@@ -18,9 +18,9 @@ FetchContent_Declare(
 )
 
 FetchContent_Declare(
-        nlohmann_json
-        GIT_REPOSITORY https://github.com/nlohmann/json
-        GIT_TAG        v3.11.2
+        poco
+        GIT_REPOSITORY https://github.com/pocoproject/poco
+        GIT_TAG        poco-1.13.0-release
 )
 
-FetchContent_MakeAvailable(Catch2 sockpp nlohmann_json)
+FetchContent_MakeAvailable(Catch2 sockpp poco)

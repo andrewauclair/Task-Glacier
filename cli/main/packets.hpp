@@ -9,8 +9,6 @@
 
 #include <sockpp/tcp_socket.h>
 
-#include <nlohmann/json.hpp>
-
 // packet structure
 // ----------------------------------------------
 // | length (2) | command (1) | sub-command (1) |
@@ -100,73 +98,73 @@ namespace mt
 		return t;
 	}
 
-	inline std::optional<nlohmann::json> read_next_packet(sockpp::tcp_socket& socket)
-	{
-		static std::vector<std::byte> received;
+	//inline std::optional<nlohmann::json> read_next_packet(sockpp::tcp_socket& socket)
+	//{
+	//	static std::vector<std::byte> received;
 
-		std::array<std::byte, 512> buffer;
+	//	std::array<std::byte, 512> buffer;
 
-		if (received.size() > 0)
-		{
-			const std::uint16_t packet_length = ntohs(read_u16(received, 0));
+	//	if (received.size() > 0)
+	//	{
+	//		const std::uint16_t packet_length = ntohs(read_u16(received, 0));
 
-			if (received.size() >= packet_length)
-			{
-				std::vector<char> chars;
+	//		if (received.size() >= packet_length)
+	//		{
+	//			std::vector<char> chars;
 
-				std::transform(received.begin() + 2, received.begin() + packet_length,
-					std::back_inserter(chars),
-					[](std::byte byte) { return static_cast<char>(byte); });
+	//			std::transform(received.begin() + 2, received.begin() + packet_length,
+	//				std::back_inserter(chars),
+	//				[](std::byte byte) { return static_cast<char>(byte); });
 
-				received.erase(received.begin(), received.begin() + packet_length);
+	//			received.erase(received.begin(), received.begin() + packet_length);
 
-				const auto json = std::string(chars.begin(), chars.end());
-				
-				return nlohmann::json::parse(json);
-			}
-		}
+	//			const auto json = std::string(chars.begin(), chars.end());
+	//			
+	//			return nlohmann::json::parse(json);
+	//		}
+	//	}
 
-		while (true)
-		{
-			const auto read = socket.read(buffer.data(), buffer.size());
-			std::cout << "read: " << read << '\n';
+	//	while (true)
+	//	{
+	//		const auto read = socket.read(buffer.data(), buffer.size());
+	//		std::cout << "read: " << read << '\n';
 
-			if (read == -1) return {};
-			
-			std::copy_n(buffer.begin(), read, std::back_inserter(received));
-			
-			const std::uint16_t packet_length = ntohs(read_u16(received, 0));
-			
-			if (received.size() >= packet_length)
-			{
-				break;
-			}
-		}
+	//		if (read == -1) return {};
+	//		
+	//		std::copy_n(buffer.begin(), read, std::back_inserter(received));
+	//		
+	//		const std::uint16_t packet_length = ntohs(read_u16(received, 0));
+	//		
+	//		if (received.size() >= packet_length)
+	//		{
+	//			break;
+	//		}
+	//	}
 
-		const std::uint16_t packet_length = ntohs(read_u16(received, 0));
+	//	const std::uint16_t packet_length = ntohs(read_u16(received, 0));
 
-		std::vector<char> chars;
-		 
-		std::transform(received.begin() + 2, received.begin() + packet_length, 
-			std::back_inserter(chars),
-			[](std::byte byte) { return static_cast<char>(byte); });
+	//	std::vector<char> chars;
+	//	 
+	//	std::transform(received.begin() + 2, received.begin() + packet_length, 
+	//		std::back_inserter(chars),
+	//		[](std::byte byte) { return static_cast<char>(byte); });
 
-		received.erase(received.begin(), received.begin() + packet_length);
+	//	received.erase(received.begin(), received.begin() + packet_length);
 
-		const auto json = std::string(chars.begin(), chars.end());
-		
-		return nlohmann::json::parse(json);
-	}
+	//	const auto json = std::string(chars.begin(), chars.end());
+	//	
+	//	return nlohmann::json::parse(json);
+	//}
 
-	inline void send_packet(sockpp::tcp_socket& socket, const nlohmann::json& json)
-	{
-		std::string str = json.dump();
+	//inline void send_packet(sockpp::tcp_socket& socket, const nlohmann::json& json)
+	//{
+	//	std::string str = json.dump();
 
-		const std::int16_t size = htons(static_cast<std::int16_t>(str.length() + 2));
+	//	const std::int16_t size = htons(static_cast<std::int16_t>(str.length() + 2));
 
-		socket.write_n(&size, 2);
-		socket.write_n(str.data(), str.length());
-	}
+	//	socket.write_n(&size, 2);
+	//	socket.write_n(str.data(), str.length());
+	//}
 }
 
 #endif

@@ -12,7 +12,9 @@ endif()
 project ("micro-task-cli")
 
 # Add source to this project's executable.
-add_library (micro_task_lib STATIC "lib.cpp")
+add_library (micro_task_lib STATIC "src/lib.cpp")
+
+target_include_directories(micro_task_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET micro_task_lib PROPERTY CXX_STANDARD 20)
