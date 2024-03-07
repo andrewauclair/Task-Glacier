@@ -17,10 +17,4 @@ FetchContent_Declare(
         GIT_TAG        v0.8.1
 )
 
-FetchContent_Declare(
-        poco
-        GIT_REPOSITORY https://github.com/pocoproject/poco
-        GIT_TAG        poco-1.13.0-release
-)
-
-FetchContent_MakeAvailable(Catch2 sockpp poco)
+FetchContent_MakeAvailable(Catch2 sockpp)

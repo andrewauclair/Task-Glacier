@@ -1,7 +1,7 @@
 ﻿# CMakeList.txt : CMake project for micro-task-cli, include source and define
 # project specific logic here.
 #
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required (VERSION 3.27)
 
 # Enable Hot Reload for MSVC compilers if supported.
 if (POLICY CMP0141)
@@ -16,8 +16,6 @@ add_library (micro_task_lib STATIC "src/lib.cpp")
 
 target_include_directories(micro_task_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET micro_task_lib PROPERTY CXX_STANDARD 20)
-endif()
+set_target_properties(micro_task_lib PROPERTIES CXX_STANDARD 23)
 
 # TODO: Add tests and install targets if needed.
