@@ -7,6 +7,8 @@
 #include <vector>
 #include <array>
 
+#include <cstdint>
+
 //#include <sockpp/tcp_socket.h>
 
 // packet structure
