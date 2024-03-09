@@ -8,6 +8,7 @@
 #include <array>
 
 #include <cstdint>
+#include <cstring>
 
 //#include <sockpp/tcp_socket.h>
 
