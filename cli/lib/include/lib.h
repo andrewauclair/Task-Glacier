@@ -2,6 +2,7 @@
 #include <optional>
 #include <unordered_map>
 #include <expected>
+#include <cstdint>
 
 using TaskID = std::int32_t;
 using ListID = std::int32_t;
