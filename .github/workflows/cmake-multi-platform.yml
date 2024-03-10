@@ -56,8 +56,8 @@ jobs:
       if: matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'clang'
       run: |
          wget https://apt.llvm.org/llvm.sh && sudo bash llvm.sh 18
-         sudo update-alternatives --install /usr/bin/clang gcc /usr/bin/clang-18 100 --slave /usr/bin/clang++ clang++ /usr/bin/clang++-18
-         sudo update-alternatives --set clang /usr/bin/clang-18
+  #       sudo update-alternatives --install /usr/bin/clang gcc /usr/bin/clang-18 100 --slave /usr/bin/clang++ clang++ /usr/bin/clang++-18
+   #      sudo update-alternatives --set clang /usr/bin/clang-18
          
     - uses: actions/checkout@v3
 
