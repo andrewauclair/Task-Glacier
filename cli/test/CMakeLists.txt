@@ -10,6 +10,10 @@ target_link_libraries(micro_task_cli_test PRIVATE
 	Catch2::Catch2WithMain micro_task_lib
 )
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	target_link_options(micro_task_cli_test PRIVATE "-stdlib=libc++")
+endif()
+
 list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
 
 include(CTest)
