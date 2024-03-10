@@ -6,6 +6,7 @@ std::vector<std::byte> CreateListMessage::pack() const
 	PacketBuilder builder;
 
 	builder.add_value(static_cast<std::int32_t>(PacketType::CREATE_LIST));
+	builder.add_value(requestID);
 	builder.add_value(groupID);
 	builder.add_string(name);
 
@@ -17,6 +18,13 @@ std::expected<CreateListMessage, UnpackError> CreateListMessage::unpack(std::spa
 	CreateListMessage message;
 
 	int bytes_read = 0;
+
+	std::int32_t raw_request_id;
+	std::memcpy(&raw_request_id, data.data() + bytes_read, sizeof(std::int32_t));
+
+	bytes_read += sizeof(std::int32_t);
+
+	message.requestID = std::byteswap(raw_request_id);
 
 	std::int32_t raw_group_id;
 	std::memcpy(&raw_group_id, data.data() + bytes_read, sizeof(std::int32_t));
@@ -42,6 +50,7 @@ std::vector<std::byte> CreateGroupMessage::pack() const
 	PacketBuilder builder;
 
 	builder.add_value(static_cast<std::int32_t>(PacketType::CREATE_GROUP));
+	builder.add_value(requestID);
 	builder.add_value(groupID);
 	builder.add_string(name);
 
@@ -50,9 +59,19 @@ std::vector<std::byte> CreateGroupMessage::pack() const
 
 std::expected<CreateGroupMessage, UnpackError> CreateGroupMessage::unpack(std::span<const std::byte> data)
 {
+	auto parser = PacketParser(data);
+	parser.parse_value<std::int16_t>();
+
 	CreateGroupMessage message;
 
 	int bytes_read = 0;
+
+	std::int32_t raw_request_id;
+	std::memcpy(&raw_request_id, data.data() + bytes_read, sizeof(std::int32_t));
+
+	bytes_read += sizeof(std::int32_t);
+
+	message.requestID = std::byteswap(raw_request_id);
 
 	std::int32_t raw_group_id;
 	std::memcpy(&raw_group_id, data.data() + bytes_read, sizeof(std::int32_t));

@@ -16,6 +16,7 @@ struct UnpackError {
 struct CreateListMessage
 {
 	GroupID groupID;
+	std::int32_t requestID;
 	std::string name;
 
 	std::vector<std::byte> pack() const;
@@ -26,6 +27,7 @@ struct CreateListMessage
 struct CreateGroupMessage
 {
 	GroupID groupID;
+	std::int32_t requestID;
 	std::string name;
 
 	std::vector<std::byte> pack() const;
@@ -83,6 +85,33 @@ public:
 	}
 };
 
+class PacketParser
+{
+private:
+	std::span<const std::byte> data;
+	std::span<const std::byte>::iterator position;
+
+public:
+	PacketParser(std::span<const std::byte> data) : data(data), position(data.begin())
+	{
+	}
+
+	template<typename T>
+	std::expected<T, UnpackError> parse_value()
+	{
+		T value;
+
+		if (std::distance(position, data.end()) < sizeof(T))
+		{
+			return UnpackError::NOT_ENOUGH_BYTES;
+		}
+		//std::memcpy(&value, position, sizeof(T));
+		position += sizeof(T);
+
+		return value;
+	}
+};
+
 enum class PacketType : std::int32_t
 {
 	CREATE_TASK = 1,
@@ -96,6 +125,9 @@ enum class PacketType : std::int32_t
 	START_TASK,
 	STOP_TASK,
 	FINISH_TASK,
+
+	SUCCESS_RESPONSE,
+	FAILURE_RESPONSE,
 };
 
 struct ParseResult
