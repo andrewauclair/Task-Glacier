@@ -25,7 +25,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         build_type: [Release]
-        c_compiler: [gcc, clang, cl]
+        c_compiler: [gcc, clang-18, cl]
         include:
           - os: windows-latest
             c_compiler: cl
@@ -34,13 +34,13 @@ jobs:
             c_compiler: gcc
             cpp_compiler: g++
           - os: ubuntu-latest
-            c_compiler: clang
-            cpp_compiler: clang++
+            c_compiler: clang-18
+            cpp_compiler: clang++-18
         exclude:
           - os: windows-latest
             c_compiler: gcc
           - os: windows-latest
-            c_compiler: clang
+            c_compiler: clang-18
           - os: ubuntu-latest
             c_compiler: cl
 
@@ -52,8 +52,8 @@ jobs:
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 --slave /usr/bin/g++ g++ /usr/bin/g++-13 --slave /usr/bin/gcov gcov /usr/bin/gcov-13
         sudo update-alternatives --set gcc /usr/bin/gcc-13
 
-    - name: switch to clang-16 on linux
-      if: matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'clang'
+    - name: switch to clang-18 on linux
+      if: matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'clang-18'
       run: |
          wget https://apt.llvm.org/llvm.sh && sudo bash llvm.sh 18
          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-18 100
