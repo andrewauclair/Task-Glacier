@@ -29,6 +29,8 @@ struct CreateGroupMessage
 	std::string name;
 
 	std::vector<std::byte> pack() const;
+
+	static std::expected<CreateGroupMessage, UnpackError> unpack(std::span<const std::byte> data);
 };
 
 using MessageTypes = std::variant<CreateListMessage, CreateGroupMessage>;
@@ -96,20 +98,6 @@ enum class PacketType : std::int32_t
 	FINISH_TASK,
 };
 
-//struct CreateListPacket
-//{
-//	std::string name;
-//	GroupID groupID;
-//};
-//
-//struct CreateGroupPacket
-//{
-//	std::string name;
-//	GroupID groupID;
-//};
-//
-//using PacketTypes = std::variant<CreateListPacket, CreateGroupPacket, std::monostate>;
-
 struct ParseResult
 {
 	std::optional<MessageTypes> packet;
@@ -150,27 +138,8 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 		}
 		case CREATE_GROUP:
 		{
-			CreateGroupMessage create_group;
-
-			std::int32_t raw_group_id;
-			std::memcpy(&raw_group_id, bytes.data() + result.bytes_read, sizeof(std::int32_t));
-
-			result.bytes_read += sizeof(std::int32_t);
-
-			create_group.groupID = std::byteswap(raw_group_id);
-
-			std::int16_t raw_name_length;
-			std::memcpy(&raw_name_length, bytes.data() + result.bytes_read, sizeof(std::int16_t));
-
-			result.bytes_read += sizeof(std::int16_t);
-
-			auto length = std::byteswap(raw_name_length);
-			create_group.name.resize(length);
-			std::memcpy(create_group.name.data(), bytes.data() + result.bytes_read, length);
-
-			result.bytes_read += length;
-
-			result.packet = create_group;
+			result.packet = CreateGroupMessage::unpack(bytes.subspan(8)).value();
+			result.bytes_read = raw_length;
 
 			break;
 		}
