@@ -11,6 +11,7 @@ target_link_libraries(micro_task_cli_test PRIVATE
 )
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	target_compile_options(micro_task_cli_test PRIVATE "-stdlib=libc++")
 	target_link_options(micro_task_cli_test PRIVATE "-stdlib=libc++")
 endif()
 
