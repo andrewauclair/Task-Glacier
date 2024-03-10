@@ -41,7 +41,7 @@ std::vector<std::byte> bytes(auto... a)
 	return std::vector<std::byte>{ static_cast<std::byte>(a)... };
 }
 
-TEST_CASE("pack the create list message", "[message][pack]")
+TEST_CASE("pack the create list message", "[list][message][pack]")
 {
 	PacketBuilder builder;
 
@@ -64,11 +64,9 @@ TEST_CASE("pack the create list message", "[message][pack]")
 	CHECK_THAT(std::span(packed).subspan(10, 7), Catch::Matchers::RangeEquals(bytes('t', 'e', 's', 't', 'i', 'n', 'g')));
 }
 
-TEST_CASE("parse a create list packet", "[list][packet]")
+TEST_CASE("parse a create list packet", "[list][message][unpack]")
 {
 	MicroTask app;
-
-	PacketBuilder builder;
 
 	CreateListMessage create_list{ 5, "testing" };
 	
@@ -83,4 +81,45 @@ TEST_CASE("parse a create list packet", "[list][packet]")
 	CHECK(packet.name == "testing");
 
 	CHECK(result.bytes_read == 17);
+}
+
+TEST_CASE("pack the create group message", "[group][message][pack]")
+{
+	PacketBuilder builder;
+
+	CreateGroupMessage create_group{ 5, "test_group" };
+
+	const auto packed = create_group.pack();
+
+	REQUIRE(packed.size() == 20);
+
+	// packet ID
+	CHECK_THAT(std::span(packed).subspan(0, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 3)));
+
+	// group ID
+	CHECK_THAT(std::span(packed).subspan(4, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 5)));
+
+	// name length
+	CHECK_THAT(std::span(packed).subspan(8, 2), Catch::Matchers::RangeEquals(bytes(0, 10)));
+
+	// name
+	CHECK_THAT(std::span(packed).subspan(10, 10), Catch::Matchers::RangeEquals(bytes('t', 'e', 's', 't', '_', 'g', 'r', 'o', 'u', 'p')));
+}
+
+TEST_CASE("parse create group packet", "[group][message][unpack]")
+{
+	MicroTask app;
+
+	auto create_group = CreateGroupMessage(5, "test_group");
+
+	const auto result = parse_packet(create_group.pack());
+
+	REQUIRE(result.packet.has_value());
+
+	auto packet = std::get<CreateGroupPacket>(result.packet.value());
+
+	CHECK(packet.groupID == 5);
+	CHECK(packet.name == "test_group");
+
+	CHECK(result.bytes_read == 20);
 }
