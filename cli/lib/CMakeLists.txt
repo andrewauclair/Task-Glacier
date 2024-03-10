@@ -1,6 +1,11 @@
 ﻿cmake_minimum_required (VERSION 3.27)
 
-add_library (micro_task_lib STATIC "src/lib.cpp" "include/lib.h")
+add_library (micro_task_lib STATIC 
+	src/lib.cpp 
+	src/packets.cpp
+	include/lib.hpp
+	include/packets.hpp
+)
 
 target_include_directories(micro_task_lib PUBLIC include)
 

@@ -2,12 +2,17 @@
 
 project("micro-task-cli-test")
 
-add_executable(micro_task_cli_test "task_test.cpp")
+add_executable(micro_task_cli_test 
+	task_test.cpp
+	packet_test.cpp
+	api_test.cpp
+)
 
 set_target_properties(micro_task_cli_test PROPERTIES CXX_STANDARD 23)
 
 target_link_libraries(micro_task_cli_test PRIVATE
-	Catch2::Catch2WithMain micro_task_lib
+	micro_task_lib
+	Catch2::Catch2WithMain
 )
 
 list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)

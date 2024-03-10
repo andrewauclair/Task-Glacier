@@ -1,3 +1,6 @@
+#ifndef MICRO_TASK_LIB_HPP
+#define MICRO_TASK_LIB_HPP
+
 #include <vector>
 #include <string>
 #include <optional>
@@ -96,7 +99,7 @@ private:
 
 enum class PacketType : std::int32_t
 {
-	CREATE_TASK,
+	CREATE_TASK = 1,
 	CREATE_LIST,
 	CREATE_GROUP,
 
@@ -180,3 +183,5 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 	}
 	return result;
 }
+
+#endif

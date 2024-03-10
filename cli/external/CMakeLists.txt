@@ -2,11 +2,15 @@ Include(FetchContent)
 
 cmake_policy(SET CMP0077 NEW)
 
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 FetchContent_Declare(
         Catch2
         GIT_SHALLOW    TRUE
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-        GIT_TAG        v3.3.2
+        GIT_TAG        v3.5.3
 )
 
 set(SOCKPP_BUILD_SHARED OFF)
