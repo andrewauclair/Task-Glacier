@@ -202,5 +202,30 @@ TEST_CASE("create group", "[group]")
 
 // TODO test that creating a group in a finished group fails
 // 
-// create new task
 
+TEST_CASE("start task", "[task]")
+{
+	MicroTask app;
+
+	REQUIRE(app.create_list("test", ROOT_GROUP_ID).has_value());
+
+	REQUIRE(app.create_task("testing", 1).has_value());
+
+	const auto start_result = app.start_task(1);
+
+	CHECK(!start_result.has_value());
+
+	const auto state_result = app.task_state(1);
+
+	check_expected_value(state_result, TaskState::ACTIVE);
+}
+
+TEST_CASE("stop task", "[task]")
+{
+
+}
+
+TEST_CASE("finish task", "[task]")
+{
+
+}

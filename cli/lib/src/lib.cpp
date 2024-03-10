@@ -2,6 +2,8 @@
 
 #include <format>
 
+Task::Task(std::string name, TaskID id) : m_name(std::move(name)), m_taskID(id) {}
+
 List::List(std::string name, ListID id) : m_name(std::move(name)), m_listID(id) {}
 
 Group::Group(std::string name, GroupID id) : m_name(std::move(name)), m_groupID(id) {}
@@ -13,6 +15,8 @@ std::expected<TaskID, std::string> MicroTask::create_task(const std::string& nam
 	if (list)
 	{
 		auto id = m_nextTaskID;
+
+		list->m_tasks.push_back(Task(name, id));
 
 		m_nextTaskID++;
 
@@ -78,6 +82,59 @@ std::optional<std::string> MicroTask::move_list(ListID listID, GroupID targetGro
 std::optional<std::string> MicroTask::move_group(GroupID groupID, GroupID targetGroupID)
 {
 	return std::nullopt;
+}
+
+Task* MicroTask::find_task(TaskID taskID)
+{
+	const auto search = [](auto search, Group& group, TaskID taskID) -> Task*
+		{
+			for (auto&& otherGroup : group.m_groups)
+			{
+				Task* result = search(search, otherGroup, taskID);
+
+				if (result)
+				{
+					return result;
+				}
+			}
+			for (auto&& list : group.m_lists)
+			{
+				for (auto&& task : list.m_tasks)
+				{
+					if (task.taskID() == taskID)
+					{
+						return &task;
+					}
+				}
+			}
+			return nullptr;
+		};
+
+	return search(search, m_root, taskID);
+}
+
+std::optional<std::string> MicroTask::start_task(TaskID id)
+{
+	auto task = find_task(id);
+
+	if (task)
+	{
+		task->state = TaskState::ACTIVE;
+
+		return std::nullopt;
+	}
+	return std::format("");
+}
+
+std::expected<TaskState, std::string> MicroTask::task_state(TaskID id)
+{
+	const auto task = find_task(id);
+
+	if (task)
+	{
+		return task->state;
+	}
+	return std::unexpected("");
 }
 
 List* MicroTask::find_list_by_id(ListID listID)

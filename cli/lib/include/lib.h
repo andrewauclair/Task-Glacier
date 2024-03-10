@@ -11,10 +11,22 @@ using GroupID = std::int32_t;
 
 inline constexpr GroupID ROOT_GROUP_ID = 0;
 
+enum class TaskState
+{
+	INACTIVE,ACTIVE,FINISHED
+};
 class Task
 {
+private:
+	TaskID m_taskID;
+
 public:
-	std::string name;
+	Task(std::string name, TaskID id);
+
+	TaskID taskID() const { return m_taskID; }
+
+	std::string m_name;
+	TaskState state = TaskState::INACTIVE;
 };
 
 class List
@@ -58,7 +70,11 @@ public:
 	std::optional<std::string> move_list(ListID listID, GroupID targetGroupID);
 	std::optional<std::string> move_group(GroupID groupID, GroupID targetGroupID);
 
-	std::optional<Task> find_task(TaskID id);
+	Task* find_task(TaskID id);
+
+	std::optional<std::string> start_task(TaskID id);
+	
+	std::expected<TaskState, std::string> task_state(TaskID id);
 
 private:
 	List* find_list_by_id(ListID listID);
