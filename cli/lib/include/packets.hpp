@@ -7,12 +7,20 @@
 #include <variant>
 #include <string>
 
+struct UnpackError {
+	enum {
+		
+	};
+};
+
 struct CreateListMessage
 {
 	GroupID groupID;
 	std::string name;
 
 	std::vector<std::byte> pack() const;
+
+	static std::expected<CreateListMessage, UnpackError> unpack();
 };
 
 struct CreateGroupMessage
@@ -25,12 +33,26 @@ struct CreateGroupMessage
 
 using MessageTypes = std::variant<CreateListMessage, CreateGroupMessage>;
 
-struct PacketBuilder
+class PacketBuilder
 {
-	std::vector<std::byte> bytes;
+private:
+	std::vector<std::byte> m_bytes;
 
-//public:
-	//std::span<const std::byte> bytes() const { return m_bytes; }
+public:
+
+	std::vector<std::byte> build()
+	{
+		std::int32_t length = m_bytes.size();
+		length += sizeof(length);
+
+		auto* ptr = reinterpret_cast<std::byte*>(&length);
+
+		for (int i = 0; i < sizeof(length); i++, ptr++)
+		{
+			m_bytes.insert(m_bytes.begin(), *ptr);
+		}
+		return m_bytes;
+	}
 
 	// TODO add specialization for enums
 	template<typename T>
@@ -41,7 +63,7 @@ struct PacketBuilder
 
 		for (int i = 0; i < sizeof(T); i++, f++)
 		{
-			bytes.push_back(*f);
+			m_bytes.push_back(*f);
 		}
 	}
 
@@ -53,7 +75,7 @@ struct PacketBuilder
 
 		for (auto ch : str)
 		{
-			bytes.push_back(static_cast<std::byte>(ch));
+			m_bytes.push_back(static_cast<std::byte>(ch));
 		}
 	}
 };
@@ -99,9 +121,13 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 
 	if (bytes.size() > 4)
 	{
+		std::int32_t raw_length;
+		std::memcpy(&raw_length, bytes.data(), sizeof(raw_length));
+		result.bytes_read += sizeof(raw_length);
+
 		// read out the packet type
 		std::int32_t raw_type;
-		std::memcpy(&raw_type, bytes.data(), sizeof(PacketType));
+		std::memcpy(&raw_type, bytes.data() + result.bytes_read, sizeof(PacketType));
 		const PacketType type = static_cast<PacketType>(std::byteswap(raw_type));
 
 		result.bytes_read += sizeof(PacketType);
@@ -135,6 +161,8 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 			result.bytes_read += length;
 
 			result.packet = create_list;
+
+			//CreateListMessage::unpack(bytes);
 
 			break;
 		}

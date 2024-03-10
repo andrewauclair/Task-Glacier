@@ -49,19 +49,22 @@ TEST_CASE("pack the create list message", "[list][message][pack]")
 
 	const auto packed = create_list.pack();
 
-	REQUIRE(packed.size() == 17);
+	REQUIRE(packed.size() == 21);
+
+	// packet length
+	CHECK_THAT(std::span(packed).subspan(0, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 0x15)));
 
 	// packet ID
-	CHECK_THAT(std::span(packed).subspan(0, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 2)));
+	CHECK_THAT(std::span(packed).subspan(4, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 2)));
 
 	// group ID
-	CHECK_THAT(std::span(packed).subspan(4, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 5)));
+	CHECK_THAT(std::span(packed).subspan(8, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 5)));
 
 	// name length
-	CHECK_THAT(std::span(packed).subspan(8, 2), Catch::Matchers::RangeEquals(bytes(0, 7)));
+	CHECK_THAT(std::span(packed).subspan(12, 2), Catch::Matchers::RangeEquals(bytes(0, 7)));
 
 	// name
-	CHECK_THAT(std::span(packed).subspan(10, 7), Catch::Matchers::RangeEquals(bytes('t', 'e', 's', 't', 'i', 'n', 'g')));
+	CHECK_THAT(std::span(packed).subspan(14, 7), Catch::Matchers::RangeEquals(bytes('t', 'e', 's', 't', 'i', 'n', 'g')));
 }
 
 TEST_CASE("parse a create list packet", "[list][message][unpack]")
@@ -80,7 +83,7 @@ TEST_CASE("parse a create list packet", "[list][message][unpack]")
 	CHECK(packet.groupID == 5);
 	CHECK(packet.name == "testing");
 
-	CHECK(result.bytes_read == 17);
+	CHECK(result.bytes_read == 21);
 }
 
 TEST_CASE("pack the create group message", "[group][message][pack]")
@@ -91,19 +94,21 @@ TEST_CASE("pack the create group message", "[group][message][pack]")
 
 	const auto packed = create_group.pack();
 
-	REQUIRE(packed.size() == 20);
+	REQUIRE(packed.size() == 24);
+
+	CHECK_THAT(std::span(packed).subspan(0, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 0x18)));
 
 	// packet ID
-	CHECK_THAT(std::span(packed).subspan(0, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 3)));
+	CHECK_THAT(std::span(packed).subspan(4, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 3)));
 
 	// group ID
-	CHECK_THAT(std::span(packed).subspan(4, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 5)));
+	CHECK_THAT(std::span(packed).subspan(8, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 5)));
 
 	// name length
-	CHECK_THAT(std::span(packed).subspan(8, 2), Catch::Matchers::RangeEquals(bytes(0, 10)));
+	CHECK_THAT(std::span(packed).subspan(12, 2), Catch::Matchers::RangeEquals(bytes(0, 10)));
 
 	// name
-	CHECK_THAT(std::span(packed).subspan(10, 10), Catch::Matchers::RangeEquals(bytes('t', 'e', 's', 't', '_', 'g', 'r', 'o', 'u', 'p')));
+	CHECK_THAT(std::span(packed).subspan(14, 10), Catch::Matchers::RangeEquals(bytes('t', 'e', 's', 't', '_', 'g', 'r', 'o', 'u', 'p')));
 }
 
 TEST_CASE("parse create group packet", "[group][message][unpack]")
@@ -121,5 +126,5 @@ TEST_CASE("parse create group packet", "[group][message][unpack]")
 	CHECK(packet.groupID == 5);
 	CHECK(packet.name == "test_group");
 
-	CHECK(result.bytes_read == 20);
+	CHECK(result.bytes_read == 24);
 }

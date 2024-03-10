@@ -9,7 +9,14 @@ std::vector<std::byte> CreateListMessage::pack() const
 	builder.add_value(groupID);
 	builder.add_string(name);
 
-	return std::move(builder).bytes;
+	return builder.build();
+}
+
+std::expected<CreateListMessage, UnpackError> CreateListMessage::unpack()
+{
+	CreateListMessage message;
+
+	return message;
 }
 
 std::vector<std::byte> CreateGroupMessage::pack() const
@@ -20,5 +27,5 @@ std::vector<std::byte> CreateGroupMessage::pack() const
 	builder.add_value(groupID);
 	builder.add_string(name);
 
-	return std::move(builder).bytes;
+	return builder.build();
 }
