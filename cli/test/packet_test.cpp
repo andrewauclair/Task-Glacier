@@ -78,7 +78,7 @@ TEST_CASE("parse a create list packet", "[list][message][unpack]")
 
 	REQUIRE(result.packet.has_value());
 
-	auto packet = std::get<CreateListPacket>(result.packet.value());
+	auto packet = std::get<CreateListMessage>(result.packet.value());
 
 	CHECK(packet.groupID == 5);
 	CHECK(packet.name == "testing");
@@ -121,7 +121,7 @@ TEST_CASE("parse create group packet", "[group][message][unpack]")
 
 	REQUIRE(result.packet.has_value());
 
-	auto packet = std::get<CreateGroupPacket>(result.packet.value());
+	auto packet = std::get<CreateGroupMessage>(result.packet.value());
 
 	CHECK(packet.groupID == 5);
 	CHECK(packet.name == "test_group");
