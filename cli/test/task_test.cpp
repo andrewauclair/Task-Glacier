@@ -25,6 +25,52 @@ TEST_CASE("root group is ID 0", "[group]")
 	CHECK(ROOT_GROUP_ID == 0);
 }
 
+TEST_CASE("create task", "[task]")
+{
+	MicroTask app;
+
+	SECTION("create task on new list")
+	{
+		REQUIRE(app.create_list("test", ROOT_GROUP_ID).has_value());
+
+		const auto result = app.create_task("testing", 1);
+
+		check_expected_value(result, 1);
+	}
+
+	SECTION("create multiple tasks")
+	{
+		REQUIRE(app.create_list("test", ROOT_GROUP_ID).has_value());
+
+		auto result = app.create_task("one", 1);
+		check_expected_value(result, 1);
+
+		result = app.create_task("two", 1);
+		check_expected_value(result, 2);
+		
+		result = app.create_task("three", 1);
+		check_expected_value(result, 3);
+		
+		result = app.create_task("four", 1);
+		check_expected_value(result, 4);
+	}
+
+	SECTION("failure states")
+	{
+		SECTION("list does not exist")
+		{
+			const auto result = app.create_task("testing", 1);
+
+			check_expected_error(result, std::string("List with ID 1 does not exist."));
+		}
+
+		SECTION("list is finished")
+		{
+
+		}
+	}
+}
+
 TEST_CASE("create list", "[list]")
 {
 	MicroTask app;
@@ -142,6 +188,15 @@ TEST_CASE("create group", "[group]")
 		check_expected_error(result, std::string("Group with ID 1 does not exist."));
 	}
 }
+
+//TEST_CASE("move list", "[list]")
+//{
+//	MicroTask app;
+//	REQUIRE(app.create_list("test", ROOT_GROUP_ID).has_value());
+//	REQUIRE(app.create_group("nested", ROOT_GROUP_ID).has_value());
+//
+//	CHECK(!app.move_list(1, 1).has_value());
+//}
 
 // TODO test that creating a list in a finished group fails
 

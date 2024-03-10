@@ -6,6 +6,22 @@ List::List(std::string name, ListID id) : m_name(std::move(name)), m_listID(id) 
 
 Group::Group(std::string name, GroupID id) : m_name(std::move(name)), m_groupID(id) {}
 
+std::expected<TaskID, std::string> MicroTask::create_task(const std::string& name, ListID listID)
+{
+	auto* list = find_list_by_id(listID);
+
+	if (list)
+	{
+		auto id = m_nextTaskID;
+
+		m_nextTaskID++;
+
+		return id;
+	}
+
+	return std::unexpected(std::format("List with ID {} does not exist.", listID));
+}
+
 std::expected<ListID, std::string> MicroTask::create_list(const std::string& name, GroupID groupID)
 {
 	Group* group = find_group_by_id(groupID);
@@ -48,9 +64,46 @@ std::expected<GroupID, std::string> MicroTask::create_group(const std::string& n
 	return std::unexpected(std::format("Group with ID {} does not exist.", groupID));
 }
 
+std::optional<std::string> MicroTask::move_list(ListID listID, GroupID targetGroupID)
+{
+	//auto* list = find_list_by_id(listID);
+	//auto* currentGroup = find_group_by_id(list->)
+	//auto* targetGroup = find_group_by_id(targetGroupID);
+
+
+
+	return std::nullopt;
+}
+
+std::optional<std::string> MicroTask::move_group(GroupID groupID, GroupID targetGroupID)
+{
+	return std::nullopt;
+}
+
 List* MicroTask::find_list_by_id(ListID listID)
 {
-	return nullptr;
+	const auto search = [](auto search, Group& group, ListID listID) -> List*
+		{
+			for (auto&& otherGroup : group.m_groups)
+			{
+				List* result = search(search, otherGroup, listID);
+
+				if (result)
+				{
+					return result;
+				}
+			}
+			for (auto&& list : group.m_lists)
+			{
+				if (list.listID() == listID)
+				{
+					return &list;
+				}
+			}
+			return nullptr;
+		};
+
+	return search(search, m_root, listID);
 }
 
 Group* MicroTask::find_group_by_id(GroupID groupID)

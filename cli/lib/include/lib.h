@@ -55,6 +55,9 @@ public:
 	std::expected<ListID, std::string> create_list(const std::string& name, GroupID groupID);
 	std::expected<GroupID, std::string> create_group(const std::string& name, GroupID groupID);
 
+	std::optional<std::string> move_list(ListID listID, GroupID targetGroupID);
+	std::optional<std::string> move_group(GroupID groupID, GroupID targetGroupID);
+
 	std::optional<Task> find_task(TaskID id);
 
 private:
@@ -67,6 +70,7 @@ private:
 private:
 	Group m_root = Group("", ROOT_GROUP_ID);
 
-	GroupID m_nextGroupID = 1;
+	TaskID m_nextTaskID = 1;
 	ListID m_nextListID = 1;
+	GroupID m_nextGroupID = 1;
 };
