@@ -129,7 +129,7 @@ struct ParseResult
 	std::int32_t bytes_read = 0;
 };
 
-inline ParseResult parse_packet(std::span<std::byte> bytes)
+inline ParseResult parse_packet(std::span<const std::byte> bytes)
 {
 	ParseResult result;
 
@@ -152,8 +152,23 @@ inline ParseResult parse_packet(std::span<std::byte> bytes)
 		{
 			CreateListPacket create_list;
 
-			create_list.name = ""; // TODO read string
-			create_list.groupID = 0; // TODO read group ID
+			std::int32_t raw_group_id;
+			std::memcpy(&raw_group_id, bytes.data() + result.bytes_read, sizeof(std::int32_t));
+
+			result.bytes_read += sizeof(std::int32_t);
+
+			create_list.groupID = std::byteswap(raw_group_id);
+
+			std::int16_t raw_name_length;
+			std::memcpy(&raw_name_length, bytes.data() + result.bytes_read, sizeof(std::int16_t));
+
+			result.bytes_read += sizeof(std::int16_t);
+
+			auto length = std::byteswap(raw_name_length);
+			create_list.name.resize(length);
+			std::memcpy(create_list.name.data(), bytes.data() + result.bytes_read, length);
+
+			result.bytes_read += length;
 
 			result.packet = create_list;
 
