@@ -58,7 +58,8 @@ jobs:
          wget https://apt.llvm.org/llvm.sh && sudo bash llvm.sh 18
          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-18 100
          sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-18 100
-          
+         echo clang++-18 -v
+         
     - uses: actions/checkout@v3
 
     - name: Set reusable strings
