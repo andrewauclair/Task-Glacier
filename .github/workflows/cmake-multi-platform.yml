@@ -43,6 +43,8 @@ jobs:
             c_compiler: clang-18
           - os: ubuntu-latest
             c_compiler: cl
+          - os: ubuntu-latest
+            c_compiler: clang-18
 
     steps:
     - name: switch to gcc-13 on linux
