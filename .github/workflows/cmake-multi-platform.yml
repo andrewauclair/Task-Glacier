@@ -46,12 +46,17 @@ jobs:
 
     steps:
     - name: switch to gcc-13 on linux
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'gcc'
       run: |
         sudo apt install gcc-13 g++-13
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 --slave /usr/bin/g++ g++ /usr/bin/g++-13 --slave /usr/bin/gcov gcov /usr/bin/gcov-13
         sudo update-alternatives --set gcc /usr/bin/gcc-13
-        
+
+    - name: switch to clang-16 on linux
+      if: matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'clang'
+      run: |
+         "wget https://apt.llvm.org/llvm.sh && sudo bash llvm.sh 16"
+         
     - uses: actions/checkout@v3
 
     - name: Set reusable strings
