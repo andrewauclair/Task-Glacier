@@ -4,6 +4,9 @@
 #include <unordered_map>
 #include <expected>
 #include <cstdint>
+#include <variant>
+#include <span>
+#include <bit>
 
 using TaskID = std::int32_t;
 using ListID = std::int32_t;
@@ -90,3 +93,75 @@ private:
 	ListID m_nextListID = 1;
 	GroupID m_nextGroupID = 1;
 };
+
+enum class PacketType : std::int32_t
+{
+	CREATE_TASK,
+	CREATE_LIST,
+	CREATE_GROUP,
+
+	MOVE_TASK,
+	MOVE_LIST,
+	MOVE_GROUP,
+
+	START_TASK,
+	STOP_TASK,
+	FINISH_TASK,
+};
+
+struct CreateListPacket
+{
+	std::string name;
+	GroupID groupID;
+};
+
+struct CreateGroupPacket
+{
+	std::string name;
+	GroupID groupID;
+};
+
+using PacketTypes = std::variant<CreateListPacket, CreateGroupPacket, std::monostate>;
+
+struct ParseResult
+{
+	std::optional<PacketTypes> packet;
+	std::int32_t bytes_read = 0;
+};
+
+inline ParseResult parse_packet(std::span<std::byte> bytes)
+{
+	ParseResult result;
+
+	if (bytes.size() > 4)
+	{
+		// read out the packet type
+		std::int32_t raw_type;
+		std::memcpy(&raw_type, bytes.data(), sizeof(PacketType));
+		const PacketType type = static_cast<PacketType>(std::byteswap(raw_type));
+
+		result.bytes_read += sizeof(PacketType);
+
+		switch (type)
+		{
+			using enum PacketType;
+
+		case CREATE_TASK:
+			break;
+		case CREATE_LIST:
+		{
+			CreateListPacket create_list;
+
+			create_list.name = ""; // TODO read string
+			create_list.groupID = 0; // TODO read group ID
+
+			result.packet = create_list;
+
+			break;
+		}
+		default:
+			break;
+		}
+	}
+	return result;
+}
