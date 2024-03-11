@@ -6,6 +6,7 @@
 #include <vector>
 #include <variant>
 #include <string>
+#include <cstring>
 
 struct UnpackError {
 	enum {
@@ -35,6 +36,10 @@ struct CreateGroupMessage
 	static std::expected<CreateGroupMessage, UnpackError> unpack(std::span<const std::byte> data);
 };
 
+struct SuccessResponse
+{
+	std::int32_t requestID;
+};
 using MessageTypes = std::variant<CreateListMessage, CreateGroupMessage>;
 
 class PacketBuilder

@@ -100,6 +100,7 @@ TEST_CASE("pack the create group message", "[group][message][pack]")
 
 	REQUIRE(packed.size() == 28);
 
+	// packet length
 	CHECK_THAT(std::span(packed).subspan(0, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 28)));
 
 	// packet ID
