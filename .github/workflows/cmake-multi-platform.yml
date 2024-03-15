@@ -33,6 +33,9 @@ jobs:
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
+          - os: ubuntu-latest
+            c_compiler: clang-18
+            cpp_compiler: clang++-18
         exclude:
           - os: windows-latest
             c_compiler: gcc
@@ -40,8 +43,6 @@ jobs:
             c_compiler: clang-18
           - os: ubuntu-latest
             c_compiler: cl
-          - os: ubuntu-latest
-            c_compiler: clang-18
     steps:
     - name: switch to gcc-13 on linux
       if: matrix.os == 'ubuntu-latest' # && matrix.c_compiler == 'gcc'
