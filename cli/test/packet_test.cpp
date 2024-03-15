@@ -4,38 +4,6 @@
 #include "lib.hpp"
 #include "packets.hpp"
 
-class PacketBuilderOld
-{
-	std::vector<std::byte> m_bytes;
-
-public:
-	std::span<const std::byte> bytes() const { return m_bytes; }
-
-	template<typename T>
-	void add_value(T value)
-	{
-		T swapped = std::byteswap(value);
-		auto* f = reinterpret_cast<unsigned char*>(&swapped);
-
-		for (int i = 0; i < sizeof(T); i++, f++)
-		{
-			m_bytes.push_back(static_cast<std::byte>(*f));
-		}
-	}
-
-	void add_string(std::string_view str)
-	{
-		std::int16_t size = str.size();
-
-		add_value(size);
-
-		for (auto ch : str)
-		{
-			m_bytes.push_back(static_cast<std::byte>(ch));
-		}
-	}
-};
-
 std::vector<std::byte> bytes(auto... a)
 {
 	return std::vector<std::byte>{ static_cast<std::byte>(a)... };
@@ -45,7 +13,7 @@ TEST_CASE("pack the create list message", "[list][message][pack]")
 {
 	PacketBuilder builder;
 
-	CreateListMessage create_list{ GroupID(5), 10, "testing"};
+	CreateListMessage create_list{ GroupID(5), RequestID(10), "testing"};
 
 	const auto packed = create_list.pack();
 
@@ -74,7 +42,7 @@ TEST_CASE("parse a create list packet", "[list][message][unpack]")
 {
 	MicroTask app;
 
-	CreateListMessage create_list{ 5, 10, "testing" };
+	CreateListMessage create_list{ 5, RequestID(10), "testing" };
 	
 	// handle the packet
 	const auto result = parse_packet(create_list.pack());
@@ -84,7 +52,7 @@ TEST_CASE("parse a create list packet", "[list][message][unpack]")
 	auto packet = std::get<CreateListMessage>(result.packet.value());
 
 	CHECK(packet.groupID == 5);
-	CHECK(packet.requestID == 10);
+	CHECK(packet.requestID == RequestID(10));
 	CHECK(packet.name == "testing");
 
 	CHECK(result.bytes_read == 25);

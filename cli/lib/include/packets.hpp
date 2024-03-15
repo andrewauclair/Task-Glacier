@@ -8,16 +8,20 @@
 #include <string>
 #include <cstring>
 
+#include <strong_type/strong_type.hpp>
+
 struct UnpackError {
 	enum {
 		NOT_ENOUGH_BYTES
 	};
 };
 
+using RequestID = strong::type<std::int32_t, struct request_id_, strong::equality>;
+
 struct CreateListMessage
 {
 	GroupID groupID;
-	std::int32_t requestID;
+	RequestID requestID;
 	std::string name;
 
 	std::vector<std::byte> pack() const;
@@ -64,9 +68,12 @@ public:
 		return m_bytes;
 	}
 
-	// TODO add specialization for enums
 	template<typename T>
-	void add_value(T value)
+	void add(T value) = delete;
+
+	template<typename T>
+		requires std::integral<T> || std::floating_point<T>
+	void add(T value)
 	{
 		T swapped = std::byteswap(value);
 		auto* f = reinterpret_cast<std::byte*>(&swapped);
@@ -77,11 +84,18 @@ public:
 		}
 	}
 
+	template<typename T>
+		requires strong::is_strong_type<T>::value
+	void add(T value)
+	{
+		add(value._val);
+	}
+
 	void add_string(std::string_view str)
 	{
 		std::int16_t size = str.size();
 
-		add_value(size);
+		add(size);
 
 		for (auto ch : str)
 		{
