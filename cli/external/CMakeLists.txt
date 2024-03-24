@@ -30,4 +30,12 @@ FetchContent_Declare(
 	GIT_TAG			v14
 )
 
-FetchContent_MakeAvailable(Catch2 sockpp strong_type)
+FetchContent_Declare(
+    libassert
+    GIT_SHALLOW     FALSE
+    GIT_REPOSITORY  https://github.com/jeremy-rifkin/libassert.git
+ #   GIT_TAG         v2.0.0-alpha
+    GIT_TAG         e7e3c35b415761e11c268436e6d1659d5a3fdbf5
+)
+
+FetchContent_MakeAvailable(Catch2 sockpp strong_type libassert)
