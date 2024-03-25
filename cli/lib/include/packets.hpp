@@ -26,6 +26,11 @@ struct CreateListMessage
 
 	std::vector<std::byte> pack() const;
 
+	friend std::ostream& operator<<(std::ostream& out, CreateListMessage msg)
+	{
+		out << msg.groupID << " " << msg.requestID._val << " " << msg.name;
+		return out;
+	}
 	static std::expected<CreateListMessage, UnpackError> unpack(std::span<const std::byte> data);
 };
 

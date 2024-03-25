@@ -1,8 +1,11 @@
-﻿cmake_minimum_required (VERSION 3.27)
+﻿cmake_minimum_required (VERSION 3.22)
 
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
 project("micro-task")
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 add_subdirectory(external)
 add_subdirectory(lib)

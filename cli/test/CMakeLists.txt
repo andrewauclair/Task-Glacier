@@ -1,6 +1,4 @@
-﻿cmake_minimum_required (VERSION 3.27)
-
-project("micro-task-cli-test")
+﻿project("micro-task-cli-test")
 
 add_executable(micro_task_cli_test 
 	task_test.cpp

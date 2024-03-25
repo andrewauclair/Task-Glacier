@@ -1,6 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.27)
-
-project("micro-task-cli")
+﻿project("micro-task-cli")
 
 add_executable(micro_task_cli "main.cpp" "packets.hpp")
 
