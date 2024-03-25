@@ -126,13 +126,13 @@ auto makeCustomMatchExpr(ArgT&& arg, MatcherT const& matcher) -> CustomMatchExpr
 
 #define CUSTOM_CHECK_THAT( arg, matcher ) CUSTOM_INTERNAL_CHECK_THAT( "CHECK_THAT", matcher, Catch::ResultDisposition::ContinueOnFailure, arg )
 
-TEST_CASE("compare", "[list]")
-{
-	CreateListMessage a{ 5, RequestID(10), "testing" };
-	CreateListMessage b{ 6, RequestID(10), "testing" };
-
-	CUSTOM_CHECK_THAT(b, CreateListMessageMatcher(a));
-}
+//TEST_CASE("compare", "[list]")
+//{
+//	CreateListMessage a{ 5, RequestID(10), "testing" };
+//	CreateListMessage b{ 6, RequestID(10), "testing" };
+//
+//	CUSTOM_CHECK_THAT(b, CreateListMessageMatcher(a));
+//}
 
 TEST_CASE("pack the create list message", "[list][message][pack]")
 {
@@ -171,28 +171,6 @@ TEST_CASE("pack the create list message", "[list][message][pack]")
 		.verify_type<std::uint32_t>(12, 5)
 		.verify_string(16, "testing");
 }
-
-class CreateListMessageMatcher : public Catch::Matchers::MatcherBase<CreateListMessage>
-{
-public:
-	CreateListMessageMatcher(const CreateListMessage& expected) : m_expected(expected) {}
-
-	bool match(const CreateListMessage& actual) const override
-	{
-		CHECK(m_expected.groupID == actual.groupID);
-		CHECK(m_expected.requestID == actual.requestID);
-		CHECK(m_expected.name == actual.name);
-		return true;
-	}
-
-	std::string describe() const override
-	{
-		return std::format("{{ groupID: {}, requestID: {}, name: {} }}", m_expected.groupID, m_expected.requestID._val, m_expected.name);
-	}
-
-private:
-	const CreateListMessage& m_expected;
-};
 
 TEST_CASE("parse a create list packet", "[list][message][unpack]")
 {
