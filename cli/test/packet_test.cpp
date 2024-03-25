@@ -22,40 +22,54 @@ std::vector<std::byte> convert_to_bytes(T value)
 
 struct PacketVerifier
 {
-	std::vector<std::byte> bytes;
+private:
+	std::vector<std::byte> m_bytes;
+	std::size_t m_current_pos = 0;
 
-	PacketVerifier& required_length(std::size_t length)
+public:
+	PacketVerifier(std::vector<std::byte> bytes, std::size_t required_length)
+		: m_bytes(std::move(bytes))
 	{
-		REQUIRE(bytes.size() == length);
-
-		return *this;
+		REQUIRE(m_bytes.size() == required_length);
 	}
 
 	template<typename T>
-	PacketVerifier& verify_type(std::size_t start, T expected)
+	PacketVerifier& verify_value(T expected, std::string_view field_name)
 	{
-		return verify_bytes(start, sizeof(T), convert_to_bytes(std::byteswap(expected)));
-	}
+		INFO("field: " << field_name << ", expected value: " << expected);
 
-	PacketVerifier& verify_bytes(std::size_t start, std::size_t length, const std::vector<std::byte>& expected_bytes)
-	{
-		CHECK_THAT(std::span(bytes).subspan(start, length), Catch::Matchers::RangeEquals(expected_bytes));
+		CHECK_THAT(std::span(m_bytes).subspan(m_current_pos, sizeof(T)), Catch::Matchers::RangeEquals(convert_to_bytes(std::byteswap(expected))));
+		m_current_pos += sizeof(T);
 		return *this;
 	}
 
-	PacketVerifier& verify_string(std::size_t start, const std::string& string)
+	PacketVerifier& verify_string(const std::string& string, std::string_view field_name)
 	{
+		INFO("field: " << field_name << ", expected value: " << string);
+
 		const std::uint16_t size = string.length();
+		const auto size_type_length = sizeof(size);
+		
+		if (m_current_pos + size >= m_bytes.size())
+		{
+			FAIL("not enough bytes");
+		}
 
-		CHECK_THAT(std::span(bytes).subspan(start, 2), Catch::Matchers::RangeEquals(::bytes((size & 0xFF00) >> 8, size & 0xFF)));
-
-		auto string_bytes = std::span(bytes).subspan(start + 2, string.length());
+		CHECK_THAT(std::span(m_bytes).subspan(m_current_pos, size_type_length), Catch::Matchers::RangeEquals(bytes((size & 0xFF00) >> 8, size & 0xFF)));
+		
+		auto string_bytes = std::span(m_bytes).subspan(m_current_pos + size_type_length, string.length());
+		
 		std::string str;
+		
 		for (auto byte : string_bytes)
 		{
 			str.push_back(static_cast<char>(byte));
 		}
+		
+		m_current_pos += size_type_length + size;
+
 		CHECK_THAT(str, Catch::Matchers::Equals(string, Catch::CaseSensitive::Yes));
+
 		return *this;
 	}
 };
@@ -136,40 +150,16 @@ auto makeCustomMatchExpr(ArgT&& arg, MatcherT const& matcher) -> CustomMatchExpr
 
 TEST_CASE("pack the create list message", "[list][message][pack]")
 {
-	PacketBuilder builder;
-
 	CreateListMessage create_list{ GroupID(5), RequestID(10), "testing"};
 
-	const auto packed = create_list.pack();
+	auto verifier = PacketVerifier(create_list.pack(), 25);
 
-	REQUIRE(packed.size() == 25);
-
-	// packet length
-	CHECK_THAT(std::span(packed).subspan(0, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 25)));
-
-	// packet ID
-	CHECK_THAT(std::span(packed).subspan(4, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 2)));
-
-	// request ID
-	CHECK_THAT(std::span(packed).subspan(8, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 10)));
-
-	// group ID
-	CHECK_THAT(std::span(packed).subspan(12, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 5)));
-
-	// name length
-	CHECK_THAT(std::span(packed).subspan(16, 2), Catch::Matchers::RangeEquals(bytes(0, 7)));
-
-	// name
-	CHECK_THAT(std::span(packed).subspan(18, 7), Catch::Matchers::RangeEquals(bytes('t', 'e', 's', 't', 'i', 'n', 'g')));
-
-	auto verifier = PacketVerifier{ create_list.pack() };
-
-	verifier.required_length(25)
-		.verify_type<std::uint32_t>(0, 25)
-		.verify_type<std::uint32_t>(4, 2)
-		.verify_type<std::uint32_t>(8, 10)
-		.verify_type<std::uint32_t>(12, 5)
-		.verify_string(16, "testing");
+	verifier
+		.verify_value<std::uint32_t>(25, "packet length")
+		.verify_value<std::uint32_t>(2, "packet ID")
+		.verify_value<std::uint32_t>(10, "request ID")
+		.verify_value<std::uint32_t>(5, "group ID")
+		.verify_string("testing", "list name");
 }
 
 TEST_CASE("parse a create list packet", "[list][message][unpack]")
@@ -219,6 +209,15 @@ TEST_CASE("pack the create group message", "[group][message][pack]")
 
 	// name
 	CHECK_THAT(std::span(packed).subspan(18, 10), Catch::Matchers::RangeEquals(bytes('t', 'e', 's', 't', '_', 'g', 'r', 'o', 'u', 'p')));
+
+	auto verifier = PacketVerifier(create_group.pack(), 28);
+
+	verifier
+		.verify_value<std::uint32_t>(28, "packet length")
+		.verify_value<std::uint32_t>(3, "packet ID")
+		.verify_value<std::uint32_t>(10, "request ID")
+		.verify_value<std::uint32_t>(5, "group ID")
+		.verify_string("test_group", "group name");
 }
 
 TEST_CASE("parse create group packet", "[group][message][unpack]")
