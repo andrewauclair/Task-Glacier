@@ -203,7 +203,7 @@ TEST_CASE("create group", "[group]")
 // TODO test that creating a group in a finished group fails
 // 
 
-TEST_CASE("start task", "[task]")
+TEST_CASE("task management", "[task]")
 {
 	MicroTask app;
 
@@ -211,54 +211,57 @@ TEST_CASE("start task", "[task]")
 
 	REQUIRE(app.create_task("testing", ListID(1)).has_value());
 
-	const auto start_result = app.start_task(TaskID(1));
+	SECTION("start a task")
+	{
+		const auto start_result = app.start_task(TaskID(1));
 
-	CHECK(!start_result.has_value());
+		CHECK(!start_result.has_value());
 
-	const auto state_result = app.task_state(TaskID(1));
+		const auto state_result = app.task_state(TaskID(1));
 
-	check_expected_value(state_result, TaskState::ACTIVE);
+		check_expected_value(state_result, TaskState::ACTIVE);
+
+		SECTION("stop a task")
+		{
+			const auto stop_result = app.stop_task(TaskID(1));
+
+			CHECK(!stop_result.has_value());
+
+			const auto state_result = app.task_state(TaskID(1));
+
+			check_expected_value(state_result, TaskState::INACTIVE);
+		}
+
+		SECTION("finish a task")
+		{
+			const auto finish_result = app.finish_task(TaskID(1));
+
+			CHECK(!finish_result.has_value());
+
+			const auto state_result = app.task_state(TaskID(1));
+
+			check_expected_value(state_result, TaskState::FINISHED);
+		}
+	}
+
+	SECTION("starting task that doesn't exist fails")
+	{
+		const auto start_result = app.start_task(TaskID(2));
+
+		REQUIRE(start_result.has_value());
+
+		CHECK(start_result.value() == "Task with ID 2 does not exist.");
+	}
 }
 
-TEST_CASE("stop task", "[task]")
+TEST_CASE("Performance", "[.perf]")
 {
-	MicroTask app;
+	BENCHMARK("simple") {
+		MicroTask app;
+		app.create_list("testing", ROOT_GROUP_ID);
 
-	REQUIRE(app.create_list("test", ROOT_GROUP_ID).has_value());
-
-	REQUIRE(app.create_task("testing", ListID(1)).has_value());
-
-	const auto start_result = app.start_task(TaskID(1));
-
-	REQUIRE(app.task_state(TaskID(1)).value_or(TaskState::INACTIVE) == TaskState::ACTIVE);
-
-	const auto stop_result = app.stop_task(TaskID(1));
-
-	CHECK(!stop_result.has_value());
-
-	const auto state_result = app.task_state(TaskID(1));
-
-	check_expected_value(state_result, TaskState::INACTIVE);
-
-}
-
-TEST_CASE("finish task", "[task]")
-{
-	MicroTask app;
-
-	REQUIRE(app.create_list("test", ROOT_GROUP_ID).has_value());
-
-	REQUIRE(app.create_task("testing", ListID(1)).has_value());
-
-	const auto start_result = app.start_task(TaskID(1));
-
-	REQUIRE(app.task_state(TaskID(1)).value_or(TaskState::INACTIVE) == TaskState::ACTIVE);
-
-	const auto stop_result = app.finish_task(TaskID(1));
-
-	CHECK(!stop_result.has_value());
-
-	const auto state_result = app.task_state(TaskID(1));
-
-	check_expected_value(state_result, TaskState::FINISHED);
+		for (int i = 0; i < 100'000; i++) {
+			app.create_task("testing longer names for tasks", ListID(1));
+		}
+	};
 }

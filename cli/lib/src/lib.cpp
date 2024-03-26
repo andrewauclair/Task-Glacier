@@ -16,11 +16,11 @@ std::expected<TaskID, std::string> MicroTask::create_task(const std::string& nam
 	{
 		auto id = m_nextTaskID;
 
-		list->m_tasks.push_back(Task(name, id));
+		list->m_tasks.emplace_back(name, id);
 
 		m_nextTaskID._val++;
 
-		return id;
+		return std::expected<TaskID, std::string>(id);
 	}
 
 	return std::unexpected(std::format("List with ID {} does not exist.", listID));
@@ -41,7 +41,7 @@ std::expected<ListID, std::string> MicroTask::create_list(const std::string& nam
 
 		m_nextListID._val++;
 
-		return new_list.listID();
+		return std::expected<ListID, std::string>(new_list.listID());
 	}
 
 	return std::unexpected(std::format("Group with ID {} does not exist.", groupID));
@@ -115,7 +115,7 @@ Task* MicroTask::find_task(TaskID taskID)
 
 std::optional<std::string> MicroTask::start_task(TaskID id)
 {
-	auto task = find_task(id);
+	auto* task = find_task(id);
 
 	if (task)
 	{
@@ -123,12 +123,12 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 
 		return std::nullopt;
 	}
-	return std::format("");
+	return std::format("Task with ID {} does not exist.", id);
 }
 
 std::optional<std::string> MicroTask::stop_task(TaskID id)
 {
-	auto task = find_task(id);
+	auto* task = find_task(id);
 
 	if (task && task->state == TaskState::ACTIVE)
 	{
@@ -141,7 +141,7 @@ std::optional<std::string> MicroTask::stop_task(TaskID id)
 
 std::optional<std::string> MicroTask::finish_task(TaskID id)
 {
-	auto task = find_task(id);
+	auto* task = find_task(id);
 
 	if (task && task->state == TaskState::ACTIVE)
 	{
@@ -154,7 +154,7 @@ std::optional<std::string> MicroTask::finish_task(TaskID id)
 
 std::expected<TaskState, std::string> MicroTask::task_state(TaskID id)
 {
-	const auto task = find_task(id);
+	const auto* task = find_task(id);
 
 	if (task)
 	{
