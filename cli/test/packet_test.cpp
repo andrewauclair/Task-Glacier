@@ -166,7 +166,7 @@ TEST_CASE("parse a create list packet", "[list][message][unpack]")
 {
 	MicroTask app;
 
-	CreateListMessage create_list{ 5, RequestID(10), "testing" };
+	auto create_list = CreateListMessage(GroupID(5), RequestID(10), "testing");
 	
 	// handle the packet
 	const auto result = parse_packet(create_list.pack());
@@ -175,7 +175,7 @@ TEST_CASE("parse a create list packet", "[list][message][unpack]")
 
 	auto packet = std::get<CreateListMessage>(result.packet.value());
 
-	CHECK(packet.groupID == 5);
+	CHECK(packet.groupID == GroupID(5));
 	CHECK(packet.requestID == RequestID(10));
 	CHECK(packet.name == "testing");
 
@@ -186,29 +186,7 @@ TEST_CASE("pack the create group message", "[group][message][pack]")
 {
 	PacketBuilder builder;
 
-	CreateGroupMessage create_group{ 5, 10, "test_group" };
-
-	const auto packed = create_group.pack();
-
-	REQUIRE(packed.size() == 28);
-
-	// packet length
-	CHECK_THAT(std::span(packed).subspan(0, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 28)));
-
-	// packet ID
-	CHECK_THAT(std::span(packed).subspan(4, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 3)));
-
-	// request ID
-	CHECK_THAT(std::span(packed).subspan(8, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 10)));
-
-	// group ID
-	CHECK_THAT(std::span(packed).subspan(12, 4), Catch::Matchers::RangeEquals(bytes(0, 0, 0, 5)));
-
-	// name length
-	CHECK_THAT(std::span(packed).subspan(16, 2), Catch::Matchers::RangeEquals(bytes(0, 10)));
-
-	// name
-	CHECK_THAT(std::span(packed).subspan(18, 10), Catch::Matchers::RangeEquals(bytes('t', 'e', 's', 't', '_', 'g', 'r', 'o', 'u', 'p')));
+	auto create_group = CreateGroupMessage(GroupID(5), RequestID(10), "test_group");
 
 	auto verifier = PacketVerifier(create_group.pack(), 28);
 
@@ -224,7 +202,7 @@ TEST_CASE("parse create group packet", "[group][message][unpack]")
 {
 	MicroTask app;
 
-	auto create_group = CreateGroupMessage(5, 10, "test_group");
+	auto create_group = CreateGroupMessage(GroupID(5), RequestID(10), "test_group");
 
 	const auto result = parse_packet(create_group.pack());
 
@@ -232,8 +210,8 @@ TEST_CASE("parse create group packet", "[group][message][unpack]")
 
 	auto packet = std::get<CreateGroupMessage>(result.packet.value());
 
-	CHECK(packet.groupID == 5);
-	CHECK(packet.requestID == 10);
+	CHECK(packet.groupID == GroupID(5));
+	CHECK(packet.requestID == RequestID(10));
 	CHECK(packet.name == "test_group");
 
 	CHECK(result.bytes_read == 28);

@@ -11,16 +11,21 @@
 #include <span>
 #include <bit>
 
-using TaskID = std::int32_t;
-using ListID = std::int32_t;
-using GroupID = std::int32_t;
+#include <strong_type/strong_type.hpp>
 
-inline constexpr GroupID ROOT_GROUP_ID = 0;
+using TaskID = strong::type<std::int32_t, struct task_id_, strong::equality>;
+using ListID = strong::type<std::int32_t, struct list_id_, strong::equality>;
+using GroupID = strong::type<std::int32_t, struct group_id_, strong::equality>;
+
+inline constexpr GroupID ROOT_GROUP_ID = GroupID(0);
 
 enum class TaskState
 {
-	INACTIVE,ACTIVE,FINISHED
+	INACTIVE,
+	ACTIVE,
+	FINISHED
 };
+
 class Task
 {
 private:
@@ -92,9 +97,9 @@ private:
 private:
 	Group m_root = Group("", ROOT_GROUP_ID);
 
-	TaskID m_nextTaskID = 1;
-	ListID m_nextListID = 1;
-	GroupID m_nextGroupID = 1;
+	TaskID m_nextTaskID = TaskID(1);
+	ListID m_nextListID = ListID(1);
+	GroupID m_nextGroupID = GroupID(1);
 };
 
 #endif

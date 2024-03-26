@@ -18,7 +18,7 @@ std::expected<TaskID, std::string> MicroTask::create_task(const std::string& nam
 
 		list->m_tasks.push_back(Task(name, id));
 
-		m_nextTaskID++;
+		m_nextTaskID._val++;
 
 		return id;
 	}
@@ -39,7 +39,7 @@ std::expected<ListID, std::string> MicroTask::create_list(const std::string& nam
 	{
 		List& new_list = group->m_lists.emplace_back(name, m_nextListID);
 
-		m_nextListID++;
+		m_nextListID._val++;
 
 		return new_list.listID();
 	}
@@ -60,7 +60,7 @@ std::expected<GroupID, std::string> MicroTask::create_group(const std::string& n
 	{
 		Group& new_group = group->m_groups.emplace_back(name, m_nextGroupID);
 
-		m_nextGroupID++;
+		m_nextGroupID._val++;
 
 		return new_group.groupID();
 	}

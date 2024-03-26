@@ -28,7 +28,7 @@ struct CreateListMessage
 
 	friend std::ostream& operator<<(std::ostream& out, CreateListMessage msg)
 	{
-		out << msg.groupID << " " << msg.requestID._val << " " << msg.name;
+		out << msg.groupID._val << " " << msg.requestID._val << " " << msg.name;
 		return out;
 	}
 	static std::expected<CreateListMessage, UnpackError> unpack(std::span<const std::byte> data);
@@ -37,7 +37,7 @@ struct CreateListMessage
 struct CreateGroupMessage
 {
 	GroupID groupID;
-	std::int32_t requestID;
+	RequestID requestID;
 	std::string name;
 
 	std::vector<std::byte> pack() const;
@@ -47,7 +47,7 @@ struct CreateGroupMessage
 
 struct SuccessResponse
 {
-	std::int32_t requestID;
+	RequestID requestID;
 };
 using MessageTypes = std::variant<CreateListMessage, CreateGroupMessage>;
 
