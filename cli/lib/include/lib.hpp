@@ -17,6 +17,27 @@ using TaskID = strong::type<std::int32_t, struct task_id_, strong::equality>;
 using ListID = strong::type<std::int32_t, struct list_id_, strong::equality>;
 using GroupID = strong::type<std::int32_t, struct group_id_, strong::equality>;
 
+template <>
+struct std::formatter<TaskID> : std::formatter<std::int32_t> {
+	auto format(TaskID p, format_context& ctx) const {
+		return std::formatter<std::int32_t>::format(p._val, ctx);
+	}
+};
+
+template <>
+struct std::formatter<ListID> : std::formatter<std::int32_t> {
+	auto format(ListID p, format_context& ctx) const {
+		return formatter<std::int32_t>::format(p._val, ctx);
+	}
+};
+
+template <>
+struct std::formatter<GroupID> : std::formatter<std::int32_t> {
+	auto format(GroupID p, format_context& ctx) const {
+		return formatter<std::int32_t>::format(p._val, ctx);
+	}
+};
+
 inline constexpr GroupID ROOT_GROUP_ID = GroupID(0);
 
 enum class TaskState
