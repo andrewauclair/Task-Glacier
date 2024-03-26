@@ -105,6 +105,8 @@ public:
 	Task* find_task(TaskID id);
 
 	std::optional<std::string> start_task(TaskID id);
+	std::optional<std::string> stop_task(TaskID id);
+	std::optional<std::string> finish_task(TaskID id);
 	
 	std::expected<TaskState, std::string> task_state(TaskID id);
 

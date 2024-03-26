@@ -222,10 +222,43 @@ TEST_CASE("start task", "[task]")
 
 TEST_CASE("stop task", "[task]")
 {
+	MicroTask app;
+
+	REQUIRE(app.create_list("test", ROOT_GROUP_ID).has_value());
+
+	REQUIRE(app.create_task("testing", ListID(1)).has_value());
+
+	const auto start_result = app.start_task(TaskID(1));
+
+	REQUIRE(app.task_state(TaskID(1)).value_or(TaskState::INACTIVE) == TaskState::ACTIVE);
+
+	const auto stop_result = app.stop_task(TaskID(1));
+
+	CHECK(!stop_result.has_value());
+
+	const auto state_result = app.task_state(TaskID(1));
+
+	check_expected_value(state_result, TaskState::INACTIVE);
 
 }
 
 TEST_CASE("finish task", "[task]")
 {
+	MicroTask app;
 
+	REQUIRE(app.create_list("test", ROOT_GROUP_ID).has_value());
+
+	REQUIRE(app.create_task("testing", ListID(1)).has_value());
+
+	const auto start_result = app.start_task(TaskID(1));
+
+	REQUIRE(app.task_state(TaskID(1)).value_or(TaskState::INACTIVE) == TaskState::ACTIVE);
+
+	const auto stop_result = app.finish_task(TaskID(1));
+
+	CHECK(!stop_result.has_value());
+
+	const auto state_result = app.task_state(TaskID(1));
+
+	check_expected_value(state_result, TaskState::FINISHED);
 }

@@ -126,6 +126,32 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 	return std::format("");
 }
 
+std::optional<std::string> MicroTask::stop_task(TaskID id)
+{
+	auto task = find_task(id);
+
+	if (task && task->state == TaskState::ACTIVE)
+	{
+		task->state = TaskState::INACTIVE;
+
+		return std::nullopt;
+	}
+	return std::format("");
+}
+
+std::optional<std::string> MicroTask::finish_task(TaskID id)
+{
+	auto task = find_task(id);
+
+	if (task && task->state == TaskState::ACTIVE)
+	{
+		task->state = TaskState::FINISHED;
+
+		return std::nullopt;
+	}
+	return std::format("");
+}
+
 std::expected<TaskState, std::string> MicroTask::task_state(TaskID id)
 {
 	const auto task = find_task(id);
