@@ -116,7 +116,7 @@ TEST_CASE("create list", "[list]")
 
 			const auto result = app.create_list("test", ROOT_GROUP_ID);
 
-			// TODO we should create facilities to format group and list names properly
+			// TODO we should create facilities to format group and list names properly (full paths)
 			check_expected_error(result, std::string("List with name 'test' already exists in group with ID 0."));
 		}
 
@@ -127,7 +127,7 @@ TEST_CASE("create list", "[list]")
 
 			const auto result = app.create_list("test", GroupID(1));
 
-			// TODO we should create facilities to format group and list names properly
+			// TODO we should create facilities to format group and list names properly (full paths)
 			check_expected_error(result, std::string("List with name 'test' already exists in group with ID 1."));
 		}
 	}
@@ -189,14 +189,20 @@ TEST_CASE("create group", "[group]")
 	}
 }
 
-//TEST_CASE("move list", "[list]")
-//{
-//	MicroTask app;
-//	REQUIRE(app.create_list("test", ROOT_GROUP_ID).has_value());
-//	REQUIRE(app.create_group("nested", ROOT_GROUP_ID).has_value());
-//
-//	CHECK(!app.move_list(1, 1).has_value());
-//}
+TEST_CASE("move list", "[list]")
+{
+	MicroTask app;
+	REQUIRE(app.create_list("test", ROOT_GROUP_ID).has_value());
+	REQUIRE(app.create_group("nested", ROOT_GROUP_ID).has_value());
+
+	CHECK(!app.move_list(ListID(1), GroupID(1)).has_value());
+
+	auto groupID = app.group_for_list(ListID(1));
+
+	REQUIRE(groupID.has_value());
+
+	CHECK(groupID.value() == GroupID(1));
+}
 
 // TODO test that creating a list in a finished group fails
 

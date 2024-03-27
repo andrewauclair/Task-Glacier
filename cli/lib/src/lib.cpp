@@ -4,7 +4,7 @@
 
 Task::Task(std::string name, TaskID id) : m_name(std::move(name)), m_taskID(id) {}
 
-List::List(std::string name, ListID id) : m_name(std::move(name)), m_listID(id) {}
+List::List(std::string name, ListID id, Group* parent) : m_name(std::move(name)), m_listID(id), m_parent(parent) {}
 
 Group::Group(std::string name, GroupID id) : m_name(std::move(name)), m_groupID(id) {}
 
@@ -37,7 +37,7 @@ std::expected<ListID, std::string> MicroTask::create_list(const std::string& nam
 
 	if (group)
 	{
-		List& new_list = group->m_lists.emplace_back(name, m_nextListID);
+		List& new_list = group->m_lists.emplace_back(name, m_nextListID, group);
 
 		m_nextListID._val++;
 
@@ -70,11 +70,15 @@ std::expected<GroupID, std::string> MicroTask::create_group(const std::string& n
 
 std::optional<std::string> MicroTask::move_list(ListID listID, GroupID targetGroupID)
 {
-	//auto* list = find_list_by_id(listID);
-	//auto* currentGroup = find_group_by_id(list->)
-	//auto* targetGroup = find_group_by_id(targetGroupID);
+	auto* list = find_list_by_id(listID);
+	auto* currentGroup = find_group_by_id(list->parent()->groupID());
+	auto* targetGroup = find_group_by_id(targetGroupID);
 
+	auto lists_pos = std::find(currentGroup->m_lists.begin(), currentGroup->m_lists.end(), *list);
 
+	
+	targetGroup->m_lists.emplace_back(std::string(list->name()), list->listID(), targetGroup);
+	currentGroup->m_lists.erase(lists_pos);
 
 	return std::nullopt;
 }
@@ -161,6 +165,13 @@ std::expected<TaskState, std::string> MicroTask::task_state(TaskID id)
 		return task->state;
 	}
 	return std::unexpected("");
+}
+
+std::optional<GroupID> MicroTask::group_for_list(ListID id)
+{
+	List* list = find_list_by_id(id);
+
+	return list ? std::optional<GroupID>{ list->parent()->groupID() } : std::nullopt;
 }
 
 List* MicroTask::find_list_by_id(ListID listID)

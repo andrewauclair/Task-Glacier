@@ -64,16 +64,24 @@ public:
 class List
 {
 public:
-	explicit List(std::string name, ListID id);
+	explicit List(std::string name, ListID id, class Group* parent);
 
 	std::string_view name() const { return m_name; }
 	ListID listID() const { return m_listID; }
+	const class Group* parent() const { return m_parent; }
 
 	std::vector<Task> m_tasks;
+
+	bool operator==(const List& other) const
+	{
+		return m_listID == other.m_listID;
+	}
 
 private:
 	std::string m_name;
 	ListID m_listID;
+
+	class Group* m_parent;
 };
 
 class Group
@@ -109,6 +117,8 @@ public:
 	std::optional<std::string> finish_task(TaskID id);
 	
 	std::expected<TaskState, std::string> task_state(TaskID id);
+
+	std::optional<GroupID> group_for_list(ListID id);
 
 private:
 	List* find_list_by_id(ListID listID);
