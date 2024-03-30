@@ -49,7 +49,11 @@ struct SuccessResponse
 {
 	RequestID requestID;
 };
-using MessageTypes = std::variant<CreateListMessage, CreateGroupMessage>;
+struct FailureResponse
+{
+	std::string message;
+};
+using MessageTypes = std::variant<CreateListMessage, CreateGroupMessage, SuccessResponse, FailureResponse>;
 
 class PacketBuilder
 {

@@ -1,6 +1,8 @@
 ﻿add_library (micro_task_lib STATIC 
+	src/api.cpp
 	src/lib.cpp 
 	src/packets.cpp
+	include/api.hpp
 	include/lib.hpp
 	include/packets.hpp
 )
