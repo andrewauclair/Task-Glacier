@@ -20,7 +20,7 @@ void API::process_packet(const MessageTypes& message)
 			}
 			else
 			{
-				m_output.push_back(FailureResponse{ result.error() });
+				m_output.push_back(FailureResponse{ message.requestID, result.error() });
 			}
 		};
 	const auto handle_create_group = [](const CreateGroupMessage&) {};

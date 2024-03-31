@@ -11,6 +11,18 @@
 template<class... Ts>
 struct overloads : Ts... { using Ts::operator()...; };
 
+template<typename T>
+void verify_message(const T& expected, const MessageTypes& actual)
+{
+	if (std::holds_alternative<T>(actual))
+	{
+		CHECK(std::get<T>(actual) == expected);
+	}
+	else
+	{
+		FAIL();
+	}
+}
 TEST_CASE("successfully create a list", "[test]")
 {
 	std::vector<MessageTypes> output;
@@ -24,14 +36,7 @@ TEST_CASE("successfully create a list", "[test]")
 
 	REQUIRE(output.size() == 1);
 
-	if (std::holds_alternative<SuccessResponse>(output[0]))
-	{
-		CHECK(std::get<SuccessResponse>(output[0]).requestID == RequestID(1));
-	}
-	else
-	{
-		FAIL();
-	}
+	verify_message(SuccessResponse{ RequestID(1) }, output[0]);
 }
 
 TEST_CASE("fail to create a list", "[test]")
@@ -47,12 +52,5 @@ TEST_CASE("fail to create a list", "[test]")
 
 	REQUIRE(output.size() == 1);
 
-	if (std::holds_alternative<FailureResponse>(output[0]))
-	{
-		CHECK(std::get<FailureResponse>(output[0]).message == "Group with ID 2 does not exist.");
-	}
-	else
-	{
-		FAIL();
-	}
+	verify_message(FailureResponse{ RequestID(1), "Group with ID 2 does not exist." }, output[0]);
 }

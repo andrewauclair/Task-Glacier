@@ -48,11 +48,32 @@ struct CreateGroupMessage
 struct SuccessResponse
 {
 	RequestID requestID;
+
+	bool operator==(SuccessResponse other) const { return requestID == other.requestID; }
+
+	friend std::ostream& operator<<(std::ostream& out, SuccessResponse message)
+	{
+		out << "SuccessResponse { RequestID: " << message.requestID._val << " }";
+		return out;
+	}
 };
 struct FailureResponse
 {
+	RequestID requestID;
 	std::string message;
+
+	bool operator==(const FailureResponse& other) const
+	{
+		return requestID == other.requestID && message == other.message;
+	}
+
+	friend std::ostream& operator<<(std::ostream& out, const FailureResponse& message)
+	{
+		out << "FailureResponse { RequestID: " << message.requestID._val << ", message: " << message.message << " }";
+		return out;
+	}
 };
+
 using MessageTypes = std::variant<CreateListMessage, CreateGroupMessage, SuccessResponse, FailureResponse>;
 
 class PacketBuilder
