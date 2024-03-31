@@ -93,3 +93,24 @@ std::expected<CreateGroupMessage, UnpackError> CreateGroupMessage::unpack(std::s
 
 	return CreateGroupMessage(groupID, requestID, name);
 }
+
+std::vector<std::byte> SuccessResponse::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(static_cast<std::int32_t>(PacketType::SUCCESS_RESPONSE));
+	builder.add(requestID);
+
+	return builder.build();
+}
+
+std::vector<std::byte> FailureResponse::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(static_cast<std::int32_t>(PacketType::FAILURE_RESPONSE));
+	builder.add(requestID);
+	builder.add_string(message);
+
+	return builder.build();
+}

@@ -24,6 +24,27 @@ struct Message {
 	virtual void visit(MessageVisitor& visitor) const = 0;
 };
 
+struct CreateTaskMessage : Message
+{
+	ListID listID;
+
+	CreateTaskMessage(ListID listID) : listID(listID) {}
+
+	void visit(MessageVisitor& visitor) const override;
+
+	bool operator==(const CreateTaskMessage& other) const
+	{
+		return listID == other.listID;
+	}
+
+	std::vector<std::byte> pack() const;
+
+	std::ostream& operator<<(std::ostream& out)
+	{
+		out << listID._val;
+	}
+};
+
 struct CreateListMessage : Message
 {
 	GroupID groupID;
@@ -40,14 +61,14 @@ struct CreateListMessage : Message
 	}
 
 	std::vector<std::byte> pack() const;
+	static std::expected<CreateListMessage, UnpackError> unpack(std::span<const std::byte> data);
 
 	std::ostream& operator<<(std::ostream& out)
 	{
-		out << groupID._val << " " << requestID._val << " " << name;
+		out << "CreateListMessage { GroupID: " << groupID._val << ", RequestID: " << requestID._val << ", Name: " << name << " }";
 		return out;
 	}
 
-	static std::expected<CreateListMessage, UnpackError> unpack(std::span<const std::byte> data);
 };
 
 struct CreateGroupMessage : Message
@@ -66,8 +87,12 @@ struct CreateGroupMessage : Message
 	}
 
 	std::vector<std::byte> pack() const;
-
 	static std::expected<CreateGroupMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	std::ostream& operator<<(std::ostream& out)
+	{
+		out << "CreateGroupMessage { GroupID: " << groupID._val << ", RequestID: " << requestID._val << ", Name: " << name << " }";
+	}
 };
 
 struct SuccessResponse : Message
@@ -80,12 +105,15 @@ struct SuccessResponse : Message
 
 	bool operator==(SuccessResponse other) const { return requestID == other.requestID; }
 
+	std::vector<std::byte> pack() const;
+
 	std::ostream& operator<<(std::ostream& out)
 	{
 		out << "SuccessResponse { RequestID: " << requestID._val << " }";
 		return out;
 	}
 };
+
 struct FailureResponse : Message
 {
 	RequestID requestID;
@@ -100,6 +128,8 @@ struct FailureResponse : Message
 		return requestID == other.requestID && message == other.message;
 	}
 
+	std::vector<std::byte> pack() const;
+
 	std::ostream& operator<<(std::ostream& out)
 	{
 		out << "FailureResponse { RequestID: " << requestID._val << ", message: " << message << " }";
@@ -108,6 +138,7 @@ struct FailureResponse : Message
 };
 
 struct MessageVisitor {
+	//virtual void visit(const CreateTaskMessage&) = 0;
 	virtual void visit(const CreateListMessage&) = 0;
 	virtual void visit(const CreateGroupMessage&) = 0;
 	virtual void visit(const SuccessResponse&) {}

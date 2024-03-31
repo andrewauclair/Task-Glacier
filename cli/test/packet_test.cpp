@@ -210,3 +210,36 @@ TEST_CASE("parse create group packet", "[group][message][unpack]")
 	CHECK(packet == create_group);
 	CHECK(result.bytes_read == 28);
 }
+
+TEST_CASE("pack the success response packet", "[message][pack]")
+{
+	PacketBuilder builder;
+
+	const auto response = SuccessResponse(RequestID(15));
+
+	auto verifier = PacketVerifier(response.pack(), 12);
+
+	verifier
+		.verify_value<std::uint32_t>(12, "packet length")
+		.verify_value<std::uint32_t>(10, "packet ID")
+		.verify_value<std::uint32_t>(15, "request ID");
+}
+
+// don't need to care about parsing SuccessResponse atm
+
+TEST_CASE("pack the failure response packet", "[message][pack]")
+{
+	PacketBuilder builder;
+
+	const auto response = FailureResponse(RequestID(10), "this is a failure message");
+
+	auto verifier = PacketVerifier(response.pack(), 39);
+
+	verifier
+		.verify_value<std::uint32_t>(39, "packet length")
+		.verify_value<std::uint32_t>(11, "packet ID")
+		.verify_value<std::uint32_t>(10, "request ID")
+		.verify_string("this is a failure message", "error message");
+}
+
+// don't need to care about parsing FailureResponse atm
