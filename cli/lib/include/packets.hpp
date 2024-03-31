@@ -18,11 +18,21 @@ struct UnpackError {
 
 using RequestID = strong::type<std::int32_t, struct request_id_, strong::equality>;
 
-struct CreateListMessage
+struct MessageVisitor;
+
+struct Message {
+	virtual void visit(MessageVisitor& visitor) const = 0;
+};
+
+struct CreateListMessage : Message
 {
 	GroupID groupID;
 	RequestID requestID;
 	std::string name;
+
+	CreateListMessage(GroupID groupID, RequestID requestID, std::string name) : groupID(groupID), requestID(requestID), name(std::move(name)) {}
+
+	void visit(MessageVisitor& visitor) const override;
 
 	std::vector<std::byte> pack() const;
 
@@ -34,20 +44,28 @@ struct CreateListMessage
 	static std::expected<CreateListMessage, UnpackError> unpack(std::span<const std::byte> data);
 };
 
-struct CreateGroupMessage
+struct CreateGroupMessage : Message
 {
 	GroupID groupID;
 	RequestID requestID;
 	std::string name;
+
+	CreateGroupMessage(GroupID groupID, RequestID requestID, std::string name) : groupID(groupID), requestID(requestID), name(std::move(name)) {}
+
+	void visit(MessageVisitor& visitor) const override;
 
 	std::vector<std::byte> pack() const;
 
 	static std::expected<CreateGroupMessage, UnpackError> unpack(std::span<const std::byte> data);
 };
 
-struct SuccessResponse
+struct SuccessResponse : Message
 {
 	RequestID requestID;
+
+	SuccessResponse(RequestID requestID) : requestID(requestID) {}
+
+	void visit(MessageVisitor& visitor) const override {};
 
 	bool operator==(SuccessResponse other) const { return requestID == other.requestID; }
 
@@ -57,10 +75,14 @@ struct SuccessResponse
 		return out;
 	}
 };
-struct FailureResponse
+struct FailureResponse : Message
 {
 	RequestID requestID;
 	std::string message;
+
+	FailureResponse(RequestID requestID, std::string message) : requestID(requestID), message(std::move(message)) {}
+
+	void visit(MessageVisitor& visitor) const override {};
 
 	bool operator==(const FailureResponse& other) const
 	{
@@ -74,7 +96,14 @@ struct FailureResponse
 	}
 };
 
-using MessageTypes = std::variant<CreateListMessage, CreateGroupMessage, SuccessResponse, FailureResponse>;
+struct MessageVisitor {
+	virtual void visit(const CreateListMessage&) = 0;
+	virtual void visit(const CreateGroupMessage&) = 0;
+	virtual void visit(const SuccessResponse&) = 0;
+	virtual void visit(const FailureResponse&) = 0;
+};
+
+using MessageTypes = std::unique_ptr<Message>;// std::variant<CreateListMessage, CreateGroupMessage, SuccessResponse, FailureResponse>;
 
 class PacketBuilder
 {
@@ -154,7 +183,7 @@ public:
 		{
 			return UnpackError::NOT_ENOUGH_BYTES;
 		}
-		//std::memcpy(&value, position, sizeof(T));
+
 		position += sizeof(T);
 
 		return value;
@@ -212,14 +241,14 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 			break;
 		case CREATE_LIST:
 		{
-			result.packet = CreateListMessage::unpack(bytes.subspan(8)).value();
+			result.packet = std::make_unique<CreateListMessage>(CreateListMessage::unpack(bytes.subspan(8)).value());
 			result.bytes_read = raw_length;
 
 			break;
 		}
 		case CREATE_GROUP:
 		{
-			result.packet = CreateGroupMessage::unpack(bytes.subspan(8)).value();
+			result.packet = std::make_unique<CreateGroupMessage>(CreateGroupMessage::unpack(bytes.subspan(8)).value());
 			result.bytes_read = raw_length;
 
 			break;

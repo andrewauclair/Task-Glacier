@@ -9,13 +9,9 @@
 class API
 {
 public:
-	API(std::vector<MessageTypes>& output);
-
-	void process_packet(const MessageTypes& message);
+	void process_packet(const Message& message, std::vector<MessageTypes>& output);
 
 private:
-	std::vector<MessageTypes>& m_output;
-
 	MicroTask m_app;
 };
 

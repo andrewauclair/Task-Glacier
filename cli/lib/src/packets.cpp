@@ -1,6 +1,8 @@
 #include "packets.hpp"
 #include "lib.hpp"
 
+void CreateListMessage::visit(MessageVisitor& visitor) const { visitor.visit(*this); }
+
 std::vector<std::byte> CreateListMessage::pack() const
 {
 	PacketBuilder builder;
@@ -43,6 +45,8 @@ std::expected<CreateListMessage, UnpackError> CreateListMessage::unpack(std::spa
 
 	return CreateListMessage(GroupID(groupID), RequestID(requestID), name);
 }
+
+void CreateGroupMessage::visit(MessageVisitor& visitor) const { visitor.visit(*this); };
 
 std::vector<std::byte> CreateGroupMessage::pack() const
 {
