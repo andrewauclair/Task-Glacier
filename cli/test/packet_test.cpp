@@ -166,19 +166,16 @@ TEST_CASE("parse a create list packet", "[list][message][unpack]")
 {
 	MicroTask app;
 
-	auto create_list = CreateListMessage(GroupID(5), RequestID(10), "testing");
+	const auto create_list = CreateListMessage(GroupID(5), RequestID(10), "testing");
 	
 	// handle the packet
 	const auto result = parse_packet(create_list.pack());
 
 	REQUIRE(result.packet.has_value());
 
-	auto packet = dynamic_cast<CreateListMessage&>(*result.packet.value().get());
+	const auto packet = dynamic_cast<CreateListMessage&>(*result.packet.value().get());
 
-	CHECK(packet.groupID == GroupID(5));
-	CHECK(packet.requestID == RequestID(10));
-	CHECK(packet.name == "testing");
-
+	CHECK(packet == create_list);
 	CHECK(result.bytes_read == 25);
 }
 
@@ -186,7 +183,7 @@ TEST_CASE("pack the create group message", "[group][message][pack]")
 {
 	PacketBuilder builder;
 
-	auto create_group = CreateGroupMessage(GroupID(5), RequestID(10), "test_group");
+	const auto create_group = CreateGroupMessage(GroupID(5), RequestID(10), "test_group");
 
 	auto verifier = PacketVerifier(create_group.pack(), 28);
 
@@ -202,17 +199,14 @@ TEST_CASE("parse create group packet", "[group][message][unpack]")
 {
 	MicroTask app;
 
-	auto create_group = CreateGroupMessage(GroupID(5), RequestID(10), "test_group");
+	const auto create_group = CreateGroupMessage(GroupID(5), RequestID(10), "test_group");
 
 	const auto result = parse_packet(create_group.pack());
 
 	REQUIRE(result.packet.has_value());
 
-	auto packet = dynamic_cast<CreateGroupMessage&>(*result.packet.value().get());
+	const auto packet = dynamic_cast<CreateGroupMessage&>(*result.packet.value().get());
 	
-	CHECK(packet.groupID == GroupID(5));
-	CHECK(packet.requestID == RequestID(10));
-	CHECK(packet.name == "test_group");
-
+	CHECK(packet == create_group);
 	CHECK(result.bytes_read == 28);
 }

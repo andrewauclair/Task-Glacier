@@ -9,7 +9,7 @@
 class API
 {
 public:
-	void process_packet(const Message& message, std::vector<MessageTypes>& output);
+	void process_packet(const Message& message, std::vector<std::unique_ptr<Message>>& output);
 
 private:
 	MicroTask m_app;

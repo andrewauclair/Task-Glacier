@@ -34,13 +34,19 @@ struct CreateListMessage : Message
 
 	void visit(MessageVisitor& visitor) const override;
 
+	bool operator==(const CreateListMessage& other) const
+	{
+		return groupID == other.groupID && requestID == other.requestID && name == other.name;
+	}
+
 	std::vector<std::byte> pack() const;
 
-	friend std::ostream& operator<<(std::ostream& out, CreateListMessage msg)
+	std::ostream& operator<<(std::ostream& out)
 	{
-		out << msg.groupID._val << " " << msg.requestID._val << " " << msg.name;
+		out << groupID._val << " " << requestID._val << " " << name;
 		return out;
 	}
+
 	static std::expected<CreateListMessage, UnpackError> unpack(std::span<const std::byte> data);
 };
 
@@ -53,6 +59,11 @@ struct CreateGroupMessage : Message
 	CreateGroupMessage(GroupID groupID, RequestID requestID, std::string name) : groupID(groupID), requestID(requestID), name(std::move(name)) {}
 
 	void visit(MessageVisitor& visitor) const override;
+
+	bool operator==(const CreateGroupMessage& other) const
+	{
+		return groupID == other.groupID && requestID == other.requestID && name == other.name;
+	}
 
 	std::vector<std::byte> pack() const;
 
@@ -69,9 +80,9 @@ struct SuccessResponse : Message
 
 	bool operator==(SuccessResponse other) const { return requestID == other.requestID; }
 
-	friend std::ostream& operator<<(std::ostream& out, SuccessResponse message)
+	std::ostream& operator<<(std::ostream& out)
 	{
-		out << "SuccessResponse { RequestID: " << message.requestID._val << " }";
+		out << "SuccessResponse { RequestID: " << requestID._val << " }";
 		return out;
 	}
 };
@@ -89,9 +100,9 @@ struct FailureResponse : Message
 		return requestID == other.requestID && message == other.message;
 	}
 
-	friend std::ostream& operator<<(std::ostream& out, const FailureResponse& message)
+	std::ostream& operator<<(std::ostream& out)
 	{
-		out << "FailureResponse { RequestID: " << message.requestID._val << ", message: " << message.message << " }";
+		out << "FailureResponse { RequestID: " << requestID._val << ", message: " << message << " }";
 		return out;
 	}
 };
@@ -99,11 +110,9 @@ struct FailureResponse : Message
 struct MessageVisitor {
 	virtual void visit(const CreateListMessage&) = 0;
 	virtual void visit(const CreateGroupMessage&) = 0;
-	virtual void visit(const SuccessResponse&) = 0;
-	virtual void visit(const FailureResponse&) = 0;
+	virtual void visit(const SuccessResponse&) {}
+	virtual void visit(const FailureResponse&) {}
 };
-
-using MessageTypes = std::unique_ptr<Message>;// std::variant<CreateListMessage, CreateGroupMessage, SuccessResponse, FailureResponse>;
 
 class PacketBuilder
 {
@@ -114,8 +123,7 @@ public:
 
 	std::vector<std::byte> build()
 	{
-		std::int32_t length = m_bytes.size();
-		length += sizeof(length);
+		std::int32_t length = m_bytes.size() + sizeof(std::int32_t);
 
 		auto* ptr = reinterpret_cast<std::byte*>(&length);
 
@@ -135,11 +143,11 @@ public:
 	void add(T value)
 	{
 		T swapped = std::byteswap(value);
-		auto* f = reinterpret_cast<std::byte*>(&swapped);
+		auto* current_byte = reinterpret_cast<std::byte*>(&swapped);
 
-		for (int i = 0; i < sizeof(T); i++, f++)
+		for (int i = 0; i < sizeof(T); i++, current_byte++)
 		{
-			m_bytes.push_back(*f);
+			m_bytes.push_back(*current_byte);
 		}
 	}
 
@@ -210,7 +218,7 @@ enum class PacketType : std::int32_t
 
 struct ParseResult
 {
-	std::optional<MessageTypes> packet;
+	std::optional<std::unique_ptr<Message>> packet;
 	std::int32_t bytes_read = 0;
 };
 

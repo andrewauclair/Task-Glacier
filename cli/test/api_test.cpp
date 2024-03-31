@@ -9,10 +9,6 @@
 
 #include <vector>
 
-// helper type for the visitor
-template<class... Ts>
-struct overloads : Ts... { using Ts::operator()...; };
-
 template<typename T>
 void verify_message(const T& expected, const Message& actual)
 {
@@ -25,32 +21,67 @@ void verify_message(const T& expected, const Message& actual)
 		FAIL();
 	}
 }
-TEST_CASE("successfully create a list", "[test]")
+
+TEST_CASE("create list", "[test]")
 {
 	API api;
-	auto create_list = CreateListMessage(ROOT_GROUP_ID, RequestID(1), "test");
-	std::vector<MessageTypes> output;
+	std::vector<std::unique_ptr<Message>> output;
 
-	api.process_packet(create_list, output);
+	SECTION("success")
+	{
+		auto create_list = CreateListMessage(ROOT_GROUP_ID, RequestID(1), "test");
 
-	REQUIRE(output.size() == 1);
+		api.process_packet(create_list, output);
 
-	verify_message(SuccessResponse{ RequestID(1) }, *output[0]);
+		REQUIRE(output.size() == 1);
 
-	// TODO use some future packets to retrieve the list to verify it exists
+		verify_message(SuccessResponse{ RequestID(1) }, *output[0]);
+
+		// TODO use some future packets to retrieve the list to verify it exists
+	}
+
+	SECTION("failure")
+	{
+		auto create_list = CreateListMessage(GroupID(2), RequestID(1), "test");
+
+		api.process_packet(create_list, output);
+
+		REQUIRE(output.size() == 1);
+
+		verify_message(FailureResponse(RequestID(1), "Group with ID 2 does not exist."), *output[0]);
+
+		// TODO use some future packets to attempt to retrieve the list and verify it does not exist
+	}
 }
 
-TEST_CASE("fail to create a list", "[test]")
+TEST_CASE("create group", "[api][group]")
 {
 	API api;
-	auto create_list = CreateListMessage(GroupID(2), RequestID(1), "test");
-	std::vector<MessageTypes> output;
+	std::vector<std::unique_ptr<Message>> output;
 
-	api.process_packet(create_list, output);
+	SECTION("success")
+	{
+		auto create_group = CreateGroupMessage(ROOT_GROUP_ID, RequestID(1), "test");
 
-	REQUIRE(output.size() == 1);
+		api.process_packet(create_group, output);
 
-	verify_message(FailureResponse(RequestID(1), "Group with ID 2 does not exist."), *output[0]);
+		REQUIRE(output.size() == 1);
 
-	// TODO use some future packets to attempt to retrieve the list and verify it does not exist
+		verify_message(SuccessResponse{ RequestID(1) }, *output[0]);
+
+		// TODO use some future packets to retrieve the group to verify it exists
+	}
+
+	SECTION("failure")
+	{
+		auto create_group = CreateGroupMessage(GroupID(2), RequestID(1), "test");
+
+		api.process_packet(create_group, output);
+
+		REQUIRE(output.size() == 1);
+
+		verify_message(FailureResponse(RequestID(1), "Group with ID 2 does not exist."), *output[0]);
+
+		// TODO use some future packets to attempt to retrieve the group and verify it does not exist
+	}
 }
