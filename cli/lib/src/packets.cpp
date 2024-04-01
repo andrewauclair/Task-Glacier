@@ -190,3 +190,141 @@ std::expected<EmptyMessage, UnpackError> EmptyMessage::unpack(std::span<const st
 
 	return EmptyMessage(packetType);
 }
+
+void TaskInfoMessage::visit(MessageVisitor& visitor) const
+{
+	visitor.visit(*this);
+}
+
+std::vector<std::byte> TaskInfoMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(static_cast<std::int32_t>(PacketType::TASK_INFO));
+	builder.add(listID);
+	builder.add_string(name);
+
+	return builder.build();
+}
+
+std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<const std::byte> data)
+{
+	int bytes_read = 0;
+
+	std::int32_t raw_task_id;
+	std::memcpy(&raw_task_id, data.data() + bytes_read, sizeof(std::int32_t));
+
+	bytes_read += sizeof(std::int32_t);
+
+	const auto taskID = std::byteswap(raw_task_id);
+
+	std::int32_t raw_list_id;
+	std::memcpy(&raw_list_id, data.data() + bytes_read, sizeof(std::int32_t));
+
+	bytes_read += sizeof(std::int32_t);
+
+	const auto listID = std::byteswap(raw_list_id);
+
+	std::int16_t raw_name_length;
+	std::memcpy(&raw_name_length, data.data() + bytes_read, sizeof(std::int16_t));
+
+	bytes_read += sizeof(std::int16_t);
+
+	auto length = std::byteswap(raw_name_length);
+	std::string name;
+	name.resize(length);
+	std::memcpy(name.data(), data.data() + bytes_read, length);
+
+	return TaskInfoMessage(TaskID(taskID), ListID(listID), name);
+}
+
+void ListInfoMessage::visit(MessageVisitor& visitor) const
+{
+	visitor.visit(*this);
+
+}
+std::vector<std::byte> ListInfoMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(static_cast<std::int32_t>(PacketType::LIST_INFO));
+	builder.add(groupID);
+	builder.add_string(name);
+
+	return builder.build();
+}
+
+std::expected<ListInfoMessage, UnpackError> ListInfoMessage::unpack(std::span<const std::byte> data)
+{
+	int bytes_read = 0;
+
+	std::int32_t raw_group_id;
+	std::memcpy(&raw_group_id, data.data() + bytes_read, sizeof(std::int32_t));
+
+	bytes_read += sizeof(std::int32_t);
+
+	const auto groupID = std::byteswap(raw_group_id);
+
+	std::int32_t raw_list_id;
+	std::memcpy(&raw_list_id, data.data() + bytes_read, sizeof(std::int32_t));
+
+	bytes_read += sizeof(std::int32_t);
+
+	const auto listID = std::byteswap(raw_list_id);
+
+
+	std::int16_t raw_name_length;
+	std::memcpy(&raw_name_length, data.data() + bytes_read, sizeof(std::int16_t));
+
+	bytes_read += sizeof(std::int16_t);
+
+	auto length = std::byteswap(raw_name_length);
+	std::string name;
+	name.resize(length);
+	std::memcpy(name.data(), data.data() + bytes_read, length);
+
+	return ListInfoMessage(GroupID(groupID), ListID(listID), name);
+}
+
+void GroupInfoMessage::visit(MessageVisitor& visitor) const
+{
+	visitor.visit(*this);
+}
+
+std::vector<std::byte> GroupInfoMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(static_cast<std::int32_t>(PacketType::CREATE_GROUP));
+	builder.add(groupID);
+	builder.add_string(name);
+
+	return builder.build();
+}
+
+std::expected<GroupInfoMessage, UnpackError> GroupInfoMessage::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+	parser.parse_value<std::int16_t>();
+
+	int bytes_read = 0;
+
+	std::int32_t raw_group_id;
+	std::memcpy(&raw_group_id, data.data() + bytes_read, sizeof(std::int32_t));
+
+	bytes_read += sizeof(std::int32_t);
+
+	GroupID groupID = GroupID(std::byteswap(raw_group_id));
+
+	std::int16_t raw_name_length;
+	std::memcpy(&raw_name_length, data.data() + bytes_read, sizeof(std::int16_t));
+
+	bytes_read += sizeof(std::int16_t);
+
+	auto length = std::byteswap(raw_name_length);
+	std::string name;
+	name.resize(length);
+	std::memcpy(name.data(), data.data() + bytes_read, length);
+
+	return GroupInfoMessage(groupID, name);
+}

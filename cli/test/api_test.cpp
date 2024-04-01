@@ -18,6 +18,7 @@ void verify_message(const T& expected, const Message& actual)
 	}
 	else
 	{
+		UNSCOPED_INFO("expected message: " << expected);
 		FAIL();
 	}
 }
@@ -130,11 +131,11 @@ TEST_CASE("request configuration at startup", "[api]")
 
 	// add 1 task to list one, 2 tasks to list two and 3 tasks to list three
 	auto create_task_1 = CreateTaskMessage(ListID(1), RequestID(6), "task 1");
-	auto create_task_2 = CreateTaskMessage(ListID(1), RequestID(7), "task 2");
-	auto create_task_3 = CreateTaskMessage(ListID(1), RequestID(8), "task 3");
-	auto create_task_4 = CreateTaskMessage(ListID(1), RequestID(9), "task 4");
-	auto create_task_5 = CreateTaskMessage(ListID(1), RequestID(10), "task 5");
-	auto create_task_6 = CreateTaskMessage(ListID(1), RequestID(11), "task 6");
+	auto create_task_2 = CreateTaskMessage(ListID(2), RequestID(7), "task 2");
+	auto create_task_3 = CreateTaskMessage(ListID(2), RequestID(8), "task 3");
+	auto create_task_4 = CreateTaskMessage(ListID(3), RequestID(9), "task 4");
+	auto create_task_5 = CreateTaskMessage(ListID(3), RequestID(10), "task 5");
+	auto create_task_6 = CreateTaskMessage(ListID(3), RequestID(11), "task 6");
 
 	api.process_packet(create_group_in_root, output);
 	api.process_packet(create_list_in_root, output);
@@ -154,5 +155,20 @@ TEST_CASE("request configuration at startup", "[api]")
 	// now that we're setup, request the configuration and check the output
 	api.process_packet(EmptyMessage{ PacketType::REQUEST_CONFIGURATION }, output);
 
-	//REQUIRE(output.size() == ? );
+	REQUIRE(output.size() == 13);
+	
+	verify_message(GroupInfoMessage(ROOT_GROUP_ID, ""), *output[0]);
+	verify_message(GroupInfoMessage(GroupID(1), "group_one"), *output[1]);
+	verify_message(GroupInfoMessage(GroupID(2), "group_two"), *output[2]);
+	verify_message(ListInfoMessage(GroupID(2), ListID(3), "list_three"), *output[3]);
+	verify_message(TaskInfoMessage(TaskID(4), ListID(3), "task 4"), *output[4]);
+	verify_message(TaskInfoMessage(TaskID(5), ListID(3), "task 5"), *output[5]);
+	verify_message(TaskInfoMessage(TaskID(6), ListID(3), "task 6"), *output[6]);
+	verify_message(ListInfoMessage(GroupID(1), ListID(2), "list_two"), *output[7]);
+	verify_message(TaskInfoMessage(TaskID(2), ListID(2), "task 2"), *output[8]);
+	verify_message(TaskInfoMessage(TaskID(3), ListID(2), "task 3"), *output[9]);
+	verify_message(ListInfoMessage(ROOT_GROUP_ID, ListID(1), "list_one"), *output[10]);
+	verify_message(TaskInfoMessage(TaskID(1), ListID(1), "task 1"), *output[11]);
+	
+	verify_message(EmptyMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[12]);
 }

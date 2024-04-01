@@ -66,5 +66,32 @@ void MessageProcessVisitor::visit(const CreateGroupMessage& message)
 
 void MessageProcessVisitor::visit(const EmptyMessage& message)
 {
+	if (message.packetType == PacketType::REQUEST_CONFIGURATION)
+	{
+		const auto add_group = [&](auto add_group, const Group& group) -> void
+			{
+				output.push_back(std::make_unique<GroupInfoMessage>(group.groupID(), group.name()));
 
+				for (auto&& g : group.m_groups)
+				{
+					add_group(add_group, g);
+				}
+
+				for (auto&& list : group.m_lists)
+				{
+					output.push_back(std::make_unique<ListInfoMessage>(group.groupID(), list.listID(), list.name()));
+
+					for (auto&& task : list.m_tasks)
+					{
+						output.push_back(std::make_unique<TaskInfoMessage>(task.taskID(), list.listID(), task.m_name));
+					}
+				}
+			};
+
+		const Group& root = app.root();
+
+		add_group(add_group, root);
+
+		output.push_back(std::make_unique<EmptyMessage>(PacketType::REQUEST_CONFIGURATION_COMPLETE));
+	}
 }

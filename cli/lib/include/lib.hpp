@@ -66,7 +66,7 @@ class List
 public:
 	explicit List(std::string name, ListID id, class Group* parent);
 
-	std::string_view name() const { return m_name; }
+	const std::string& name() const { return m_name; }
 	ListID listID() const { return m_listID; }
 	const class Group* parent() const { return m_parent; }
 
@@ -89,7 +89,7 @@ class Group
 public:
 	explicit Group(std::string name, GroupID id);
 
-	std::string_view name() const { return m_name; }
+	const std::string& name() const { return m_name; }
 	GroupID groupID() const { return m_groupID; }
 
 	std::vector<Group> m_groups;
@@ -119,6 +119,8 @@ public:
 	std::expected<TaskState, std::string> task_state(TaskID id);
 
 	std::optional<GroupID> group_for_list(ListID id);
+
+	const Group& root() const { return m_root; }
 
 private:
 	List* find_list_by_id(ListID listID);

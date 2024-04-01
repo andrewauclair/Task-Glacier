@@ -40,6 +40,10 @@ enum class PacketType : std::int32_t
 
 	REQUEST_CONFIGURATION,
 	REQUEST_CONFIGURATION_COMPLETE,
+
+	TASK_INFO,
+	LIST_INFO,
+	GROUP_INFO,
 };
 
 struct Message {
@@ -178,6 +182,86 @@ struct EmptyMessage : Message
 
 	std::vector<std::byte> pack() const;
 	static std::expected<EmptyMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	friend std::ostream& operator<<(std::ostream& out, const EmptyMessage& message)
+	{
+		out << "EmptyMessage { PacketType: " << static_cast<std::uint32_t>(message.packetType) << " }";
+		return out;
+	}
+};
+
+struct TaskInfoMessage : Message
+{
+	TaskID taskID;
+	ListID listID;
+	std::string name;
+
+	TaskInfoMessage(TaskID taskID, ListID listID, std::string name) : taskID(taskID), listID(listID), name(std::move(name)) {}
+
+	void visit(MessageVisitor& visitor) const override;
+
+	bool operator==(const TaskInfoMessage& other) const
+	{
+		return taskID == other.taskID && listID == other.listID && name == other.name;
+	}
+
+	std::vector<std::byte> pack() const;
+	static std::expected<TaskInfoMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	friend std::ostream& operator<<(std::ostream& out, const TaskInfoMessage& message)
+	{
+		out << "TaskInfoMessage { TaskID: " << message.taskID._val << ", ListID: " << message.listID._val << ", Name : \"" << message.name << "\" }";
+		return out;
+	}
+};
+
+struct ListInfoMessage : Message
+{
+	GroupID groupID;
+	ListID listID;
+	std::string name;
+
+	ListInfoMessage(GroupID groupID, ListID listID, std::string name) : groupID(groupID), listID(listID), name(std::move(name)) {}
+
+	void visit(MessageVisitor& visitor) const override;
+
+	bool operator==(const ListInfoMessage& other) const
+	{
+		return groupID == other.groupID && listID == other.listID && name == other.name;
+	}
+
+	std::vector<std::byte> pack() const;
+	static std::expected<ListInfoMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	friend std::ostream& operator<<(std::ostream& out, const ListInfoMessage& message)
+	{
+		out << "ListInfoMessage { GroupID: " << message.groupID._val << ", ListID: " << message.listID._val << ", Name : \"" << message.name << "\" }";
+		return out;
+	}
+};
+
+struct GroupInfoMessage : Message
+{
+	GroupID groupID;
+	std::string name;
+
+	GroupInfoMessage(GroupID groupID, std::string name) : groupID(groupID), name(std::move(name)) {}
+
+	void visit(MessageVisitor& visitor) const override;
+
+	bool operator==(const GroupInfoMessage& other) const
+	{
+		return groupID == other.groupID && name == other.name;
+	}
+
+	std::vector<std::byte> pack() const;
+	static std::expected<GroupInfoMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	friend std::ostream& operator<<(std::ostream& out, const GroupInfoMessage& message)
+	{
+		out << "GroupInfoMessage { GroupID: " << message.groupID._val << ", Name: \"" << message.name << "\" }";
+		return out;
+	}
 };
 
 struct MessageVisitor {
@@ -187,6 +271,9 @@ struct MessageVisitor {
 	virtual void visit(const SuccessResponse&) {}
 	virtual void visit(const FailureResponse&) {}
 	virtual void visit(const EmptyMessage&) = 0;
+	virtual void visit(const TaskInfoMessage&) {};
+	virtual void visit(const ListInfoMessage&) {};
+	virtual void visit(const GroupInfoMessage&) {};
 };
 
 class PacketBuilder
