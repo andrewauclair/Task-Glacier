@@ -7,6 +7,7 @@
 #include <variant>
 #include <string>
 #include <cstring>
+#include <memory>
 
 #include <strong_type/strong_type.hpp>
 
