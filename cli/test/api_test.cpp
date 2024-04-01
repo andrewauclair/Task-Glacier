@@ -160,13 +160,16 @@ TEST_CASE("request configuration at startup", "[api]")
 	verify_message(GroupInfoMessage(ROOT_GROUP_ID, ""), *output[0]);
 	verify_message(GroupInfoMessage(GroupID(1), "group_one"), *output[1]);
 	verify_message(GroupInfoMessage(GroupID(2), "group_two"), *output[2]);
+	
 	verify_message(ListInfoMessage(GroupID(2), ListID(3), "list_three"), *output[3]);
 	verify_message(TaskInfoMessage(TaskID(4), ListID(3), "task 4"), *output[4]);
 	verify_message(TaskInfoMessage(TaskID(5), ListID(3), "task 5"), *output[5]);
 	verify_message(TaskInfoMessage(TaskID(6), ListID(3), "task 6"), *output[6]);
+	
 	verify_message(ListInfoMessage(GroupID(1), ListID(2), "list_two"), *output[7]);
 	verify_message(TaskInfoMessage(TaskID(2), ListID(2), "task 2"), *output[8]);
 	verify_message(TaskInfoMessage(TaskID(3), ListID(2), "task 3"), *output[9]);
+
 	verify_message(ListInfoMessage(ROOT_GROUP_ID, ListID(1), "list_one"), *output[10]);
 	verify_message(TaskInfoMessage(TaskID(1), ListID(1), "task 1"), *output[11]);
 	
