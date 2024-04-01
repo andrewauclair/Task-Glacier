@@ -27,21 +27,25 @@ struct Message {
 struct CreateTaskMessage : Message
 {
 	ListID listID;
+	RequestID requestID;
+	std::string name;
 
-	CreateTaskMessage(ListID listID) : listID(listID) {}
+	CreateTaskMessage(ListID listID, RequestID requestID, std::string name) : listID(listID), requestID(requestID), name(std::move(name)) {}
 
 	void visit(MessageVisitor& visitor) const override;
 
 	bool operator==(const CreateTaskMessage& other) const
 	{
-		return listID == other.listID;
+		return listID == other.listID && requestID == other.requestID && name == other.name;
 	}
 
 	std::vector<std::byte> pack() const;
+	static std::expected<CreateTaskMessage, UnpackError> unpack(std::span<const std::byte> data);
 
-	std::ostream& operator<<(std::ostream& out)
+	friend std::ostream& operator<<(std::ostream& out, const CreateTaskMessage& message)
 	{
-		out << listID._val;
+		out << "CreateTaskMessage { ListID: " << message.listID._val << ", RequestID: " << message.requestID._val << ", Name: \"" << message.name << "\" }";
+		return out;
 	}
 };
 
@@ -63,12 +67,11 @@ struct CreateListMessage : Message
 	std::vector<std::byte> pack() const;
 	static std::expected<CreateListMessage, UnpackError> unpack(std::span<const std::byte> data);
 
-	std::ostream& operator<<(std::ostream& out)
+	friend std::ostream& operator<<(std::ostream& out, const CreateListMessage& message)
 	{
-		out << "CreateListMessage { GroupID: " << groupID._val << ", RequestID: " << requestID._val << ", Name: " << name << " }";
+		out << "CreateListMessage { GroupID: " << message.groupID._val << ", RequestID: " << message.requestID._val << ", Name: \"" << message.name << "\" }";
 		return out;
 	}
-
 };
 
 struct CreateGroupMessage : Message
@@ -89,9 +92,10 @@ struct CreateGroupMessage : Message
 	std::vector<std::byte> pack() const;
 	static std::expected<CreateGroupMessage, UnpackError> unpack(std::span<const std::byte> data);
 
-	std::ostream& operator<<(std::ostream& out)
+	friend std::ostream& operator<<(std::ostream& out, const CreateGroupMessage& message)
 	{
-		out << "CreateGroupMessage { GroupID: " << groupID._val << ", RequestID: " << requestID._val << ", Name: " << name << " }";
+		out << "CreateGroupMessage { GroupID: " << message.groupID._val << ", RequestID: " << message.requestID._val << ", Name: \"" << message.name << "\" }";
+		return out;
 	}
 };
 
@@ -107,9 +111,9 @@ struct SuccessResponse : Message
 
 	std::vector<std::byte> pack() const;
 
-	std::ostream& operator<<(std::ostream& out)
+	friend std::ostream& operator<<(std::ostream& out, const SuccessResponse& message)
 	{
-		out << "SuccessResponse { RequestID: " << requestID._val << " }";
+		out << "SuccessResponse { RequestID: " << message.requestID._val << " }";
 		return out;
 	}
 };
@@ -130,15 +134,15 @@ struct FailureResponse : Message
 
 	std::vector<std::byte> pack() const;
 
-	std::ostream& operator<<(std::ostream& out)
+	friend std::ostream& operator<<(std::ostream& out, const FailureResponse& message)
 	{
-		out << "FailureResponse { RequestID: " << requestID._val << ", message: " << message << " }";
+		out << "FailureResponse { RequestID: " << message.requestID._val << ", message: \"" << message.message << "\" }";
 		return out;
 	}
 };
 
 struct MessageVisitor {
-	//virtual void visit(const CreateTaskMessage&) = 0;
+	virtual void visit(const CreateTaskMessage&) = 0;
 	virtual void visit(const CreateListMessage&) = 0;
 	virtual void visit(const CreateGroupMessage&) = 0;
 	virtual void visit(const SuccessResponse&) {}
@@ -277,6 +281,9 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 			using enum PacketType;
 
 		case CREATE_TASK:
+			result.packet = std::make_unique<CreateTaskMessage>(CreateTaskMessage::unpack(bytes.subspan(8)).value());
+			result.bytes_read = raw_length;
+
 			break;
 		case CREATE_LIST:
 		{

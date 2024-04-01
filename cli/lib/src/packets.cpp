@@ -1,6 +1,51 @@
 #include "packets.hpp"
 #include "lib.hpp"
 
+void CreateTaskMessage::visit(MessageVisitor& visitor) const { visitor.visit(*this); }
+
+std::vector<std::byte> CreateTaskMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(static_cast<std::int32_t>(PacketType::CREATE_TASK));
+	builder.add(requestID);
+	builder.add(listID);
+	builder.add_string(name);
+
+	return builder.build();
+}
+
+std::expected<CreateTaskMessage, UnpackError> CreateTaskMessage::unpack(std::span<const std::byte> data)
+{
+	int bytes_read = 0;
+
+	std::int32_t raw_request_id;
+	std::memcpy(&raw_request_id, data.data() + bytes_read, sizeof(std::int32_t));
+
+	bytes_read += sizeof(std::int32_t);
+
+	const auto requestID = std::byteswap(raw_request_id);
+
+	std::int32_t raw_list_id;
+	std::memcpy(&raw_list_id, data.data() + bytes_read, sizeof(std::int32_t));
+
+	bytes_read += sizeof(std::int32_t);
+
+	const auto listID = std::byteswap(raw_list_id);
+
+	std::int16_t raw_name_length;
+	std::memcpy(&raw_name_length, data.data() + bytes_read, sizeof(std::int16_t));
+
+	bytes_read += sizeof(std::int16_t);
+
+	auto length = std::byteswap(raw_name_length);
+	std::string name;
+	name.resize(length);
+	std::memcpy(name.data(), data.data() + bytes_read, length);
+
+	return CreateTaskMessage(ListID(listID), RequestID(requestID), name);
+}
+
 void CreateListMessage::visit(MessageVisitor& visitor) const { visitor.visit(*this); }
 
 std::vector<std::byte> CreateListMessage::pack() const

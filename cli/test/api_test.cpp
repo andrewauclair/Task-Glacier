@@ -22,7 +22,38 @@ void verify_message(const T& expected, const Message& actual)
 	}
 }
 
-TEST_CASE("create list", "[test]")
+TEST_CASE("create task", "[api][task]")
+{
+	API api;
+	std::vector<std::unique_ptr<Message>> output;
+
+	auto create_list = CreateListMessage(ROOT_GROUP_ID, RequestID(1), "test");
+	api.process_packet(create_list, output);
+
+	SECTION("success")
+	{
+		auto create_task = CreateTaskMessage(ListID(1), RequestID(2), "this is a test");
+
+		api.process_packet(create_task, output);
+
+		REQUIRE(output.size() == 2);
+
+		verify_message(SuccessResponse{ RequestID(2) }, *output[1]);
+	}
+
+	SECTION("failure")
+	{
+		auto create_task = CreateTaskMessage(ListID(2), RequestID(2), "this is a test");
+
+		api.process_packet(create_task, output);
+
+		REQUIRE(output.size() == 2);
+
+		verify_message(FailureResponse{ RequestID(2), "List with ID 2 does not exist." }, *output[1]);
+	}
+}
+
+TEST_CASE("create list", "[api][list]")
 {
 	API api;
 	std::vector<std::unique_ptr<Message>> output;

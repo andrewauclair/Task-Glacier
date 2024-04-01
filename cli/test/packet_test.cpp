@@ -148,9 +148,39 @@ private:
 //	CUSTOM_CHECK_THAT(b, CreateListMessageMatcher(a));
 //}
 
+TEST_CASE("pack the create task message", "[task][message][pack]")
+{
+	const auto create_task = CreateTaskMessage(ListID(5), RequestID(10), "this is a test");
+
+	auto verifier = PacketVerifier(create_task.pack(), 32);
+
+	verifier
+		.verify_value<std::uint32_t>(32, "packet length")
+		.verify_value<std::uint32_t>(1, "packet ID")
+		.verify_value<std::uint32_t>(10, "request ID")
+		.verify_value<std::uint32_t>(5, "list ID")
+		.verify_string("this is a test", "task name");
+}
+
+TEST_CASE("parse a create task packet", "[task][message][unpack]")
+{
+	MicroTask app;
+
+	const auto create_task = CreateTaskMessage(ListID(5), RequestID(10), "this is a test");
+
+	const auto result = parse_packet(create_task.pack());
+
+	REQUIRE(result.packet.has_value());
+
+	const auto packet = dynamic_cast<CreateTaskMessage&>(*result.packet.value().get());
+
+	CHECK(packet == create_task);
+	CHECK(result.bytes_read == 32);
+}
+
 TEST_CASE("pack the create list message", "[list][message][pack]")
 {
-	CreateListMessage create_list{ GroupID(5), RequestID(10), "testing"};
+	auto create_list = CreateListMessage(GroupID(5), RequestID(10), "testing");
 
 	auto verifier = PacketVerifier(create_list.pack(), 25);
 
