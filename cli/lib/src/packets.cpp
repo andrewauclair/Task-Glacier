@@ -159,3 +159,34 @@ std::vector<std::byte> FailureResponse::pack() const
 
 	return builder.build();
 }
+
+void EmptyMessage::visit(MessageVisitor& visitor) const
+{
+	visitor.visit(*this);
+}
+
+std::vector<std::byte> EmptyMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(static_cast<std::int32_t>(packetType));
+
+	return builder.build();
+}
+
+std::expected<EmptyMessage, UnpackError> EmptyMessage::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+	parser.parse_value<std::int16_t>();
+
+	int bytes_read = 0;
+
+	std::int32_t raw_packet_id;
+	std::memcpy(&raw_packet_id, data.data() + bytes_read, sizeof(std::int32_t));
+
+	bytes_read += sizeof(std::int32_t);
+
+	PacketType packetType = PacketType(std::byteswap(raw_packet_id));
+
+	return EmptyMessage(packetType);
+}

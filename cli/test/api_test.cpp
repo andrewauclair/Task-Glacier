@@ -116,3 +116,44 @@ TEST_CASE("create group", "[api][group]")
 		// TODO use some future packets to attempt to retrieve the group and verify it does not exist
 	}
 }
+
+TEST_CASE("request configuration at startup", "[api]")
+{
+	API api;
+	std::vector<std::unique_ptr<Message>> output;
+
+	auto create_group_in_root = CreateGroupMessage(ROOT_GROUP_ID, RequestID(1), "group_one");
+	auto create_list_in_root = CreateListMessage(ROOT_GROUP_ID, RequestID(2), "list_one");
+	auto create_group_in_one = CreateGroupMessage(GroupID(1), RequestID(3), "group_two");
+	auto create_list_in_one = CreateListMessage(GroupID(1), RequestID(4), "list_two");
+	auto create_list_in_two = CreateListMessage(GroupID(2), RequestID(5), "list_three");
+
+	// add 1 task to list one, 2 tasks to list two and 3 tasks to list three
+	auto create_task_1 = CreateTaskMessage(ListID(1), RequestID(6), "task 1");
+	auto create_task_2 = CreateTaskMessage(ListID(1), RequestID(7), "task 2");
+	auto create_task_3 = CreateTaskMessage(ListID(1), RequestID(8), "task 3");
+	auto create_task_4 = CreateTaskMessage(ListID(1), RequestID(9), "task 4");
+	auto create_task_5 = CreateTaskMessage(ListID(1), RequestID(10), "task 5");
+	auto create_task_6 = CreateTaskMessage(ListID(1), RequestID(11), "task 6");
+
+	api.process_packet(create_group_in_root, output);
+	api.process_packet(create_list_in_root, output);
+	api.process_packet(create_group_in_one, output);
+	api.process_packet(create_list_in_one, output);
+	api.process_packet(create_list_in_two, output);
+
+	api.process_packet(create_task_1, output);
+	api.process_packet(create_task_2, output);
+	api.process_packet(create_task_3, output);
+	api.process_packet(create_task_4, output);
+	api.process_packet(create_task_5, output);
+	api.process_packet(create_task_6, output);
+
+	output.clear();
+
+	// now that we're setup, request the configuration and check the output
+	api.process_packet(EmptyMessage{ PacketType::REQUEST_CONFIGURATION }, output);
+
+	//REQUIRE(output.size() == ? );
+})
+}

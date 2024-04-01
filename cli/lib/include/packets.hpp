@@ -20,6 +20,27 @@ using RequestID = strong::type<std::int32_t, struct request_id_, strong::equalit
 
 struct MessageVisitor;
 
+enum class PacketType : std::int32_t
+{
+	CREATE_TASK = 1,
+	CREATE_LIST,
+	CREATE_GROUP,
+
+	MOVE_TASK,
+	MOVE_LIST,
+	MOVE_GROUP,
+
+	START_TASK,
+	STOP_TASK,
+	FINISH_TASK,
+
+	SUCCESS_RESPONSE,
+	FAILURE_RESPONSE,
+
+	REQUEST_CONFIGURATION,
+	REQUEST_CONFIGURATION_COMPLETE,
+};
+
 struct Message {
 	virtual void visit(MessageVisitor& visitor) const = 0;
 };
@@ -141,12 +162,30 @@ struct FailureResponse : Message
 	}
 };
 
+struct EmptyMessage : Message
+{
+	PacketType packetType;
+
+	EmptyMessage(PacketType type) : packetType(type) {}
+
+	void visit(MessageVisitor& visitor) const override;
+
+	bool operator==(const EmptyMessage& other) const
+	{
+		return packetType == other.packetType;
+	}
+
+	std::vector<std::byte> pack() const;
+	static std::expected<EmptyMessage, UnpackError> unpack(std::span<const std::byte> data);
+};
+
 struct MessageVisitor {
 	virtual void visit(const CreateTaskMessage&) = 0;
 	virtual void visit(const CreateListMessage&) = 0;
 	virtual void visit(const CreateGroupMessage&) = 0;
 	virtual void visit(const SuccessResponse&) {}
 	virtual void visit(const FailureResponse&) {}
+	virtual void visit(const EmptyMessage&) = 0;
 };
 
 class PacketBuilder
@@ -233,24 +272,6 @@ public:
 	}
 };
 
-enum class PacketType : std::int32_t
-{
-	CREATE_TASK = 1,
-	CREATE_LIST,
-	CREATE_GROUP,
-
-	MOVE_TASK,
-	MOVE_LIST,
-	MOVE_GROUP,
-
-	START_TASK,
-	STOP_TASK,
-	FINISH_TASK,
-
-	SUCCESS_RESPONSE,
-	FAILURE_RESPONSE,
-};
-
 struct ParseResult
 {
 	std::optional<std::unique_ptr<Message>> packet;
@@ -295,6 +316,14 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 		case CREATE_GROUP:
 		{
 			result.packet = std::make_unique<CreateGroupMessage>(CreateGroupMessage::unpack(bytes.subspan(8)).value());
+			result.bytes_read = raw_length;
+
+			break;
+		}
+		case REQUEST_CONFIGURATION:
+		case REQUEST_CONFIGURATION_COMPLETE:
+		{
+			result.packet = std::make_unique<EmptyMessage>(EmptyMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 
 			break;

@@ -12,6 +12,7 @@ struct MessageProcessVisitor : MessageVisitor
 	void visit(const CreateTaskMessage& message) override;
 	void visit(const CreateListMessage& message) override;
 	void visit(const CreateGroupMessage& message) override;
+	void visit(const EmptyMessage& message) override;
 };
 }
 
@@ -61,4 +62,9 @@ void MessageProcessVisitor::visit(const CreateGroupMessage& message)
 	{
 		output.push_back(std::make_unique<FailureResponse>(message.requestID, result.error()));
 	}
+}
+
+void MessageProcessVisitor::visit(const EmptyMessage& message)
+{
+
 }

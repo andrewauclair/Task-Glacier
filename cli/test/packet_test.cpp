@@ -273,3 +273,32 @@ TEST_CASE("pack the failure response packet", "[message][pack]")
 }
 
 // don't need to care about parsing FailureResponse atm
+
+TEST_CASE("pack the empty packet", "[message][pack]")
+{
+	PacketBuilder builder;
+
+	const auto message = EmptyMessage(PacketType::REQUEST_CONFIGURATION);
+
+	auto verifier = PacketVerifier(message.pack(), 8);
+
+	verifier
+		.verify_value<std::uint32_t>(8, "packet length")
+		.verify_value<std::uint32_t>(12, "packet ID");
+}
+
+TEST_CASE("unpack the empty packet", "[message][unpack]")
+{
+	MicroTask app;
+
+	const auto message = EmptyMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
+
+	const auto result = parse_packet(message.pack());
+
+	REQUIRE(result.packet.has_value());
+
+	const auto packet = dynamic_cast<EmptyMessage&>(*result.packet.value().get());
+
+	CHECK(packet == message);
+	CHECK(result.bytes_read == 8);
+}
