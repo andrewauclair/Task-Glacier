@@ -155,5 +155,4 @@ TEST_CASE("request configuration at startup", "[api]")
 	api.process_packet(EmptyMessage{ PacketType::REQUEST_CONFIGURATION }, output);
 
 	//REQUIRE(output.size() == ? );
-})
 }
