@@ -11,10 +11,8 @@
 
 #include <strong_type/strong_type.hpp>
 
-struct UnpackError {
-	enum {
-		NOT_ENOUGH_BYTES
-	};
+enum class UnpackError {
+	NOT_ENOUGH_BYTES
 };
 
 using RequestID = strong::type<std::int32_t, struct request_id_, strong::equality>;
@@ -47,6 +45,14 @@ enum class PacketType : std::int32_t
 };
 
 struct Message {
+private:
+	PacketType m_packetType;
+
+public:
+	Message(PacketType packetType) : m_packetType(packetType) {}
+
+	PacketType packetType() const { return m_packetType; }
+
 	virtual void visit(MessageVisitor& visitor) const = 0;
 };
 
@@ -56,7 +62,7 @@ struct CreateTaskMessage : Message
 	RequestID requestID;
 	std::string name;
 
-	CreateTaskMessage(ListID listID, RequestID requestID, std::string name) : listID(listID), requestID(requestID), name(std::move(name)) {}
+	CreateTaskMessage(ListID listID, RequestID requestID, std::string name) : Message(PacketType::CREATE_TASK), listID(listID), requestID(requestID), name(std::move(name)) {}
 
 	void visit(MessageVisitor& visitor) const override;
 
@@ -81,7 +87,7 @@ struct CreateListMessage : Message
 	RequestID requestID;
 	std::string name;
 
-	CreateListMessage(GroupID groupID, RequestID requestID, std::string name) : groupID(groupID), requestID(requestID), name(std::move(name)) {}
+	CreateListMessage(GroupID groupID, RequestID requestID, std::string name) : Message(PacketType::CREATE_LIST), groupID(groupID), requestID(requestID), name(std::move(name)) {}
 
 	void visit(MessageVisitor& visitor) const override;
 
@@ -106,7 +112,7 @@ struct CreateGroupMessage : Message
 	RequestID requestID;
 	std::string name;
 
-	CreateGroupMessage(GroupID groupID, RequestID requestID, std::string name) : groupID(groupID), requestID(requestID), name(std::move(name)) {}
+	CreateGroupMessage(GroupID groupID, RequestID requestID, std::string name) : Message(PacketType::CREATE_GROUP), groupID(groupID), requestID(requestID), name(std::move(name)) {}
 
 	void visit(MessageVisitor& visitor) const override;
 
@@ -129,7 +135,7 @@ struct SuccessResponse : Message
 {
 	RequestID requestID;
 
-	SuccessResponse(RequestID requestID) : requestID(requestID) {}
+	SuccessResponse(RequestID requestID) : Message(PacketType::SUCCESS_RESPONSE), requestID(requestID) {}
 
 	void visit(MessageVisitor& visitor) const override {};
 
@@ -149,7 +155,7 @@ struct FailureResponse : Message
 	RequestID requestID;
 	std::string message;
 
-	FailureResponse(RequestID requestID, std::string message) : requestID(requestID), message(std::move(message)) {}
+	FailureResponse(RequestID requestID, std::string message) : Message(PacketType::FAILURE_RESPONSE), requestID(requestID), message(std::move(message)) {}
 
 	void visit(MessageVisitor& visitor) const override {};
 
@@ -171,7 +177,7 @@ struct EmptyMessage : Message
 {
 	PacketType packetType;
 
-	EmptyMessage(PacketType type) : packetType(type) {}
+	EmptyMessage(PacketType type) : Message(packetType), packetType(type) {}
 
 	void visit(MessageVisitor& visitor) const override;
 
@@ -196,7 +202,7 @@ struct TaskInfoMessage : Message
 	ListID listID;
 	std::string name;
 
-	TaskInfoMessage(TaskID taskID, ListID listID, std::string name) : taskID(taskID), listID(listID), name(std::move(name)) {}
+	TaskInfoMessage(TaskID taskID, ListID listID, std::string name) : Message(PacketType::TASK_INFO), taskID(taskID), listID(listID), name(std::move(name)) {}
 
 	void visit(MessageVisitor& visitor) const override;
 
@@ -221,7 +227,7 @@ struct ListInfoMessage : Message
 	ListID listID;
 	std::string name;
 
-	ListInfoMessage(GroupID groupID, ListID listID, std::string name) : groupID(groupID), listID(listID), name(std::move(name)) {}
+	ListInfoMessage(GroupID groupID, ListID listID, std::string name) : Message(PacketType::LIST_INFO), groupID(groupID), listID(listID), name(std::move(name)) {}
 
 	void visit(MessageVisitor& visitor) const override;
 
@@ -245,7 +251,7 @@ struct GroupInfoMessage : Message
 	GroupID groupID;
 	std::string name;
 
-	GroupInfoMessage(GroupID groupID, std::string name) : groupID(groupID), name(std::move(name)) {}
+	GroupInfoMessage(GroupID groupID, std::string name) : Message(PacketType::GROUP_INFO), groupID(groupID), name(std::move(name)) {}
 
 	void visit(MessageVisitor& visitor) const override;
 
@@ -283,18 +289,20 @@ private:
 
 public:
 
-	std::vector<std::byte> build()
+	std::vector<std::byte> build() const
 	{
-		std::int32_t length = m_bytes.size() + sizeof(std::int32_t);
+		std::vector<std::byte> bytes = m_bytes;
+
+		std::int32_t length = bytes.size() + sizeof(std::int32_t);
 
 		auto* ptr = reinterpret_cast<std::byte*>(&length);
 
 		// inserting in this order will do the byte swapping for us atm
 		for (int i = 0; i < sizeof(length); i++, ptr++)
 		{
-			m_bytes.insert(m_bytes.begin(), *ptr);
+			bytes.insert(bytes.begin(), *ptr);
 		}
-		return m_bytes;
+		return bytes;
 	}
 
 	template<typename T>
@@ -311,6 +319,13 @@ public:
 		{
 			m_bytes.push_back(*current_byte);
 		}
+	}
+
+	template<typename T>
+		requires std::is_enum_v<T>
+	void add(T value)
+	{
+		add(static_cast<std::underlying_type_t<T>>(value));
 	}
 
 	template<typename T>
@@ -337,26 +352,82 @@ class PacketParser
 {
 private:
 	std::span<const std::byte> data;
-	std::span<const std::byte>::iterator position;
+	std::size_t position;
 
 public:
-	PacketParser(std::span<const std::byte> data) : data(data), position(data.begin())
+	PacketParser(std::span<const std::byte> data) : data(data), position(0)
 	{
 	}
 
 	template<typename T>
-	std::expected<T, UnpackError> parse_value()
-	{
-		T value;
+	std::expected<T, UnpackError> parse_next() = delete;
 
-		if (std::distance(position, data.end()) < sizeof(T))
+	template<typename T>
+		requires std::integral<T> || std::floating_point<T>
+	std::expected<T, UnpackError> parse_next()
+	{
+		if (std::distance(data.begin() + position, data.end()) < sizeof(T))
 		{
-			return UnpackError::NOT_ENOUGH_BYTES;
+			return std::unexpected(UnpackError::NOT_ENOUGH_BYTES);
 		}
+
+		T value;
+		std::memcpy(&value, data.data() + position, sizeof(T));
+		value = std::byteswap(value);
 
 		position += sizeof(T);
 
 		return value;
+	}
+
+	template<typename T>
+		requires std::is_enum_v<T>
+	std::expected<T, UnpackError> parse_next()
+	{
+		auto result = parse_next<std::underlying_type_t<T>>();
+
+		if (result)
+		{
+			return T(result.value());
+		}
+		return std::unexpected(result.error());
+	}
+
+	template<typename T>
+		requires strong::is_strong_type<T>::value
+	std::expected<T, UnpackError> parse_next()
+	{
+		auto result = parse_next<strong::underlying_type_t<T>>();
+
+		if (result)
+		{
+			return T(result.value());
+		}
+		return std::unexpected(result.error());
+	}
+
+	template<typename T>
+		requires std::same_as<T, std::string>
+	std::expected<T, UnpackError> parse_next()
+	{
+		auto length = parse_next<std::int16_t>();
+
+		if (!length)
+		{
+			return std::unexpected(length.error());
+		}
+
+		if (std::distance(data.begin() + position, data.end()) < length.value())
+		{
+			return std::unexpected(UnpackError::NOT_ENOUGH_BYTES);
+		}
+
+		std::string name;
+		name.resize(length.value());
+		std::memcpy(name.data(), data.data() + position, length.value());
+		position += length.value();
+
+		return name;
 	}
 };
 
@@ -390,20 +461,20 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 			using enum PacketType;
 
 		case CREATE_TASK:
-			result.packet = std::make_unique<CreateTaskMessage>(CreateTaskMessage::unpack(bytes.subspan(8)).value());
+			result.packet = std::make_unique<CreateTaskMessage>(CreateTaskMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 
 			break;
 		case CREATE_LIST:
 		{
-			result.packet = std::make_unique<CreateListMessage>(CreateListMessage::unpack(bytes.subspan(8)).value());
+			result.packet = std::make_unique<CreateListMessage>(CreateListMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 
 			break;
 		}
 		case CREATE_GROUP:
 		{
-			result.packet = std::make_unique<CreateGroupMessage>(CreateGroupMessage::unpack(bytes.subspan(8)).value());
+			result.packet = std::make_unique<CreateGroupMessage>(CreateGroupMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 
 			break;
