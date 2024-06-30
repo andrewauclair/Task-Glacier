@@ -21,14 +21,11 @@ struct MessageVisitor;
 
 enum class PacketType : std::int32_t
 {
-	CREATE_TASK = 1,
-	CREATE_LIST,
-	CREATE_GROUP,
+	VERSION_REQUEST = 1,
+	VERSION,
 
+	CREATE_TASK,
 	MOVE_TASK,
-	MOVE_LIST,
-	MOVE_GROUP,
-
 	START_TASK,
 	STOP_TASK,
 	FINISH_TASK,
@@ -40,8 +37,6 @@ enum class PacketType : std::int32_t
 	REQUEST_CONFIGURATION_COMPLETE,
 
 	TASK_INFO,
-	LIST_INFO,
-	GROUP_INFO,
 };
 
 struct Message {
@@ -77,56 +72,6 @@ struct CreateTaskMessage : Message
 	friend std::ostream& operator<<(std::ostream& out, const CreateTaskMessage& message)
 	{
 		out << "CreateTaskMessage { ListID: " << message.listID._val << ", RequestID: " << message.requestID._val << ", Name: \"" << message.name << "\" }";
-		return out;
-	}
-};
-
-struct CreateListMessage : Message
-{
-	GroupID groupID;
-	RequestID requestID;
-	std::string name;
-
-	CreateListMessage(GroupID groupID, RequestID requestID, std::string name) : Message(PacketType::CREATE_LIST), groupID(groupID), requestID(requestID), name(std::move(name)) {}
-
-	void visit(MessageVisitor& visitor) const override;
-
-	bool operator==(const CreateListMessage& other) const
-	{
-		return groupID == other.groupID && requestID == other.requestID && name == other.name;
-	}
-
-	std::vector<std::byte> pack() const;
-	static std::expected<CreateListMessage, UnpackError> unpack(std::span<const std::byte> data);
-
-	friend std::ostream& operator<<(std::ostream& out, const CreateListMessage& message)
-	{
-		out << "CreateListMessage { GroupID: " << message.groupID._val << ", RequestID: " << message.requestID._val << ", Name: \"" << message.name << "\" }";
-		return out;
-	}
-};
-
-struct CreateGroupMessage : Message
-{
-	GroupID groupID;
-	RequestID requestID;
-	std::string name;
-
-	CreateGroupMessage(GroupID groupID, RequestID requestID, std::string name) : Message(PacketType::CREATE_GROUP), groupID(groupID), requestID(requestID), name(std::move(name)) {}
-
-	void visit(MessageVisitor& visitor) const override;
-
-	bool operator==(const CreateGroupMessage& other) const
-	{
-		return groupID == other.groupID && requestID == other.requestID && name == other.name;
-	}
-
-	std::vector<std::byte> pack() const;
-	static std::expected<CreateGroupMessage, UnpackError> unpack(std::span<const std::byte> data);
-
-	friend std::ostream& operator<<(std::ostream& out, const CreateGroupMessage& message)
-	{
-		out << "CreateGroupMessage { GroupID: " << message.groupID._val << ", RequestID: " << message.requestID._val << ", Name: \"" << message.name << "\" }";
 		return out;
 	}
 };
@@ -221,65 +166,12 @@ struct TaskInfoMessage : Message
 	}
 };
 
-struct ListInfoMessage : Message
-{
-	GroupID groupID;
-	ListID listID;
-	std::string name;
-
-	ListInfoMessage(GroupID groupID, ListID listID, std::string name) : Message(PacketType::LIST_INFO), groupID(groupID), listID(listID), name(std::move(name)) {}
-
-	void visit(MessageVisitor& visitor) const override;
-
-	bool operator==(const ListInfoMessage& other) const
-	{
-		return groupID == other.groupID && listID == other.listID && name == other.name;
-	}
-
-	std::vector<std::byte> pack() const;
-	static std::expected<ListInfoMessage, UnpackError> unpack(std::span<const std::byte> data);
-
-	friend std::ostream& operator<<(std::ostream& out, const ListInfoMessage& message)
-	{
-		out << "ListInfoMessage { GroupID: " << message.groupID._val << ", ListID: " << message.listID._val << ", Name : \"" << message.name << "\" }";
-		return out;
-	}
-};
-
-struct GroupInfoMessage : Message
-{
-	GroupID groupID;
-	std::string name;
-
-	GroupInfoMessage(GroupID groupID, std::string name) : Message(PacketType::GROUP_INFO), groupID(groupID), name(std::move(name)) {}
-
-	void visit(MessageVisitor& visitor) const override;
-
-	bool operator==(const GroupInfoMessage& other) const
-	{
-		return groupID == other.groupID && name == other.name;
-	}
-
-	std::vector<std::byte> pack() const;
-	static std::expected<GroupInfoMessage, UnpackError> unpack(std::span<const std::byte> data);
-
-	friend std::ostream& operator<<(std::ostream& out, const GroupInfoMessage& message)
-	{
-		out << "GroupInfoMessage { GroupID: " << message.groupID._val << ", Name: \"" << message.name << "\" }";
-		return out;
-	}
-};
-
 struct MessageVisitor {
 	virtual void visit(const CreateTaskMessage&) = 0;
-	virtual void visit(const CreateListMessage&) = 0;
-	virtual void visit(const CreateGroupMessage&) = 0;
 	virtual void visit(const SuccessResponse&) {}
 	virtual void visit(const FailureResponse&) {}
 	virtual void visit(const EmptyMessage&) = 0;
 	virtual void visit(const TaskInfoMessage&) {};
-	virtual void visit(const ListInfoMessage&) {};
-	virtual void visit(const GroupInfoMessage&) {};
 };
 
 class PacketBuilder
@@ -465,20 +357,6 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 			result.bytes_read = raw_length;
 
 			break;
-		case CREATE_LIST:
-		{
-			result.packet = std::make_unique<CreateListMessage>(CreateListMessage::unpack(bytes.subspan(4)).value());
-			result.bytes_read = raw_length;
-
-			break;
-		}
-		case CREATE_GROUP:
-		{
-			result.packet = std::make_unique<CreateGroupMessage>(CreateGroupMessage::unpack(bytes.subspan(4)).value());
-			result.bytes_read = raw_length;
-
-			break;
-		}
 		case REQUEST_CONFIGURATION:
 		case REQUEST_CONFIGURATION_COMPLETE:
 		{
