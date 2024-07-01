@@ -53,17 +53,17 @@ public:
 
 struct CreateTaskMessage : Message
 {
-	ListID listID;
+	TaskID parentID;
 	RequestID requestID;
 	std::string name;
 
-	CreateTaskMessage(ListID listID, RequestID requestID, std::string name) : Message(PacketType::CREATE_TASK), listID(listID), requestID(requestID), name(std::move(name)) {}
+	CreateTaskMessage(TaskID parentID, RequestID requestID, std::string name) : Message(PacketType::CREATE_TASK), parentID(parentID), requestID(requestID), name(std::move(name)) {}
 
 	void visit(MessageVisitor& visitor) const override;
 
 	bool operator==(const CreateTaskMessage& other) const
 	{
-		return listID == other.listID && requestID == other.requestID && name == other.name;
+		return parentID == other.parentID && requestID == other.requestID && name == other.name;
 	}
 
 	std::vector<std::byte> pack() const;
@@ -71,7 +71,7 @@ struct CreateTaskMessage : Message
 
 	friend std::ostream& operator<<(std::ostream& out, const CreateTaskMessage& message)
 	{
-		out << "CreateTaskMessage { ListID: " << message.listID._val << ", RequestID: " << message.requestID._val << ", Name: \"" << message.name << "\" }";
+		out << "CreateTaskMessage { parentID: " << message.parentID._val << ", RequestID: " << message.requestID._val << ", Name: \"" << message.name << "\" }";
 		return out;
 	}
 };
@@ -144,16 +144,16 @@ struct EmptyMessage : Message
 struct TaskInfoMessage : Message
 {
 	TaskID taskID;
-	ListID listID;
+	TaskID parentID;
 	std::string name;
 
-	TaskInfoMessage(TaskID taskID, ListID listID, std::string name) : Message(PacketType::TASK_INFO), taskID(taskID), listID(listID), name(std::move(name)) {}
+	TaskInfoMessage(TaskID taskID, TaskID parentID, std::string name) : Message(PacketType::TASK_INFO), taskID(taskID), parentID(parentID), name(std::move(name)) {}
 
 	void visit(MessageVisitor& visitor) const override;
 
 	bool operator==(const TaskInfoMessage& other) const
 	{
-		return taskID == other.taskID && listID == other.listID && name == other.name;
+		return taskID == other.taskID && parentID == other.parentID && name == other.name;
 	}
 
 	std::vector<std::byte> pack() const;
@@ -161,7 +161,7 @@ struct TaskInfoMessage : Message
 
 	friend std::ostream& operator<<(std::ostream& out, const TaskInfoMessage& message)
 	{
-		out << "TaskInfoMessage { TaskID: " << message.taskID._val << ", ListID: " << message.listID._val << ", Name : \"" << message.name << "\" }";
+		out << "TaskInfoMessage { TaskID: " << message.taskID._val << ", ParentID: " << message.parentID._val << ", Name : \"" << message.name << "\" }";
 		return out;
 	}
 };

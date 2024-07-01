@@ -20,202 +20,58 @@ void check_expected_error(const std::expected<T, U>& expected, const U& error)
 }
 
 
-TEST_CASE("root group is ID 0", "[group]")
+TEST_CASE("no parent ID is 0", "[task]")
 {
-	CHECK(ROOT_GROUP_ID == GroupID(0));
+	CHECK(NO_PARENT == TaskID(0));
 }
 
 TEST_CASE("create task", "[task]")
 {
 	MicroTask app;
 
-	SECTION("create task on new list")
+	SECTION("create task with no parent")
 	{
-		REQUIRE(app.create_list("test", ROOT_GROUP_ID).has_value());
-
-		const auto result = app.create_task("testing", ListID(1));
+		const auto result = app.create_task("testing");
 
 		check_expected_value(result, TaskID(1));
 	}
 
 	SECTION("create multiple tasks")
 	{
-		REQUIRE(app.create_list("test", ROOT_GROUP_ID).has_value());
-
-		auto result = app.create_task("one", ListID(1));
+		auto result = app.create_task("one");
 		check_expected_value(result, TaskID(1));
 
-		result = app.create_task("two", ListID(1));
+		result = app.create_task("two");
 		check_expected_value(result, TaskID(2));
 		
-		result = app.create_task("three", ListID(1));
+		result = app.create_task("three");
 		check_expected_value(result, TaskID(3));
 		
-		result = app.create_task("four", ListID(1));
+		result = app.create_task("four");
 		check_expected_value(result, TaskID(4));
 	}
 
 	SECTION("failure states")
 	{
-		SECTION("list does not exist")
+		SECTION("Parent does not exist")
 		{
-			const auto result = app.create_task("testing", ListID(1));
+			const auto result = app.create_task("testing", TaskID(1));
 
-			check_expected_error(result, std::string("List with ID 1 does not exist."));
+			check_expected_error(result, std::string("Task with ID 1 does not exist."));
 		}
 
-		SECTION("list is finished")
+		SECTION("Parent is finished")
 		{
 
-		}
-	}
-}
-
-TEST_CASE("create list", "[list]")
-{
-	MicroTask app;
-
-	SECTION("create new list in root group")
-	{
-		const auto result = app.create_list("test", ROOT_GROUP_ID);
-
-		check_expected_value(result, ListID(1));
-	}
-
-	SECTION("create new list in non-root group")
-	{
-		REQUIRE(app.create_group("nested", ROOT_GROUP_ID).has_value());
-
-		const auto result = app.create_list("test", GroupID(1));
-
-		check_expected_value(result, ListID(1));
-	}
-
-	SECTION("using existing list name in another group is ok")
-	{
-		REQUIRE(app.create_group("nested", ROOT_GROUP_ID).has_value());
-		REQUIRE(app.create_list("test", ROOT_GROUP_ID).has_value());
-
-		const auto result = app.create_list("test", GroupID(1));
-
-		check_expected_value(result, ListID(2));
-	}
-
-	SECTION("failure states")
-	{
-		SECTION("create new list fails when target group doesn't exist")
-		{
-			const auto result = app.create_list("test", GroupID(1));
-
-			check_expected_error(result, std::string("Group with ID 1 does not exist."));
-		}
-
-		SECTION("create new list fails when list already exists in root group")
-		{
-			REQUIRE(app.create_list("test", ROOT_GROUP_ID).has_value());
-
-			const auto result = app.create_list("test", ROOT_GROUP_ID);
-
-			// TODO we should create facilities to format group and list names properly (full paths)
-			check_expected_error(result, std::string("List with name 'test' already exists in group with ID 0."));
-		}
-
-		SECTION("create new list fails when list already exists in non-root group")
-		{
-			REQUIRE(app.create_group("nested", ROOT_GROUP_ID).has_value());
-			REQUIRE(app.create_list("test", GroupID(1)).has_value());
-
-			const auto result = app.create_list("test", GroupID(1));
-
-			// TODO we should create facilities to format group and list names properly (full paths)
-			check_expected_error(result, std::string("List with name 'test' already exists in group with ID 1."));
 		}
 	}
 }
-
-TEST_CASE("create group", "[group]")
-{
-	MicroTask app;
-
-	SECTION("create new group in root group")
-	{
-		const auto result = app.create_group("test", ROOT_GROUP_ID);
-
-		check_expected_value(result, GroupID(1));
-	}
-
-	SECTION("create new group in non-root group")
-	{
-		REQUIRE(app.create_group("nested", ROOT_GROUP_ID).has_value());
-
-		const auto result = app.create_group("test", GroupID(1));
-
-		check_expected_value(result, GroupID(2));
-	}
-
-	SECTION("using existing group name in another group is ok")
-	{
-		REQUIRE(app.create_group("nested", ROOT_GROUP_ID).has_value());
-
-		const auto result = app.create_group("nested", GroupID(1));
-
-		check_expected_value(result, GroupID(2));
-	}
-
-	SECTION("create new group fails when group with name already exists in root group")
-	{
-		REQUIRE(app.create_group("test", ROOT_GROUP_ID).has_value());
-
-		const auto result = app.create_group("test", ROOT_GROUP_ID);
-
-		check_expected_error(result, std::string("Group with name 'test' already exists in group with ID 0."));
-	}
-
-	SECTION("create new group fails when group with name already exists in non-root group")
-	{
-		REQUIRE(app.create_group("nested", ROOT_GROUP_ID).has_value());
-		REQUIRE(app.create_group("test", GroupID(1)).has_value());
-
-		const auto result = app.create_group("test", GroupID(1));
-
-		check_expected_error(result, std::string("Group with name 'test' already exists in group with ID 1."));
-	}
-
-	SECTION("create new group fails when target group doesn't exist")
-	{
-		const auto result = app.create_group("test", GroupID(1));
-
-		check_expected_error(result, std::string("Group with ID 1 does not exist."));
-	}
-}
-
-TEST_CASE("move list", "[list]")
-{
-	MicroTask app;
-	REQUIRE(app.create_list("test", ROOT_GROUP_ID).has_value());
-	REQUIRE(app.create_group("nested", ROOT_GROUP_ID).has_value());
-
-	CHECK(!app.move_list(ListID(1), GroupID(1)).has_value());
-
-	auto groupID = app.group_for_list(ListID(1));
-
-	REQUIRE(groupID.has_value());
-
-	CHECK(groupID.value() == GroupID(1));
-}
-
-// TODO test that creating a list in a finished group fails
-
-// TODO test that creating a group in a finished group fails
-// 
 
 TEST_CASE("task management", "[task]")
 {
 	MicroTask app;
 
-	REQUIRE(app.create_list("test", ROOT_GROUP_ID).has_value());
-
-	REQUIRE(app.create_task("testing", ListID(1)).has_value());
+	REQUIRE(app.create_task("testing").has_value());
 
 	SECTION("start a task")
 	{
@@ -258,16 +114,4 @@ TEST_CASE("task management", "[task]")
 
 		CHECK(start_result.value() == "Task with ID 2 does not exist.");
 	}
-}
-
-TEST_CASE("Performance", "[.perf]")
-{
-	BENCHMARK("simple") {
-		MicroTask app;
-		app.create_list("testing", ROOT_GROUP_ID);
-
-		for (int i = 0; i < 100'000; i++) {
-			app.create_task("testing longer names for tasks", ListID(1));
-		}
-	};
 }

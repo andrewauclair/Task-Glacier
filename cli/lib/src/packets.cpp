@@ -9,7 +9,7 @@ std::vector<std::byte> CreateTaskMessage::pack() const
 
 	builder.add(static_cast<std::int32_t>(PacketType::CREATE_TASK));
 	builder.add(requestID);
-	builder.add(listID);
+	builder.add(parentID);
 	builder.add_string(name);
 
 	return builder.build();
@@ -21,12 +21,12 @@ std::expected<CreateTaskMessage, UnpackError> CreateTaskMessage::unpack(std::spa
 	
 	const auto packetType = parser.parse_next<PacketType>();
 	const auto requestID = parser.parse_next<RequestID>();
-	const auto listID = parser.parse_next<ListID>();
+	const auto parentID = parser.parse_next<TaskID>();
 	const auto name = parser.parse_next<std::string>();
 
 	try
 	{
-		return CreateTaskMessage(listID.value(), requestID.value(), name.value());
+		return CreateTaskMessage(parentID.value(), requestID.value(), name.value());
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{
@@ -92,7 +92,7 @@ std::vector<std::byte> TaskInfoMessage::pack() const
 	PacketBuilder builder;
 
 	builder.add(PacketType::TASK_INFO);
-	builder.add(listID);
+	builder.add(parentID);
 	builder.add_string(name);
 
 	return builder.build();
@@ -104,12 +104,12 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 
 	const auto packetType = parser.parse_next<PacketType>();
 	const auto taskID = parser.parse_next<TaskID>();
-	const auto listID = parser.parse_next<ListID>();
+	const auto parentID = parser.parse_next<TaskID>();
 	const auto name = parser.parse_next<std::string>();
 
 	try
 	{
-		return TaskInfoMessage(taskID.value(), listID.value(), name.value());
+		return TaskInfoMessage(taskID.value(), parentID.value(), name.value());
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{
