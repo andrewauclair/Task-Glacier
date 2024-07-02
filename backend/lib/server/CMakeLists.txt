@@ -1,16 +1,14 @@
-﻿add_library (micro_task_lib STATIC 
-	src/api.cpp
-	src/lib.cpp 
-	src/packets.cpp
-	include/api.hpp
-	include/lib.hpp
-	include/packets.hpp
+﻿add_library (micro_task_server_lib STATIC 
+	api.cpp
+	server.cpp 
+	api.hpp
+	server.hpp
 )
 
-target_include_directories(micro_task_lib PUBLIC include)
+target_include_directories(micro_task_server_lib PUBLIC .)
 
-set_target_properties(micro_task_lib PROPERTIES CXX_STANDARD 23)
+set_target_properties(micro_task_server_lib PROPERTIES CXX_STANDARD 23)
 
-target_link_libraries(micro_task_lib PUBLIC
-	strong_type
+target_link_libraries(micro_task_server_lib PUBLIC
+	strong_type micro_task_common
 )

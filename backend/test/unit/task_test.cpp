@@ -1,5 +1,5 @@
 #include <catch2/catch_all.hpp>
-#include "lib.hpp"
+#include "server.hpp"
 
 template<typename T, typename U>
 void check_expected_value(const std::expected<T, U>& expected, const T& value)

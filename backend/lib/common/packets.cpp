@@ -1,5 +1,4 @@
 #include "packets.hpp"
-#include "lib.hpp"
 
 void CreateTaskMessage::visit(MessageVisitor& visitor) const { visitor.visit(*this); }
 

@@ -4,7 +4,7 @@
 #include <libassert/assert.hpp>
 
 #include "api.hpp"
-#include "lib.hpp"
+#include "server.hpp"
 #include "packets.hpp"
 
 #include <vector>

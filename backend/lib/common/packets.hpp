@@ -1,18 +1,30 @@
 #ifndef MICRO_TASK_PACKETS_HPP
 #define MICRO_TASK_PACKETS_HPP
 
-#include "lib.hpp"
+//#include "server.hpp"
 
 #include <vector>
 #include <variant>
 #include <string>
 #include <cstring>
 #include <memory>
+#include <expected>
+#include <span>
+#include <optional>
 
 #include <strong_type/strong_type.hpp>
 
 enum class UnpackError {
 	NOT_ENOUGH_BYTES
+};
+
+using TaskID = strong::type<std::int32_t, struct task_id_, strong::equality, strong::hashable, strong::ordered>;
+
+template <>
+struct std::formatter<TaskID> : std::formatter<std::int32_t> {
+	auto format(TaskID p, format_context& ctx) const {
+		return std::formatter<std::int32_t>::format(p._val, ctx);
+	}
 };
 
 using RequestID = strong::type<std::int32_t, struct request_id_, strong::equality>;
