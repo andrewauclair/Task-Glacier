@@ -54,12 +54,12 @@ std::vector<std::byte> FailureResponse::pack() const
 	return builder.build();
 }
 
-void EmptyMessage::visit(MessageVisitor& visitor) const
+void BasicMessage::visit(MessageVisitor& visitor) const
 {
 	visitor.visit(*this);
 }
 
-std::vector<std::byte> EmptyMessage::pack() const
+std::vector<std::byte> BasicMessage::pack() const
 {
 	PacketBuilder builder;
 
@@ -68,7 +68,7 @@ std::vector<std::byte> EmptyMessage::pack() const
 	return builder.build();
 }
 
-std::expected<EmptyMessage, UnpackError> EmptyMessage::unpack(std::span<const std::byte> data)
+std::expected<BasicMessage, UnpackError> BasicMessage::unpack(std::span<const std::byte> data)
 {
 	auto parser = PacketParser(data);
 
@@ -76,7 +76,7 @@ std::expected<EmptyMessage, UnpackError> EmptyMessage::unpack(std::span<const st
 
 	if (packetType)
 	{
-		return EmptyMessage(packetType.value());
+		return BasicMessage(packetType.value());
 	}
 	return std::unexpected(packetType.error());
 }

@@ -27,7 +27,9 @@ struct std::formatter<TaskID> : std::formatter<std::int32_t> {
 	}
 };
 
-using RequestID = strong::type<std::int32_t, struct request_id_, strong::equality>;
+inline constexpr TaskID NO_PARENT = TaskID(0);
+
+using RequestID = strong::type<std::int32_t, struct request_id_, strong::equality, strong::incrementable>;
 
 struct MessageVisitor;
 
@@ -51,16 +53,19 @@ enum class PacketType : std::int32_t
 	TASK_INFO,
 };
 
-struct Message {
-private:
-	PacketType m_packetType;
-
+struct Message
+{
 public:
 	Message(PacketType packetType) : m_packetType(packetType) {}
 
 	PacketType packetType() const { return m_packetType; }
 
 	virtual void visit(MessageVisitor& visitor) const = 0;
+	
+	virtual std::vector<std::byte> pack() const = 0;
+
+private:
+	PacketType m_packetType;
 };
 
 struct CreateTaskMessage : Message
@@ -78,7 +83,7 @@ struct CreateTaskMessage : Message
 		return parentID == other.parentID && requestID == other.requestID && name == other.name;
 	}
 
-	std::vector<std::byte> pack() const;
+	std::vector<std::byte> pack() const override;
 	static std::expected<CreateTaskMessage, UnpackError> unpack(std::span<const std::byte> data);
 
 	friend std::ostream& operator<<(std::ostream& out, const CreateTaskMessage& message)
@@ -98,7 +103,7 @@ struct SuccessResponse : Message
 
 	bool operator==(SuccessResponse other) const { return requestID == other.requestID; }
 
-	std::vector<std::byte> pack() const;
+	std::vector<std::byte> pack() const override;
 
 	friend std::ostream& operator<<(std::ostream& out, const SuccessResponse& message)
 	{
@@ -121,7 +126,7 @@ struct FailureResponse : Message
 		return requestID == other.requestID && message == other.message;
 	}
 
-	std::vector<std::byte> pack() const;
+	std::vector<std::byte> pack() const override;
 
 	friend std::ostream& operator<<(std::ostream& out, const FailureResponse& message)
 	{
@@ -130,25 +135,25 @@ struct FailureResponse : Message
 	}
 };
 
-struct EmptyMessage : Message
+struct BasicMessage : Message
 {
 	PacketType packetType;
 
-	EmptyMessage(PacketType type) : Message(packetType), packetType(type) {}
+	BasicMessage(PacketType type) : Message(packetType), packetType(type) {}
 
 	void visit(MessageVisitor& visitor) const override;
 
-	bool operator==(const EmptyMessage& other) const
+	bool operator==(const BasicMessage& other) const
 	{
 		return packetType == other.packetType;
 	}
 
-	std::vector<std::byte> pack() const;
-	static std::expected<EmptyMessage, UnpackError> unpack(std::span<const std::byte> data);
+	std::vector<std::byte> pack() const override;
+	static std::expected<BasicMessage, UnpackError> unpack(std::span<const std::byte> data);
 
-	friend std::ostream& operator<<(std::ostream& out, const EmptyMessage& message)
+	friend std::ostream& operator<<(std::ostream& out, const BasicMessage& message)
 	{
-		out << "EmptyMessage { PacketType: " << static_cast<std::uint32_t>(message.packetType) << " }";
+		out << "BasicMessage { PacketType: " << static_cast<std::uint32_t>(message.packetType) << " }";
 		return out;
 	}
 };
@@ -168,7 +173,7 @@ struct TaskInfoMessage : Message
 		return taskID == other.taskID && parentID == other.parentID && name == other.name;
 	}
 
-	std::vector<std::byte> pack() const;
+	std::vector<std::byte> pack() const override;
 	static std::expected<TaskInfoMessage, UnpackError> unpack(std::span<const std::byte> data);
 
 	friend std::ostream& operator<<(std::ostream& out, const TaskInfoMessage& message)
@@ -182,7 +187,7 @@ struct MessageVisitor {
 	virtual void visit(const CreateTaskMessage&) = 0;
 	virtual void visit(const SuccessResponse&) {}
 	virtual void visit(const FailureResponse&) {}
-	virtual void visit(const EmptyMessage&) = 0;
+	virtual void visit(const BasicMessage&) = 0;
 	virtual void visit(const TaskInfoMessage&) {};
 };
 
@@ -337,7 +342,7 @@ public:
 
 struct ParseResult
 {
-	std::optional<std::unique_ptr<Message>> packet;
+	std::unique_ptr<Message> packet;
 	std::int32_t bytes_read = 0;
 };
 
@@ -372,7 +377,7 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 		case REQUEST_CONFIGURATION:
 		case REQUEST_CONFIGURATION_COMPLETE:
 		{
-			result.packet = std::make_unique<EmptyMessage>(EmptyMessage::unpack(bytes.subspan(4)).value());
+			result.packet = std::make_unique<BasicMessage>(BasicMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 
 			break;

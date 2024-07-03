@@ -10,7 +10,7 @@ struct MessageProcessVisitor : MessageVisitor
 	MessageProcessVisitor(MicroTask& app, std::vector<std::unique_ptr<Message>>& output) : app(app), output(output) {}
 
 	void visit(const CreateTaskMessage& message) override;
-	void visit(const EmptyMessage& message) override;
+	void visit(const BasicMessage& message) override;
 };
 }
 
@@ -34,7 +34,7 @@ void MessageProcessVisitor::visit(const CreateTaskMessage& message)
 	}
 }
 
-void MessageProcessVisitor::visit(const EmptyMessage& message)
+void MessageProcessVisitor::visit(const BasicMessage& message)
 {
 	if (message.packetType == PacketType::REQUEST_CONFIGURATION)
 	{
@@ -45,6 +45,6 @@ void MessageProcessVisitor::visit(const EmptyMessage& message)
 
 		app.for_each_task_sorted(send_task);
 
-		output.push_back(std::make_unique<EmptyMessage>(PacketType::REQUEST_CONFIGURATION_COMPLETE));
+		output.push_back(std::make_unique<BasicMessage>(PacketType::REQUEST_CONFIGURATION_COMPLETE));
 	}
 }

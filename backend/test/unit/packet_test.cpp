@@ -96,9 +96,9 @@ TEST_CASE("parse a create task packet", "[task][message][unpack]")
 
 	const auto result = parse_packet(create_task.pack());
 
-	REQUIRE(result.packet.has_value());
+	REQUIRE(result.packet);
 
-	const auto packet = dynamic_cast<CreateTaskMessage&>(*result.packet.value().get());
+	const auto packet = dynamic_cast<CreateTaskMessage&>(*result.packet.get());
 
 	CHECK(packet == create_task);
 	CHECK(result.bytes_read == 32);
@@ -141,7 +141,7 @@ TEST_CASE("pack the empty packet", "[message][pack]")
 {
 	PacketBuilder builder;
 
-	const auto message = EmptyMessage(PacketType::REQUEST_CONFIGURATION);
+	const auto message = BasicMessage(PacketType::REQUEST_CONFIGURATION);
 
 	auto verifier = PacketVerifier(message.pack(), 8);
 
@@ -154,13 +154,13 @@ TEST_CASE("unpack the empty packet", "[message][unpack]")
 {
 	MicroTask app;
 
-	const auto message = EmptyMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
+	const auto message = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
 
 	const auto result = parse_packet(message.pack());
 
-	REQUIRE(result.packet.has_value());
+	REQUIRE(result.packet);
 
-	const auto packet = dynamic_cast<EmptyMessage&>(*result.packet.value().get());
+	const auto packet = dynamic_cast<BasicMessage&>(*result.packet.get());
 
 	CHECK(packet == message);
 	CHECK(result.bytes_read == 8);

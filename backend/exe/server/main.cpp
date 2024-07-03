@@ -1,13 +1,88 @@
 ﻿#include "packets.hpp"
+#include "server.hpp"
 
 #include <iostream>
 #include <cstdlib>
 #include <unordered_map>
+#include <array>
 
 #include <sockpp/tcp_acceptor.h>
 
+inline std::uint32_t read_u32(const std::vector<std::byte>& input, std::size_t index)
+{
+	std::array<std::byte, 4> bytes;
+	std::memcpy(bytes.data(), input.data() + index, 4);
+	std::uint32_t t = {};
+	std::memcpy(&t, bytes.data(), 4);
+	t = std::byteswap(t);
+	return t;
+}
+
+class RequestCounter
+{
+public:
+	RequestID newID()
+	{
+		return nextID++;
+	}
+
+private:
+	RequestID nextID = RequestID(1);
+};
+
+struct Visitor : MessageVisitor
+{
+	MicroTask& server;
+	sockpp::tcp_socket& socket;
+
+	Visitor(MicroTask& server, sockpp::tcp_socket& socket)
+		: server(server), socket(socket)
+	{
+	}
+
+	virtual void visit(const CreateTaskMessage& message) override
+	{
+		std::cout << message << '\n';
+
+		const auto result = server.create_task(message.name, message.parentID);
+
+		if (result)
+		{
+			SuccessResponse response(message.requestID);
+			const auto output = response.pack();
+			socket.write_n(output.data(), output.size());
+		}
+		else
+		{
+			FailureResponse response(message.requestID, result.error());
+			const auto output = response.pack();
+			socket.write_n(output.data(), output.size());
+		}
+	}
+
+	virtual void visit(const SuccessResponse& message) override
+	{
+		std::cout << message << '\n';
+	}
+
+	virtual void visit(const FailureResponse& message) override
+	{
+		std::cout << message << '\n';
+	}
+	
+	virtual void visit(const BasicMessage& message) override
+	{
+		std::cout << message << '\n';
+	}
+	
+	virtual void visit(const TaskInfoMessage& message) override
+	{
+		std::cout << message << '\n';
+	}
+};
+
 /*
-* micro-task-cli.exe 127.0.0.1 5000
+* micro_task_server.exe 127.0.0.1 5000
 */
 int main(int argc, char** argv)
 {
@@ -29,123 +104,24 @@ int main(int argc, char** argv)
 
 	std::cout << "connected\n";
 
-	struct task {
-		std::int32_t id;
-		std::string name;
-		std::chrono::system_clock::time_point add_time;
-		std::optional<std::chrono::system_clock::time_point> start_time;
-	};
+	MicroTask server;
+	Visitor visitor(server, *socket);
 
-	std::unordered_map<std::int32_t, task> tasks;
-	std::int32_t next_id = 1;
+	while (socket->is_open())
+	{
+		std::vector<std::byte> input(4);
+		socket->read_n(input.data(), 4);
 
-	//while (auto opt_json = mt::read_next_packet(*socket))
-	//{
-	//	auto json = opt_json.value();
+		const auto length = read_u32(input, 0);
 
-	//	std::cout << json << '\n';
+		input.resize(length);
+		socket->read_n(input.data() + 4, length - 4);
 
-	//	std::int32_t command;
-	//	json.at("command").get_to(command);
+		const auto result = parse_packet(input);
 
-	//	if (command == 1) {
-	//		// version request
-	//		//auto response = nlohmann::json();
-	//		//response["command"] = 1;
-	//		//response["version"] = "2023-10-30";
-
-	//		//mt::send_packet(*socket, response);
-	//	}
-	//	else if (command == 2) {
-	//		// add task
-	//		std::string name = json["name"].get<std::string>();
-
-	//		task new_task;
-	//		new_task.id = next_id++;
-	//		new_task.name = name;
-	//		new_task.add_time = std::chrono::system_clock::now();// std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
-
-	//		tasks.emplace(new_task.id, new_task);
-
-	//		//nlohmann::json response;
-
-	//		//response["command"] = 2;
-	//		//response["id"] = new_task.id;
-	//		//response["name"] = new_task.name;
-	//		//response["add-time"] = std::format("{:%FT%TZ}", new_task.add_time);
-
-	//		//if (new_task.start_time.has_value())
-	//		//{
-	//		//	response["start-time"] = std::format("{:%FT%TZ}", new_task.start_time.value());
-	//		//}
-
-	//		//mt::send_packet(*socket, response);
-	//	}
-	//	else if (command == 3) {
-	//		// start task
-	//		const std::int32_t id = json["id"].get<int>();
-
-	//		if (tasks.contains(id))
-	//		{
-	//			task task = tasks.at(id);
-
-	//			task.start_time = std::chrono::system_clock::now();// std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
-
-	//			//nlohmann::json response;
-
-	//			//response["command"] = 3;
-	//			//response["id"] = task.id;
-	//			//response["name"] = task.name;
-
-	//			//mt::send_packet(*socket, response);
-	//		}
-	//	}
-	//	else if (command == 4) {
-	//		// get task (temporary command)
-	//		std::int32_t id = json["id"].get<int>();
-
-	//		if (tasks.contains(id))
-	//		{
-	//			task task = tasks.at(id);
-
-	//			//nlohmann::json response;
-
-	//			//response["command"] = 4;
-	//			//response["id"] = id;
-	//			//response["name"] = task.name;
-	//			//response["add-time"] = std::format("{:%FT%TZ}", task.add_time);
-
-	//			//if (task.start_time.has_value())
-	//			//{
-	//			//	response["start-time"] = std::format("{:%FT%TZ}", task.start_time.value());
-	//			//}
-
-	//			//mt::send_packet(*socket, response);
-	//		}
-	//	}
-	//	else if (command == 5) {
-	//		// get all tasks
-	//		//nlohmann::json response;
-	//		//
-	//		//response["command"] = 5;
-
-	//		//for (auto&& task : tasks)
-	//		//{
-	//		//	nlohmann::json task_json;
-	//		//	task_json["id"] = task.second.id;
-	//		//	task_json["name"] = task.second.name;
-	//		//	task_json["add-time"] = std::format("{:%FT%TZ}", task.second.add_time);
-
-	//		//	if (task.second.start_time.has_value())
-	//		//	{
-	//		//		response["start-time"] = std::format("{:%FT%TZ}", task.second.start_time.value());
-	//		//	}
-
-	//		//	response["tasks"].push_back(task_json);
-	//		//}
-
-	//		//mt::send_packet(*socket, response);
-	//	}
-	//	std::cout << json << '\n';
-	//}
+		if (result.packet)
+		{
+			result.packet->visit(visitor);
+		}
+	}
 }

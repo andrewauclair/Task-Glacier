@@ -75,7 +75,7 @@ TEST_CASE("request configuration at startup", "[api]")
 	output.clear();
 
 	// now that we're setup, request the configuration and check the output
-	api.process_packet(EmptyMessage{ PacketType::REQUEST_CONFIGURATION }, output);
+	api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, output);
 
 	REQUIRE(output.size() == 7);
 	
@@ -86,5 +86,5 @@ TEST_CASE("request configuration at startup", "[api]")
 	verify_message(TaskInfoMessage(TaskID(5), TaskID(3), "task 5"), *output[4]);
 	verify_message(TaskInfoMessage(TaskID(6), TaskID(4), "task 6"), *output[5]);
 	
-	verify_message(EmptyMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[6]);
+	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[6]);
 }

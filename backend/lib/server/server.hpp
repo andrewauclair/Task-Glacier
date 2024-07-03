@@ -16,8 +16,6 @@
 
 #include <strong_type/strong_type.hpp>
 
-inline constexpr TaskID NO_PARENT = TaskID(0);
-
 enum class TaskState
 {
 	INACTIVE,
