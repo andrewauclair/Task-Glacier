@@ -2,6 +2,7 @@
 #define MICRO_TASK_LIB_HPP
 
 #include "packets.hpp"
+#include "clock.hpp"
 
 #include <vector>
 #include <string>
@@ -42,6 +43,8 @@ public:
 class MicroTask
 {
 public:
+	MicroTask(const Clock& clock) : m_clock(&clock) {}
+
 	std::expected<TaskID, std::string> create_task(const std::string& name, TaskID parentID = NO_PARENT);
 
 	Task* find_task(TaskID id);
@@ -75,6 +78,8 @@ private:
 	std::unordered_map<TaskID, Task> m_tasks;
 
 	TaskID m_nextTaskID = TaskID(1);
+
+	const Clock* m_clock;
 };
 
 #endif

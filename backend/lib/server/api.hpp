@@ -9,9 +9,12 @@
 class API
 {
 public:
+	API(const Clock& clock) : m_clock(&clock), m_app(clock) {}
+
 	void process_packet(const Message& message, std::vector<std::unique_ptr<Message>>& output);
 
 private:
+	const Clock* m_clock;
 	MicroTask m_app;
 };
 

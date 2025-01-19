@@ -1,4 +1,6 @@
 ﻿add_library (micro_task_common OBJECT
+	clock.hpp
+	packets.hpp
 	packets.cpp
 )
 

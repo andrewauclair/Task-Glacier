@@ -27,7 +27,8 @@ void verify_message(const T& expected, const Message& actual)
 
 TEST_CASE("create task", "[api][task]")
 {
-	API api;
+	TestClock clock;
+	API api(clock);
 	std::vector<std::unique_ptr<Message>> output;
 
 	SECTION("success")
@@ -55,7 +56,8 @@ TEST_CASE("create task", "[api][task]")
 
 TEST_CASE("request configuration at startup", "[api]")
 {
-	API api;
+	TestClock clock;
+	API api(clock);
 	std::vector<std::unique_ptr<Message>> output;
 
 	auto create_task_1 = CreateTaskMessage(NO_PARENT, RequestID(1), "task 1");

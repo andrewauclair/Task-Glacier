@@ -108,7 +108,8 @@ int main(int argc, char** argv)
 
 	std::cout << "connected\n";
 
-	MicroTask server;
+	Clock clock;
+	MicroTask server(clock);
 	Visitor visitor(server, *socket);
 
 	while (socket->is_open())

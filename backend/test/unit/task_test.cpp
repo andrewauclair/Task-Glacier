@@ -27,7 +27,8 @@ TEST_CASE("no parent ID is 0", "[task]")
 
 TEST_CASE("create task", "[task]")
 {
-	MicroTask app;
+	TestClock clock;
+	MicroTask app(clock);
 
 	SECTION("create task with no parent")
 	{
@@ -69,7 +70,8 @@ TEST_CASE("create task", "[task]")
 
 TEST_CASE("task management", "[task]")
 {
-	MicroTask app;
+	TestClock clock;
+	MicroTask app(clock);
 
 	REQUIRE(app.create_task("testing").has_value());
 
