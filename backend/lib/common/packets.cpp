@@ -33,6 +33,35 @@ std::expected<CreateTaskMessage, UnpackError> CreateTaskMessage::unpack(std::spa
 	}
 }
 
+void StartTaskMessage::visit(MessageVisitor& visitor) const { visitor.visit(*this); }
+
+std::vector<std::byte> StartTaskMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(static_cast<std::int32_t>(PacketType::START_TASK));
+	builder.add(taskID);
+
+	return builder.build();
+}
+
+std::expected<StartTaskMessage, UnpackError> StartTaskMessage::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto taskID = parser.parse_next<TaskID>();
+
+	try
+	{
+		return StartTaskMessage(taskID.value());
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
+}
+
 std::vector<std::byte> SuccessResponse::pack() const
 {
 	PacketBuilder builder;

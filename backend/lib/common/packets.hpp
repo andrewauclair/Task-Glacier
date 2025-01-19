@@ -93,6 +93,29 @@ struct CreateTaskMessage : Message
 	}
 };
 
+struct TaskMessage : Message
+{
+	TaskID taskID;
+
+	TaskMessage(PacketType type, TaskID taskID) : Message(type), taskID(taskID) {}
+};
+
+struct StartTaskMessage : TaskMessage
+{
+	StartTaskMessage(TaskID taskID) : TaskMessage(PacketType::START_TASK, taskID) {}
+
+	void visit(MessageVisitor& visitor) const override;
+
+	std::vector<std::byte> pack() const override;
+	static std::expected<StartTaskMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	friend std::ostream& operator<<(std::ostream& out, const StartTaskMessage& message)
+	{
+		out << "StartTaskMessage { taskID: " << message.taskID._val << "\" }";
+		return out;
+	}
+};
+
 struct SuccessResponse : Message
 {
 	RequestID requestID;
@@ -185,6 +208,7 @@ struct TaskInfoMessage : Message
 
 struct MessageVisitor {
 	virtual void visit(const CreateTaskMessage&) = 0;
+	virtual void visit(const StartTaskMessage&) {}
 	virtual void visit(const SuccessResponse&) {}
 	virtual void visit(const FailureResponse&) {}
 	virtual void visit(const BasicMessage&) = 0;
