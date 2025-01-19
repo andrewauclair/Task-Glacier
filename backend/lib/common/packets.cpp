@@ -144,3 +144,37 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 		return std::unexpected(e.error());
 	}
 }
+
+void BugzillaInfoMessage::visit(MessageVisitor& visitor) const
+{
+	visitor.visit(*this);
+}
+
+std::vector<std::byte> BugzillaInfoMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(PacketType::BUGZILLA_INFO);
+	builder.add_string(URL);
+	builder.add_string(apiKey);
+
+	return builder.build();
+}
+
+std::expected<BugzillaInfoMessage, UnpackError> BugzillaInfoMessage::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto URL = parser.parse_next<std::string>();
+	const auto apiKey = parser.parse_next<std::string>();
+
+	try
+	{
+		return BugzillaInfoMessage(URL.value(), apiKey.value());
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
+}

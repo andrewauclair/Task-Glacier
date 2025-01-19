@@ -165,3 +165,34 @@ TEST_CASE("unpack the empty packet", "[message][unpack]")
 	CHECK(packet == message);
 	CHECK(result.bytes_read == 8);
 }
+
+TEST_CASE("Bugzilla Info Packet", "[message]")
+{
+	PacketBuilder builder;
+	MicroTask app;
+
+	const auto message = BugzillaInfoMessage("bugzilla", "aBSEFASDfOJOEFfjlsojFEF");
+
+	SECTION("Pack")
+	{
+		auto verifier = PacketVerifier(message.pack(), 43);
+
+		verifier
+			.verify_value<std::uint32_t>(43, "packet length")
+			.verify_value<std::uint32_t>(13, "packet ID")
+			.verify_string("bugzilla", "URL")
+			.verify_string("aBSEFASDfOJOEFfjlsojFEF", "API Key");
+	}
+
+	SECTION("Unpack")
+	{
+		const auto result = parse_packet(message.pack());
+
+		REQUIRE(result.packet);
+
+		const auto packet = dynamic_cast<BugzillaInfoMessage&>(*result.packet.get());
+
+		CHECK(packet == message);
+		CHECK(result.bytes_read == 43);
+	}
+}

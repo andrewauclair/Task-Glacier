@@ -10,7 +10,7 @@ FetchContent_Declare(
     Catch2
     GIT_SHALLOW    TRUE
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG        v3.5.3
+    GIT_TAG        v3.8.0
 )
 
 set(SOCKPP_BUILD_SHARED OFF)

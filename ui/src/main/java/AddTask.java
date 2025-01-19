@@ -23,12 +23,6 @@ public class AddTask extends JDialog {
             addTask.put("command", 2);
             addTask.put("name", name.getText());
 
-            try {
-                MainFrame.sendJSON(output, addTask);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-
             AddTask.this.dispose();
         });
 

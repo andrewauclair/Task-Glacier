@@ -1,2 +1,2 @@
-rootProject.name = "macro-task-ui"
+rootProject.name = "task-glacier-ui"
 

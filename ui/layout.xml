@@ -1,15 +1,12 @@
 <?xml version="1.0" ?>
 <app-layout>
-<layout main-frame="true" location="30,98" size="763,623" state="0">
+<layout main-frame="true" location="32,100" size="764,624" state="0">
 <westToolbar>
 </westToolbar>
 <eastToolbar>
 </eastToolbar>
 <southToolbar>
 </southToolbar>
-<simple persistentID="tasks" class-name="TasksLists">
-<properties></properties>
-</simple>
 </layout>
 <undocked>
 </undocked>

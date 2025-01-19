@@ -90,3 +90,6 @@ bin/
 ### Mac OS ###
 .DS_Store
 /cli/build-release-linux
+ui/Main-0.0.1.exe
+/ui/.idea
+ui/layout.xml

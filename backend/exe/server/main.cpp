@@ -82,11 +82,15 @@ struct Visitor : MessageVisitor
 };
 
 /*
-* micro_task_server.exe 127.0.0.1 5000
+* task-glacier 127.0.0.1 5000
 */
 int main(int argc, char** argv)
 {
-	if (argc < 3) return -1;
+	if (argc < 3)
+	{
+		std::cerr << "task-glacier <ip address> <port>\n";
+		return -1;
+	}
 
 	sockpp::initialize();
 

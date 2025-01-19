@@ -1,5 +1,5 @@
-import ModernDocking.Dockable;
-import ModernDocking.Docking;
+import io.github.andrewauclair.moderndocking.Dockable;
+import io.github.andrewauclair.moderndocking.app.Docking;
 import org.json.JSONObject;
 
 import javax.swing.*;
@@ -42,11 +42,6 @@ public class TasksLists extends JPanel implements Dockable {
             startTask.put("command", 3);
             startTask.put("id", tableModel.getValueAt(table.convertRowIndexToModel(selectedRow), 0));
 
-            try {
-                MainFrame.sendJSON(output, startTask);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
         });
         contextMenu.add(start);
 
@@ -70,6 +65,11 @@ public class TasksLists extends JPanel implements Dockable {
         gbc.fill = GridBagConstraints.BOTH;
 
         add(split, gbc);
+    }
+
+    public TasksLists(String persistentID, String title) {
+        table = null;
+        tableModel = null;
     }
 
     @Override

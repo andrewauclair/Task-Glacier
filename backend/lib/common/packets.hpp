@@ -51,6 +51,7 @@ enum class PacketType : std::int32_t
 	REQUEST_CONFIGURATION_COMPLETE,
 
 	TASK_INFO,
+	BUGZILLA_INFO
 };
 
 struct Message
@@ -206,13 +207,38 @@ struct TaskInfoMessage : Message
 	}
 };
 
+struct BugzillaInfoMessage : Message
+{
+	std::string URL;
+	std::string apiKey;
+
+	BugzillaInfoMessage(std::string URL, std::string apiKey) : Message(PacketType::BUGZILLA_INFO), URL(std::move(URL)), apiKey(std::move(apiKey)) {}
+
+	void visit(MessageVisitor& visitor) const override;
+
+	bool operator==(const BugzillaInfoMessage& other) const
+	{
+		return URL == other.URL && apiKey == other.apiKey;
+	}
+
+	std::vector<std::byte> pack() const override;
+	static std::expected<BugzillaInfoMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	friend std::ostream& operator<<(std::ostream& out, const BugzillaInfoMessage& message)
+	{
+		out << "BugzillaInfoMessage { URL: \"" << message.URL << "\", apiKey: \"" << message.apiKey << "\" }";
+		return out;
+	}
+};
+
 struct MessageVisitor {
 	virtual void visit(const CreateTaskMessage&) = 0;
 	virtual void visit(const StartTaskMessage&) {}
 	virtual void visit(const SuccessResponse&) {}
 	virtual void visit(const FailureResponse&) {}
 	virtual void visit(const BasicMessage&) = 0;
-	virtual void visit(const TaskInfoMessage&) {};
+	virtual void visit(const TaskInfoMessage&) {}
+	virtual void visit(const BugzillaInfoMessage&) {}
 };
 
 class PacketBuilder
@@ -402,6 +428,13 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 		case REQUEST_CONFIGURATION_COMPLETE:
 		{
 			result.packet = std::make_unique<BasicMessage>(BasicMessage::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
+
+			break;
+		}
+		case BUGZILLA_INFO:
+		{
+			result.packet = std::make_unique<BugzillaInfoMessage>(BugzillaInfoMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 
 			break;

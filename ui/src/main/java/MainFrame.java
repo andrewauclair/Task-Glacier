@@ -1,9 +1,12 @@
-import ModernDocking.*;
-import ModernDocking.exception.DockingLayoutException;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
-import docking.ui.DockingUI;
+import io.github.andrewauclair.moderndocking.app.AppState;
+import io.github.andrewauclair.moderndocking.app.Docking;
+import io.github.andrewauclair.moderndocking.app.RootDockingPanel;
+import io.github.andrewauclair.moderndocking.app.WindowLayoutBuilder;
+import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
+import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
 import org.json.JSONObject;
 
 import javax.swing.*;
@@ -19,23 +22,8 @@ import java.time.OffsetDateTime;
 import java.util.Arrays;
 
 public class MainFrame extends JFrame {
-    public static void sendJSON(DataOutputStream output, JSONObject object) throws IOException {
-        String string = object.toString();
-
-        short size = (short) (2 + string.length());
-
-        output.write(ByteBuffer.allocate(2).putShort(size).array());
-        output.write(string.getBytes());
-
-        output.flush();
-    }
-
     public MainFrame() throws IOException {
         setLayout(new GridBagLayout());
-
-        final Socket socket = new Socket("127.0.0.1", 5005);
-
-        DataOutputStream output = new DataOutputStream(socket.getOutputStream());
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -46,6 +34,8 @@ public class MainFrame extends JFrame {
 
         RootDockingPanel root = new RootDockingPanel();
         add(root, gbc);
+
+        setTitle("Task Glacier (Not Connected)");
 
         JPanel statusBar = new JPanel(new GridBagLayout());
         JLabel activeTask = new JLabel("No active task");
@@ -70,13 +60,13 @@ public class MainFrame extends JFrame {
         DockingUI.initialize();
         Docking.registerDockingPanel(root, this);
 
-        TasksLists tasks = new TasksLists(output);
+//        TasksLists tasks = new TasksLists(output);
 
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        WindowLayoutBuilder tasks1 = new WindowLayoutBuilder("tasks");
+//        WindowLayoutBuilder tasks1 = new WindowLayoutBuilder("tasks");
 
-        AppState.setDefaultApplicationLayout(tasks1.buildApplicationLayout());
+//        AppState.setDefaultApplicationLayout(tasks1.buildApplicationLayout());
 
 
         JMenuBar menuBar = new JMenuBar();
@@ -85,13 +75,31 @@ public class MainFrame extends JFrame {
         JMenu task = new JMenu("Task");
         JMenuItem add = new JMenuItem("Add");
         add.addActionListener(e -> {
-            new AddTask(output).setVisible(true);
+//            new AddTask(output).setVisible(true);
         });
         task.add(add);
 
         menuBar.add(task);
 
-// now that the main frame is set up with the defaults, we can restore the layout
+        JMenu server = new JMenu("Server");
+        JMenuItem connect = new JMenuItem("Connect...");
+        connect.addActionListener(e -> {
+            class ServerConfig extends JDialog {
+                ServerConfig() {
+                    add(new JLabel("IP Address: "));
+                    add(new JTextField());
+                    add(new JLabel("Port: "));
+                    add(new JTextField());
+                }
+            }
+            ServerConfig config =new ServerConfig();
+            config.setVisible(true);
+        });
+
+        server.add(connect);
+        menuBar.add(server);
+
+        // now that the main frame is set up with the defaults, we can restore the layout
         File layoutFile = new File("layout.xml");
         AppState.setPersistFile(layoutFile);
 
@@ -104,6 +112,14 @@ public class MainFrame extends JFrame {
 
         AppState.setAutoPersist(true);
 
+
+
+    }
+
+    private void createConnection() throws IOException {
+        final Socket socket = new Socket("127.0.0.1", 5005);
+
+        DataOutputStream output = new DataOutputStream(socket.getOutputStream());
 
         Thread listen = new Thread(() -> {
             try (DataInputStream in = new DataInputStream(socket.getInputStream())) {
@@ -137,10 +153,10 @@ public class MainFrame extends JFrame {
                             break;
                         case 2: // add task
                             // this response verifies that the task was added
-                            tasks.addTask(obj.getInt("id"), obj.getString("name"));
+//                            tasks.addTask(obj.getInt("id"), obj.getString("name"));
                             break;
                         case 3: // start task
-                            activeTask.setText(obj.getInt("id") + " - " + obj.getString("name"));
+//                            activeTask.setText(obj.getInt("id") + " - " + obj.getString("name"));
                             repaint();
                             break;
                         case 4: // get task response
