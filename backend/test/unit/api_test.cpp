@@ -8,10 +8,13 @@
 #include "packets.hpp"
 
 #include <vector>
+#include <source_location>
 
 template<typename T>
-void verify_message(const T& expected, const Message& actual)
+void verify_message(const T& expected, const Message& actual, std::source_location location = std::source_location::current())
 {
+	INFO(location.file_name() << ":" << location.line());
+
 	UNSCOPED_INFO("packet type: " << static_cast<std::int32_t>(actual.packetType()));
 	
 	if (const auto* actual_message = dynamic_cast<const T*>(&actual))
@@ -28,7 +31,8 @@ void verify_message(const T& expected, const Message& actual)
 TEST_CASE("create task", "[api][task]")
 {
 	TestClock clock;
-	API api(clock);
+	std::ostringstream file;
+	API api(clock, file);
 	std::vector<std::unique_ptr<Message>> output;
 
 	SECTION("success")
@@ -52,12 +56,119 @@ TEST_CASE("create task", "[api][task]")
 
 		verify_message(FailureResponse{ RequestID(1), "Task with ID 2 does not exist." }, *output[0]);
 	}
+
+	SECTION("persist")
+	{
+		auto create_task = CreateTaskMessage(NO_PARENT, RequestID(1), "this is a test");
+
+		api.process_packet(create_task, output);
+
+		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
+		CHECK(file.str() == "create 1 0 1737344039870 this is a test\n");
+	}
+}
+
+// TODO for now we're just going to do this in one big test
+TEST_CASE("Persist Tasks", "[api][task]")
+{
+	TestClock clock;
+	std::ostringstream file;
+	API api(clock, file);
+	std::vector<std::unique_ptr<Message>> output;
+
+	auto create_task_1 = CreateTaskMessage(NO_PARENT, RequestID(1), "task 1");
+	auto create_task_2 = CreateTaskMessage(TaskID(1), RequestID(2), "task 2");
+	auto create_task_3 = CreateTaskMessage(TaskID(2), RequestID(3), "task 3");
+	auto create_task_4 = CreateTaskMessage(TaskID(2), RequestID(4), "task 4");
+	auto create_task_5 = CreateTaskMessage(TaskID(3), RequestID(5), "task 5");
+	auto create_task_6 = CreateTaskMessage(TaskID(4), RequestID(6), "task 6");
+
+	auto start_task_2 = StartTaskMessage(TaskID(2), RequestID(7));
+	auto start_task_3 = StartTaskMessage(TaskID(3), RequestID(8));
+	auto start_task_4 = StartTaskMessage(TaskID(4), RequestID(9));
+
+	auto stop_task_2 = StopTaskMessage(TaskID(2), RequestID(10));
+	auto stop_task_3 = StopTaskMessage(TaskID(3), RequestID(11));
+	auto stop_task_4 = StopTaskMessage(TaskID(4), RequestID(12));
+
+	auto finish_task_2 = FinishTaskMessage(TaskID(2), RequestID(13));
+	auto finish_task_3 = FinishTaskMessage(TaskID(3), RequestID(14));
+	auto finish_task_4 = FinishTaskMessage(TaskID(4), RequestID(15));
+
+	api.process_packet(create_task_1, output);
+	clock.time += std::chrono::hours(1);
+	
+	api.process_packet(create_task_2, output);
+	clock.time += std::chrono::hours(1);
+	
+	api.process_packet(start_task_2, output);
+	clock.time += std::chrono::hours(1);
+
+	api.process_packet(create_task_3, output);
+	clock.time += std::chrono::hours(1);
+	
+	api.process_packet(stop_task_2, output);
+	clock.time += std::chrono::hours(1);
+
+	api.process_packet(start_task_3, output);
+	clock.time += std::chrono::hours(1);
+
+	api.process_packet(create_task_4, output);
+	clock.time += std::chrono::hours(1);
+	
+	api.process_packet(create_task_5, output);
+	clock.time += std::chrono::hours(1);
+
+	api.process_packet(stop_task_3, output);
+	clock.time += std::chrono::hours(1);
+
+	api.process_packet(create_task_6, output);
+	clock.time += std::chrono::hours(1);
+
+	api.process_packet(start_task_2, output);
+	clock.time += std::chrono::hours(1);
+
+	api.process_packet(stop_task_2, output);
+	clock.time += std::chrono::hours(1);
+
+	api.process_packet(start_task_4, output);
+	clock.time += std::chrono::hours(1);
+
+	api.process_packet(finish_task_4, output);
+	clock.time += std::chrono::hours(1);
+
+	api.process_packet(finish_task_3, output);
+	clock.time += std::chrono::hours(1);
+
+	api.process_packet(finish_task_2, output);
+	clock.time += std::chrono::hours(1);
+
+	std::ostringstream expected;
+	expected << "create 1 0 1737344039870 task 1\n";
+	expected << "create 2 1 1737347639870 task 2\n";
+	expected << "start 2 1737351239870\n";
+	expected << "create 3 2 1737354839870 task 3\n";
+	expected << "stop 2 1737358439870\n";
+	expected << "start 3 1737362039870\n";
+	expected << "create 4 2 1737365639870 task 4\n";
+	expected << "create 5 3 1737369239870 task 5\n";
+	expected << "stop 3 1737372839870\n";
+	expected << "create 6 4 1737376439870 task 6\n";
+	expected << "start 2 1737380039870\n";
+	expected << "stop 2 1737383639870\n";
+	expected << "start 4 1737387239870\n";
+	expected << "finish 4 1737390839870\n";
+	expected << "finish 3 1737394439870\n";
+	expected << "finish 2 1737398039870\n";
+
+	CHECK(file.str() == expected.str());
 }
 
 TEST_CASE("request configuration at startup", "[api]")
 {
 	TestClock clock;
-	API api(clock);
+	std::ostringstream file;
+	API api(clock, file);
 	std::vector<std::unique_ptr<Message>> output;
 
 	auto create_task_1 = CreateTaskMessage(NO_PARENT, RequestID(1), "task 1");

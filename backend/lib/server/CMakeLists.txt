@@ -1,8 +1,7 @@
 ﻿add_library (micro_task_server_lib STATIC 
-	api.cpp
-	server.cpp 
-	api.hpp
-	server.hpp
+	api.hpp		api.cpp
+	server.cpp  server.hpp
+	persist.hpp persist.cpp
 )
 
 target_include_directories(micro_task_server_lib PUBLIC .)

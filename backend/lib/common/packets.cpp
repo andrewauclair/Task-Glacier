@@ -51,10 +51,71 @@ std::expected<StartTaskMessage, UnpackError> StartTaskMessage::unpack(std::span<
 
 	const auto packetType = parser.parse_next<PacketType>();
 	const auto taskID = parser.parse_next<TaskID>();
+	const auto requestID = parser.parse_next<RequestID>();
 
 	try
 	{
-		return StartTaskMessage(taskID.value());
+		return StartTaskMessage(taskID.value(), requestID.value());
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
+}
+
+void StopTaskMessage::visit(MessageVisitor& visitor) const { visitor.visit(*this); }
+
+std::vector<std::byte> StopTaskMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(static_cast<std::int32_t>(PacketType::STOP_TASK));
+	builder.add(taskID);
+
+	return builder.build();
+}
+
+std::expected<StopTaskMessage, UnpackError> StopTaskMessage::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto taskID = parser.parse_next<TaskID>();
+	const auto requestID = parser.parse_next<RequestID>();
+
+	try
+	{
+		return StopTaskMessage(taskID.value(), requestID.value());
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
+}
+
+void FinishTaskMessage::visit(MessageVisitor& visitor) const { visitor.visit(*this); }
+
+std::vector<std::byte> FinishTaskMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(static_cast<std::int32_t>(PacketType::FINISH_TASK));
+	builder.add(taskID);
+
+	return builder.build();
+}
+
+std::expected<FinishTaskMessage, UnpackError> FinishTaskMessage::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto taskID = parser.parse_next<TaskID>();
+	const auto requestID = parser.parse_next<RequestID>();
+
+	try
+	{
+		return FinishTaskMessage(taskID.value(), requestID.value());
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{

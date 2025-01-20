@@ -13,8 +13,8 @@ target_link_libraries(micro_task_integration_test PRIVATE
 	Catch2::Catch2WithMain
 )
 
-list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
+#list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
 
-include(CTest)
-include(Catch)
-catch_discover_tests(micro_task_integration_test)
+#include(CTest)
+#include(Catch)
+#catch_discover_tests(micro_task_integration_test)

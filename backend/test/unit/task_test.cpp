@@ -28,7 +28,8 @@ TEST_CASE("no parent ID is 0", "[task]")
 TEST_CASE("create task", "[task]")
 {
 	TestClock clock;
-	MicroTask app(clock);
+	std::ostringstream output;
+	MicroTask app(clock, output);
 
 	SECTION("create task with no parent")
 	{
@@ -71,7 +72,10 @@ TEST_CASE("create task", "[task]")
 TEST_CASE("task management", "[task]")
 {
 	TestClock clock;
-	MicroTask app(clock);
+	std::ostringstream output;
+	clock.time += std::chrono::hours(2);
+
+	MicroTask app(clock, output);
 
 	REQUIRE(app.create_task("testing").has_value());
 
@@ -84,7 +88,7 @@ TEST_CASE("task management", "[task]")
 		const auto state_result = app.task_state(TaskID(1));
 
 		check_expected_value(state_result, TaskState::ACTIVE);
-
+		
 		SECTION("stop a task")
 		{
 			const auto stop_result = app.stop_task(TaskID(1));

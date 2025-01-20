@@ -51,7 +51,9 @@ enum class PacketType : std::int32_t
 	REQUEST_CONFIGURATION_COMPLETE,
 
 	TASK_INFO,
-	BUGZILLA_INFO
+
+	BUGZILLA_INFO,
+	BUGZILLA_REFRESH
 };
 
 struct Message
@@ -103,9 +105,16 @@ struct TaskMessage : Message
 
 struct StartTaskMessage : TaskMessage
 {
-	StartTaskMessage(TaskID taskID) : TaskMessage(PacketType::START_TASK, taskID) {}
+	RequestID requestID;
+
+	StartTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::START_TASK, taskID), requestID(requestID) {}
 
 	void visit(MessageVisitor& visitor) const override;
+
+	bool operator==(const StartTaskMessage& other) const
+	{
+		return taskID == other.taskID && requestID == other.requestID;
+	}
 
 	std::vector<std::byte> pack() const override;
 	static std::expected<StartTaskMessage, UnpackError> unpack(std::span<const std::byte> data);
@@ -113,6 +122,52 @@ struct StartTaskMessage : TaskMessage
 	friend std::ostream& operator<<(std::ostream& out, const StartTaskMessage& message)
 	{
 		out << "StartTaskMessage { taskID: " << message.taskID._val << "\" }";
+		return out;
+	}
+};
+
+struct StopTaskMessage : TaskMessage
+{
+	RequestID requestID;
+
+	StopTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::STOP_TASK, taskID), requestID(requestID) {}
+
+	void visit(MessageVisitor& visitor) const override;
+
+	bool operator==(const StopTaskMessage& other) const
+	{
+		return taskID == other.taskID && requestID == other.requestID;
+	}
+
+	std::vector<std::byte> pack() const override;
+	static std::expected<StopTaskMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	friend std::ostream& operator<<(std::ostream& out, const StopTaskMessage& message)
+	{
+		out << "StopTaskMessage { taskID: " << message.taskID._val << "\" }";
+		return out;
+	}
+};
+
+struct FinishTaskMessage : TaskMessage
+{
+	RequestID requestID;
+
+	FinishTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::FINISH_TASK, taskID), requestID(requestID) {}
+
+	void visit(MessageVisitor& visitor) const override;
+
+	bool operator==(const FinishTaskMessage& other) const
+	{
+		return taskID == other.taskID && requestID == other.requestID;
+	}
+
+	std::vector<std::byte> pack() const override;
+	static std::expected<FinishTaskMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	friend std::ostream& operator<<(std::ostream& out, const FinishTaskMessage& message)
+	{
+		out << "FinishTaskMessage { taskID: " << message.taskID._val << "\" }";
 		return out;
 	}
 };
@@ -234,6 +289,8 @@ struct BugzillaInfoMessage : Message
 struct MessageVisitor {
 	virtual void visit(const CreateTaskMessage&) = 0;
 	virtual void visit(const StartTaskMessage&) {}
+	virtual void visit(const StopTaskMessage&) {}
+	virtual void visit(const FinishTaskMessage&) {}
 	virtual void visit(const SuccessResponse&) {}
 	virtual void visit(const FailureResponse&) {}
 	virtual void visit(const BasicMessage&) = 0;
@@ -426,6 +483,7 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 			break;
 		case REQUEST_CONFIGURATION:
 		case REQUEST_CONFIGURATION_COMPLETE:
+		case BUGZILLA_REFRESH:
 		{
 			result.packet = std::make_unique<BasicMessage>(BasicMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;

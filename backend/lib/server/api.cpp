@@ -10,6 +10,9 @@ struct MessageProcessVisitor : MessageVisitor
 	MessageProcessVisitor(MicroTask& app, std::vector<std::unique_ptr<Message>>& output) : app(app), output(output) {}
 
 	void visit(const CreateTaskMessage& message) override;
+	void visit(const StartTaskMessage& message) override;
+	void visit(const StopTaskMessage& message) override;
+	void visit(const FinishTaskMessage& message) override;
 	void visit(const BasicMessage& message) override;
 };
 }
@@ -31,6 +34,48 @@ void MessageProcessVisitor::visit(const CreateTaskMessage& message)
 	else
 	{
 		output.push_back(std::make_unique<FailureResponse>(message.requestID, result.error()));
+	}
+}
+
+void MessageProcessVisitor::visit(const StartTaskMessage& message)
+{
+	const auto result = app.start_task(message.taskID);
+
+	if (result)
+	{
+		output.push_back(std::make_unique<FailureResponse>(message.requestID, result.value()));
+	}
+	else
+	{
+		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
+	}
+}
+
+void MessageProcessVisitor::visit(const StopTaskMessage& message)
+{
+	const auto result = app.stop_task(message.taskID);
+
+	if (result)
+	{
+		output.push_back(std::make_unique<FailureResponse>(message.requestID, result.value()));
+	}
+	else
+	{
+		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
+	}
+}
+
+void MessageProcessVisitor::visit(const FinishTaskMessage& message)
+{
+	const auto result = app.finish_task(message.taskID);
+
+	if (result)
+	{
+		output.push_back(std::make_unique<FailureResponse>(message.requestID, result.value()));
+	}
+	else
+	{
+		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
 	}
 }
 

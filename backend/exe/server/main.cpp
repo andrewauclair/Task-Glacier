@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <unordered_map>
 #include <array>
+#include <fstream>
 
 #include <sockpp/tcp_acceptor.h>
 
@@ -60,6 +61,66 @@ struct Visitor : MessageVisitor
 		}
 	}
 
+	void visit(const StartTaskMessage& message) override
+	{
+		std::cout << message << '\n';
+
+		const auto result = server.start_task(message.taskID);
+
+		if (result)
+		{
+			SuccessResponse response(message.requestID);
+			const auto output = response.pack();
+			socket.write_n(output.data(), output.size());
+		}
+		else
+		{
+			FailureResponse response(message.requestID, result.value());
+			const auto output = response.pack();
+			socket.write_n(output.data(), output.size());
+		}		
+	}
+
+	void visit(const StopTaskMessage& message) override
+	{
+		std::cout << message << '\n';
+
+		const auto result = server.stop_task(message.taskID);
+
+		if (result)
+		{
+			SuccessResponse response(message.requestID);
+			const auto output = response.pack();
+			socket.write_n(output.data(), output.size());
+		}
+		else
+		{
+			FailureResponse response(message.requestID, result.value());
+			const auto output = response.pack();
+			socket.write_n(output.data(), output.size());
+		}
+	}
+
+	void visit(const FinishTaskMessage& message) override
+	{
+		std::cout << message << '\n';
+
+		const auto result = server.finish_task(message.taskID);
+
+		if (result)
+		{
+			SuccessResponse response(message.requestID);
+			const auto output = response.pack();
+			socket.write_n(output.data(), output.size());
+		}
+		else
+		{
+			FailureResponse response(message.requestID, result.value());
+			const auto output = response.pack();
+			socket.write_n(output.data(), output.size());
+		}
+	}
+
 	virtual void visit(const SuccessResponse& message) override
 	{
 		std::cout << message << '\n';
@@ -82,13 +143,13 @@ struct Visitor : MessageVisitor
 };
 
 /*
-* task-glacier 127.0.0.1 5000
+* task-glacier 127.0.0.1 5000 /var/lib/task-glacier
 */
 int main(int argc, char** argv)
 {
-	if (argc < 3)
+	if (argc < 4)
 	{
-		std::cerr << "task-glacier <ip address> <port>\n";
+		std::cerr << "task-glacier <ip address> <port> <persistence directory>\n";
 		return -1;
 	}
 
@@ -109,7 +170,8 @@ int main(int argc, char** argv)
 	std::cout << "connected\n";
 
 	Clock clock;
-	MicroTask server(clock);
+	std::ofstream output(argv[3]);
+	MicroTask server(clock, output);
 	Visitor visitor(server, *socket);
 
 	while (socket->is_open())

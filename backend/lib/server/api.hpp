@@ -9,7 +9,7 @@
 class API
 {
 public:
-	API(const Clock& clock) : m_clock(&clock), m_app(clock) {}
+	API(const Clock& clock, std::ostream& output) : m_clock(&clock), m_app(clock, output) {}
 
 	void process_packet(const Message& message, std::vector<std::unique_ptr<Message>>& output);
 

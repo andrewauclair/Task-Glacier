@@ -17,6 +17,8 @@ std::expected<TaskID, std::string> MicroTask::create_task(const std::string& nam
 
 	m_nextTaskID._val++;
 
+	*m_output << "create " << id._val << ' ' << parentID._val << ' ' << m_clock->now().count() << ' ' << name << '\n';
+
 	return std::expected<TaskID, std::string>(id);
 }
 
@@ -35,6 +37,8 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 	{
 		task->state = TaskState::ACTIVE;
 
+		*m_output << "start " << id._val << ' ' << m_clock->now().count() << '\n';
+
 		return std::nullopt;
 	}
 	return std::format("Task with ID {} does not exist.", id);
@@ -48,6 +52,8 @@ std::optional<std::string> MicroTask::stop_task(TaskID id)
 	{
 		task->state = TaskState::INACTIVE;
 
+		*m_output << "stop " << id._val << ' ' << m_clock->now().count() << '\n';
+
 		return std::nullopt;
 	}
 	return std::format("");
@@ -57,9 +63,11 @@ std::optional<std::string> MicroTask::finish_task(TaskID id)
 {
 	auto* task = find_task(id);
 
-	if (task && task->state == TaskState::ACTIVE)
+	if (task && task->state != TaskState::FINISHED)
 	{
 		task->state = TaskState::FINISHED;
+
+		*m_output << "finish " << id._val << ' ' << m_clock->now().count() << '\n';
 
 		return std::nullopt;
 	}

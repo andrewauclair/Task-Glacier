@@ -91,7 +91,8 @@ TEST_CASE("pack the create task message", "[task][message][pack]")
 TEST_CASE("parse a create task packet", "[task][message][unpack]")
 {
 	TestClock clock;
-	MicroTask app(clock);
+	std::ostringstream output;
+	MicroTask app(clock, output);
 
 	const auto create_task = CreateTaskMessage(NO_PARENT, RequestID(10), "this is a test");
 
@@ -154,7 +155,8 @@ TEST_CASE("pack the empty packet", "[message][pack]")
 TEST_CASE("unpack the empty packet", "[message][unpack]")
 {
 	TestClock clock;
-	MicroTask app(clock);
+	std::ostringstream output;
+	MicroTask app(clock, output);
 
 	const auto message = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
 
@@ -172,7 +174,8 @@ TEST_CASE("Bugzilla Info Packet", "[message]")
 {
 	PacketBuilder builder;
 	TestClock clock;
-	MicroTask app(clock);
+	std::ostringstream output;
+	MicroTask app(clock, output);
 
 	const auto message = BugzillaInfoMessage("bugzilla", "aBSEFASDfOJOEFfjlsojFEF");
 

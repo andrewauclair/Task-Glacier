@@ -24,11 +24,21 @@ enum class TaskState
 	FINISHED
 };
 
+struct TaskTimes
+{
+	std::chrono::milliseconds start;
+	std::optional<std::chrono::milliseconds> stop;
+};
+
 class Task
 {
 private:
 	TaskID m_taskID;
 	TaskID m_parentID;
+
+	std::chrono::milliseconds m_createTime;
+	std::vector<TaskTimes> m_times;
+	std::optional<std::chrono::milliseconds> m_finishTime;
 
 public:
 	Task(std::string name, TaskID id, TaskID parentID);
@@ -43,7 +53,7 @@ public:
 class MicroTask
 {
 public:
-	MicroTask(const Clock& clock) : m_clock(&clock) {}
+	MicroTask(const Clock& clock, std::ostream& output) : m_clock(&clock), m_output(&output) {}
 
 	std::expected<TaskID, std::string> create_task(const std::string& name, TaskID parentID = NO_PARENT);
 
@@ -80,6 +90,7 @@ private:
 	TaskID m_nextTaskID = TaskID(1);
 
 	const Clock* m_clock;
+	std::ostream* m_output;
 };
 
 #endif

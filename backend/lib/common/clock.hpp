@@ -14,7 +14,7 @@ struct Clock
 
 struct TestClock : Clock
 {
-	std::chrono::milliseconds time = std::chrono::milliseconds(0);
+	std::chrono::milliseconds time = std::chrono::milliseconds(1737344039870); // 3:34 am, 20th January 2025
 
 	std::chrono::milliseconds now() const override
 	{
