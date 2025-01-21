@@ -11,6 +11,7 @@
 #include <expected>
 #include <span>
 #include <optional>
+#include <chrono>
 
 #include <strong_type/strong_type.hpp>
 
@@ -239,17 +240,40 @@ struct BasicMessage : Message
 
 struct TaskInfoMessage : Message
 {
+	struct TaskTimes
+	{
+		std::chrono::milliseconds start = std::chrono::milliseconds(0);
+		std::optional<std::chrono::milliseconds> stop;
+	};
+
 	TaskID taskID;
 	TaskID parentID;
 	std::string name;
 
-	TaskInfoMessage(TaskID taskID, TaskID parentID, std::string name) : Message(PacketType::TASK_INFO), taskID(taskID), parentID(parentID), name(std::move(name)) {}
+	std::chrono::milliseconds createTime = std::chrono::milliseconds(0);
+	std::vector<TaskTimes> times;
+	std::optional<std::chrono::milliseconds> finishTime;
 
+	TaskInfoMessage(TaskID taskID, TaskID parentID, std::string name) : Message(PacketType::TASK_INFO), taskID(taskID), parentID(parentID), name(std::move(name)) {}
+	
 	void visit(MessageVisitor& visitor) const override;
 
 	bool operator==(const TaskInfoMessage& other) const
 	{
-		return taskID == other.taskID && parentID == other.parentID && name == other.name;
+		if (times.size() != other.times.size())
+		{
+			return false;
+		}
+		
+		for (std::size_t i = 0; i < times.size(); i++)
+		{
+			if (times[i].start != other.times[i].start || times[i].stop != other.times[i].stop)
+			{
+				return false;
+			}
+		}
+
+		return taskID == other.taskID && parentID == other.parentID && name == other.name && createTime == other.createTime && finishTime == other.finishTime;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -257,7 +281,12 @@ struct TaskInfoMessage : Message
 
 	friend std::ostream& operator<<(std::ostream& out, const TaskInfoMessage& message)
 	{
-		out << "TaskInfoMessage { TaskID: " << message.taskID._val << ", ParentID: " << message.parentID._val << ", Name : \"" << message.name << "\" }";
+		out << "TaskInfoMessage { taskID: " << message.taskID._val << ", parentID: " << message.parentID._val << ", name: \"" << message.name << "\", createTime: " << message.createTime.count() << ", finishTime: " << (message.finishTime.has_value() ? std::to_string(message.finishTime.value().count()) : "nullopt") << ", times: [";
+		for (auto&& time : message.times)
+		{
+			out << "{ start: " << time.start.count() << ", stop: " << (time.stop.has_value() ? std::to_string(time.stop.value().count()) : "nullopt") << " }, ";
+		}
+		out << "]";
 		return out;
 	}
 };
@@ -379,7 +408,7 @@ public:
 	std::expected<T, UnpackError> parse_next() = delete;
 
 	template<typename T>
-		requires std::integral<T> || std::floating_point<T>
+		requires (std::integral<T> || std::floating_point<T>) && !std::same_as<T, bool>
 	std::expected<T, UnpackError> parse_next()
 	{
 		if (std::distance(data.begin() + position, data.end()) < sizeof(T))
@@ -405,6 +434,19 @@ public:
 		if (result)
 		{
 			return T(result.value());
+		}
+		return std::unexpected(result.error());
+	}
+
+	template<typename T>
+		requires std::same_as<T, bool>
+	std::expected<T, UnpackError> parse_next()
+	{
+		auto result = parse_next<std::int8_t>();
+
+		if (result)
+		{
+			return result.value() != 0;
 		}
 		return std::unexpected(result.error());
 	}
@@ -444,6 +486,19 @@ public:
 		position += length.value();
 
 		return name;
+	}
+
+	template<typename T>
+		requires std::same_as<T, std::chrono::milliseconds>
+	std::expected<T, UnpackError> parse_next()
+	{
+		auto result = parse_next<std::int64_t>();
+
+		if (result)
+		{
+			return std::chrono::milliseconds(result.value());
+		}
+		return std::unexpected(result.error());
 	}
 };
 

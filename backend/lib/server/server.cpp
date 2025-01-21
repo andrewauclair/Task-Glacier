@@ -2,7 +2,12 @@
 
 #include <format>
 
-Task::Task(std::string name, TaskID id, TaskID parentID) : m_name(std::move(name)), m_taskID(id), m_parentID(parentID) {}
+Task::Task(std::string name, TaskID id, TaskID parentID, std::chrono::milliseconds createTime) : m_name(std::move(name)), m_taskID(id), m_parentID(parentID), m_createTime(createTime) {}
+
+bool Task::operator==(const Task& task) const
+{
+	return m_taskID == task.m_taskID;
+}
 
 std::expected<TaskID, std::string> MicroTask::create_task(const std::string& name, TaskID parentID)
 {
@@ -13,11 +18,11 @@ std::expected<TaskID, std::string> MicroTask::create_task(const std::string& nam
 
 	auto id = m_nextTaskID;
 
-	m_tasks.emplace(id, Task(name, id, parentID));
+	m_tasks.emplace(id, Task(name, id, parentID, m_clock->now()));
 
 	m_nextTaskID._val++;
 
-	*m_output << "create " << id._val << ' ' << parentID._val << ' ' << m_clock->now().count() << ' ' << name << '\n';
+	*m_output << "create " << id._val << ' ' << parentID._val << ' ' << m_clock->now().count() << " (" << name << ")\n";
 
 	return std::expected<TaskID, std::string>(id);
 }
@@ -83,4 +88,83 @@ std::expected<TaskState, std::string> MicroTask::task_state(TaskID id)
 		return task->state;
 	}
 	return std::unexpected("");
+}
+
+namespace
+{
+	std::vector<std::string> split(const std::string& s, char delim) {
+		std::vector<std::string> result;
+		std::stringstream ss(s);
+		std::string item;
+
+		while (getline(ss, item, delim)) {
+			result.push_back(item);
+		}
+
+		return result;
+	}
+}
+
+void MicroTask::load_from_file(std::istream& input)
+{
+	std::string line;
+
+	while (std::getline(input, line))
+	{
+		if (line.starts_with("create"))
+		{
+			auto values = split(line, ' ');
+			TaskID id = TaskID(std::stoi(values[1]));
+			TaskID parentID = TaskID(std::stoi(values[2]));
+			std::chrono::milliseconds createTime = std::chrono::milliseconds(std::stoll(values[3]));
+			auto first = line.find_first_of('(') + 1;
+			std::string name = line.substr(first, line.size() - first - 1);
+
+			m_tasks.emplace(id, Task(name, id, parentID, createTime));
+		}
+		else if (line.starts_with("start"))
+		{
+			auto values = split(line, ' ');
+			TaskID id = TaskID(std::stoi(values[1]));
+			std::chrono::milliseconds startTime = std::chrono::milliseconds(std::stoll(values[2]));
+
+			auto* task = find_task(id);
+
+			if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
+
+			task->state = TaskState::ACTIVE;
+			task->m_times.emplace_back(startTime);
+		}
+		else if (line.starts_with("stop"))
+		{
+			auto values = split(line, ' ');
+			TaskID id = TaskID(std::stoi(values[1]));
+			std::chrono::milliseconds stopTime = std::chrono::milliseconds(std::stoll(values[2]));
+
+			auto* task = find_task(id);
+
+			if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
+			if (task->m_times.empty()) throw std::runtime_error("Cannot stop task, never been started: " + std::to_string(id._val));
+
+			task->state = TaskState::INACTIVE;
+			task->m_times.back().stop = stopTime;
+		}
+		else if (line.starts_with("finish"))
+		{
+			auto values = split(line, ' ');
+			TaskID id = TaskID(std::stoi(values[1]));
+			std::chrono::milliseconds finishTime = std::chrono::milliseconds(std::stoll(values[2]));
+
+			auto* task = find_task(id);
+
+			if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
+
+			task->state = TaskState::FINISHED;
+			task->m_finishTime = finishTime;
+		}
+		else
+		{
+			throw std::runtime_error("Invalid command: " + line);
+		}
+	}
 }

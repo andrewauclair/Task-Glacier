@@ -181,6 +181,7 @@ std::vector<std::byte> TaskInfoMessage::pack() const
 	PacketBuilder builder;
 
 	builder.add(PacketType::TASK_INFO);
+	builder.add(taskID);
 	builder.add(parentID);
 	builder.add_string(name);
 
@@ -198,7 +199,36 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 
 	try
 	{
-		return TaskInfoMessage(taskID.value(), parentID.value(), name.value());
+		auto info = TaskInfoMessage(taskID.value(), parentID.value(), name.value());
+
+		info.createTime = parser.parse_next<std::chrono::milliseconds>().value();
+
+		const auto startStopCount = parser.parse_next<std::int32_t>().value();
+
+		for (std::int32_t i = 0; i < startStopCount; i++)
+		{
+			TaskTimes times;
+
+			times.start = parser.parse_next<std::chrono::milliseconds>().value();
+
+			const bool stopPresent = parser.parse_next<bool>().value();
+
+			if (stopPresent)
+			{
+				times.stop = parser.parse_next<std::chrono::milliseconds>().value();
+			}
+
+			info.times.push_back(times);
+		}
+
+		const bool finishTimePresent = parser.parse_next<bool>().value();
+		
+		if (finishTimePresent)
+		{
+			info.finishTime = parser.parse_next<std::chrono::milliseconds>().value();
+		}
+
+		return info;
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{
