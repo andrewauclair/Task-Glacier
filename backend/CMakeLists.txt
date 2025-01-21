@@ -7,6 +7,10 @@ project("micro-task")
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
+set(CMAKE_SKIP_BUILD_RPATH TRUE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH $ORIGIN)
+ 
 add_subdirectory(external)
 add_subdirectory(lib/common)
 add_subdirectory(lib/server)
