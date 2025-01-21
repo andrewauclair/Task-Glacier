@@ -408,7 +408,7 @@ public:
 	std::expected<T, UnpackError> parse_next() = delete;
 
 	template<typename T>
-		requires (std::integral<T> || std::floating_point<T>) && !std::same_as<T, bool>
+		requires (std::integral<T> || std::floating_point<T>) && (!std::same_as<T, bool>)
 	std::expected<T, UnpackError> parse_next()
 	{
 		if (std::distance(data.begin() + position, data.end()) < sizeof(T))
