@@ -159,6 +159,11 @@ void MicroTask::load_from_file(std::istream& input)
 
 			if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
 
+			if (task->state == TaskState::ACTIVE)
+			{
+				task->m_times.back().stop = finishTime;
+			}
+
 			task->state = TaskState::FINISHED;
 			task->m_finishTime = finishTime;
 		}

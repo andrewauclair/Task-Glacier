@@ -85,7 +85,13 @@ void MessageProcessVisitor::visit(const BasicMessage& message)
 	{
 		const auto send_task = [&](const Task& task)
 		{
-			output.push_back(std::make_unique<TaskInfoMessage>(task.taskID(), task.parentID(), task.m_name));
+			auto info = std::make_unique<TaskInfoMessage>(task.taskID(), task.parentID(), task.m_name);
+			info->createTime = task.createTime();
+			info->finishTime = task.finishTime();
+			auto times = task.times();
+			info->times = std::vector<TaskTimes>(times.begin(), times.end());
+
+			output.push_back(std::move(info));
 		};
 
 		app.for_each_task_sorted(send_task);

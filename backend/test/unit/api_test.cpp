@@ -85,17 +85,18 @@ TEST_CASE("Persist Tasks", "[api][task]")
 	auto create_task_5 = CreateTaskMessage(TaskID(3), RequestID(5), "task 5");
 	auto create_task_6 = CreateTaskMessage(TaskID(4), RequestID(6), "task 6");
 
-	auto start_task_2 = StartTaskMessage(TaskID(2), RequestID(7));
-	auto start_task_3 = StartTaskMessage(TaskID(3), RequestID(8));
-	auto start_task_4 = StartTaskMessage(TaskID(4), RequestID(9));
+	auto start_task_1 = StartTaskMessage(TaskID(1), RequestID(7));
+	auto start_task_2 = StartTaskMessage(TaskID(2), RequestID(8));
+	auto start_task_3 = StartTaskMessage(TaskID(3), RequestID(9));
+	auto start_task_4 = StartTaskMessage(TaskID(4), RequestID(10));
 
-	auto stop_task_2 = StopTaskMessage(TaskID(2), RequestID(10));
-	auto stop_task_3 = StopTaskMessage(TaskID(3), RequestID(11));
-	auto stop_task_4 = StopTaskMessage(TaskID(4), RequestID(12));
+	auto stop_task_2 = StopTaskMessage(TaskID(2), RequestID(11));
+	auto stop_task_3 = StopTaskMessage(TaskID(3), RequestID(12));
+	auto stop_task_4 = StopTaskMessage(TaskID(4), RequestID(13));
 
-	auto finish_task_2 = FinishTaskMessage(TaskID(2), RequestID(13));
-	auto finish_task_3 = FinishTaskMessage(TaskID(3), RequestID(14));
-	auto finish_task_4 = FinishTaskMessage(TaskID(4), RequestID(15));
+	auto finish_task_2 = FinishTaskMessage(TaskID(2), RequestID(14));
+	auto finish_task_3 = FinishTaskMessage(TaskID(3), RequestID(15));
+	auto finish_task_4 = FinishTaskMessage(TaskID(4), RequestID(16));
 
 	api.process_packet(create_task_1, output);
 	clock.time += std::chrono::hours(1);
@@ -145,6 +146,8 @@ TEST_CASE("Persist Tasks", "[api][task]")
 	api.process_packet(finish_task_2, output);
 	clock.time += std::chrono::hours(1);
 
+	api.process_packet(start_task_1, output);
+
 	std::ostringstream expected;
 	expected << "create 1 0 1737344039870 (task 1)\n";
 	expected << "create 2 1 1737347639870 (task 2)\n";
@@ -162,6 +165,7 @@ TEST_CASE("Persist Tasks", "[api][task]")
 	expected << "finish 4 1737390839870\n";
 	expected << "finish 3 1737394439870\n";
 	expected << "finish 2 1737398039870\n";
+	expected << "start 1 1737401639870\n";
 
 	CHECK(fileOutput.str() == expected.str());
 }
@@ -187,6 +191,7 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	fileOutput << "finish 4 1737390839870\n";
 	fileOutput << "finish 3 1737394439870\n";
 	fileOutput << "finish 2 1737398039870\n";
+	fileOutput << "start 1 1737401639870\n";
 
 	fileInput = std::istringstream(fileOutput.str());
 	fileOutput.clear();
@@ -209,6 +214,21 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	auto task6 = TaskInfoMessage(TaskID(6), TaskID(4), "task 6");
 
 	task1.createTime = std::chrono::milliseconds(1737344039870);
+	task2.createTime = std::chrono::milliseconds(1737347639870);
+	task3.createTime = std::chrono::milliseconds(1737354839870);
+	task4.createTime = std::chrono::milliseconds(1737365639870);
+	task5.createTime = std::chrono::milliseconds(1737369239870);
+	task6.createTime = std::chrono::milliseconds(1737376439870);
+
+	task1.times.emplace_back(std::chrono::milliseconds(1737401639870));
+	task2.times.emplace_back(std::chrono::milliseconds(1737351239870), std::chrono::milliseconds(1737358439870));
+	task2.times.emplace_back(std::chrono::milliseconds(1737380039870), std::chrono::milliseconds(1737383639870));
+	task3.times.emplace_back(std::chrono::milliseconds(1737362039870), std::chrono::milliseconds(1737372839870));
+	task4.times.emplace_back(std::chrono::milliseconds(1737387239870), std::chrono::milliseconds(1737390839870));
+
+	task2.finishTime = std::chrono::milliseconds(1737398039870);
+	task3.finishTime = std::chrono::milliseconds(1737394439870);
+	task4.finishTime = std::chrono::milliseconds(1737390839870);
 
 	verify_message(task1, *output[0]);
 	verify_message(task2, *output[1]);
@@ -250,12 +270,12 @@ TEST_CASE("request configuration at startup", "[api]")
 
 	REQUIRE(output.size() == 7);
 	
-	verify_message(TaskInfoMessage(TaskID(1), NO_PARENT, "task 1"), *output[0]);
-	verify_message(TaskInfoMessage(TaskID(2), TaskID(1), "task 2"), *output[1]);
-	verify_message(TaskInfoMessage(TaskID(3), TaskID(2), "task 3"), *output[2]);
-	verify_message(TaskInfoMessage(TaskID(4), TaskID(2), "task 4"), *output[3]);
-	verify_message(TaskInfoMessage(TaskID(5), TaskID(3), "task 5"), *output[4]);
-	verify_message(TaskInfoMessage(TaskID(6), TaskID(4), "task 6"), *output[5]);
+	verify_message(TaskInfoMessage(TaskID(1), NO_PARENT, "task 1", std::chrono::milliseconds(1737344039870)), *output[0]);
+	verify_message(TaskInfoMessage(TaskID(2), TaskID(1), "task 2", std::chrono::milliseconds(1737344039870)), *output[1]);
+	verify_message(TaskInfoMessage(TaskID(3), TaskID(2), "task 3", std::chrono::milliseconds(1737344039870)), *output[2]);
+	verify_message(TaskInfoMessage(TaskID(4), TaskID(2), "task 4", std::chrono::milliseconds(1737344039870)), *output[3]);
+	verify_message(TaskInfoMessage(TaskID(5), TaskID(3), "task 5", std::chrono::milliseconds(1737344039870)), *output[4]);
+	verify_message(TaskInfoMessage(TaskID(6), TaskID(4), "task 6", std::chrono::milliseconds(1737344039870)), *output[5]);
 	
 	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[6]);
 }

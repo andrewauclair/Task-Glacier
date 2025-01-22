@@ -24,12 +24,6 @@ enum class TaskState
 	FINISHED
 };
 
-struct TaskTimes
-{
-	std::chrono::milliseconds start;
-	std::optional<std::chrono::milliseconds> stop;
-};
-
 class Task
 {
 	friend class MicroTask;

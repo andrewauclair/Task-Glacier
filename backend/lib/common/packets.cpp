@@ -184,6 +184,22 @@ std::vector<std::byte> TaskInfoMessage::pack() const
 	builder.add(taskID);
 	builder.add(parentID);
 	builder.add_string(name);
+	builder.add(createTime);
+
+	builder.add(static_cast<std::int32_t>(times.size()));
+
+	for (auto&& time : times)
+	{
+		builder.add(time.start);
+		builder.add(time.stop.has_value());
+
+		if (time.stop)
+		{
+			builder.add(time.stop.value());
+		}
+	}
+
+	builder.add(finishTime.has_value());
 
 	return builder.build();
 }

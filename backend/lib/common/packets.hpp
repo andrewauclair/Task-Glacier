@@ -238,14 +238,14 @@ struct BasicMessage : Message
 	}
 };
 
+struct TaskTimes
+{
+	std::chrono::milliseconds start = std::chrono::milliseconds(0);
+	std::optional<std::chrono::milliseconds> stop;
+};
+
 struct TaskInfoMessage : Message
 {
-	struct TaskTimes
-	{
-		std::chrono::milliseconds start = std::chrono::milliseconds(0);
-		std::optional<std::chrono::milliseconds> stop;
-	};
-
 	TaskID taskID;
 	TaskID parentID;
 	std::string name;
@@ -254,7 +254,7 @@ struct TaskInfoMessage : Message
 	std::vector<TaskTimes> times;
 	std::optional<std::chrono::milliseconds> finishTime;
 
-	TaskInfoMessage(TaskID taskID, TaskID parentID, std::string name) : Message(PacketType::TASK_INFO), taskID(taskID), parentID(parentID), name(std::move(name)) {}
+	TaskInfoMessage(TaskID taskID, TaskID parentID, std::string name, std::chrono::milliseconds createTime = std::chrono::milliseconds(0)) : Message(PacketType::TASK_INFO), taskID(taskID), parentID(parentID), name(std::move(name)), createTime(createTime) {}
 	
 	void visit(MessageVisitor& visitor) const override;
 
@@ -354,7 +354,7 @@ public:
 	void add(T value) = delete;
 
 	template<typename T>
-		requires std::integral<T> || std::floating_point<T>
+		requires (std::integral<T> || std::floating_point<T>) && (!std::same_as<T, bool>)
 	void add(T value)
 	{
 		T swapped = std::byteswap(value);
@@ -374,10 +374,24 @@ public:
 	}
 
 	template<typename T>
+		requires std::same_as<T, bool>
+	void add(T value)
+	{
+		add(static_cast<std::int8_t>(value));
+	}
+
+	template<typename T>
 		requires strong::is_strong_type<T>::value
 	void add(T value)
 	{
 		add(value._val);
+	}
+
+	template<typename T>
+		requires std::same_as<T, std::chrono::milliseconds>
+	void add(T value)
+	{
+		add(static_cast<std::int64_t>(value.count()));
 	}
 
 	void add_string(std::string_view str)
