@@ -1,4 +1,4 @@
-import org.json.JSONObject;
+import packets.CreateTask;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,10 +19,12 @@ public class AddTask extends JDialog {
 
         JButton add = new JButton("Add");
         add.addActionListener(e -> {
-            JSONObject addTask = new JSONObject();
-            addTask.put("command", 2);
-            addTask.put("name", name.getText());
-
+            CreateTask create = new CreateTask(name.getText(), 1);
+            try {
+                create.writeToStream(output);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
             AddTask.this.dispose();
         });
 

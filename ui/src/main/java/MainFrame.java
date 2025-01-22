@@ -4,24 +4,23 @@ import com.formdev.flatlaf.FlatLightLaf;
 import io.github.andrewauclair.moderndocking.app.AppState;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import io.github.andrewauclair.moderndocking.app.RootDockingPanel;
-import io.github.andrewauclair.moderndocking.app.WindowLayoutBuilder;
 import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
 import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
-import org.json.JSONObject;
 
 import javax.swing.*;
-import javax.swing.plaf.IconUIResource;
 import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 
 public class MainFrame extends JFrame {
+    private final JMenuItem add;
+    private DataOutputStream output;
+
     public MainFrame() throws IOException {
         setLayout(new GridBagLayout());
 
@@ -73,9 +72,10 @@ public class MainFrame extends JFrame {
         setJMenuBar(menuBar);
 
         JMenu task = new JMenu("Task");
-        JMenuItem add = new JMenuItem("Add");
+        add = new JMenuItem("Add");
+        add.setEnabled(false);
         add.addActionListener(e -> {
-//            new AddTask(output).setVisible(true);
+            new AddTask(output).setVisible(true);
         });
         task.add(add);
 
@@ -86,10 +86,33 @@ public class MainFrame extends JFrame {
         connect.addActionListener(e -> {
             class ServerConfig extends JDialog {
                 ServerConfig() {
-                    add(new JLabel("IP Address: "));
-                    add(new JTextField());
-                    add(new JLabel("Port: "));
-                    add(new JTextField());
+                    GridBagConstraints gbc = new GridBagConstraints();
+                    setLayout(new GridBagLayout());
+                    gbc.gridx = 0;
+                    gbc.gridy = 0;
+                    add(new JLabel("IP Address: "), gbc);
+                    gbc.gridy++;
+                    gbc.gridx++;
+                    JTextField IP = new JTextField();
+                    add(IP, gbc);
+                    gbc.gridx = 0;
+                    gbc.gridy++;
+                    add(new JLabel("Port: "), gbc);
+                    gbc.gridx++;
+                    JTextField port = new JTextField();
+                    add(port, gbc);
+
+                    gbc.gridy++;
+                    JButton connectButton = new JButton("Connect");
+                    add(connectButton, gbc);
+                    connectButton.addActionListener(e -> {
+                        try {
+                            createConnection(IP.getText(), Integer.parseInt(port.getText()));
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    });
+                    pack();
                 }
             }
             ServerConfig config =new ServerConfig();
@@ -116,10 +139,13 @@ public class MainFrame extends JFrame {
 
     }
 
-    private void createConnection() throws IOException {
-        final Socket socket = new Socket("127.0.0.1", 5005);
+    private void createConnection(String ipAddress, int port) throws IOException {
+        final Socket socket = new Socket(ipAddress, port);
 
-        DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+        setTitle("Task Glacier (Connected)");
+
+        output = new DataOutputStream(socket.getOutputStream());
+        add.setEnabled(true);
 
         Thread listen = new Thread(() -> {
             try (DataInputStream in = new DataInputStream(socket.getInputStream())) {
@@ -145,31 +171,31 @@ public class MainFrame extends JFrame {
                     }
 
                     String source = new String(Arrays.copyOfRange(bytes, 0, bytes.length));
-                    JSONObject obj = new JSONObject(source);
-
-                    switch (obj.getInt("command")) {
-                        case 1: // version request response
-                            System.out.println("Version: " + obj.getString("version"));
-                            break;
-                        case 2: // add task
-                            // this response verifies that the task was added
-//                            tasks.addTask(obj.getInt("id"), obj.getString("name"));
-                            break;
-                        case 3: // start task
-//                            activeTask.setText(obj.getInt("id") + " - " + obj.getString("name"));
-                            repaint();
-                            break;
-                        case 4: // get task response
-                            OffsetDateTime addTime = OffsetDateTime.parse(obj.getString("add-time"));
-                            System.out.printf("Task %d %s %s%n", obj.getInt("id"), addTime, obj.getString("name"));
-
-                            if (obj.has("start-time")) {
-                                OffsetDateTime startTime = OffsetDateTime.parse(obj.getString("start-time"));
-
-                                System.out.println("start time: " + startTime);
-                            }
-                            break;
-                    }
+//                    JSONObject obj = new JSONObject(source);
+//
+//                    switch (obj.getInt("command")) {
+//                        case 1: // version request response
+//                            System.out.println("Version: " + obj.getString("version"));
+//                            break;
+//                        case 2: // add task
+//                            // this response verifies that the task was added
+////                            tasks.addTask(obj.getInt("id"), obj.getString("name"));
+//                            break;
+//                        case 3: // start task
+////                            activeTask.setText(obj.getInt("id") + " - " + obj.getString("name"));
+//                            repaint();
+//                            break;
+//                        case 4: // get task response
+//                            OffsetDateTime addTime = OffsetDateTime.parse(obj.getString("add-time"));
+//                            System.out.printf("Task %d %s %s%n", obj.getInt("id"), addTime, obj.getString("name"));
+//
+//                            if (obj.has("start-time")) {
+//                                OffsetDateTime startTime = OffsetDateTime.parse(obj.getString("start-time"));
+//
+//                                System.out.println("start time: " + startTime);
+//                            }
+//                            break;
+//                    }
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);

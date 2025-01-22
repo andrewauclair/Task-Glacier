@@ -1,6 +1,5 @@
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.app.Docking;
-import org.json.JSONObject;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -38,9 +37,9 @@ public class TasksLists extends JPanel implements Dockable {
                 return;
             }
 
-            JSONObject startTask = new JSONObject();
-            startTask.put("command", 3);
-            startTask.put("id", tableModel.getValueAt(table.convertRowIndexToModel(selectedRow), 0));
+//            JSONObject startTask = new JSONObject();
+//            startTask.put("command", 3);
+//            startTask.put("id", tableModel.getValueAt(table.convertRowIndexToModel(selectedRow), 0));
 
         });
         contextMenu.add(start);

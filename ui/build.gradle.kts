@@ -10,7 +10,6 @@ repositories {
 dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
-    implementation("org.json:json:20231013")
     implementation("io.github.andrewauclair:modern-docking-api:1.0")
     implementation("io.github.andrewauclair:modern-docking-single-app:1.0")
     implementation("io.github.andrewauclair:modern-docking-ui:1.0")
