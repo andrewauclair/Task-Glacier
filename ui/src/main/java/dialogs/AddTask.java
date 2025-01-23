@@ -1,3 +1,5 @@
+package dialogs;
+
 import packets.CreateTask;
 
 import javax.swing.*;

@@ -1,3 +1,5 @@
+package dialogs;
+
 import javax.swing.*;
 
 public class Settings extends JDialog {

@@ -163,40 +163,51 @@ int main(int argc, char** argv)
 
 	auto acceptor = sockpp::tcp_acceptor(sockpp::inet_address(ip_address, port));
 
-	auto connection = acceptor.accept();
-
-	auto socket = std::make_unique<sockpp::tcp_socket>(std::move(connection));
-
-	std::cout << "connected\n";
-
 	Clock clock;
 	std::ofstream output(argv[3], std::ios::out | std::ios::app);
 	MicroTask server(clock, output);
-	Visitor visitor(server, *socket);
-
-	while (socket->is_open())
+	
+	// ctrl-c app to kill it
+	while (true)
 	{
-		std::vector<std::byte> input(4);
-		if (socket->read_n(input.data(), 4) == -1)
+		auto connection = acceptor.accept();
+
+		std::cout << "Connected\n";
+
+		auto socket = std::make_unique<sockpp::tcp_socket>(std::move(connection));
+
+		Visitor visitor(server, *socket);
+
+		while (socket->is_open())
 		{
-			std::cout << "Error with socket\n";
-			std::cout << socket->last_error() << '\n';
+			std::vector<std::byte> input(4);
+			if (socket->read_n(input.data(), 4) == -1)
+			{
+				std::cout << "Error with socket\n";
+				std::cout << socket->last_error() << '\n';
+
+				break;
+			}
+
+			const auto length = read_u32(input, 0);
+
+			input.resize(length);
+			if (socket->read_n(input.data() + 4, length - 4) == -1)
+			{
+				std::cout << "Error with socket\n";
+				std::cout << socket->last_error() << '\n';
+
+				break;
+			}
+
+			const auto result = parse_packet(input);
+
+			if (result.packet)
+			{
+				result.packet->visit(visitor);
+			}
 		}
 
-		const auto length = read_u32(input, 0);
-
-		input.resize(length);
-		if (socket->read_n(input.data() + 4, length - 4) == -1)
-		{
-			std::cout << "Error with socket\n";
-			std::cout << socket->last_error() << '\n';
-		}
-
-		const auto result = parse_packet(input);
-
-		if (result.packet)
-		{
-			result.packet->visit(visitor);
-		}
+		std::cout << "Disconnected\n";
 	}
 }

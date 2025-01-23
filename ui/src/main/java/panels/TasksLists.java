@@ -1,3 +1,5 @@
+package panels;
+
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.app.Docking;
 
@@ -7,7 +9,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.DataOutputStream;
-import java.io.IOException;
 
 public class TasksLists extends JPanel implements Dockable {
 
