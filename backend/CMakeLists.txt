@@ -2,7 +2,7 @@
 
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
-project("micro-task")
+project("task-glacier")
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
