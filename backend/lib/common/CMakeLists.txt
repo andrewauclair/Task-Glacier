@@ -1,13 +1,13 @@
-﻿add_library (micro_task_common OBJECT
+﻿add_library (task-glacier-common OBJECT
 	clock.hpp
 	packets.hpp
 	packets.cpp
 )
 
-target_include_directories(micro_task_common PUBLIC .)
+target_include_directories(task-glacier-common PUBLIC .)
 
-set_target_properties(micro_task_common PROPERTIES CXX_STANDARD 23)
+set_target_properties(task-glacier-common PROPERTIES CXX_STANDARD 23)
 
-target_link_libraries(micro_task_common PUBLIC
+target_link_libraries(task-glacier-common PUBLIC
 	strong_type
 )
