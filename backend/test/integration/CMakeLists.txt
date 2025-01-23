@@ -7,8 +7,8 @@ add_executable(task-glacier-integration-tests
 set_target_properties(task-glacier-integration-tests PROPERTIES CXX_STANDARD 23)
 
 target_link_libraries(task-glacier-integration-tests PRIVATE
-	micro_task_server_lib
-	micro_task_cli_lib
+	task-glacier-server-lib
+	task-glacier-cli-lib
 	libassert::assert
 	Catch2::Catch2WithMain
 )
