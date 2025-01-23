@@ -9,8 +9,8 @@ add_executable(task-glacier-unit-tests
 set_target_properties(task-glacier-unit-tests PROPERTIES CXX_STANDARD 23)
 
 target_link_libraries(task-glacier-unit-tests PRIVATE
- 	task-glacier-server
-  	task-glacier-cli
+ 	task-glacier-server-lib
+  	task-glacier-cli-lib
 	libassert::assert
 	Catch2::Catch2WithMain
 )
