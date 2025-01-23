@@ -16,8 +16,7 @@ public class ConnectToServer extends JDialog {
 
         GridBagConstraints gbc = new GridBagConstraints();
 
-        // TODO I'm pretty sure there's some way to get a default, right?
-        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
         gbc.gridx = 0;
         gbc.gridy = 0;
 
