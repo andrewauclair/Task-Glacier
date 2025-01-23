@@ -1,12 +1,12 @@
-﻿project("micro-task-cli-test")
+﻿project("task-glacier-integration-tests")
 
-add_executable(micro_task_integration_test 
+add_executable(task-glacier-integration-tests 
 	test.cpp
 )
 
-set_target_properties(micro_task_integration_test PROPERTIES CXX_STANDARD 23)
+set_target_properties(task-glacier-integration-tests PROPERTIES CXX_STANDARD 23)
 
-target_link_libraries(micro_task_integration_test PRIVATE
+target_link_libraries(task-glacier-integration-tests PRIVATE
 	micro_task_server_lib
 	micro_task_cli_lib
 	libassert::assert
@@ -17,4 +17,4 @@ target_link_libraries(micro_task_integration_test PRIVATE
 
 #include(CTest)
 #include(Catch)
-#catch_discover_tests(micro_task_integration_test)
+#catch_discover_tests(task-glacier-integration-tests)
