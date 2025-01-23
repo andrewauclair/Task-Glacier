@@ -150,8 +150,8 @@ public class MainFrame extends JFrame {
         Thread listen = new Thread(() -> {
             try (DataInputStream in = new DataInputStream(socket.getInputStream())) {
                 int packetLength;
-                while ((packetLength = in.readShort()) != -1) {
-                    int expectedBytes = packetLength - 2;
+                while ((packetLength = in.readInt()) != -1) {
+                    int expectedBytes = packetLength - 4;
 
                     byte[] bytes = new byte[expectedBytes];
 

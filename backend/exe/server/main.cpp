@@ -159,7 +159,7 @@ int main(int argc, char** argv)
 
 	const int port = std::atoi(argv[2]);
 
-	std::cout << ip_address << " " << port << '\n';
+	std::cout << ip_address << ' ' << port << ' ' << argv[3] << '\n';
 
 	auto acceptor = sockpp::tcp_acceptor(sockpp::inet_address(ip_address, port));
 
@@ -170,19 +170,27 @@ int main(int argc, char** argv)
 	std::cout << "connected\n";
 
 	Clock clock;
-	std::ofstream output(argv[3]);
+	std::ofstream output(argv[3], std::ios::out | std::ios::app);
 	MicroTask server(clock, output);
 	Visitor visitor(server, *socket);
 
 	while (socket->is_open())
 	{
 		std::vector<std::byte> input(4);
-		socket->read_n(input.data(), 4);
+		if (socket->read_n(input.data(), 4) == -1)
+		{
+			std::cout << "Error with socket\n";
+			std::cout << socket->last_error() << '\n';
+		}
 
 		const auto length = read_u32(input, 0);
 
 		input.resize(length);
-		socket->read_n(input.data() + 4, length - 4);
+		if (socket->read_n(input.data() + 4, length - 4) == -1)
+		{
+			std::cout << "Error with socket\n";
+			std::cout << socket->last_error() << '\n';
+		}
 
 		const auto result = parse_packet(input);
 
