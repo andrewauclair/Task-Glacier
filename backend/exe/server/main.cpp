@@ -1,5 +1,6 @@
 ﻿#include "packets.hpp"
 #include "server.hpp"
+#include "api.hpp"
 
 #include <iostream>
 #include <cstdlib>
@@ -164,9 +165,12 @@ int main(int argc, char** argv)
 	auto acceptor = sockpp::tcp_acceptor(sockpp::inet_address(ip_address, port));
 
 	Clock clock;
+	std::ifstream input(argv[3]);
 	std::ofstream output(argv[3], std::ios::out | std::ios::app);
-	MicroTask server(clock, output);
+	//MicroTask server(clock, output);
 	
+	API api(clock, input, output);
+
 	// ctrl-c app to kill it
 	while (true)
 	{
@@ -176,7 +180,7 @@ int main(int argc, char** argv)
 
 		auto socket = std::make_unique<sockpp::tcp_socket>(std::move(connection));
 
-		Visitor visitor(server, *socket);
+		//Visitor visitor(server, *socket);
 
 		while (socket->is_open())
 		{
@@ -204,7 +208,15 @@ int main(int argc, char** argv)
 
 			if (result.packet)
 			{
-				result.packet->visit(visitor);
+				//result.packet->visit(visitor);
+				std::vector<std::unique_ptr<Message>> toSend;
+				api.process_packet(*result.packet, toSend);
+
+				for (auto&& message : toSend)
+				{
+					const auto output = message->pack();
+					socket->write_n(output.data(), output.size());
+				}
 			}
 		}
 

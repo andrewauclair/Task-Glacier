@@ -14,9 +14,13 @@ public class TasksLists extends JPanel implements Dockable {
 
     private final JTable table;
     private final DefaultTableModel tableModel;
+    private final String persistentID;
+    private final String title;
 
-    public TasksLists(DataOutputStream output) {
-        super(new GridBagLayout());
+    public TasksLists(DataOutputStream output, String persistentID, String title) {
+        super(new BorderLayout());
+        this.persistentID = persistentID;
+        this.title = title;
 
         Docking.registerDockable(this);
 
@@ -37,11 +41,6 @@ public class TasksLists extends JPanel implements Dockable {
             if (selectedRow == -1) {
                 return;
             }
-
-//            JSONObject startTask = new JSONObject();
-//            startTask.put("command", 3);
-//            startTask.put("id", tableModel.getValueAt(table.convertRowIndexToModel(selectedRow), 0));
-
         });
         contextMenu.add(start);
 
@@ -53,33 +52,18 @@ public class TasksLists extends JPanel implements Dockable {
                 }
             }
         });
-        JSplitPane split = new JSplitPane();
-        split.setLeftComponent(new JScrollPane(tree));
-        split.setRightComponent(new JScrollPane(table));
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-
-        add(split, gbc);
-    }
-
-    public TasksLists(String persistentID, String title) {
-        table = null;
-        tableModel = null;
+        add(new JScrollPane(table));
     }
 
     @Override
     public String getPersistentID() {
-        return "tasks";
+        return persistentID;
     }
 
     @Override
     public String getTabText() {
-        return "Tasks";
+        return title;
     }
 
     @Override
@@ -89,5 +73,9 @@ public class TasksLists extends JPanel implements Dockable {
 
     public void addTask(int id, String name) {
         tableModel.addRow(new Object[] { id, name });
+    }
+
+    public void taskModelUpdated() {
+
     }
 }

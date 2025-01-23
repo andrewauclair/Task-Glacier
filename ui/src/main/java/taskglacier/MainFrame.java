@@ -6,8 +6,11 @@ import com.formdev.flatlaf.FlatLightLaf;
 import io.github.andrewauclair.moderndocking.app.AppState;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import io.github.andrewauclair.moderndocking.app.RootDockingPanel;
+import io.github.andrewauclair.moderndocking.app.WindowLayoutBuilder;
 import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
 import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
+import packets.RequestConfig;
+import panels.TasksLists;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,6 +19,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.util.prefs.Preferences;
 
 public class MainFrame extends JFrame {
@@ -55,19 +59,20 @@ public class MainFrame extends JFrame {
 
         add(statusBar, gbc);
 
-        setSize(400, 400);
+        setSize(600, 400);
         Docking.initialize(this);
 
         DockingUI.initialize();
         Docking.registerDockingPanel(root, this);
 
+        TasksLists list = new TasksLists(output, "tasks", "Tasks");
 //        panels.TasksLists tasks = new panels.TasksLists(output);
 
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-//        WindowLayoutBuilder tasks1 = new WindowLayoutBuilder("tasks");
+        WindowLayoutBuilder builder = new WindowLayoutBuilder("tasks");
 
-//        AppState.setDefaultApplicationLayout(tasks1.buildApplicationLayout());
+        AppState.setDefaultApplicationLayout(builder.buildApplicationLayout());
 
         setJMenuBar(new MenuBar(this));
 
@@ -142,6 +147,9 @@ public class MainFrame extends JFrame {
                     if (totalRead == -1) {
                         break;
                     }
+
+                    var packetType = ByteBuffer.wrap(bytes, 0, 4).getInt();
+                    System.out.println("Received packet with length: " + packetLength + ", type: " + packetType);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -149,6 +157,8 @@ public class MainFrame extends JFrame {
         });
 
         listen.start();
+
+
     }
 
     public static void main(String[] args) {

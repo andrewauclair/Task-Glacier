@@ -16,6 +16,7 @@ public class CreateTask {
 
     public void writeToStream(DataOutputStream output) throws IOException {
         output.write(ByteBuffer.allocate(4).putInt(18 + name.length()).array());
+        // TODO PacketType enum in the Java code
         output.write(ByteBuffer.allocate(4).putInt(3).array());
         output.write(ByteBuffer.allocate(4).putInt(requestID).array());
         output.write(ByteBuffer.allocate(4).putInt(0).array()); // TODO parent ID

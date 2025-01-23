@@ -2,6 +2,7 @@ package taskglacier;
 
 import dialogs.AddTask;
 import dialogs.ConnectToServer;
+import packets.RequestConfig;
 
 import javax.management.remote.JMXConnectorServer;
 import javax.swing.*;
@@ -44,6 +45,16 @@ public class MenuBar extends JMenuBar {
         server.add(connect);
         server.add(disconnect);
 
+        JMenuItem request = new JMenuItem("Request Config");
+        request.addActionListener(e -> {
+            RequestConfig requestConfig = new RequestConfig();
+            try {
+                requestConfig.writeToStream(mainFrame.output);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+        server.add(request);
         add(server);
     }
 
