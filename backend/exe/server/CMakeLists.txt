@@ -1,9 +1,11 @@
-﻿project("micro-task-server")
+﻿project("task-glacier-server")
 
-add_executable(task-glacier main.cpp)
+add_executable(task-glacier-server main.cpp)
 
-set_target_properties(task-glacier PROPERTIES CXX_STANDARD 23)
+set_target_properties(task-glacier-server PROPERTIES CXX_STANDARD 23)
 
-target_link_libraries(task-glacier PRIVATE
-	micro_task_common micro_task_server_lib sockpp-static
+target_link_libraries(task-glacier-server PRIVATE
+	task-glacier-common
+ 	task-glacier-server-lib
+ 	sockpp-static
 )
