@@ -16,7 +16,8 @@ public class AddTask extends JDialog {
         JTextField name = new JTextField(50);
 
         JTextField parent = new JTextField();
-
+        parent.setText("0");
+        
         JTextField timeA = new JTextField();
         JTextField timeB = new JTextField();
 
