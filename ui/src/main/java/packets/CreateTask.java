@@ -3,7 +3,7 @@ package packets;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class CreateTask {
+public class CreateTask implements Packet {
     private final String name;
     private final int requestID;
 
@@ -15,7 +15,7 @@ public class CreateTask {
         this.requestID = requestID;
     }
 
-    public void writeToStream(DataOutputStream output) throws IOException {
+    public void writeToOutput(DataOutputStream output) throws IOException {
         output.writeInt(18 + name.length());
         output.writeInt(PacketType.CREATE_TASK.value());
         output.writeInt(requestID);

@@ -5,21 +5,18 @@ import dialogs.ConnectToServer;
 import packets.RequestConfig;
 
 import javax.swing.*;
-import java.io.IOException;
 
 public class MenuBar extends JMenuBar {
-    private final MainFrame mainFrame;
     private final JMenuItem add;
 
     private final JMenuItem connect = new JMenuItem("Connect...");
     private final JMenuItem disconnect = new JMenuItem("Disconnect");
 
     public MenuBar(MainFrame mainFrame) {
-        this.mainFrame = mainFrame;
         JMenu task = new JMenu("Task");
         add = new JMenuItem("Add");
         add.setEnabled(false);
-        add.addActionListener(e -> new AddTask(mainFrame, mainFrame.output).setVisible(true));
+        add.addActionListener(e -> new AddTask(mainFrame).setVisible(true));
         task.add(add);
 
         add(task);
@@ -42,12 +39,8 @@ public class MenuBar extends JMenuBar {
         JMenuItem request = new JMenuItem("Request Config");
         request.addActionListener(e -> {
             RequestConfig requestConfig = new RequestConfig();
-            try {
-                mainFrame.clearTasks();
-                requestConfig.writeToStream(mainFrame.output);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
+                mainFrame.getTaskModel().clear();
+                mainFrame.getConnection().sendPacket(requestConfig);
         });
         server.add(request);
         add(server);

@@ -183,6 +183,8 @@ std::vector<std::byte> TaskInfoMessage::pack() const
 	builder.add(PacketType::TASK_INFO);
 	builder.add(taskID);
 	builder.add(parentID);
+	builder.add(state);
+	builder.add(newTask);
 	builder.add_string(name);
 	builder.add(createTime);
 
@@ -211,11 +213,15 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 	const auto packetType = parser.parse_next<PacketType>();
 	const auto taskID = parser.parse_next<TaskID>();
 	const auto parentID = parser.parse_next<TaskID>();
+	const auto state = parser.parse_next<TaskState>();
+	const auto newTask = parser.parse_next<bool>();
 	const auto name = parser.parse_next<std::string>();
 
 	try
 	{
 		auto info = TaskInfoMessage(taskID.value(), parentID.value(), name.value());
+		info.state = state.value();
+		info.newTask = newTask.value();
 
 		info.createTime = parser.parse_next<std::chrono::milliseconds>().value();
 

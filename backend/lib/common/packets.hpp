@@ -28,6 +28,13 @@ struct std::formatter<TaskID> : std::formatter<std::int32_t> {
 	}
 };
 
+enum class TaskState : std::int32_t
+{
+	INACTIVE,
+	ACTIVE,
+	FINISHED
+};
+
 inline constexpr TaskID NO_PARENT = TaskID(0);
 
 using RequestID = strong::type<std::int32_t, struct request_id_, strong::equality, strong::incrementable>;
@@ -248,6 +255,9 @@ struct TaskInfoMessage : Message
 {
 	TaskID taskID;
 	TaskID parentID;
+	TaskState state;
+	bool newTask = false;
+
 	std::string name;
 
 	std::chrono::milliseconds createTime = std::chrono::milliseconds(0);
@@ -273,7 +283,7 @@ struct TaskInfoMessage : Message
 			}
 		}
 
-		return taskID == other.taskID && parentID == other.parentID && name == other.name && createTime == other.createTime && finishTime == other.finishTime;
+		return taskID == other.taskID && parentID == other.parentID && state == other.state && newTask == other.newTask && name == other.name && createTime == other.createTime && finishTime == other.finishTime;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -281,7 +291,7 @@ struct TaskInfoMessage : Message
 
 	friend std::ostream& operator<<(std::ostream& out, const TaskInfoMessage& message)
 	{
-		out << "TaskInfoMessage { taskID: " << message.taskID._val << ", parentID: " << message.parentID._val << ", name: \"" << message.name << "\", createTime: " << message.createTime.count() << ", finishTime: " << (message.finishTime.has_value() ? std::to_string(message.finishTime.value().count()) : "nullopt") << ", times: [";
+		out << "TaskInfoMessage { taskID: " << message.taskID._val << ", parentID: " << message.parentID._val << ", state: " << static_cast<std::int32_t>(message.state) << ", newTask: " << message.newTask << ", name: \"" << message.name << "\", createTime: " << message.createTime.count() << ", finishTime: " << (message.finishTime.has_value() ? std::to_string(message.finishTime.value().count()) : "nullopt") << ", times: [";
 		for (auto&& time : message.times)
 		{
 			out << "{ start: " << time.start.count() << ", stop: " << (time.stop.has_value() ? std::to_string(time.stop.value().count()) : "nullopt") << " }, ";

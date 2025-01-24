@@ -17,13 +17,6 @@
 
 #include <strong_type/strong_type.hpp>
 
-enum class TaskState
-{
-	INACTIVE,
-	ACTIVE,
-	FINISHED
-};
-
 class Task
 {
 	friend class MicroTask;

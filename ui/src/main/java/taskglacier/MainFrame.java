@@ -3,28 +3,44 @@ package taskglacier;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
+import data.ServerConnection;
+import data.TaskModel;
 import io.github.andrewauclair.moderndocking.app.AppState;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import io.github.andrewauclair.moderndocking.app.RootDockingPanel;
 import io.github.andrewauclair.moderndocking.app.WindowLayoutBuilder;
 import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
 import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
-import packets.PacketType;
-import packets.TaskInfo;
 import panels.TasksLists;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.util.prefs.Preferences;
 
 public class MainFrame extends JFrame {
     private final TasksLists list;
-    public DataOutputStream output;
     private Thread listen;
     private Socket socket;
+
+    private ServerConnection connection = new ServerConnection(null, null);
+    private TaskModel taskModel = new TaskModel();
+
+    public boolean isConnected() {
+        return connection != null;
+    }
+
+    public ServerConnection getConnection() {
+        return connection;
+    }
+
+    public TaskModel getTaskModel() {
+        return taskModel;
+    }
 
     public MainFrame() throws IOException {
         setLayout(new GridBagLayout());
@@ -104,12 +120,12 @@ public class MainFrame extends JFrame {
         if (socket != null) {
             try {
                 socket.close();
-                output.close();
+                connection.close();
             }
             catch (IOException ignored) {
             }
             socket = null;
-            output = null;
+            connection = null;
             listen = null;
 
             setTitle("Task Glacier (Not Connected)");
@@ -123,52 +139,15 @@ public class MainFrame extends JFrame {
 
         setTitle("Task Glacier (Connected - " + ipAddress + ":" + port + ")");
 
-        output = new DataOutputStream(socket.getOutputStream());
+        DataInputStream input = new DataInputStream(socket.getInputStream());
+        DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+
+        connection = new ServerConnection(input, output);
 
         ((MenuBar) getJMenuBar()).connected();
 
-        listen = new Thread(() -> {
-            try (DataInputStream in = new DataInputStream(socket.getInputStream())) {
-                int packetLength;
-                while ((packetLength = in.readInt()) != -1) {
-                    int expectedBytes = packetLength - 4;
-
-                    byte[] bytes = new byte[expectedBytes];
-
-                    int totalRead = 0;
-
-                    while (totalRead < expectedBytes) {
-                        int read = in.read(bytes, totalRead, bytes.length - totalRead);
-                        if (read == -1) {
-                            totalRead = -1;
-                            break;
-                        }
-                        totalRead += read;
-                    }
-
-                    if (totalRead == -1) {
-                        break;
-                    }
-
-                    PacketType packetType = PacketType.valueOf(ByteBuffer.wrap(bytes, 0, 4).getInt());
-                    System.out.println("Received packet with length: " + packetLength + ", type: " + packetType);
-
-                    if (packetType == PacketType.TASK_INFO) {
-                        TaskInfo info = TaskInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
-
-                        list.addTask(info.taskID, info.name);
-                    }
-                }
-            } catch (IOException e) {
-                ((MenuBar) getJMenuBar()).disconnected();
-
-                throw new RuntimeException(e);
-            }
-        });
-
+        listen = new Thread(() -> connection.run(this));
         listen.start();
-
-
     }
 
     public static void main(String[] args) {
@@ -225,10 +204,5 @@ public class MainFrame extends JFrame {
         }
         UIManager.getDefaults().put("TabbedPane.contentBorderInsets", new Insets(0,0,0,0));
         UIManager.getDefaults().put("TabbedPane.tabsOverlapBorder", true);
-
-    }
-
-    public void clearTasks() {
-        list.clear();
     }
 }

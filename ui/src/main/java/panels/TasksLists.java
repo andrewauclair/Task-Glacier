@@ -1,5 +1,7 @@
 package panels;
 
+import data.TaskModel;
+import data.TaskState;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import packets.PacketType;
@@ -13,22 +15,32 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 
-public class TasksLists extends JPanel implements Dockable {
+public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
 
     private final JTable table;
     private final DefaultTableModel tableModel;
+    private final MainFrame mainFrame;
     private final String persistentID;
     private final String title;
 
     public TasksLists(MainFrame mainFrame, String persistentID, String title) {
         super(new BorderLayout());
+        this.mainFrame = mainFrame;
         this.persistentID = persistentID;
         this.title = title;
 
         Docking.registerDockable(this);
+        mainFrame.getTaskModel().addListener(this);
 
-        tableModel = new DefaultTableModel(new Object[]{"ID", "Name"}, 0);
-        table = new JTable(tableModel);
+        tableModel = new DefaultTableModel(new Object[]{"ID", "Name"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        table = new JTable(tableModel) {
+
+        };
 
         JPopupMenu contextMenu = new JPopupMenu();
         JMenuItem start = new JMenuItem("Start");
@@ -45,11 +57,7 @@ public class TasksLists extends JPanel implements Dockable {
             TaskStateChange change = new TaskStateChange();
             change.packetType = PacketType.START_TASK;
             change.taskID = (int) tableModel.getValueAt(selectedRow, 0);
-            try {
-                change.writeToStream(mainFrame.output);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
+            mainFrame.getConnection().sendPacket(change);
         });
         stop.addActionListener(e -> {
             int selectedRow = table.getSelectedRow();
@@ -61,11 +69,7 @@ public class TasksLists extends JPanel implements Dockable {
             TaskStateChange change = new TaskStateChange();
             change.packetType = PacketType.STOP_TASK;
             change.taskID = (int) tableModel.getValueAt(selectedRow, 0);
-            try {
-                change.writeToStream(mainFrame.output);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
+            mainFrame.getConnection().sendPacket(change);
         });
         finish.addActionListener(e -> {
             int selectedRow = table.getSelectedRow();
@@ -77,11 +81,7 @@ public class TasksLists extends JPanel implements Dockable {
             TaskStateChange change = new TaskStateChange();
             change.packetType = PacketType.FINISH_TASK;
             change.taskID = (int) tableModel.getValueAt(selectedRow, 0);
-            try {
-                change.writeToStream(mainFrame.output);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
+            mainFrame.getConnection().sendPacket(change);
         });
 
         contextMenu.add(start);
@@ -118,16 +118,27 @@ public class TasksLists extends JPanel implements Dockable {
         return false;
     }
 
-    public void clear() {
+    @Override
+    public void cleared() {
         tableModel.setRowCount(0);
     }
 
-    public void addTask(int id, String name) {
-        tableModel.addRow(new Object[] { id, name });
+    @Override
+    public void newTask(int taskID) {
+        String name = mainFrame.getTaskModel().getTaskName(taskID);
+        tableModel.addRow(new Object[] { taskID, name });
         tableModel.fireTableRowsInserted(tableModel.getRowCount() - 1, tableModel.getRowCount());
     }
 
-    public void taskModelUpdated() {
-
+    @Override
+    public void updatedTask(int taskID) {
+        if (mainFrame.getTaskModel().getTaskState(taskID) == TaskState.FINISHED) {
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                if ((int) tableModel.getValueAt(i, 0) == taskID) {
+                    tableModel.removeRow(i);
+                    break;
+                }
+            }
+        }
     }
 }

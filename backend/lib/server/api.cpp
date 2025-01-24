@@ -30,6 +30,15 @@ void MessageProcessVisitor::visit(const CreateTaskMessage& message)
 	if (result)
 	{
 		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
+
+		auto* task = app.find_task(result.value());
+
+		TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
+		info.newTask = true;
+		info.state = task->state;
+		info.createTime = task->createTime();
+
+		output.push_back(std::make_unique<TaskInfoMessage>(info));
 	}
 	else
 	{
@@ -48,6 +57,15 @@ void MessageProcessVisitor::visit(const StartTaskMessage& message)
 	else
 	{
 		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
+
+		auto* task = app.find_task(message.taskID);
+
+		TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
+		info.state = task->state;
+		info.createTime = task->createTime();
+		info.times.insert(info.times.end(), task->times().begin(), task->times().end());
+
+		output.push_back(std::make_unique<TaskInfoMessage>(info));
 	}
 }
 
@@ -62,6 +80,15 @@ void MessageProcessVisitor::visit(const StopTaskMessage& message)
 	else
 	{
 		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
+
+		auto* task = app.find_task(message.taskID);
+
+		TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
+		info.state = task->state;
+		info.createTime = task->createTime();
+		info.times.insert(info.times.end(), task->times().begin(), task->times().end());
+
+		output.push_back(std::make_unique<TaskInfoMessage>(info));
 	}
 }
 
@@ -76,6 +103,15 @@ void MessageProcessVisitor::visit(const FinishTaskMessage& message)
 	else
 	{
 		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
+
+		auto* task = app.find_task(message.taskID);
+
+		TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
+		info.state = task->state;
+		info.createTime = task->createTime();
+		info.times.insert(info.times.end(), task->times().begin(), task->times().end());
+
+		output.push_back(std::make_unique<TaskInfoMessage>(info));
 	}
 }
 

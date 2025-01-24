@@ -7,11 +7,9 @@ import taskglacier.MainFrame;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.DataOutputStream;
-import java.io.IOException;
 
 public class AddTask extends JDialog {
-    public AddTask(MainFrame mainFrame, DataOutputStream output) {
+    public AddTask(MainFrame mainFrame) {
         // name, time tracking and project info
         // some of this info can be automatically filled (and maybe locked) in the future based on the list we're adding to
         // right now lists don't exist
@@ -27,11 +25,7 @@ public class AddTask extends JDialog {
         JButton add = new JButton("Add");
         add.addActionListener(e -> {
             CreateTask create = new CreateTask(name.getText(), Integer.parseInt(parent.getText()), RequestID.nextRequestID());
-            try {
-                create.writeToStream(output);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
+            mainFrame.getConnection().sendPacket(create);
             AddTask.this.dispose();
         });
 
