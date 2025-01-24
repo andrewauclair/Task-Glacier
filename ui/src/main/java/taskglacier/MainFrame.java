@@ -9,20 +9,19 @@ import io.github.andrewauclair.moderndocking.app.RootDockingPanel;
 import io.github.andrewauclair.moderndocking.app.WindowLayoutBuilder;
 import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
 import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
-import packets.RequestConfig;
+import packets.PacketType;
+import packets.TaskInfo;
 import panels.TasksLists;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.prefs.Preferences;
 
 public class MainFrame extends JFrame {
+    private final TasksLists list;
     public DataOutputStream output;
     private Thread listen;
     private Socket socket;
@@ -65,8 +64,7 @@ public class MainFrame extends JFrame {
         DockingUI.initialize();
         Docking.registerDockingPanel(root, this);
 
-        TasksLists list = new TasksLists(output, "tasks", "Tasks");
-//        panels.TasksLists tasks = new panels.TasksLists(output);
+        list = new TasksLists(this, "tasks", "Tasks");
 
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
@@ -152,8 +150,14 @@ public class MainFrame extends JFrame {
                         break;
                     }
 
-                    var packetType = ByteBuffer.wrap(bytes, 0, 4).getInt();
+                    PacketType packetType = PacketType.valueOf(ByteBuffer.wrap(bytes, 0, 4).getInt());
                     System.out.println("Received packet with length: " + packetLength + ", type: " + packetType);
+
+                    if (packetType == PacketType.TASK_INFO) {
+                        TaskInfo info = TaskInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
+
+                        list.addTask(info.taskID, info.name);
+                    }
                 }
             } catch (IOException e) {
                 ((MenuBar) getJMenuBar()).disconnected();
@@ -222,5 +226,9 @@ public class MainFrame extends JFrame {
         UIManager.getDefaults().put("TabbedPane.contentBorderInsets", new Insets(0,0,0,0));
         UIManager.getDefaults().put("TabbedPane.tabsOverlapBorder", true);
 
+    }
+
+    public void clearTasks() {
+        list.clear();
     }
 }

@@ -4,14 +4,8 @@ import dialogs.AddTask;
 import dialogs.ConnectToServer;
 import packets.RequestConfig;
 
-import javax.management.remote.JMXConnectorServer;
 import javax.swing.*;
-import java.awt.*;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
-import java.util.Arrays;
 
 public class MenuBar extends JMenuBar {
     private final MainFrame mainFrame;
@@ -25,7 +19,7 @@ public class MenuBar extends JMenuBar {
         JMenu task = new JMenu("Task");
         add = new JMenuItem("Add");
         add.setEnabled(false);
-        add.addActionListener(e -> new AddTask(mainFrame.output).setVisible(true));
+        add.addActionListener(e -> new AddTask(mainFrame, mainFrame.output).setVisible(true));
         task.add(add);
 
         add(task);
@@ -49,6 +43,7 @@ public class MenuBar extends JMenuBar {
         request.addActionListener(e -> {
             RequestConfig requestConfig = new RequestConfig();
             try {
+                mainFrame.clearTasks();
                 requestConfig.writeToStream(mainFrame.output);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
@@ -60,11 +55,13 @@ public class MenuBar extends JMenuBar {
 
     public void connected() {
         add.setEnabled(true);
+        connect.setEnabled(false);
         disconnect.setEnabled(true);
     }
 
     public void disconnected() {
         add.setEnabled(false);
+        connect.setEnabled(true);
         disconnect.setEnabled(false);
     }
 }

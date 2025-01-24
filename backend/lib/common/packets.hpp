@@ -37,24 +37,24 @@ struct MessageVisitor;
 enum class PacketType : std::int32_t
 {
 	VERSION_REQUEST = 1,
-	VERSION,
+	VERSION = 2,
 
-	CREATE_TASK,
-	MOVE_TASK,
-	START_TASK,
-	STOP_TASK,
-	FINISH_TASK,
+	CREATE_TASK = 3,
+	MOVE_TASK = 4,
+	START_TASK = 5,
+	STOP_TASK = 6,
+	FINISH_TASK = 7,
 
-	SUCCESS_RESPONSE,
-	FAILURE_RESPONSE,
+	SUCCESS_RESPONSE = 8,
+	FAILURE_RESPONSE = 9,
 
-	REQUEST_CONFIGURATION,
-	REQUEST_CONFIGURATION_COMPLETE,
+	REQUEST_CONFIGURATION = 10,
+	REQUEST_CONFIGURATION_COMPLETE = 11,
 
-	TASK_INFO,
+	TASK_INFO = 12,
 
-	BUGZILLA_INFO,
-	BUGZILLA_REFRESH
+	BUGZILLA_INFO = 13,
+	BUGZILLA_REFRESH = 14
 };
 
 struct Message
@@ -549,6 +549,18 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 			result.packet = std::make_unique<CreateTaskMessage>(CreateTaskMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 
+			break;
+		case START_TASK:
+			result.packet = std::make_unique<StartTaskMessage>(StartTaskMessage::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
+			break;
+		case STOP_TASK:
+			result.packet = std::make_unique<StopTaskMessage>(StopTaskMessage::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
+			break;
+		case FINISH_TASK:
+			result.packet = std::make_unique<FinishTaskMessage>(FinishTaskMessage::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
 			break;
 		case REQUEST_CONFIGURATION:
 		case REQUEST_CONFIGURATION_COMPLETE:

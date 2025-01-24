@@ -5,15 +5,13 @@ import taskglacier.MainFrame;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Properties;
 import java.util.prefs.Preferences;
-import java.util.prefs.PreferencesFactory;
 
 public class ConnectToServer extends JDialog {
     public ConnectToServer(MainFrame mainFrame) {
         setLayout(new GridBagLayout());
+        setTitle("Connect");
 
         GridBagConstraints gbc = new GridBagConstraints();
 
