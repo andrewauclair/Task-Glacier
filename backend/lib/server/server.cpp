@@ -121,6 +121,10 @@ void MicroTask::load_from_file(std::istream& input)
 			std::string name = line.substr(first, line.size() - first - 1);
 
 			m_tasks.emplace(id, Task(name, id, parentID, createTime));
+
+			// attempt to track the next task ID
+			// TODO test this
+			m_nextTaskID._val = id._val + 1;
 		}
 		else if (line.starts_with("start"))
 		{

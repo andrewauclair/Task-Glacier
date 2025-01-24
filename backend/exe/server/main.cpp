@@ -32,117 +32,6 @@ private:
 	RequestID nextID = RequestID(1);
 };
 
-struct Visitor : MessageVisitor
-{
-	MicroTask& server;
-	sockpp::tcp_socket& socket;
-
-	Visitor(MicroTask& server, sockpp::tcp_socket& socket)
-		: server(server), socket(socket)
-	{
-	}
-
-	virtual void visit(const CreateTaskMessage& message) override
-	{
-		std::cout << message << '\n';
-
-		const auto result = server.create_task(message.name, message.parentID);
-
-		if (result)
-		{
-			SuccessResponse response(message.requestID);
-			const auto output = response.pack();
-			socket.write_n(output.data(), output.size());
-		}
-		else
-		{
-			FailureResponse response(message.requestID, result.error());
-			const auto output = response.pack();
-			socket.write_n(output.data(), output.size());
-		}
-	}
-
-	void visit(const StartTaskMessage& message) override
-	{
-		std::cout << message << '\n';
-
-		const auto result = server.start_task(message.taskID);
-
-		if (result)
-		{
-			SuccessResponse response(message.requestID);
-			const auto output = response.pack();
-			socket.write_n(output.data(), output.size());
-		}
-		else
-		{
-			FailureResponse response(message.requestID, result.value());
-			const auto output = response.pack();
-			socket.write_n(output.data(), output.size());
-		}		
-	}
-
-	void visit(const StopTaskMessage& message) override
-	{
-		std::cout << message << '\n';
-
-		const auto result = server.stop_task(message.taskID);
-
-		if (result)
-		{
-			SuccessResponse response(message.requestID);
-			const auto output = response.pack();
-			socket.write_n(output.data(), output.size());
-		}
-		else
-		{
-			FailureResponse response(message.requestID, result.value());
-			const auto output = response.pack();
-			socket.write_n(output.data(), output.size());
-		}
-	}
-
-	void visit(const FinishTaskMessage& message) override
-	{
-		std::cout << message << '\n';
-
-		const auto result = server.finish_task(message.taskID);
-
-		if (result)
-		{
-			SuccessResponse response(message.requestID);
-			const auto output = response.pack();
-			socket.write_n(output.data(), output.size());
-		}
-		else
-		{
-			FailureResponse response(message.requestID, result.value());
-			const auto output = response.pack();
-			socket.write_n(output.data(), output.size());
-		}
-	}
-
-	virtual void visit(const SuccessResponse& message) override
-	{
-		std::cout << message << '\n';
-	}
-
-	virtual void visit(const FailureResponse& message) override
-	{
-		std::cout << message << '\n';
-	}
-	
-	virtual void visit(const BasicMessage& message) override
-	{
-		std::cout << message << '\n';
-	}
-	
-	virtual void visit(const TaskInfoMessage& message) override
-	{
-		std::cout << message << '\n';
-	}
-};
-
 /*
 * task-glacier 127.0.0.1 5000 /var/lib/task-glacier
 */
@@ -167,7 +56,6 @@ int main(int argc, char** argv)
 	Clock clock;
 	std::ifstream input(argv[3]);
 	std::ofstream output(argv[3], std::ios::out | std::ios::app);
-	//MicroTask server(clock, output);
 	
 	API api(clock, input, output);
 
@@ -179,8 +67,6 @@ int main(int argc, char** argv)
 		std::cout << "Connected\n";
 
 		auto socket = std::make_unique<sockpp::tcp_socket>(std::move(connection));
-
-		//Visitor visitor(server, *socket);
 
 		while (socket->is_open())
 		{
@@ -208,7 +94,6 @@ int main(int argc, char** argv)
 
 			if (result.packet)
 			{
-				//result.packet->visit(visitor);
 				std::vector<std::unique_ptr<Message>> toSend;
 				api.process_packet(*result.packet, toSend);
 

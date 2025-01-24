@@ -94,7 +94,11 @@ public class MainFrame extends JFrame {
         Preferences preferences = Preferences.userNodeForPackage(MainFrame.class);
 
         if (preferences.get("IP-Address", null) != null) {
-            createConnection(preferences.get("IP-Address", null), preferences.getInt("Port", 0));
+            try {
+                createConnection(preferences.get("IP-Address", null), preferences.getInt("Port", 0));
+            }
+            catch (Exception ignored) {
+            }
         }
     }
 
@@ -152,6 +156,8 @@ public class MainFrame extends JFrame {
                     System.out.println("Received packet with length: " + packetLength + ", type: " + packetType);
                 }
             } catch (IOException e) {
+                ((MenuBar) getJMenuBar()).disconnected();
+
                 throw new RuntimeException(e);
             }
         });

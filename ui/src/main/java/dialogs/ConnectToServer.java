@@ -1,5 +1,6 @@
 package dialogs;
 
+import data.Standards;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
