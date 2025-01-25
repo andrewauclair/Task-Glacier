@@ -19,6 +19,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.prefs.Preferences;
 
@@ -135,7 +136,8 @@ public class MainFrame extends JFrame {
     }
 
     public void createConnection(String ipAddress, int port) throws IOException {
-        socket = new Socket(ipAddress, port);
+        socket = new Socket();
+        socket.connect(new InetSocketAddress(ipAddress, port), 500);
 
         setTitle("Task Glacier (Connected - " + ipAddress + ":" + port + ")");
 

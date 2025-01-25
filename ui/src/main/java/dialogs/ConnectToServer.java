@@ -65,7 +65,7 @@ public class ConnectToServer extends JDialog {
                     preferences.remove("Port");
                 }
             } catch (IOException ex) {
-                throw new RuntimeException(ex);
+                JOptionPane.showMessageDialog(ConnectToServer.this, "Connection to " + IP.getText() + ":" + port.getText() + " Failed", "Failed to Connect", JOptionPane.ERROR_MESSAGE);
             }
 
             ConnectToServer.this.dispose();
