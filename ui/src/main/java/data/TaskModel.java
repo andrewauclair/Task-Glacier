@@ -25,8 +25,8 @@ public class TaskModel {
 
     public interface Listener {
         void cleared();
-        void newTask(int taskID);
-        void updatedTask(int taskID);
+        void newTask(Task task);
+        void updatedTask(Task task);
     }
 
     private List<Task> tasks = new ArrayList<>();
@@ -56,13 +56,13 @@ public class TaskModel {
 
             if (first.isPresent()) {
                 first.get().state = info.state;
+                listeners.forEach(listener -> listener.updatedTask(first.get()));
             }
-
-            listeners.forEach(listener -> listener.updatedTask(info.taskID));
         }
         else {
-            tasks.add(new Task(info.taskID, info.name));
-            listeners.forEach(listener -> listener.newTask(info.taskID));
+            Task task = new Task(info.taskID, info.parentID, info.name);
+            tasks.add(task);
+            listeners.forEach(listener -> listener.newTask(task));
         }
     }
 }

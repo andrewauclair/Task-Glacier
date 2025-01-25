@@ -15,6 +15,9 @@ dependencies {
     implementation("io.github.andrewauclair:modern-docking-ui:1.0")
     implementation("com.formdev:flatlaf:3.2")
     implementation("com.formdev:flatlaf-extras:3.2")
+
+    // https://mvnrepository.com/artifact/org.swinglabs/swingx
+    implementation("org.swinglabs:swingx:1.6.1")
 }
 
 tasks.test {

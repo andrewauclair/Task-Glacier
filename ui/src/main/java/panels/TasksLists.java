@@ -1,9 +1,12 @@
 package panels;
 
+import data.Task;
 import data.TaskModel;
 import data.TaskState;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.app.Docking;
+import org.jdesktop.swingx.JXTreeTable;
+import org.jdesktop.swingx.treetable.DefaultTreeTableModel;
 import packets.PacketType;
 import packets.TaskStateChange;
 import taskglacier.MainFrame;
@@ -16,12 +19,12 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 
 public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
-
-    private final JTable table;
-    private final DefaultTableModel tableModel;
     private final MainFrame mainFrame;
     private final String persistentID;
     private final String title;
+    ParentTaskTreeTableNode parentTask = new ParentTaskTreeTableNode();
+    DefaultTreeTableModel treeTableModel = new DefaultTreeTableModel(parentTask);
+    JXTreeTable table = new JXTreeTable(treeTableModel);
 
     public TasksLists(MainFrame mainFrame, String persistentID, String title) {
         super(new BorderLayout());
@@ -32,15 +35,9 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         Docking.registerDockable(this);
         mainFrame.getTaskModel().addListener(this);
 
-        tableModel = new DefaultTableModel(new Object[]{"ID", "Name"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        table = new JTable(tableModel) {
-
-        };
+        table.tableChanged();
+        table.setShowsRootHandles(true);
+        table.expandAll();
 
         JPopupMenu contextMenu = new JPopupMenu();
         JMenuItem start = new JMenuItem("Start");
@@ -56,7 +53,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
 
             TaskStateChange change = new TaskStateChange();
             change.packetType = PacketType.START_TASK;
-            change.taskID = (int) tableModel.getValueAt(selectedRow, 0);
+            change.taskID = (int) treeTableModel.getValueAt(selectedRow, 0);
             mainFrame.getConnection().sendPacket(change);
         });
         stop.addActionListener(e -> {
@@ -68,7 +65,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
 
             TaskStateChange change = new TaskStateChange();
             change.packetType = PacketType.STOP_TASK;
-            change.taskID = (int) tableModel.getValueAt(selectedRow, 0);
+            change.taskID = (int) treeTableModel.getValueAt(selectedRow, 0);
             mainFrame.getConnection().sendPacket(change);
         });
         finish.addActionListener(e -> {
@@ -80,7 +77,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
 
             TaskStateChange change = new TaskStateChange();
             change.packetType = PacketType.FINISH_TASK;
-            change.taskID = (int) tableModel.getValueAt(selectedRow, 0);
+            change.taskID = (int) treeTableModel.getValueAt(selectedRow, 0);
             mainFrame.getConnection().sendPacket(change);
         });
 
@@ -120,25 +117,29 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
 
     @Override
     public void cleared() {
-        tableModel.setRowCount(0);
+//        treeTableModel.setRowCount(0);
     }
 
     @Override
-    public void newTask(int taskID) {
-        String name = mainFrame.getTaskModel().getTaskName(taskID);
-        tableModel.addRow(new Object[] { taskID, name });
-        tableModel.fireTableRowsInserted(tableModel.getRowCount() - 1, tableModel.getRowCount());
+    public void newTask(Task task) {
+//        String name = mainFrame.getTaskModel().getTaskName(taskID);
+//        treeTableModel.addRow(new Object[] { taskID, name });
+//        treeTableModel.fireTableRowsInserted(treeTableModel.getRowCount() - 1, treeTableModel.getRowCount());
+
+
+        parentTask.addTask(task);
+        table.expandAll();
     }
 
     @Override
-    public void updatedTask(int taskID) {
-        if (mainFrame.getTaskModel().getTaskState(taskID) == TaskState.FINISHED) {
-            for (int i = 0; i < tableModel.getRowCount(); i++) {
-                if ((int) tableModel.getValueAt(i, 0) == taskID) {
-                    tableModel.removeRow(i);
-                    break;
-                }
-            }
-        }
+    public void updatedTask(Task task) {
+//        if (mainFrame.getTaskModel().getTaskState(taskID) == TaskState.FINISHED) {
+//            for (int i = 0; i < treeTableModel.getRowCount(); i++) {
+//                if ((int) treeTableModel.getValueAt(i, 0) == taskID) {
+//                    treeTableModel.removeRow(i);
+//                    break;
+//                }
+//            }
+//        }
     }
 }
