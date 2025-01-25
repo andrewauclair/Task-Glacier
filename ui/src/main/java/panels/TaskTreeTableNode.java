@@ -15,6 +15,9 @@ public class TaskTreeTableNode extends AbstractMutableTreeTableNode {
 
     @Override
     public Object getValueAt(int i) {
+        if (task == null) {
+            return null;
+        }
         switch (i) {
             case 0:
                 return task.id;

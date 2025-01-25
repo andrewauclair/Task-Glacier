@@ -13,6 +13,7 @@ import taskglacier.MainFrame;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -22,8 +23,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
     private final MainFrame mainFrame;
     private final String persistentID;
     private final String title;
-    ParentTaskTreeTableNode parentTask = new ParentTaskTreeTableNode();
-    DefaultTreeTableModel treeTableModel = new DefaultTreeTableModel(parentTask);
+    TasksTreeTableModel treeTableModel = new TasksTreeTableModel();
     JXTreeTable table = new JXTreeTable(treeTableModel);
 
     public TasksLists(MainFrame mainFrame, String persistentID, String title) {
@@ -35,7 +35,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         Docking.registerDockable(this);
         mainFrame.getTaskModel().addListener(this);
 
-        table.tableChanged();
+//        table.tableChanged();
         table.setShowsRootHandles(true);
         table.expandAll();
 
@@ -51,9 +51,13 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
                 return;
             }
 
+            TreePath pathForRow = table.getPathForRow(selectedRow);
+
+
+
             TaskStateChange change = new TaskStateChange();
             change.packetType = PacketType.START_TASK;
-            change.taskID = (int) treeTableModel.getValueAt(selectedRow, 0);
+            change.taskID = (int) treeTableModel.getValueAt(pathForRow.getLastPathComponent(), 0);
             mainFrame.getConnection().sendPacket(change);
         });
         stop.addActionListener(e -> {
@@ -62,10 +66,11 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
             if (selectedRow == -1) {
                 return;
             }
+            TreePath pathForRow = table.getPathForRow(selectedRow);
 
             TaskStateChange change = new TaskStateChange();
             change.packetType = PacketType.STOP_TASK;
-            change.taskID = (int) treeTableModel.getValueAt(selectedRow, 0);
+            change.taskID = (int) treeTableModel.getValueAt(pathForRow.getLastPathComponent(), 0);
             mainFrame.getConnection().sendPacket(change);
         });
         finish.addActionListener(e -> {
@@ -75,9 +80,11 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
                 return;
             }
 
+            TreePath pathForRow = table.getPathForRow(selectedRow);
+
             TaskStateChange change = new TaskStateChange();
             change.packetType = PacketType.FINISH_TASK;
-            change.taskID = (int) treeTableModel.getValueAt(selectedRow, 0);
+            change.taskID = (int) treeTableModel.getValueAt(pathForRow.getLastPathComponent(), 0);
             mainFrame.getConnection().sendPacket(change);
         });
 
@@ -127,7 +134,10 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
 //        treeTableModel.fireTableRowsInserted(treeTableModel.getRowCount() - 1, treeTableModel.getRowCount());
 
 
-        parentTask.addTask(task);
+//        parentTask.addTask(task);
+treeTableModel.addTask(task);
+
+
         table.expandAll();
     }
 
