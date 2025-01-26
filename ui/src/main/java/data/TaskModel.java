@@ -1,13 +1,18 @@
 package data;
 
 import packets.TaskInfo;
-import packets.TaskStateChange;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class TaskModel {
+    public Task getTask(int taskID) {
+        return tasks.stream().filter(task -> task.id == taskID)
+                .findFirst()
+                .orElse(null);
+    }
+
     public String getTaskName(int taskID) {
         Optional<String> first = tasks.stream().filter(task -> task.id == taskID)
                 .map(task -> task.name)
@@ -24,7 +29,6 @@ public class TaskModel {
     }
 
     public interface Listener {
-        void cleared();
         void newTask(Task task);
         void updatedTask(Task task);
     }
@@ -38,11 +42,6 @@ public class TaskModel {
 
     public void removeListener(Listener listener) {
         listeners.remove(listener);
-    }
-
-    public void clear() {
-        tasks.clear();
-        listeners.forEach(Listener::cleared);
     }
 
     public boolean hasTask(int taskID) {
@@ -61,6 +60,7 @@ public class TaskModel {
         }
         else {
             Task task = new Task(info.taskID, info.parentID, info.name);
+            task.state = info.state;
             tasks.add(task);
             listeners.forEach(listener -> listener.newTask(task));
         }

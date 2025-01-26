@@ -1,8 +1,12 @@
 package panels;
 
 import data.Task;
+import data.TaskState;
 import org.jdesktop.swingx.treetable.AbstractMutableTreeTableNode;
 import org.jdesktop.swingx.treetable.TreeTableNode;
+
+import javax.swing.*;
+import java.util.Objects;
 
 public class TaskTreeTableNode extends AbstractMutableTreeTableNode {
     private final TaskTreeTableNode parent;
@@ -16,20 +20,18 @@ public class TaskTreeTableNode extends AbstractMutableTreeTableNode {
     @Override
     public Object getValueAt(int i) {
         if (task == null) {
-            return null;
+            return "?";
         }
         switch (i) {
             case 0:
-                return task.id;
-            case 1:
                 return task.name;
         }
-        return null;
+        return "?";
     }
 
     @Override
     public int getColumnCount() {
-        return 2; // id and name for now
+        return 1; // just name for now
     }
 
     @Override
@@ -69,5 +71,26 @@ public class TaskTreeTableNode extends AbstractMutableTreeTableNode {
         if (o instanceof Task) {
             task = (Task) o;
         }
+    }
+
+    public boolean isActiveTask() {
+        if (task == null) {
+            return false;
+        }
+        return task.state == TaskState.ACTIVE;
+    }
+
+    public boolean hasActiveChildTask() {
+        if (children.isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < getChildCount(); i++) {
+            TaskTreeTableNode child = (TaskTreeTableNode) getChildAt(i);
+
+            if (child.isActiveTask() || child.hasActiveChildTask()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

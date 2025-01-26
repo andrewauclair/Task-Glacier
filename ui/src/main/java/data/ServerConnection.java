@@ -5,6 +5,7 @@ import packets.PacketType;
 import packets.TaskInfo;
 import taskglacier.MainFrame;
 
+import javax.swing.*;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -50,7 +51,7 @@ public class ServerConnection {
                 if (packetType == PacketType.TASK_INFO) {
                     TaskInfo info = TaskInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
 
-                    mainFrame.getTaskModel().receiveInfo(info);
+                    SwingUtilities.invokeLater(() -> mainFrame.getTaskModel().receiveInfo(info));
                 }
             }
         } catch (IOException e) {

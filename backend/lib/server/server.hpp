@@ -52,6 +52,7 @@ public:
 
 	std::expected<TaskID, std::string> create_task(const std::string& name, TaskID parentID = NO_PARENT);
 
+	Task* active_task() const { return m_activeTask; }
 	Task* find_task(TaskID id);
 
 	std::optional<std::string> start_task(TaskID id);
@@ -83,6 +84,7 @@ public:
 
 private:
 	std::unordered_map<TaskID, Task> m_tasks;
+	Task* m_activeTask = nullptr;
 
 	TaskID m_nextTaskID = TaskID(1);
 

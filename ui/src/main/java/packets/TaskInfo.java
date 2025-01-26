@@ -28,6 +28,20 @@ public class TaskInfo implements Packet {
 
         info.name = new String(bytes);
 
+        input.readLong(); // create time
+
+        int timesCount = input.readInt();// number of times
+
+        for (int i = 0; i < timesCount; i++) {
+            input.readLong(); // start time
+            boolean stopPresent = input.readByte() != 0;// stop present
+
+            input.readLong(); // stop time
+        }
+
+        input.readByte(); // finish present
+        input.readLong(); // finish time
+
         return info;
     }
 

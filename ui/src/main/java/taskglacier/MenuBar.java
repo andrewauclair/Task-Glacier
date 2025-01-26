@@ -36,13 +36,6 @@ public class MenuBar extends JMenuBar {
         server.add(connect);
         server.add(disconnect);
 
-        JMenuItem request = new JMenuItem("Request Config");
-        request.addActionListener(e -> {
-            RequestConfig requestConfig = new RequestConfig();
-                mainFrame.getTaskModel().clear();
-                mainFrame.getConnection().sendPacket(requestConfig);
-        });
-        server.add(request);
         add(server);
     }
 

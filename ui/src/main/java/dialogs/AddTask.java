@@ -17,11 +17,6 @@ public class AddTask extends JDialog {
 
         JTextField parent = new JTextField();
         parent.setText("0");
-        
-        JTextField timeA = new JTextField();
-        JTextField timeB = new JTextField();
-
-        JTextField project = new JTextField();
 
         JButton add = new JButton("Add");
         add.addActionListener(e -> {
@@ -41,14 +36,6 @@ public class AddTask extends JDialog {
 
         add(createFlow("Parent: ", parent), gbc);
         gbc.gridy++;
-//        add(createFlow("Time A:", timeA), gbc);
-//        gbc.gridy++;
-
-//        add(createFlow("Time B:", timeB), gbc);
-//        gbc.gridy++;
-
-//        add(createFlow("Project:", project), gbc);
-//        gbc.gridy++;
 
         add(add, gbc);
         gbc.gridy++;

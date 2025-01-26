@@ -6,14 +6,32 @@ import org.jdesktop.swingx.treetable.TreeTableNode;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public class TasksTreeTableModel extends AbstractTreeTableModel {
-    private final ParentTaskTreeTableNode parentTask;
+    private TaskTreeTableNode parentTask;
 
-    public TasksTreeTableModel() {
-        super(new ParentTaskTreeTableNode());
+    public TasksTreeTableModel(TaskTreeTableNode root) {
+        super(root);
 
-        parentTask = (ParentTaskTreeTableNode) getRoot();
+        parentTask = root;
+    }
+
+    public TreeTableNode[] getPathToRoot(TreeTableNode aNode) {
+        Objects.requireNonNull(aNode);
+
+        List<TreeTableNode> path = new ArrayList<>();
+
+        TreeTableNode node;
+        for(node = aNode; node != this.root; node = node.getParent()) {
+            path.addFirst(node);
+        }
+
+        path.addFirst(node);
+
+        return path.toArray(new TreeTableNode[0]);
     }
 
     public void addTask(Task task) {
@@ -30,13 +48,18 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
             if (node != null) {
                 node.add(new TaskTreeTableNode(node, task));
 
-                modelSupport.fireChildAdded(new TreePath(node.getParent()), node.getParent().getIndex(node), node);
+                modelSupport.fireChildAdded(new TreePath(getPathToRoot(node)), node.getParent().getIndex(node), node);
             }
         }
     }
 
     public void updateTask(Task task) {
+        TaskTreeTableNode node = findTaskNode(parentTask, task.id);
 
+        if (node != null) {
+            node.setUserObject(task);
+            modelSupport.fireChildChanged(new TreePath(getPathToRoot(node.getParent())), node.getParent().getIndex(node), node);
+        }
     }
 
     private static TaskTreeTableNode findTaskNode(TaskTreeTableNode node, int taskID) {
@@ -59,7 +82,7 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
 
     @Override
     public int getColumnCount() {
-        return 2;
+        return 1;
     }
 
     @Override
@@ -80,5 +103,10 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
     @Override
     public int getIndexOfChild(Object parent, Object child) {
         return ((TaskTreeTableNode) parent).getIndex((TreeNode) child);
+    }
+
+    public void setRoot(TaskTreeTableNode root) {
+        this.root = root;
+        modelSupport.fireNewRoot();
     }
 }

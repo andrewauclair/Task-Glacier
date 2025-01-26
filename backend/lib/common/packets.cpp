@@ -194,14 +194,11 @@ std::vector<std::byte> TaskInfoMessage::pack() const
 	{
 		builder.add(time.start);
 		builder.add(time.stop.has_value());
-
-		if (time.stop)
-		{
-			builder.add(time.stop.value());
-		}
+		builder.add(time.stop.value_or(std::chrono::milliseconds(0)));
 	}
 
 	builder.add(finishTime.has_value());
+	builder.add(finishTime.value_or(std::chrono::milliseconds(0)));
 
 	return builder.build();
 }

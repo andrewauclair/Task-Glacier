@@ -11,6 +11,7 @@ import io.github.andrewauclair.moderndocking.app.RootDockingPanel;
 import io.github.andrewauclair.moderndocking.app.WindowLayoutBuilder;
 import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
 import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
+import packets.RequestConfig;
 import panels.TasksLists;
 
 import javax.swing.*;
@@ -44,6 +45,8 @@ public class MainFrame extends JFrame {
     }
 
     public MainFrame() throws IOException {
+        mainFrame = this;
+
         setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -148,9 +151,21 @@ public class MainFrame extends JFrame {
 
         ((MenuBar) getJMenuBar()).connected();
 
-        listen = new Thread(() -> connection.run(this));
+        RequestConfig requestConfig = new RequestConfig();
+        connection.sendPacket(requestConfig);
+
+        listen = new Thread(() -> {
+            try {
+                connection.run(this);
+            }
+            catch (Exception ignored) {
+                disconnect();
+            }
+        });
         listen.start();
     }
+
+    public static MainFrame mainFrame = null;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {

@@ -48,6 +48,8 @@ void MessageProcessVisitor::visit(const CreateTaskMessage& message)
 
 void MessageProcessVisitor::visit(const StartTaskMessage& message)
 {
+	auto* currentActiveTask = app.active_task();
+
 	const auto result = app.start_task(message.taskID);
 
 	if (result)
@@ -57,6 +59,16 @@ void MessageProcessVisitor::visit(const StartTaskMessage& message)
 	else
 	{
 		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
+
+		if (currentActiveTask)
+		{
+			TaskInfoMessage info(currentActiveTask->taskID(), currentActiveTask->parentID(), currentActiveTask->m_name);
+			info.state = currentActiveTask->state;
+			info.createTime = currentActiveTask->createTime();
+			info.times.insert(info.times.end(), currentActiveTask->times().begin(), currentActiveTask->times().end());
+
+			output.push_back(std::make_unique<TaskInfoMessage>(info));
+		}
 
 		auto* task = app.find_task(message.taskID);
 
@@ -122,6 +134,7 @@ void MessageProcessVisitor::visit(const BasicMessage& message)
 		const auto send_task = [&](const Task& task)
 		{
 			auto info = std::make_unique<TaskInfoMessage>(task.taskID(), task.parentID(), task.m_name);
+			info->state = task.state;
 			info->createTime = task.createTime();
 			info->finishTime = task.finishTime();
 			auto times = task.times();

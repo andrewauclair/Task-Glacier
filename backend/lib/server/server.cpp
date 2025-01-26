@@ -40,7 +40,13 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 
 	if (task)
 	{
+		if (m_activeTask)
+		{
+			m_activeTask->state = TaskState::INACTIVE;
+		}
 		task->state = TaskState::ACTIVE;
+
+		m_activeTask = task;
 
 		*m_output << "start " << id._val << ' ' << m_clock->now().count() << std::endl;
 
@@ -55,6 +61,8 @@ std::optional<std::string> MicroTask::stop_task(TaskID id)
 
 	if (task && task->state == TaskState::ACTIVE)
 	{
+		m_activeTask = nullptr;
+
 		task->state = TaskState::INACTIVE;
 
 		*m_output << "stop " << id._val << ' ' << m_clock->now().count() << std::endl;
@@ -70,6 +78,11 @@ std::optional<std::string> MicroTask::finish_task(TaskID id)
 
 	if (task && task->state != TaskState::FINISHED)
 	{
+		if (task == m_activeTask)
+		{
+			m_activeTask = nullptr;
+		}
+
 		task->state = TaskState::FINISHED;
 
 		*m_output << "finish " << id._val << ' ' << m_clock->now().count() << std::endl;
@@ -109,6 +122,8 @@ void MicroTask::load_from_file(std::istream& input)
 {
 	std::string line;
 
+	Task* activeTask = nullptr;
+
 	while (std::getline(input, line))
 	{
 		if (line.starts_with("create"))
@@ -136,6 +151,13 @@ void MicroTask::load_from_file(std::istream& input)
 
 			if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
 
+			if (activeTask)
+			{
+				activeTask->state = TaskState::INACTIVE;
+				activeTask->m_times.back().stop = startTime;
+			}
+			activeTask = task;
+
 			task->state = TaskState::ACTIVE;
 			task->m_times.emplace_back(startTime);
 		}
@@ -150,6 +172,7 @@ void MicroTask::load_from_file(std::istream& input)
 			if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
 			if (task->m_times.empty()) throw std::runtime_error("Cannot stop task, never been started: " + std::to_string(id._val));
 
+			activeTask = nullptr;
 			task->state = TaskState::INACTIVE;
 			task->m_times.back().stop = stopTime;
 		}
@@ -166,6 +189,7 @@ void MicroTask::load_from_file(std::istream& input)
 			if (task->state == TaskState::ACTIVE)
 			{
 				task->m_times.back().stop = finishTime;
+				activeTask = nullptr;
 			}
 
 			task->state = TaskState::FINISHED;

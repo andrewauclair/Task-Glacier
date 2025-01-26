@@ -1,9 +1,13 @@
 #include <catch2/catch_all.hpp>
 #include "server.hpp"
 
+#include <source_location>
+
 template<typename T, typename U>
-void check_expected_value(const std::expected<T, U>& expected, const T& value)
+void check_expected_value(const std::expected<T, U>& expected, const T& value, std::source_location location = std::source_location::current())
 {
+	INFO("Location: " << location.file_name() << ":" << location.line());
+
 	if (!expected.has_value())
 	{
 		UNSCOPED_INFO("std::expected error was: " << expected.error());
@@ -13,8 +17,10 @@ void check_expected_value(const std::expected<T, U>& expected, const T& value)
 }
 
 template<typename U, typename T>
-void check_expected_error(const std::expected<T, U>& expected, const U& error)
+void check_expected_error(const std::expected<T, U>& expected, const U& error, std::source_location location = std::source_location::current())
 {
+	INFO("Location: " << location.file_name() << ":" << location.line());
+
 	REQUIRE(!expected.has_value());
 	CHECK(expected.error() == error);
 }
@@ -110,14 +116,90 @@ TEST_CASE("task management", "[task]")
 
 			check_expected_value(state_result, TaskState::FINISHED);
 		}
+
+		SECTION("start another task")
+		{
+			REQUIRE(app.create_task("next task").has_value());
+
+			const auto start_result_2 = app.start_task(TaskID(2));
+
+			CHECK(!start_result_2.has_value());
+
+			const auto state_result_1 = app.task_state(TaskID(1));
+			const auto state_result_2 = app.task_state(TaskID(2));
+
+			check_expected_value(state_result_1, TaskState::INACTIVE);
+			check_expected_value(state_result_2, TaskState::ACTIVE);
+		}
+	}
+}
+
+TEST_CASE("Handling active task", "[task]")
+{
+	TestClock clock;
+	std::ostringstream output;
+	clock.time += std::chrono::hours(2);
+
+	MicroTask app(clock, output);
+
+	app.create_task("test 1");
+	app.create_task("test 2");
+	app.create_task("test 3");
+
+	app.start_task(TaskID(1));
+
+	auto state1 = app.task_state(TaskID(1));
+
+	check_expected_value(state1, TaskState::ACTIVE);
+
+	SECTION("Starting another task stops active task")
+	{
+		app.start_task(TaskID(2));
+
+		state1 = app.task_state(TaskID(1));
+		auto state2 = app.task_state(TaskID(2));
+
+		check_expected_value(state1, TaskState::INACTIVE);
+		check_expected_value(state2, TaskState::ACTIVE);
 	}
 
-	SECTION("starting task that doesn't exist fails")
+	SECTION("Stopping active task clears active task")
 	{
-		const auto start_result = app.start_task(TaskID(2));
+		app.stop_task(TaskID(1));
 
-		REQUIRE(start_result.has_value());
+		app.finish_task(TaskID(1)); // finish the task to force it out of INACTIVE state
 
-		CHECK(start_result.value() == "Task with ID 2 does not exist.");
+		app.start_task(TaskID(2));
+
+		state1 = app.task_state(TaskID(1));
+		auto state2 = app.task_state(TaskID(2));
+
+		check_expected_value(state1, TaskState::FINISHED);
+		check_expected_value(state2, TaskState::ACTIVE);
+	}
+
+	SECTION("Finishing active task clears active task")
+	{
+		app.finish_task(TaskID(1));
+
+		app.start_task(TaskID(2));
+
+		state1 = app.task_state(TaskID(1));
+		auto state2 = app.task_state(TaskID(2));
+
+		check_expected_value(state1, TaskState::FINISHED);
+		check_expected_value(state2, TaskState::ACTIVE);
+	}
+
+	SECTION("Don't clear the active task if it isn't the task being finished")
+	{
+		app.finish_task(TaskID(3));
+		app.start_task(TaskID(2));
+
+		state1 = app.task_state(TaskID(1));
+		auto state2 = app.task_state(TaskID(2));
+
+		check_expected_value(state1, TaskState::INACTIVE);
+		check_expected_value(state2, TaskState::ACTIVE);
 	}
 }

@@ -42,9 +42,16 @@ TEST_CASE("create task", "[api][task]")
 
 		api.process_packet(create_task, output);
 
-		REQUIRE(output.size() == 1);
+		REQUIRE(output.size() == 2);
 
 		verify_message(SuccessResponse{ RequestID(1) }, *output[0]);
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "this is a test");
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.state = TaskState::INACTIVE;
+		taskInfo.newTask = true;
+
+		verify_message(taskInfo, *output[1]);
 	}
 
 	SECTION("failure")
@@ -69,6 +76,50 @@ TEST_CASE("create task", "[api][task]")
 	}
 }
 
+TEST_CASE("start task", "[api][task]")
+{
+	TestClock clock;
+	std::istringstream fileInput;
+	std::ostringstream fileOutput;
+	API api(clock, fileInput, fileOutput);
+	std::vector<std::unique_ptr<Message>> output;
+
+	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "test 1"), output);
+	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(2), "test 2"), output);
+
+	output.clear();
+
+	api.process_packet(StartTaskMessage(TaskID(1), RequestID(3)), output);
+
+	REQUIRE(output.size() == 2);
+
+	verify_message(SuccessResponse{ RequestID(3) }, *output[0]);
+
+	auto taskInfo1 = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+	taskInfo1.createTime = std::chrono::milliseconds(1737344039870);
+	taskInfo1.state = TaskState::ACTIVE;
+
+	verify_message(taskInfo1, *output[1]);
+
+	output.clear();
+
+	api.process_packet(StartTaskMessage(TaskID(2), RequestID(4)), output);
+
+	REQUIRE(output.size() == 3);
+
+	verify_message(SuccessResponse{ RequestID(4) }, *output[0]);
+
+	taskInfo1.state = TaskState::INACTIVE;
+
+	verify_message(taskInfo1, *output[1]);
+
+	auto taskInfo2 = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
+	taskInfo2.createTime = std::chrono::milliseconds(1737344039870);
+	taskInfo2.state = TaskState::ACTIVE;
+
+	verify_message(taskInfo2, *output[2]);
+}
+
 // TODO for now we're just going to do this in one big test
 TEST_CASE("Persist Tasks", "[api][task]")
 {
@@ -89,14 +140,16 @@ TEST_CASE("Persist Tasks", "[api][task]")
 	auto start_task_2 = StartTaskMessage(TaskID(2), RequestID(8));
 	auto start_task_3 = StartTaskMessage(TaskID(3), RequestID(9));
 	auto start_task_4 = StartTaskMessage(TaskID(4), RequestID(10));
+	auto start_task_5 = StartTaskMessage(TaskID(5), RequestID(11));
+	auto start_task_6 = StartTaskMessage(TaskID(6), RequestID(12));
 
-	auto stop_task_2 = StopTaskMessage(TaskID(2), RequestID(11));
-	auto stop_task_3 = StopTaskMessage(TaskID(3), RequestID(12));
-	auto stop_task_4 = StopTaskMessage(TaskID(4), RequestID(13));
+	auto stop_task_2 = StopTaskMessage(TaskID(2), RequestID(13));
+	auto stop_task_3 = StopTaskMessage(TaskID(3), RequestID(14));
+	auto stop_task_4 = StopTaskMessage(TaskID(4), RequestID(15));
 
-	auto finish_task_2 = FinishTaskMessage(TaskID(2), RequestID(14));
-	auto finish_task_3 = FinishTaskMessage(TaskID(3), RequestID(15));
-	auto finish_task_4 = FinishTaskMessage(TaskID(4), RequestID(16));
+	auto finish_task_2 = FinishTaskMessage(TaskID(2), RequestID(16));
+	auto finish_task_3 = FinishTaskMessage(TaskID(3), RequestID(17));
+	auto finish_task_4 = FinishTaskMessage(TaskID(4), RequestID(18));
 
 	api.process_packet(create_task_1, output);
 	clock.time += std::chrono::hours(1);
@@ -146,7 +199,14 @@ TEST_CASE("Persist Tasks", "[api][task]")
 	api.process_packet(finish_task_2, output);
 	clock.time += std::chrono::hours(1);
 
+	api.process_packet(start_task_6, output);
+	clock.time += std::chrono::hours(1);
+
+	api.process_packet(start_task_5, output);
+	clock.time += std::chrono::hours(1);
+
 	api.process_packet(start_task_1, output);
+	clock.time += std::chrono::hours(1);
 
 	std::ostringstream expected;
 	expected << "create 1 0 1737344039870 (task 1)\n";
@@ -165,7 +225,9 @@ TEST_CASE("Persist Tasks", "[api][task]")
 	expected << "finish 4 1737390839870\n";
 	expected << "finish 3 1737394439870\n";
 	expected << "finish 2 1737398039870\n";
-	expected << "start 1 1737401639870\n";
+	expected << "start 6 1737401639870\n";
+	expected << "start 5 1737405239870\n";
+	expected << "start 1 1737408839870\n";
 
 	CHECK(fileOutput.str() == expected.str());
 }
@@ -191,7 +253,9 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	fileOutput << "finish 4 1737390839870\n";
 	fileOutput << "finish 3 1737394439870\n";
 	fileOutput << "finish 2 1737398039870\n";
-	fileOutput << "start 1 1737401639870\n";
+	fileOutput << "start 6 1737401639870\n";
+	fileOutput << "start 5 1737405239870\n";
+	fileOutput << "start 1 1737408839870\n";
 
 	fileInput = std::istringstream(fileOutput.str());
 	fileOutput.clear();
@@ -213,6 +277,13 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	auto task5 = TaskInfoMessage(TaskID(5), TaskID(3), "task 5");
 	auto task6 = TaskInfoMessage(TaskID(6), TaskID(4), "task 6");
 
+	task1.state = TaskState::ACTIVE;
+	task2.state = TaskState::FINISHED;
+	task3.state = TaskState::FINISHED;
+	task4.state = TaskState::FINISHED;
+	task5.state = TaskState::INACTIVE;
+	task6.state = TaskState::INACTIVE;
+
 	task1.createTime = std::chrono::milliseconds(1737344039870);
 	task2.createTime = std::chrono::milliseconds(1737347639870);
 	task3.createTime = std::chrono::milliseconds(1737354839870);
@@ -220,11 +291,13 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	task5.createTime = std::chrono::milliseconds(1737369239870);
 	task6.createTime = std::chrono::milliseconds(1737376439870);
 
-	task1.times.emplace_back(std::chrono::milliseconds(1737401639870));
+	task1.times.emplace_back(std::chrono::milliseconds(1737408839870));
 	task2.times.emplace_back(std::chrono::milliseconds(1737351239870), std::chrono::milliseconds(1737358439870));
 	task2.times.emplace_back(std::chrono::milliseconds(1737380039870), std::chrono::milliseconds(1737383639870));
 	task3.times.emplace_back(std::chrono::milliseconds(1737362039870), std::chrono::milliseconds(1737372839870));
 	task4.times.emplace_back(std::chrono::milliseconds(1737387239870), std::chrono::milliseconds(1737390839870));
+	task5.times.emplace_back(std::chrono::milliseconds(1737405239870), std::chrono::milliseconds(1737408839870));
+	task6.times.emplace_back(std::chrono::milliseconds(1737401639870), std::chrono::milliseconds(1737405239870));
 
 	task2.finishTime = std::chrono::milliseconds(1737398039870);
 	task3.finishTime = std::chrono::milliseconds(1737394439870);

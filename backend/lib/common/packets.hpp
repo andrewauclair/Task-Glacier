@@ -255,7 +255,7 @@ struct TaskInfoMessage : Message
 {
 	TaskID taskID;
 	TaskID parentID;
-	TaskState state;
+	TaskState state = TaskState::INACTIVE;
 	bool newTask = false;
 
 	std::string name;
