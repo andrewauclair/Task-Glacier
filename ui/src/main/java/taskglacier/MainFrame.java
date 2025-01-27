@@ -12,6 +12,7 @@ import io.github.andrewauclair.moderndocking.app.WindowLayoutBuilder;
 import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
 import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
 import packets.RequestConfig;
+import panels.StatusBar;
 import panels.TasksLists;
 
 import javax.swing.*;
@@ -61,21 +62,13 @@ public class MainFrame extends JFrame {
 
         setTitle("Task Glacier (Not Connected)");
 
-        JPanel statusBar = new JPanel(new GridBagLayout());
-        JLabel activeTask = new JLabel("No active task");
+        StatusBar statusBar = new StatusBar();
+        taskModel.addListener(statusBar);
 
-        gbc.weightx = 0;
-
-        statusBar.add(activeTask, gbc);
-        gbc.weightx = 1;
-        gbc.gridx=1;
-        statusBar.add(new JLabel(), gbc);
-
-        gbc.gridx = 0;
         gbc.gridy++;
-        gbc.weightx = 1;
         gbc.weighty = 0;
-
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        
         add(statusBar, gbc);
 
         setSize(600, 400);
@@ -93,8 +86,6 @@ public class MainFrame extends JFrame {
         AppState.setDefaultApplicationLayout(builder.buildApplicationLayout());
 
         setJMenuBar(new MenuBar(this));
-
-
 
         // now that the main frame is set up with the defaults, we can restore the layout
         File layoutFile = new File("layout.xml");

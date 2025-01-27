@@ -97,9 +97,12 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
             table.expandAll();
         }
         else {
+            // TODO I think this happens too early, before we've gotten data from the server, so the task doesn't exist yet
             Task task = mainFrame.getTaskModel().getTask(taskID);
 
-            treeTableModel.addTask(task);
+            if (task != null ) {
+                treeTableModel.addTask(task);
+            }
 
             table.expandAll();
         }
