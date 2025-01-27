@@ -62,6 +62,15 @@ public class TaskModel {
             Task task = new Task(info.taskID, info.parentID, info.name);
             task.state = info.state;
             tasks.add(task);
+
+            Optional<Task> first = tasks.stream().filter(parent -> parent.id == info.parentID)
+                    .findFirst();
+
+            if (first.isPresent()) {
+                first.get().children.add(task);
+                listeners.forEach(listener -> listener.updatedTask(first.get()));
+            }
+
             listeners.forEach(listener -> listener.newTask(task));
         }
     }

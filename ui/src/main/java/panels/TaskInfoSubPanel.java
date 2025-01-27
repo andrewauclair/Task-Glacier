@@ -28,7 +28,14 @@ public class TaskInfoSubPanel extends JPanel {
         add(id, gbc);
     }
 
+    private void clear() {
+        taskID.setText("");
+    }
     public void displayForTask(Task task) {
+        if (task == null) {
+            clear();
+            return;
+        }
         taskID.setText(String.valueOf(task.id));
     }
 }

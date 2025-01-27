@@ -2,6 +2,7 @@ package panels;
 
 import data.Task;
 import data.TaskModel;
+import data.TaskState;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingProperty;
 import io.github.andrewauclair.moderndocking.DockingRegion;
@@ -12,6 +13,8 @@ import packets.TaskStateChange;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -29,7 +32,14 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
     @DockingProperty(name = "taskID")
     private int taskID = 0;
 
+    private boolean allTasks = false;
+
+    private TaskInfoSubPanel infoSubPanel = new TaskInfoSubPanel();
+
+    // TODO right now Modern Docking uses the persistentID as both parameters. That's not ideal.
     public TasksLists(String persistentID, String title) {
+        super(new BorderLayout());
+
         this.persistentID = persistentID;
         this.title = "Tasks";
         mainFrame = MainFrame.mainFrame;
@@ -52,7 +62,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
 
         taskID = task.id;
         this.mainFrame = mainFrame;
-        persistentID = task.name;
+        persistentID = "task-list-" + task.id;
         title = "Tasks (" + task.name + ")";
 
         Docking.registerDockable(this);
@@ -64,7 +74,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         treeTableModel.addTask(task);
 
         table.setShowsRootHandles(true);
-        table.setRootVisible(true);
+        table.setRootVisible(false);
 
         table.expandAll();
 
@@ -73,6 +83,8 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
 
     public TasksLists(MainFrame mainFrame, String persistentID, String title) {
         super(new BorderLayout());
+
+        allTasks = true;
 
         this.mainFrame = mainFrame;
         this.persistentID = persistentID;
@@ -97,7 +109,6 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
             table.expandAll();
         }
         else {
-            // TODO I think this happens too early, before we've gotten data from the server, so the task doesn't exist yet
             Task task = mainFrame.getTaskModel().getTask(taskID);
 
             if (task != null ) {
@@ -121,9 +132,6 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
                 if (task != null) {
                     setText(task.name);
                 }
-                else {
-                    setText("Empty?");
-                }
 
                 if (node.isActiveTask()) {
                     setIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/active.png"))));
@@ -137,59 +145,16 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         };
         table.setTreeCellRenderer(treeCellRenderer);
 
+        JMenuItem add = new JMenuItem("Add Task...");
+        JMenuItem addSubTask = new JMenuItem("Add Sub-Task...");
         JMenuItem start = new JMenuItem("Start");
         JMenuItem stop = new JMenuItem("Stop");
         JMenuItem finish = new JMenuItem("Finish");
         JMenuItem openInNewWindow = new JMenuItem("Open in New List");
 
-        start.addActionListener(e -> {
-            int selectedRow = table.getSelectedRow();
-
-            if (selectedRow == -1) {
-                return;
-            }
-
-            TreePath pathForRow = table.getPathForRow(selectedRow);
-            TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
-            Task task = (Task) node.getUserObject();
-
-            TaskStateChange change = new TaskStateChange();
-            change.packetType = PacketType.START_TASK;
-            change.taskID = task.id;
-            mainFrame.getConnection().sendPacket(change);
-        });
-        stop.addActionListener(e -> {
-            int selectedRow = table.getSelectedRow();
-
-            if (selectedRow == -1) {
-                return;
-            }
-
-            TreePath pathForRow = table.getPathForRow(selectedRow);
-            TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
-            Task task = (Task) node.getUserObject();
-
-            TaskStateChange change = new TaskStateChange();
-            change.packetType = PacketType.STOP_TASK;
-            change.taskID = task.id;
-            mainFrame.getConnection().sendPacket(change);
-        });
-        finish.addActionListener(e -> {
-            int selectedRow = table.getSelectedRow();
-
-            if (selectedRow == -1) {
-                return;
-            }
-
-            TreePath pathForRow = table.getPathForRow(selectedRow);
-            TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
-            Task task = (Task) node.getUserObject();
-
-            TaskStateChange change = new TaskStateChange();
-            change.packetType = PacketType.FINISH_TASK;
-            change.taskID = task.id;
-            mainFrame.getConnection().sendPacket(change);
-        });
+        start.addActionListener(e -> changeTaskState(PacketType.START_TASK));
+        stop.addActionListener(e -> changeTaskState(PacketType.STOP_TASK));
+        finish.addActionListener(e -> changeTaskState(PacketType.FINISH_TASK));
 
         openInNewWindow.addActionListener(e -> {
             int selectedRow = table.getSelectedRow();
@@ -202,8 +167,14 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
             TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
             Task task = (Task) node.getUserObject();
 
-            TasksLists newList = new TasksLists(mainFrame, task);
-            Docking.dock(newList, TasksLists.this, DockingRegion.CENTER);
+            if (!Docking.isDockableRegistered("task-list-" + task.id)) {
+                TasksLists newList = new TasksLists(mainFrame, task);
+                Docking.dock(newList, TasksLists.this, DockingRegion.CENTER);
+            }
+            else {
+                // TODO add this when Modern Docking has Docking.bringToFront(String)
+//                Docking.bringToFront("task-list-" + task.id);
+            }
         });
 
         table.addMouseListener(new MouseAdapter() {
@@ -215,19 +186,28 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
                     JPopupMenu contextMenu = new JPopupMenu();
 
                     if (selectedRow == -1) {
-                        // TODO allow an add task option
+                        contextMenu.add(add);
+                        contextMenu.show(table, e.getX(), e.getY());
                         return;
                     }
 
                     contextMenu.add(start);
                     contextMenu.add(stop);
                     contextMenu.add(finish);
+                    contextMenu.addSeparator();
+                    contextMenu.add(addSubTask);
 
                     TreePath pathForRow = table.getPathForRow(selectedRow);
                     TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
+                    Task task = (Task) node.getUserObject();
+
+                    start.setEnabled(task.state == TaskState.INACTIVE);
+                    stop.setEnabled(task.state == TaskState.ACTIVE);
+                    finish.setEnabled(task.state != TaskState.FINISHED);
 
                     // task has subtasks, allow an option to open it in a new panel
                     if (!node.isLeaf()) {
+                        contextMenu.addSeparator();
                         contextMenu.add(openInNewWindow);
                     }
 
@@ -239,7 +219,39 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
             }
         });
 
-        add(new JScrollPane(table));
+        table.addTreeSelectionListener(e -> {
+            if (e.getNewLeadSelectionPath() == null) {
+                infoSubPanel.displayForTask(null);
+                return;
+            }
+            TaskTreeTableNode lastPathComponent = (TaskTreeTableNode) e.getNewLeadSelectionPath().getLastPathComponent();
+
+            infoSubPanel.displayForTask((Task) lastPathComponent.getUserObject());
+        });
+
+        JSplitPane split = new JSplitPane();
+
+        split.setLeftComponent(new JScrollPane(table));
+        split.setRightComponent(infoSubPanel);
+
+        add(split);
+    }
+
+    private void changeTaskState(PacketType type) {
+        int selectedRow = table.getSelectedRow();
+
+        if (selectedRow == -1) {
+            return;
+        }
+
+        TreePath pathForRow = table.getPathForRow(selectedRow);
+        TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
+        Task task = (Task) node.getUserObject();
+
+        TaskStateChange change = new TaskStateChange();
+        change.packetType = type;
+        change.taskID = task.id;
+        mainFrame.getConnection().sendPacket(change);
     }
 
     @Override
@@ -259,7 +271,9 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
 
     @Override
     public void newTask(Task task) {
-        treeTableModel.addTask(task);
+        if (allTasks) {
+            treeTableModel.addTask(task);
+        }
     }
 
     @Override

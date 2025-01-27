@@ -26,7 +26,6 @@ import java.net.Socket;
 import java.util.prefs.Preferences;
 
 public class MainFrame extends JFrame {
-    private final TasksLists list;
     private Thread listen;
     private Socket socket;
 
@@ -68,7 +67,7 @@ public class MainFrame extends JFrame {
         gbc.gridy++;
         gbc.weighty = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        
+
         add(statusBar, gbc);
 
         setSize(600, 400);
@@ -77,7 +76,7 @@ public class MainFrame extends JFrame {
         DockingUI.initialize();
         Docking.registerDockingPanel(root, this);
 
-        list = new TasksLists(this, "tasks", "Tasks");
+        new TasksLists(this, "tasks", "Tasks");
 
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
@@ -91,15 +90,6 @@ public class MainFrame extends JFrame {
         File layoutFile = new File("layout.xml");
         AppState.setPersistFile(layoutFile);
 
-        try {
-            AppState.restore();
-        } catch (DockingLayoutException e) {
-            // something happened trying to load the layout file, record it here
-            e.printStackTrace();
-        }
-
-        AppState.setAutoPersist(true);
-
         Preferences preferences = Preferences.userNodeForPackage(MainFrame.class);
 
         if (preferences.get("IP-Address", null) != null) {
@@ -109,6 +99,22 @@ public class MainFrame extends JFrame {
             catch (Exception ignored) {
             }
         }
+
+        // if we're connected, we'll wait for the request config to complete before restoring
+        if (isConnected()) {
+            restoreLayout();
+        }
+    }
+
+    public static void restoreLayout() {
+        try {
+            AppState.restore();
+        } catch (DockingLayoutException e) {
+            // something happened trying to load the layout file, record it here
+            e.printStackTrace();
+        }
+
+        AppState.setAutoPersist(true);
     }
 
     public void disconnect() {

@@ -1,5 +1,6 @@
 package data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Task {
@@ -8,7 +9,7 @@ public class Task {
     public TaskState state = TaskState.INACTIVE;
     public String name;
 
-    public List<Task> children;
+    public List<Task> children = new ArrayList<>();
 
     public Task(int id, int parentID, String name) {
         this.id = id;

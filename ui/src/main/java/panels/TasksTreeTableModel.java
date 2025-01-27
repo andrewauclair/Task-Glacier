@@ -51,6 +51,10 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
                 modelSupport.fireChildAdded(new TreePath(getPathToRoot(node)), node.getParent().getIndex(node), node);
             }
         }
+
+        for (Task child : task.children) {
+            addTask(child);
+        }
     }
 
     public void updateTask(Task task) {

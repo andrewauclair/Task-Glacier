@@ -53,6 +53,9 @@ public class ServerConnection {
 
                     SwingUtilities.invokeLater(() -> mainFrame.getTaskModel().receiveInfo(info));
                 }
+                else if (packetType == PacketType.REQUEST_CONFIGURATION_COMPLETE) {
+                    SwingUtilities.invokeLater(MainFrame::restoreLayout);
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
