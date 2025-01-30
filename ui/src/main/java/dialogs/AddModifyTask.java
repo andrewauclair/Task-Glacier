@@ -8,22 +8,33 @@ import taskglacier.MainFrame;
 import javax.swing.*;
 import java.awt.*;
 
-public class AddTask extends JDialog {
-    public AddTask(MainFrame mainFrame) {
+public class AddModifyTask extends JDialog {
+    public AddModifyTask(MainFrame mainFrame, boolean modify) {
         // name, time tracking and project info
-        // some of this info can be automatically filled (and maybe locked) in the future based on the list we're adding to
-        // right now lists don't exist
+        // some of this info can be automatically filled
         JTextField name = new JTextField(50);
 
         JTextField parent = new JTextField();
         parent.setText("0");
 
+        JCheckBox inheritTime = new JCheckBox("Inherit Time From Parent");
+
+        JTextField time1 = new JTextField();
+        JTextField time2 = new JTextField();
+
+        JButton save = new JButton("Save");
         JButton add = new JButton("Add");
-        add.addActionListener(e -> {
-            CreateTask create = new CreateTask(name.getText(), Integer.parseInt(parent.getText()), RequestID.nextRequestID());
-            mainFrame.getConnection().sendPacket(create);
-            AddTask.this.dispose();
-        });
+
+        if (modify) {
+
+        }
+        else {
+            add.addActionListener(e -> {
+                CreateTask create = new CreateTask(name.getText(), Integer.parseInt(parent.getText()), RequestID.nextRequestID());
+                mainFrame.getConnection().sendPacket(create);
+                AddModifyTask.this.dispose();
+            });
+        }
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -35,6 +46,15 @@ public class AddTask extends JDialog {
         gbc.gridy++;
 
         add(createFlow("Parent: ", parent), gbc);
+        gbc.gridy++;
+
+        add(inheritTime, gbc);
+        gbc.gridy++;
+        
+        add(createFlow("Time A: ", time1), gbc);
+        gbc.gridy++;
+
+        add(createFlow("Time B: ", time2), gbc);
         gbc.gridy++;
 
         add(add, gbc);

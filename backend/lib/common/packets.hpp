@@ -51,6 +51,7 @@ enum class PacketType : std::int32_t
 	START_TASK = 5,
 	STOP_TASK = 6,
 	FINISH_TASK = 7,
+	UPDATE_TASK = 15, // TODO redo numbers when we're done
 
 	SUCCESS_RESPONSE = 8,
 	FAILURE_RESPONSE = 9,
@@ -60,8 +61,24 @@ enum class PacketType : std::int32_t
 
 	TASK_INFO = 12,
 
+	// configure and refresh bugzilla (refresh is manual by the user on the UI)
+	// the server will create and update tasks based on bugzilla changes and send TASK_INFO messages
+	// both of these messages have responses of SUCCESS_RESPONSE or FAILURE_RESPONSE
 	BUGZILLA_INFO = 13,
-	BUGZILLA_REFRESH = 14
+	BUGZILLA_REFRESH = 14,
+
+	// report for the day with various information, displayed on a dialog on the UI
+	DAILY_REPORT = 16,
+	REQUEST_DAILY_REPORT = 17,
+
+	// report for the time tracking for the week, displayed on a dialog on the UI
+	WEEKLY_REPORT = 18,
+	REQUEST_WEEKLY_REPORT = 19,
+
+	// request the server to search for tasks matching the provided information
+	SEARCH_REQUEST = 20,
+	// return the results to the UI. This is a list of task IDs matching the search request
+	SEARCH_RESULTS = 21
 };
 
 struct Message
@@ -323,6 +340,40 @@ struct BugzillaInfoMessage : Message
 		out << "BugzillaInfoMessage { URL: \"" << message.URL << "\", apiKey: \"" << message.apiKey << "\" }";
 		return out;
 	}
+};
+
+struct DailyReportMessage : Message
+{
+	// start time for the day
+	// estimated end time for the day (assuming 8 hours)
+	// list of task ids and the start/stop index
+	// total time for the day
+	// total time per time category for the day
+};
+
+struct WeeklyReportMessage : Message
+{
+	// su, mo, tu, we, th, fr, sa
+	// time spent on each time category per day
+	// list of task ids and the start/stop index
+	// total time per day
+	// total time for week
+	// total time per time category per day
+	// total time per time category for week
+};
+
+struct SearchRequestMessage : Message
+{
+	// search text
+	// type: task name, label, time, state (mainly for finished), time category
+	
+	// ideally this would work kind of like the IntelliJ search anywhere, but with some special stuff for time
+	// or maybe certain text is detected as time like "Jan 29" or "January 29" or "1/29"?
+};
+
+struct SearchResultMessage : Message
+{
+	std::vector<TaskID> taskIDs;
 };
 
 struct MessageVisitor {

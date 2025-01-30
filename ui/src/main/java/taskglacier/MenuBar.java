@@ -1,8 +1,7 @@
 package taskglacier;
 
-import dialogs.AddTask;
+import dialogs.AddModifyTask;
 import dialogs.ConnectToServer;
-import packets.RequestConfig;
 
 import javax.swing.*;
 
@@ -16,7 +15,7 @@ public class MenuBar extends JMenuBar {
         JMenu task = new JMenu("Task");
         add = new JMenuItem("Add");
         add.setEnabled(false);
-        add.addActionListener(e -> new AddTask(mainFrame).setVisible(true));
+        add.addActionListener(e -> new AddModifyTask(mainFrame).setVisible(true));
         task.add(add);
 
         add(task);
