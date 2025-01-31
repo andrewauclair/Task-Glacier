@@ -126,77 +126,40 @@ struct CreateTaskMessage : Message
 struct TaskMessage : Message
 {
 	TaskID taskID;
+	RequestID requestID;
 
 	TaskMessage(PacketType type, TaskID taskID) : Message(type), taskID(taskID) {}
+
+	void visit(MessageVisitor& visitor) const override;
+
+	bool operator==(const TaskMessage& other) const
+	{
+		return packetType() == other.packetType() && taskID == other.taskID && requestID == other.requestID;
+	}
+
+	std::vector<std::byte> pack() const override;
+	static std::expected<TaskMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	friend std::ostream& operator<<(std::ostream& out, const TaskMessage& message)
+	{
+		out << "TaskMessage { packetType: " << packetType() << ", requestID: " << requestID._val << ", taskID: " << message.taskID._val << "\" }";
+		return out;
+	}
 };
 
 struct StartTaskMessage : TaskMessage
 {
-	RequestID requestID;
-
 	StartTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::START_TASK, taskID), requestID(requestID) {}
-
-	void visit(MessageVisitor& visitor) const override;
-
-	bool operator==(const StartTaskMessage& other) const
-	{
-		return taskID == other.taskID && requestID == other.requestID;
-	}
-
-	std::vector<std::byte> pack() const override;
-	static std::expected<StartTaskMessage, UnpackError> unpack(std::span<const std::byte> data);
-
-	friend std::ostream& operator<<(std::ostream& out, const StartTaskMessage& message)
-	{
-		out << "StartTaskMessage { taskID: " << message.taskID._val << "\" }";
-		return out;
-	}
 };
 
 struct StopTaskMessage : TaskMessage
 {
-	RequestID requestID;
-
 	StopTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::STOP_TASK, taskID), requestID(requestID) {}
-
-	void visit(MessageVisitor& visitor) const override;
-
-	bool operator==(const StopTaskMessage& other) const
-	{
-		return taskID == other.taskID && requestID == other.requestID;
-	}
-
-	std::vector<std::byte> pack() const override;
-	static std::expected<StopTaskMessage, UnpackError> unpack(std::span<const std::byte> data);
-
-	friend std::ostream& operator<<(std::ostream& out, const StopTaskMessage& message)
-	{
-		out << "StopTaskMessage { taskID: " << message.taskID._val << "\" }";
-		return out;
-	}
 };
 
 struct FinishTaskMessage : TaskMessage
 {
-	RequestID requestID;
-
 	FinishTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::FINISH_TASK, taskID), requestID(requestID) {}
-
-	void visit(MessageVisitor& visitor) const override;
-
-	bool operator==(const FinishTaskMessage& other) const
-	{
-		return taskID == other.taskID && requestID == other.requestID;
-	}
-
-	std::vector<std::byte> pack() const override;
-	static std::expected<FinishTaskMessage, UnpackError> unpack(std::span<const std::byte> data);
-
-	friend std::ostream& operator<<(std::ostream& out, const FinishTaskMessage& message)
-	{
-		out << "FinishTaskMessage { taskID: " << message.taskID._val << "\" }";
-		return out;
-	}
 };
 
 struct SuccessResponse : Message
@@ -422,7 +385,8 @@ struct SearchRequestMessage : Message
 {
 	// search text
 	// type: task name, label, time, state (mainly for finished), time category
-	
+	std::string searchText;
+
 	// ideally this would work kind of like the IntelliJ search anywhere, but with some special stuff for time
 	// or maybe certain text is detected as time like "Jan 29" or "January 29" or "1/29"?
 };
@@ -431,6 +395,18 @@ struct SearchResultMessage : Message
 {
 	std::vector<TaskID> taskIDs;
 };
+
+// time categories
+// these will be tracked internally by ID so that we don't have to pass strings everywhere
+// and the user can freely rename them and have all uses update
+// the time categories can be removed after adding, but only if they have not been used
+// the user can optionally reassign any times to a new time category continue removing
+//
+// time categories can be archived when in use. this will remove them from being an option
+// for creating new tasks, but will allow them to still exist on old tasks. Some option might
+// be needed for existing tasks that are using the time category. Presumably, if you are archiving
+// a time category, it's no longer in use. so in this case, you should probably change any
+// active tasks to another time category.
 
 struct MessageVisitor {
 	virtual void visit(const CreateTaskMessage&) = 0;

@@ -74,36 +74,37 @@ public:
 	}
 };
 
-TEST_CASE("pack the create task message", "[task][message][pack]")
+TEST_CASE("Create Task", "[message]")
 {
 	const auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
 
-	auto verifier = PacketVerifier(create_task.pack(), 32);
+	SECTION("Pack")
+	{
+		auto verifier = PacketVerifier(create_task.pack(), 32);
 
-	verifier
-		.verify_value<std::uint32_t>(32, "packet length")
-		.verify_value<std::uint32_t>(3, "packet ID")
-		.verify_value<std::uint32_t>(10, "request ID")
-		.verify_value<std::uint32_t>(5, "parent ID")
-		.verify_string("this is a test", "task name");
-}
+		verifier
+			.verify_value<std::uint32_t>(32, "packet length")
+			.verify_value<std::uint32_t>(3, "packet ID")
+			.verify_value<std::uint32_t>(10, "request ID")
+			.verify_value<std::uint32_t>(5, "parent ID")
+			.verify_string("this is a test", "task name");
+	}
 
-TEST_CASE("parse a create task packet", "[task][message][unpack]")
-{
-	TestClock clock;
-	std::ostringstream output;
-	MicroTask app(clock, output);
+	SECTION("Unpack")
+	{
+		TestClock clock;
+		std::ostringstream output;
+		MicroTask app(clock, output);
 
-	const auto create_task = CreateTaskMessage(NO_PARENT, RequestID(10), "this is a test");
+		const auto result = parse_packet(create_task.pack());
 
-	const auto result = parse_packet(create_task.pack());
+		REQUIRE(result.packet);
 
-	REQUIRE(result.packet);
+		const auto packet = dynamic_cast<CreateTaskMessage&>(*resuilt.packet.get());
 
-	const auto packet = dynamic_cast<CreateTaskMessage&>(*result.packet.get());
-
-	CHECK(packet == create_task);
-	CHECK(result.bytes_read == 32);
+		CHECK(packet == create_task);
+		CHECK(result.bytes_read == 32);
+	}
 }
 
 TEST_CASE("pack the success response packet", "[message][pack]")
