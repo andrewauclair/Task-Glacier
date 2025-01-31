@@ -14,6 +14,8 @@
 #include <chrono>
 
 #include <strong_type/strong_type.hpp>
+#include <map>
+#include <array>
 
 enum class UnpackError {
 	NOT_ENOUGH_BYTES
@@ -342,17 +344,71 @@ struct BugzillaInfoMessage : Message
 	}
 };
 
+struct DailyReport
+{
+	// reports for days that have no task start/stops is invalid (the UI will say there's no data or something for that day)
+	bool isValidReport = false;
+
+	// start time for the day
+	std::chrono::milliseconds startTime;
+
+	// estimated end time for the day (assuming 8 hours)
+	bool estimatedEndTime = false;
+	std::chrono::milliseconds endTime;
+
+	// list of task ids and the start/stop index
+	struct TimePair {
+		TaskID taskID; std::int32_t startStopIndex;
+
+		constexpr auto operator<=>(const TimePair&) const = default;
+	};
+
+	std::vector<TimePair> times;
+
+	// total time for the day
+	std::chrono::milliseconds totalTime;
+
+	// total time per time category for the day
+	std::map<std::string, std::chrono::milliseconds> timePerCategory;
+
+	constexpr auto operator<=>(const DailyReport&) const = default;
+
+	friend std::ostream& operator<<(std::ostream& out, const DailyReport& report)
+	{
+		return out;
+	}
+};
+
 struct DailyReportMessage : Message
 {
-	// start time for the day
-	// estimated end time for the day (assuming 8 hours)
-	// list of task ids and the start/stop index
-	// total time for the day
-	// total time per time category for the day
+	DailyReport report;
+
+	DailyReportMessage() : Message(PacketType::DAILY_REPORT) {}
+
+	void visit(MessageVisitor& visitor) const override;
+
+	bool operator==(const DailyReportMessage& other) const
+	{
+		return report == other.report;
+	}
+
+	std::vector<std::byte> pack() const override;
+	static std::expected<DailyReportMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	friend std::ostream& operator<<(std::ostream& out, const DailyReportMessage& message)
+	{
+		out << "DailyReportMessage { " << message.report << " }";
+		return out;
+	}
 };
 
 struct WeeklyReportMessage : Message
 {
+	std::array<DailyReport, 7> dailyReports;
+
+	std::chrono::milliseconds totalTime;
+	std::map<std::string, std::chrono::milliseconds> timePerCategory;
+
 	// su, mo, tu, we, th, fr, sa
 	// time spent on each time category per day
 	// list of task ids and the start/stop index

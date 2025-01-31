@@ -4,7 +4,10 @@ import io.github.andrewauclair.moderndocking.Dockable;
 
 import javax.swing.*;
 
-public class WeeklyReport extends JPanel implements Dockable {
+public class WeeklyReportPanel extends JPanel implements Dockable {
+    public WeeklyReportPanel() {
+
+    }
 
     @Override
     public String getPersistentID() {
