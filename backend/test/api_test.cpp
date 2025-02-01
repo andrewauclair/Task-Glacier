@@ -71,6 +71,9 @@ struct TestHelper
 			INFO(location.file_name() << ":" << location.line());
 
 			CHECK(*output[0] == SuccessResponse(message.requestID));
+
+			// now remove the first message, calls to required_messages will check what comes after the response message
+			output.erase(output.begin());
 		}
 		else
 		{
@@ -176,14 +179,13 @@ TEST_CASE("Create Task", "[api][task]")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test"));
 
-		auto success = SuccessResponse(RequestID(1));
-
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "this is a test");
+
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.state = TaskState::INACTIVE;
 		taskInfo.newTask = true;
 
-		helper.required_messages({ &success, &taskInfo });
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Success - Create Task With Parent")
@@ -191,14 +193,13 @@ TEST_CASE("Create Task", "[api][task]")
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
 		helper.expect_success(CreateTaskMessage(TaskID(1), helper.next_request_id(), "test 2"));
 
-		auto success = SuccessResponse(RequestID(2));
-
 		auto taskInfo = TaskInfoMessage(TaskID(2), TaskID(1), "test 2");
+
 		taskInfo.createTime = std::chrono::milliseconds(1737345839870);
 		taskInfo.state = TaskState::INACTIVE;
 		taskInfo.newTask = true;
 
-		helper.required_messages({ &success, &taskInfo });
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Failure - Parent Task Does Not Exist")
@@ -239,15 +240,14 @@ TEST_CASE("Start Task", "[api][task]")
 
 		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
 
-		auto success = SuccessResponse(RequestID(3));
-
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.times.emplace_back(std::chrono::milliseconds(1737347639870));
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
 
-		helper.required_messages({ &success, &taskInfo });
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Success - Start Another Task")
@@ -258,21 +258,21 @@ TEST_CASE("Start Task", "[api][task]")
 		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
 		helper.expect_success(StartTaskMessage(TaskID(2), helper.next_request_id()));
 
-		auto success = SuccessResponse(RequestID(4));
-
 		auto taskInfo1 = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+		
 		taskInfo1.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo1.times.emplace_back(std::chrono::milliseconds(1737347639870), std::chrono::milliseconds(1737349439870));
 		taskInfo1.state = TaskState::INACTIVE;
 		taskInfo1.newTask = false;
 
 		auto taskInfo2 = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
+
 		taskInfo2.createTime = std::chrono::milliseconds(1737345839870);
 		taskInfo2.times.emplace_back(std::chrono::milliseconds(1737350339870));
 		taskInfo2.state = TaskState::ACTIVE;
 		taskInfo2.newTask = false;
 
-		helper.required_messages({ &success, &taskInfo1, &taskInfo2 });
+		helper.required_messages({ &taskInfo1, &taskInfo2 });
 	}
 
 	SECTION("Failure - Task Does Not Exist")
@@ -290,15 +290,14 @@ TEST_CASE("Start Task", "[api][task]")
 		// active task remains active and hasn't been modified
 		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
 
-		auto success = SuccessResponse(helper.prev_request_id());
-
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
+
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.times.emplace_back(std::chrono::milliseconds(1737345839870));
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
 
-		helper.required_messages({ &success, &taskInfo });
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Failure - Task Is Finished")
@@ -311,15 +310,14 @@ TEST_CASE("Start Task", "[api][task]")
 		// task hasn't been modified
 		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
 
-		auto success = SuccessResponse(helper.prev_request_id());
-
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
+
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.finishTime = std::chrono::milliseconds(1737345839870);
 		taskInfo.state = TaskState::FINISHED;
 		taskInfo.newTask = false;
 
-		helper.required_messages({ &success, &taskInfo });
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Persist")
@@ -346,15 +344,14 @@ TEST_CASE("Stop Task", "[api][task]")
 
 		helper.expect_success(StopTaskMessage(TaskID(1), helper.next_request_id()));
 
-		auto success = SuccessResponse(RequestID(3));
-
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
+
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.times.emplace_back(std::chrono::milliseconds(1737345839870), std::chrono::milliseconds(1737347639870));
 		taskInfo.state = TaskState::INACTIVE;
 		taskInfo.newTask = false;
 
-		helper.required_messages({ &success, &taskInfo });
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Success - Stopping Active Task Clears Active Task")
@@ -367,29 +364,27 @@ TEST_CASE("Stop Task", "[api][task]")
 
 		helper.expect_success(StartTaskMessage(TaskID(2), helper.next_request_id()));
 
-		auto success = SuccessResponse(helper.prev_request_id());
-
 		auto taskInfo = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
+
 		taskInfo.createTime = std::chrono::milliseconds(1737345839870);
 		taskInfo.times.emplace_back(std::chrono::milliseconds(1737353039870));
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
 
-		helper.required_messages({ &success, &taskInfo });
+		helper.required_messages({ &taskInfo });
 
 		// task hasn't been modified
 		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
 
-		success = SuccessResponse(helper.prev_request_id());
-
 		taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.times.emplace_back(std::chrono::milliseconds(1737347639870), std::chrono::milliseconds(1737349439870));
 		taskInfo.finishTime = std::chrono::milliseconds(1737351239870);
 		taskInfo.state = TaskState::FINISHED;
 		taskInfo.newTask = false;
 
-		helper.required_messages({ &success, &taskInfo });
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Failure - Task Does Not Exist")
@@ -406,14 +401,13 @@ TEST_CASE("Stop Task", "[api][task]")
 		// task hasn't been modified
 		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
 
-		auto success = SuccessResponse(helper.prev_request_id());
-
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
+
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.state = TaskState::INACTIVE;
 		taskInfo.newTask = false;
 
-		helper.required_messages({ &success, &taskInfo });
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Failure - Task Is Finished")
@@ -426,15 +420,14 @@ TEST_CASE("Stop Task", "[api][task]")
 		// task hasn't been modified
 		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
 
-		auto success = SuccessResponse(helper.prev_request_id());
-
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
+
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.finishTime = std::chrono::milliseconds(1737345839870);
 		taskInfo.state = TaskState::FINISHED;
 		taskInfo.newTask = false;
 
-		helper.required_messages({ &success, &taskInfo });
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Persist")
@@ -462,16 +455,15 @@ TEST_CASE("Finish Task", "[api][task]")
 
 		helper.expect_success(FinishTaskMessage(TaskID(1), helper.next_request_id()));
 
-		auto success = SuccessResponse(helper.prev_request_id());
-
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
+
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.times.emplace_back(std::chrono::milliseconds(1737345839870), std::chrono::milliseconds(1737347639870));
 		taskInfo.finishTime = std::chrono::milliseconds(1737347639870);
 		taskInfo.state = TaskState::FINISHED;
 		taskInfo.newTask = false;
 
-		helper.required_messages({ &success, &taskInfo });
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Success - Finish Task That Is Not Active")
@@ -485,43 +477,40 @@ TEST_CASE("Finish Task", "[api][task]")
 
 			helper.expect_success(FinishTaskMessage(TaskID(2), helper.next_request_id()));
 
-			auto success = SuccessResponse(helper.prev_request_id());
-
 			auto taskInfo = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
+
 			taskInfo.createTime = std::chrono::milliseconds(1737345839870);
 			taskInfo.finishTime = std::chrono::milliseconds(1737349439870);
 			taskInfo.state = TaskState::FINISHED;
 			taskInfo.newTask = false;
 
-			helper.required_messages({ &success, &taskInfo });
+			helper.required_messages({ &taskInfo });
 
 			// active task remains active and hasn't been modified
 			helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
 
-			success = SuccessResponse(helper.prev_request_id());
-
 			taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+
 			taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 			taskInfo.times.emplace_back(std::chrono::milliseconds(1737347639870));
 			taskInfo.state = TaskState::ACTIVE;
 			taskInfo.newTask = false;
 
-			helper.required_messages({ &success, &taskInfo });
+			helper.required_messages({ &taskInfo });
 		}
 
 		SECTION("Without Active Task")
 		{
 			helper.expect_success(FinishTaskMessage(TaskID(2), helper.next_request_id()));
 
-			auto success = SuccessResponse(helper.prev_request_id());
-
 			auto taskInfo = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
+
 			taskInfo.createTime = std::chrono::milliseconds(1737345839870);
 			taskInfo.finishTime = std::chrono::milliseconds(1737347639870);
 			taskInfo.state = TaskState::FINISHED;
 			taskInfo.newTask = false;
 
-			helper.required_messages({ &success, &taskInfo });
+			helper.required_messages({ &taskInfo });
 		}
 	}
 
@@ -534,29 +523,27 @@ TEST_CASE("Finish Task", "[api][task]")
 
 		helper.expect_success(StartTaskMessage(TaskID(2), helper.next_request_id()));
 
-		auto success = SuccessResponse(helper.prev_request_id());
-
 		auto taskInfo = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
+
 		taskInfo.createTime = std::chrono::milliseconds(1737345839870);
 		taskInfo.times.emplace_back(std::chrono::milliseconds(1737351239870));
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
 
-		helper.required_messages({ &success, &taskInfo });
+		helper.required_messages({ &taskInfo });
 
 		// task hasn't been modified
 		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
 
-		success = SuccessResponse(helper.prev_request_id());
-
 		taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.times.emplace_back(std::chrono::milliseconds(1737347639870), std::chrono::milliseconds(1737349439870));
 		taskInfo.finishTime = std::chrono::milliseconds(1737349439870);
 		taskInfo.state = TaskState::FINISHED;
 		taskInfo.newTask = false;
 
-		helper.required_messages({ &success, &taskInfo });
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Success - Do Not Clear Active Task When Finished Another Task")
@@ -569,28 +556,26 @@ TEST_CASE("Finish Task", "[api][task]")
 
 		helper.expect_success(StartTaskMessage(TaskID(3), helper.next_request_id()));
 
-		auto success = SuccessResponse(helper.prev_request_id());
-
 		auto taskInfo1 = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+
 		taskInfo1.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo1.times.emplace_back(std::chrono::milliseconds(1737349439870), std::chrono::milliseconds(1737353039870));
 		taskInfo1.state = TaskState::INACTIVE;
 		taskInfo1.newTask = false;
 
 		auto taskInfo3 = TaskInfoMessage(TaskID(3), NO_PARENT, "test 3");
+
 		taskInfo3.createTime = std::chrono::milliseconds(1737347639870);
 		taskInfo3.times.emplace_back(std::chrono::milliseconds(1737353939870));
 		taskInfo3.state = TaskState::ACTIVE;
 		taskInfo3.newTask = false;
 
-		helper.required_messages({ &success, &taskInfo1, &taskInfo3 });
+		helper.required_messages({ &taskInfo1, &taskInfo3 });
 
 		// task hasn't been modified
 		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
 
-		success = SuccessResponse(helper.prev_request_id());
-
-		helper.required_messages({ &success, &taskInfo1 });
+		helper.required_messages({ &taskInfo1 });
 	}
 
 	SECTION("Failure - Task Does Not Exist")
