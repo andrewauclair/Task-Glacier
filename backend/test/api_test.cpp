@@ -213,7 +213,7 @@ TEST_CASE("Create Task", "[api][task]")
 	SECTION("Failure - Parent Is Finished")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
-		helper.expect_success(FinishTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1)));
 		helper.expect_failure(CreateTaskMessage(TaskID(1), helper.next_request_id(), "test 2"), "Cannot add sub-task. Task with ID 1 is finished.");
 
 		// verify that the task was not created
@@ -238,7 +238,7 @@ TEST_CASE("Start Task", "[api][task]")
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 2"));
 
-		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
 
@@ -255,8 +255,8 @@ TEST_CASE("Start Task", "[api][task]")
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 2"));
 
-		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
-		helper.expect_success(StartTaskMessage(TaskID(2), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(2)));
 
 		auto taskInfo1 = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
 		
@@ -277,15 +277,15 @@ TEST_CASE("Start Task", "[api][task]")
 
 	SECTION("Failure - Task Does Not Exist")
 	{
-		helper.expect_failure(StartTaskMessage(TaskID(1), helper.next_request_id()), "Task with ID 1 does not exist.");
+		helper.expect_failure(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)), "Task with ID 1 does not exist.");
 	}
 
 	SECTION("Failure - Task Is Already Active")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
-		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 
-		helper.expect_failure(StartTaskMessage(TaskID(1), helper.next_request_id()), "Task with ID 1 is already active.");
+		helper.expect_failure(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)), "Task with ID 1 is already active.");
 
 		// active task remains active and hasn't been modified
 		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
@@ -303,9 +303,9 @@ TEST_CASE("Start Task", "[api][task]")
 	SECTION("Failure - Task Is Finished")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
-		helper.expect_success(FinishTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1)));
 
-		helper.expect_failure(StartTaskMessage(TaskID(1), helper.next_request_id()), "Task with ID 1 is finished.");
+		helper.expect_failure(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)), "Task with ID 1 is finished.");
 
 		// task hasn't been modified
 		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
@@ -326,7 +326,7 @@ TEST_CASE("Start Task", "[api][task]")
 
 		helper.clear_output();
 
-		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 
 		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
 		CHECK(helper.fileOutput.str() == "start 1 1737346739870\n");
@@ -340,9 +340,9 @@ TEST_CASE("Stop Task", "[api][task]")
 	SECTION("Success - Stop Active Task")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
-		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 
-		helper.expect_success(StopTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
 
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
 
@@ -358,11 +358,11 @@ TEST_CASE("Stop Task", "[api][task]")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 2"));
-		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
-		helper.expect_success(StopTaskMessage(TaskID(1), helper.next_request_id())); // sotp the task. this step is critical to the test
-		helper.expect_success(FinishTaskMessage(TaskID(1), helper.next_request_id())); // finish the task to force it out of INACTIVE state
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1))); // sotp the task. this step is critical to the test
+		helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1))); // finish the task to force it out of INACTIVE state
 
-		helper.expect_success(StartTaskMessage(TaskID(2), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(2)));
 
 		auto taskInfo = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
 
@@ -389,14 +389,14 @@ TEST_CASE("Stop Task", "[api][task]")
 
 	SECTION("Failure - Task Does Not Exist")
 	{
-		helper.expect_failure(StopTaskMessage(TaskID(1), helper.next_request_id()), "Task with ID 1 does not exist.");
+		helper.expect_failure(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)), "Task with ID 1 does not exist.");
 	}
 
 	SECTION("Failure - Task Is Not Active")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
 
-		helper.expect_failure(StopTaskMessage(TaskID(1), helper.next_request_id()), "Task with ID 1 is not active.");
+		helper.expect_failure(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)), "Task with ID 1 is not active.");
 
 		// task hasn't been modified
 		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
@@ -413,9 +413,9 @@ TEST_CASE("Stop Task", "[api][task]")
 	SECTION("Failure - Task Is Finished")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
-		helper.expect_success(FinishTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1)));
 
-		helper.expect_failure(StartTaskMessage(TaskID(1), helper.next_request_id()), "Task with ID 1 is finished.");
+		helper.expect_failure(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)), "Task with ID 1 is finished.");
 
 		// task hasn't been modified
 		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
@@ -433,11 +433,11 @@ TEST_CASE("Stop Task", "[api][task]")
 	SECTION("Persist")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test"));
-		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 
 		helper.clear_output();
 
-		helper.expect_success(StopTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
 
 		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
 		CHECK(helper.fileOutput.str() == "stop 1 1737348539870\n");
@@ -451,9 +451,9 @@ TEST_CASE("Finish Task", "[api][task]")
 	SECTION("Success - Finish Active Task")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
-		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 
-		helper.expect_success(FinishTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1)));
 
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
 
@@ -473,9 +473,9 @@ TEST_CASE("Finish Task", "[api][task]")
 
 		SECTION("With Active Task")
 		{
-			helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
+			helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 
-			helper.expect_success(FinishTaskMessage(TaskID(2), helper.next_request_id()));
+			helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(2)));
 
 			auto taskInfo = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
 
@@ -501,7 +501,7 @@ TEST_CASE("Finish Task", "[api][task]")
 
 		SECTION("Without Active Task")
 		{
-			helper.expect_success(FinishTaskMessage(TaskID(2), helper.next_request_id()));
+			helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(2)));
 
 			auto taskInfo = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
 
@@ -518,10 +518,10 @@ TEST_CASE("Finish Task", "[api][task]")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 2"));
-		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
-		helper.expect_success(FinishTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1)));
 
-		helper.expect_success(StartTaskMessage(TaskID(2), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(2)));
 
 		auto taskInfo = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
 
@@ -551,10 +551,10 @@ TEST_CASE("Finish Task", "[api][task]")
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 2"));
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 3"));
-		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
-		helper.expect_success(FinishTaskMessage(TaskID(2), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(2)));
 
-		helper.expect_success(StartTaskMessage(TaskID(3), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(3)));
 
 		auto taskInfo1 = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
 
@@ -580,15 +580,15 @@ TEST_CASE("Finish Task", "[api][task]")
 
 	SECTION("Failure - Task Does Not Exist")
 	{
-		helper.expect_failure(FinishTaskMessage(TaskID(1), helper.next_request_id()), "Task with ID 1 does not exist.");
+		helper.expect_failure(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1)), "Task with ID 1 does not exist.");
 	}
 
 	SECTION("Failure - Task Is Already Finished")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
-		helper.expect_success(FinishTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1)));
 
-		helper.expect_failure(FinishTaskMessage(TaskID(1), helper.next_request_id()), "Task with ID 1 is already finished.");
+		helper.expect_failure(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1)), "Task with ID 1 is already finished.");
 	}
 
 	// TODO we'll have some special cases about not finishing parents before children
@@ -596,11 +596,11 @@ TEST_CASE("Finish Task", "[api][task]")
 	SECTION("Persist")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test"));
-		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 
 		helper.clear_output();
 
-		helper.expect_success(FinishTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1)));
 
 		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
 		CHECK(helper.fileOutput.str() == "finish 1 1737348539870\n");
@@ -623,20 +623,20 @@ TEST_CASE("Persist Tasks", "[api][task]")
 	auto create_task_5 = CreateTaskMessage(TaskID(3), RequestID(5), "task 5");
 	auto create_task_6 = CreateTaskMessage(TaskID(4), RequestID(6), "task 6");
 
-	auto start_task_1 = StartTaskMessage(TaskID(1), RequestID(7));
-	auto start_task_2 = StartTaskMessage(TaskID(2), RequestID(8));
-	auto start_task_3 = StartTaskMessage(TaskID(3), RequestID(9));
-	auto start_task_4 = StartTaskMessage(TaskID(4), RequestID(10));
-	auto start_task_5 = StartTaskMessage(TaskID(5), RequestID(11));
-	auto start_task_6 = StartTaskMessage(TaskID(6), RequestID(12));
+	auto start_task_1 = TaskMessage(PacketType::START_TASK, RequestID(7), TaskID(1));
+	auto start_task_2 = TaskMessage(PacketType::START_TASK, RequestID(8), TaskID(2));
+	auto start_task_3 = TaskMessage(PacketType::START_TASK, RequestID(9), TaskID(3));
+	auto start_task_4 = TaskMessage(PacketType::START_TASK, RequestID(10), TaskID(4));
+	auto start_task_5 = TaskMessage(PacketType::START_TASK, RequestID(11), TaskID(5));
+	auto start_task_6 = TaskMessage(PacketType::START_TASK, RequestID(12), TaskID(6));
 
-	auto stop_task_2 = StopTaskMessage(TaskID(2), RequestID(13));
-	auto stop_task_3 = StopTaskMessage(TaskID(3), RequestID(14));
-	auto stop_task_4 = StopTaskMessage(TaskID(4), RequestID(15));
+	auto stop_task_2 = TaskMessage(PacketType::STOP_TASK, RequestID(13), TaskID(2));
+	auto stop_task_3 = TaskMessage(PacketType::STOP_TASK, RequestID(14), TaskID(3));
+	auto stop_task_4 = TaskMessage(PacketType::STOP_TASK, RequestID(15), TaskID(4));
 
-	auto finish_task_2 = FinishTaskMessage(TaskID(2), RequestID(16));
-	auto finish_task_3 = FinishTaskMessage(TaskID(3), RequestID(17));
-	auto finish_task_4 = FinishTaskMessage(TaskID(4), RequestID(18));
+	auto finish_task_2 = TaskMessage(PacketType::FINISH_TASK, RequestID(16), TaskID(2));
+	auto finish_task_3 = TaskMessage(PacketType::FINISH_TASK, RequestID(17), TaskID(3));
+	auto finish_task_4 = TaskMessage(PacketType::FINISH_TASK, RequestID(18), TaskID(4));
 
 	api.process_packet(create_task_1, output);
 	api.process_packet(create_task_2, output);

@@ -12,10 +12,11 @@
 #include <span>
 #include <optional>
 #include <chrono>
-
-#include <strong_type/strong_type.hpp>
 #include <map>
 #include <array>
+#include <cassert>
+
+#include <strong_type/strong_type.hpp>
 
 enum class UnpackError {
 	NOT_ENOUGH_BYTES
@@ -175,7 +176,10 @@ struct TaskMessage : RequestMessage
 {
 	TaskID taskID;
 
-	TaskMessage(PacketType type, RequestID requestID, TaskID taskID) : RequestMessage(type, requestID), taskID(taskID) {}
+	TaskMessage(PacketType type, RequestID requestID, TaskID taskID) : RequestMessage(type, requestID), taskID(taskID)
+	{
+		assert(type == PacketType::START_TASK || type == PacketType::STOP_TASK || type == PacketType::FINISH_TASK || type == PacketType::REQUEST_TASK);
+	}
 
 	void visit(MessageVisitor& visitor) const override;
 
@@ -207,21 +211,6 @@ struct TaskMessage : RequestMessage
 		out << "TaskMessage { packetType: " << static_cast<std::int32_t>(message.packetType()) << ", requestID: " << message.requestID._val << ", taskID: " << message.taskID._val << "\" }";
 		return out;
 	}
-};
-
-struct StartTaskMessage : TaskMessage
-{
-	StartTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::START_TASK, requestID, taskID) {}
-};
-
-struct StopTaskMessage : TaskMessage
-{
-	StopTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::STOP_TASK, requestID, taskID) {}
-};
-
-struct FinishTaskMessage : TaskMessage
-{
-	FinishTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::FINISH_TASK, requestID, taskID) {}
 };
 
 struct SuccessResponse : Message
