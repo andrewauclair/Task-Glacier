@@ -11,9 +11,15 @@ bool Task::operator==(const Task& task) const
 
 std::expected<TaskID, std::string> MicroTask::create_task(const std::string& name, TaskID parentID)
 {
-	if (parentID._val != 0 && !m_tasks.contains(parentID))
+	auto* parent_task = find_task(parentID);
+
+	if (parentID._val != 0 && !parent_task)
 	{
 		return std::unexpected(std::format("Task with ID {} does not exist.", parentID));
+	}
+	else if (parent_task && parent_task->state == TaskState::FINISHED)
+	{
+		return std::unexpected(std::format("Cannot add sub-task. Task with ID {} is finished.", parentID));
 	}
 
 	auto id = m_nextTaskID;
