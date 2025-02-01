@@ -96,6 +96,13 @@ public:
 
 	virtual std::vector<std::byte> pack() const = 0;
 
+	virtual std::ostream& print(std::ostream& out) const = 0;
+
+	friend std::ostream& operator<<(std::ostream& out, const Message& message)
+	{
+		return message.print(out);
+	}
+
 private:
 	PacketType m_packetType;
 };
@@ -110,11 +117,6 @@ struct CreateTaskMessage : Message
 
 	void visit(MessageVisitor& visitor) const override;
 
-	bool operator==(const CreateTaskMessage& message) const
-	{
-		return parentID == message.parentID && requestID == message.requestID && name == message.name;
-	}
-
 	bool operator==(const Message& message) const override
 	{
 		if (const auto* other = dynamic_cast<const CreateTaskMessage*>(&message))
@@ -124,14 +126,24 @@ struct CreateTaskMessage : Message
 		return false;
 	}
 	
+	bool operator==(const CreateTaskMessage& message) const
+	{
+		return parentID == message.parentID && requestID == message.requestID && name == message.name;
+	}
+
 	std::vector<std::byte> pack() const override;
 	static std::expected<CreateTaskMessage, UnpackError> unpack(std::span<const std::byte> data);
 
-	friend std::ostream& operator<<(std::ostream& out, const CreateTaskMessage& message)
+	std::ostream& print(std::ostream& out) const override
 	{
-		out << "CreateTaskMessage { parentID: " << message.parentID._val << ", RequestID: " << message.requestID._val << ", Name: \"" << message.name << "\" }";
+		out << "CreateTaskMessage { parentID: " << parentID._val << ", RequestID: " << requestID._val << ", Name: \"" << name << "\" }";
 		return out;
 	}
+
+	/*friend std::ostream& operator<<(std::ostream& out, const CreateTaskMessage& message)
+	{
+		return message.print(out);
+	}*/
 };
 
 struct TaskMessage : Message
@@ -147,13 +159,24 @@ struct TaskMessage : Message
 	{
 		if (const auto* other = dynamic_cast<const TaskMessage*>(&message))
 		{
-			return packetType() == other->packetType() && taskID == other->taskID && requestID == other->requestID;
+			return *this == *other;
 		}
 		return false;
 	}
 
+	bool operator==(const TaskMessage& message) const
+	{
+		return packetType() == message.packetType() && taskID == message.taskID && requestID == message.requestID;
+	}
+
 	std::vector<std::byte> pack() const override;
 	static std::expected<TaskMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	std::ostream& print(std::ostream& out) const override
+	{
+		out << "TaskMessage { packetType: " << static_cast<std::int32_t>(packetType()) << ", requestID: " << requestID._val << ", taskID: " << taskID._val << "\" }";
+		return out;
+	}
 
 	friend std::ostream& operator<<(std::ostream& out, const TaskMessage& message)
 	{
@@ -189,12 +212,23 @@ struct SuccessResponse : Message
 	{
 		if (const auto* other = dynamic_cast<const SuccessResponse*>(&message))
 		{
-			return requestID == other->requestID;
+			return *this == *other;
 		}
 		return false;
 	}
 
+	bool operator==(const SuccessResponse& message) const
+	{
+		return requestID == message.requestID;
+	}
+
 	std::vector<std::byte> pack() const override;
+
+	std::ostream& print(std::ostream& out) const override
+	{
+		out << "SuccessResponse { RequestID: " << requestID._val << " }";
+		return out;
+	}
 
 	friend std::ostream& operator<<(std::ostream& out, const SuccessResponse& message)
 	{
@@ -216,12 +250,23 @@ struct FailureResponse : Message
 	{
 		if (const auto* other = dynamic_cast<const FailureResponse*>(&message))
 		{
-			return requestID == other->requestID && this->message == other->message;
+			return *this == *other;
 		}
 		return false;
 	}
 
+	bool operator==(const FailureResponse& message) const
+	{
+		return requestID == message.requestID && this->message == message.message;
+	}
+
 	std::vector<std::byte> pack() const override;
+
+	std::ostream& print(std::ostream& out) const override
+	{
+		out << "FailureResponse { RequestID: " << requestID._val << ", message: \"" << message << "\" }";
+		return out;
+	}
 
 	friend std::ostream& operator<<(std::ostream& out, const FailureResponse& message)
 	{
@@ -242,13 +287,24 @@ struct BasicMessage : Message
 	{
 		if (const auto* other = dynamic_cast<const BasicMessage*>(&message))
 		{
-			return packetType == other->packetType;
+			return *this == *other;
 		}
 		return false;
 	}
 
+	bool operator==(const BasicMessage& message) const
+	{
+		return packetType == message.packetType;
+	}
+
 	std::vector<std::byte> pack() const override;
 	static std::expected<BasicMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	std::ostream& print(std::ostream& out) const override
+	{
+		out << "BasicMessage { PacketType: " << static_cast<std::int32_t>(packetType) << " }";
+		return out;
+	}
 
 	friend std::ostream& operator<<(std::ostream& out, const BasicMessage& message)
 	{
@@ -282,28 +338,44 @@ struct TaskInfoMessage : Message
 
 	bool operator==(const Message& message) const override
 	{
-		const auto* other = dynamic_cast<const TaskInfoMessage*>(&message);
+		if (const auto* other = dynamic_cast<const TaskInfoMessage*>(&message))
+		{
+			return *this == *other;
+		}
+		return false;
+	}
 
-		if (!other) return false;
-
-		if (times.size() != other->times.size())
+	bool operator==(const TaskInfoMessage& message) const
+	{
+		if (times.size() != message.times.size())
 		{
 			return false;
 		}
 		
 		for (std::size_t i = 0; i < times.size(); i++)
 		{
-			if (times[i].start != other->times[i].start || times[i].stop != other->times[i].stop)
+			if (times[i].start != message.times[i].start || times[i].stop != message.times[i].stop)
 			{
 				return false;
 			}
 		}
 
-		return taskID == other->taskID && parentID == other->parentID && state == other->state && newTask == other->newTask && name == other->name && createTime == other->createTime && finishTime == other->finishTime;
+		return taskID == message.taskID && parentID == message.parentID && state == message.state && newTask == message.newTask && name == message.name && createTime == message.createTime && finishTime == message.finishTime;
 	}
 
 	std::vector<std::byte> pack() const override;
 	static std::expected<TaskInfoMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	std::ostream& print(std::ostream& out) const override
+	{
+		out << "TaskInfoMessage { taskID: " << taskID._val << ", parentID: " << parentID._val << ", state: " << static_cast<std::int32_t>(state) << ", newTask: " << newTask << ", name: \"" << name << "\", createTime: " << createTime.count() << ", finishTime: " << (finishTime.has_value() ? std::to_string(finishTime.value().count()) : "nullopt") << ", times: [";
+		for (auto&& time : times)
+		{
+			out << "{ start: " << time.start.count() << ", stop: " << (time.stop.has_value() ? std::to_string(time.stop.value().count()) : "nullopt") << " }, ";
+		}
+		out << "]";
+		return out;
+	}
 
 	friend std::ostream& operator<<(std::ostream& out, const TaskInfoMessage& message)
 	{
@@ -330,13 +402,24 @@ struct BugzillaInfoMessage : Message
 	{
 		if (const auto* other = dynamic_cast<const BugzillaInfoMessage*>(&message))
 		{
-			return URL == other->URL && apiKey == other->apiKey;
+			return *this == *other;
 		}
 		return false;
 	}
 
+	bool operator==(const BugzillaInfoMessage& message) const
+	{
+		return URL == message.URL && apiKey == message.apiKey;
+	}
+
 	std::vector<std::byte> pack() const override;
 	static std::expected<BugzillaInfoMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	std::ostream& print(std::ostream& out) const override
+	{
+		out << "BugzillaInfoMessage { URL: \"" << URL << "\", apiKey: \"" << apiKey << "\" }";
+		return out;
+	}
 
 	friend std::ostream& operator<<(std::ostream& out, const BugzillaInfoMessage& message)
 	{
@@ -392,13 +475,24 @@ struct DailyReportMessage : Message
 	{
 		if (const auto* other = dynamic_cast<const DailyReportMessage*>(&message))
 		{
-			return report == other->report;
+			return *this == *other;
 		}
 		return false;
 	}
 
+	bool operator==(const DailyReportMessage& message) const
+	{
+		return report == message.report;
+	}
+
 	std::vector<std::byte> pack() const override;
 	static std::expected<DailyReportMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	std::ostream& print(std::ostream& out) const override
+	{
+		out << "DailyReportMessage { " << report << " }";
+		return out;
+	}
 
 	friend std::ostream& operator<<(std::ostream& out, const DailyReportMessage& message)
 	{

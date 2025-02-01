@@ -65,7 +65,7 @@ struct TestHelper
 		// check output for a failure message for the request ID
 	}
 
-	void required_messages(const std::vector<std::unique_ptr<Message>>& messages)
+	void required_messages(const std::vector<Message*>& messages)
 	{
 		// expected message sequence:
 		// m1
@@ -82,6 +82,23 @@ struct TestHelper
 		{
 			match &= *output[i] == *messages[i];
 		}
+
+		if (!match)
+		{
+			UNSCOPED_INFO("Expected message sequence:");
+
+			for (auto&& msg : messages)
+			{
+				UNSCOPED_INFO(msg);
+			}
+			UNSCOPED_INFO("Found message sequence:");
+			for (auto&& msg : output)
+			{
+				UNSCOPED_INFO(msg);
+			}
+		}
+
+		CHECK(match);
 	}
 
 private:
@@ -90,49 +107,37 @@ private:
 
 TEST_CASE("create task", "[api][task]")
 {
-	TestClock clock;
-	std::istringstream fileInput;
-	std::ostringstream fileOutput;
-	API api(clock, fileInput, fileOutput);
-	std::vector<std::unique_ptr<Message>> output;
+	TestHelper helper;
 
 	SECTION("success")
 	{
-		auto create_task = CreateTaskMessage(NO_PARENT, RequestID(1), "this is a test");
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.nextRequestID(), "this is a test"));
 
-		api.process_packet(create_task, output);
-
-		REQUIRE(output.size() == 2);
-
-		verify_message(SuccessResponse{ RequestID(1) }, *output[0]);
+		auto success = SuccessResponse(RequestID(1));
 
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "this is a test");
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.state = TaskState::INACTIVE;
 		taskInfo.newTask = true;
 
-		verify_message(taskInfo, *output[1]);
+		helper.required_messages({ &success, &taskInfo });
 	}
 
 	SECTION("failure")
 	{
-		auto create_task = CreateTaskMessage(TaskID(2), RequestID(1), "this is a test");
+		helper.expect_failure(CreateTaskMessage(TaskID(2), helper.nextRequestID(), "this is a test"), "Task with ID 2 does not exist.");
 
-		api.process_packet(create_task, output);
+		auto failure = FailureResponse(RequestID(1), "Task with ID 2 does not exist.");
 
-		REQUIRE(output.size() == 1);
-
-		verify_message(FailureResponse{ RequestID(1), "Task with ID 2 does not exist." }, *output[0]);
+		helper.required_messages({ &failure });
 	}
 
 	SECTION("persist")
 	{
-		auto create_task = CreateTaskMessage(NO_PARENT, RequestID(1), "this is a test");
-
-		api.process_packet(create_task, output);
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.nextRequestID(), "this is a test"));
 
 		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
-		CHECK(fileOutput.str() == "create 1 0 1737344039870 (this is a test)\n");
+		CHECK(helper.fileOutput.str() == "create 1 0 1737344039870 (this is a test)\n");
 	}
 }
 
