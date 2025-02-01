@@ -92,6 +92,8 @@ public:
 
 	virtual void visit(MessageVisitor& visitor) const = 0;
 	
+	virtual bool operator==(const Message& message) const = 0;
+
 	virtual std::vector<std::byte> pack() const = 0;
 
 private:
@@ -108,11 +110,20 @@ struct CreateTaskMessage : Message
 
 	void visit(MessageVisitor& visitor) const override;
 
-	bool operator==(const CreateTaskMessage& other) const
+	bool operator==(const CreateTaskMessage& message) const
 	{
-		return parentID == other.parentID && requestID == other.requestID && name == other.name;
+		return parentID == message.parentID && requestID == message.requestID && name == message.name;
 	}
 
+	bool operator==(const Message& message) const override
+	{
+		if (const auto* other = dynamic_cast<const CreateTaskMessage*>(&message))
+		{
+			return *this == *other;
+		}
+		return false;
+	}
+	
 	std::vector<std::byte> pack() const override;
 	static std::expected<CreateTaskMessage, UnpackError> unpack(std::span<const std::byte> data);
 
@@ -132,9 +143,13 @@ struct TaskMessage : Message
 
 	void visit(MessageVisitor& visitor) const override;
 
-	bool operator==(const TaskMessage& other) const
+	bool operator==(const Message& message) const override
 	{
-		return packetType() == other.packetType() && taskID == other.taskID && requestID == other.requestID;
+		if (const auto* other = dynamic_cast<const TaskMessage*>(&message))
+		{
+			return packetType() == other->packetType() && taskID == other->taskID && requestID == other->requestID;
+		}
+		return false;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -170,7 +185,14 @@ struct SuccessResponse : Message
 
 	void visit(MessageVisitor& visitor) const override {};
 
-	bool operator==(SuccessResponse other) const { return requestID == other.requestID; }
+	bool operator==(const Message& message) const override
+	{
+		if (const auto* other = dynamic_cast<const SuccessResponse*>(&message))
+		{
+			return requestID == other->requestID;
+		}
+		return false;
+	}
 
 	std::vector<std::byte> pack() const override;
 
@@ -190,9 +212,13 @@ struct FailureResponse : Message
 
 	void visit(MessageVisitor& visitor) const override {};
 
-	bool operator==(const FailureResponse& other) const
+	bool operator==(const Message& message) const override
 	{
-		return requestID == other.requestID && message == other.message;
+		if (const auto* other = dynamic_cast<const FailureResponse*>(&message))
+		{
+			return requestID == other->requestID && this->message == other->message;
+		}
+		return false;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -212,9 +238,13 @@ struct BasicMessage : Message
 
 	void visit(MessageVisitor& visitor) const override;
 
-	bool operator==(const BasicMessage& other) const
+	bool operator==(const Message& message) const override
 	{
-		return packetType == other.packetType;
+		if (const auto* other = dynamic_cast<const BasicMessage*>(&message))
+		{
+			return packetType == other->packetType;
+		}
+		return false;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -250,22 +280,26 @@ struct TaskInfoMessage : Message
 	
 	void visit(MessageVisitor& visitor) const override;
 
-	bool operator==(const TaskInfoMessage& other) const
+	bool operator==(const Message& message) const override
 	{
-		if (times.size() != other.times.size())
+		const auto* other = dynamic_cast<const TaskInfoMessage*>(&message);
+
+		if (!other) return false;
+
+		if (times.size() != other->times.size())
 		{
 			return false;
 		}
 		
 		for (std::size_t i = 0; i < times.size(); i++)
 		{
-			if (times[i].start != other.times[i].start || times[i].stop != other.times[i].stop)
+			if (times[i].start != other->times[i].start || times[i].stop != other->times[i].stop)
 			{
 				return false;
 			}
 		}
 
-		return taskID == other.taskID && parentID == other.parentID && state == other.state && newTask == other.newTask && name == other.name && createTime == other.createTime && finishTime == other.finishTime;
+		return taskID == other->taskID && parentID == other->parentID && state == other->state && newTask == other->newTask && name == other->name && createTime == other->createTime && finishTime == other->finishTime;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -292,9 +326,13 @@ struct BugzillaInfoMessage : Message
 
 	void visit(MessageVisitor& visitor) const override;
 
-	bool operator==(const BugzillaInfoMessage& other) const
+	bool operator==(const Message& message) const override
 	{
-		return URL == other.URL && apiKey == other.apiKey;
+		if (const auto* other = dynamic_cast<const BugzillaInfoMessage*>(&message))
+		{
+			return URL == other->URL && apiKey == other->apiKey;
+		}
+		return false;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -350,9 +388,13 @@ struct DailyReportMessage : Message
 
 	void visit(MessageVisitor& visitor) const override;
 
-	bool operator==(const DailyReportMessage& other) const
+	bool operator==(const Message& message) const override
 	{
-		return report == other.report;
+		if (const auto* other = dynamic_cast<const DailyReportMessage*>(&message))
+		{
+			return report == other->report;
+		}
+		return false;
 	}
 
 	std::vector<std::byte> pack() const override;

@@ -28,6 +28,66 @@ void verify_message(const T& expected, const Message& actual, std::source_locati
 	}
 }
 
+struct TestHelper
+{
+	TestClock clock;
+	std::istringstream fileInput;
+	std::ostringstream fileOutput;
+	API api = API(clock, fileInput, fileOutput);
+	std::vector<std::unique_ptr<Message>> output;
+
+	TestHelper()
+	{
+
+	}
+
+	RequestID nextRequestID()
+	{
+		auto id = m_nextRequestID++;
+		return id;
+	}
+
+	void expect_success(const Message& message)
+	{
+		output.clear();
+
+		api.process_packet(message, output);
+
+		// check output for a success message for the request ID
+	}
+
+	void expect_failure(const Message& message, const std::string& error)
+	{
+		output.clear();
+
+		api.process_packet(message, output);
+
+		// check output for a failure message for the request ID
+	}
+
+	void required_messages(const std::vector<std::unique_ptr<Message>>& messages)
+	{
+		// expected message sequence:
+		// m1
+		// m2
+		// m3
+		//
+		// but found:
+		// m2
+		// m3
+
+		bool match = output.size() == messages.size();
+
+		for (std::size_t i = 0; i < output.size() && match; i++)
+		{
+			match &= *output[i] == *messages[i];
+		}
+	}
+
+private:
+	RequestID m_nextRequestID = RequestID(1);
+};
+
 TEST_CASE("create task", "[api][task]")
 {
 	TestClock clock;
