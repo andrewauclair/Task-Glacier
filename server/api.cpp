@@ -10,10 +10,13 @@ struct MessageProcessVisitor : MessageVisitor
 	MessageProcessVisitor(MicroTask& app, std::vector<std::unique_ptr<Message>>& output) : app(app), output(output) {}
 
 	void visit(const CreateTaskMessage& message) override;
-	void visit(const StartTaskMessage& message) override;
-	void visit(const StopTaskMessage& message) override;
-	void visit(const FinishTaskMessage& message) override;
+	void visit(const TaskMessage& message) override;
 	void visit(const BasicMessage& message) override;
+
+private:
+	void start_task(const TaskMessage& message);
+	void stop_task(const TaskMessage& message);
+	void finish_task(const TaskMessage& message);
 };
 }
 
@@ -46,7 +49,23 @@ void MessageProcessVisitor::visit(const CreateTaskMessage& message)
 	}
 }
 
-void MessageProcessVisitor::visit(const StartTaskMessage& message)
+void MessageProcessVisitor::visit(const TaskMessage& message)
+{
+	switch (message.packetType())
+	{
+	case PacketType::START_TASK:
+		start_task(message);
+		break;
+	case PacketType::STOP_TASK:
+		stop_task(message);
+		break;
+	case PacketType::FINISH_TASK:
+		finish_task(message);
+		break;
+	}
+}
+
+void MessageProcessVisitor::start_task(const TaskMessage& message)
 {
 	auto* currentActiveTask = app.active_task();
 
@@ -81,7 +100,7 @@ void MessageProcessVisitor::visit(const StartTaskMessage& message)
 	}
 }
 
-void MessageProcessVisitor::visit(const StopTaskMessage& message)
+void MessageProcessVisitor::stop_task(const TaskMessage& message)
 {
 	const auto result = app.stop_task(message.taskID);
 
@@ -104,7 +123,7 @@ void MessageProcessVisitor::visit(const StopTaskMessage& message)
 	}
 }
 
-void MessageProcessVisitor::visit(const FinishTaskMessage& message)
+void MessageProcessVisitor::finish_task(const TaskMessage& message)
 {
 	const auto result = app.finish_task(message.taskID);
 

@@ -100,7 +100,7 @@ TEST_CASE("Create Task", "[message]")
 
 		REQUIRE(result.packet);
 
-		const auto packet = dynamic_cast<CreateTaskMessage&>(*resuilt.packet.get());
+		const auto packet = dynamic_cast<CreateTaskMessage&>(*result.packet.get());
 
 		CHECK(packet == create_task);
 		CHECK(result.bytes_read == 32);

@@ -1,0 +1,1 @@
+This folder is for any code that is shared between the Micro Task 2 Server and CLI applications

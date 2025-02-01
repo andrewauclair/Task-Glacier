@@ -128,7 +128,7 @@ struct TaskMessage : Message
 	TaskID taskID;
 	RequestID requestID;
 
-	TaskMessage(PacketType type, TaskID taskID) : Message(type), taskID(taskID) {}
+	TaskMessage(PacketType type, RequestID requestID, TaskID taskID) : Message(type), requestID(requestID), taskID(taskID) {}
 
 	void visit(MessageVisitor& visitor) const override;
 
@@ -142,24 +142,24 @@ struct TaskMessage : Message
 
 	friend std::ostream& operator<<(std::ostream& out, const TaskMessage& message)
 	{
-		out << "TaskMessage { packetType: " << packetType() << ", requestID: " << requestID._val << ", taskID: " << message.taskID._val << "\" }";
+		out << "TaskMessage { packetType: " << static_cast<std::int32_t>(message.packetType()) << ", requestID: " << message.requestID._val << ", taskID: " << message.taskID._val << "\" }";
 		return out;
 	}
 };
 
 struct StartTaskMessage : TaskMessage
 {
-	StartTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::START_TASK, taskID), requestID(requestID) {}
+	StartTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::START_TASK, requestID, taskID) {}
 };
 
 struct StopTaskMessage : TaskMessage
 {
-	StopTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::STOP_TASK, taskID), requestID(requestID) {}
+	StopTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::STOP_TASK, requestID, taskID) {}
 };
 
 struct FinishTaskMessage : TaskMessage
 {
-	FinishTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::FINISH_TASK, taskID), requestID(requestID) {}
+	FinishTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::FINISH_TASK, requestID, taskID) {}
 };
 
 struct SuccessResponse : Message
@@ -222,7 +222,7 @@ struct BasicMessage : Message
 
 	friend std::ostream& operator<<(std::ostream& out, const BasicMessage& message)
 	{
-		out << "BasicMessage { PacketType: " << static_cast<std::uint32_t>(message.packetType) << " }";
+		out << "BasicMessage { PacketType: " << static_cast<std::int32_t>(message.packetType) << " }";
 		return out;
 	}
 };
@@ -410,9 +410,7 @@ struct SearchResultMessage : Message
 
 struct MessageVisitor {
 	virtual void visit(const CreateTaskMessage&) = 0;
-	virtual void visit(const StartTaskMessage&) {}
-	virtual void visit(const StopTaskMessage&) {}
-	virtual void visit(const FinishTaskMessage&) {}
+	virtual void visit(const TaskMessage&) {}
 	virtual void visit(const SuccessResponse&) {}
 	virtual void visit(const FailureResponse&) {}
 	virtual void visit(const BasicMessage&) = 0;
@@ -644,15 +642,9 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 
 			break;
 		case START_TASK:
-			result.packet = std::make_unique<StartTaskMessage>(StartTaskMessage::unpack(bytes.subspan(4)).value());
-			result.bytes_read = raw_length;
-			break;
 		case STOP_TASK:
-			result.packet = std::make_unique<StopTaskMessage>(StopTaskMessage::unpack(bytes.subspan(4)).value());
-			result.bytes_read = raw_length;
-			break;
 		case FINISH_TASK:
-			result.packet = std::make_unique<FinishTaskMessage>(FinishTaskMessage::unpack(bytes.subspan(4)).value());
+			result.packet = std::make_unique<TaskMessage>(TaskMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 			break;
 		case REQUEST_CONFIGURATION:
