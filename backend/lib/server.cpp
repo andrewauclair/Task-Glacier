@@ -40,6 +40,15 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 
 	if (task)
 	{
+		if (task->state == TaskState::ACTIVE)
+		{
+			return std::format("Task with ID {} is already active.", id);
+		}
+		else if (task->state == TaskState::FINISHED)
+		{
+			return std::format("Task with ID {} is finished.", id);
+		}
+
 		if (m_activeTask)
 		{
 			m_activeTask->state = TaskState::INACTIVE;
@@ -72,7 +81,11 @@ std::optional<std::string> MicroTask::stop_task(TaskID id)
 
 		return std::nullopt;
 	}
-	return std::format("");
+	if (!task)
+	{
+		return std::format("Task with ID {} does not exist.", id);
+	}
+	return std::format("Task with ID {} is not active.", id);
 }
 
 std::optional<std::string> MicroTask::finish_task(TaskID id)
@@ -98,7 +111,11 @@ std::optional<std::string> MicroTask::finish_task(TaskID id)
 
 		return std::nullopt;
 	}
-	return std::format("");
+	if (task && task->state == TaskState::FINISHED)
+	{
+		return std::format("Task with ID {} is already finished.", id);
+	}
+	return std::format("Task with ID {} does not exist.", id);
 }
 
 std::expected<TaskState, std::string> MicroTask::task_state(TaskID id)

@@ -54,6 +54,7 @@ enum class PacketType : std::int32_t
 	STOP_TASK = 6,
 	FINISH_TASK = 7,
 	UPDATE_TASK = 15, // TODO redo numbers when we're done
+	REQUEST_TASK = 22,
 
 	SUCCESS_RESPONSE = 8,
 	FAILURE_RESPONSE = 9,

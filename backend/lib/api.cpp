@@ -2,22 +2,22 @@
 
 namespace
 {
-struct MessageProcessVisitor : MessageVisitor
-{
-	MicroTask& app;
-	std::vector<std::unique_ptr<Message>>& output;
+	struct MessageProcessVisitor : MessageVisitor
+	{
+		MicroTask& app;
+		std::vector<std::unique_ptr<Message>>& output;
 
-	MessageProcessVisitor(MicroTask& app, std::vector<std::unique_ptr<Message>>& output) : app(app), output(output) {}
+		MessageProcessVisitor(MicroTask& app, std::vector<std::unique_ptr<Message>>& output) : app(app), output(output) {}
 
-	void visit(const CreateTaskMessage& message) override;
-	void visit(const TaskMessage& message) override;
-	void visit(const BasicMessage& message) override;
+		void visit(const CreateTaskMessage& message) override;
+		void visit(const TaskMessage& message) override;
+		void visit(const BasicMessage& message) override;
 
-private:
-	void start_task(const TaskMessage& message);
-	void stop_task(const TaskMessage& message);
-	void finish_task(const TaskMessage& message);
-};
+	private:
+		void start_task(const TaskMessage& message);
+		void stop_task(const TaskMessage& message);
+		void finish_task(const TaskMessage& message);
+	};
 }
 
 void API::process_packet(const Message& message, std::vector<std::unique_ptr<Message>>& output)
@@ -62,6 +62,28 @@ void MessageProcessVisitor::visit(const TaskMessage& message)
 	case PacketType::FINISH_TASK:
 		finish_task(message);
 		break;
+	case PacketType::REQUEST_TASK:
+	{
+		const auto* task = app.find_task(message.taskID);
+
+		if (task)
+		{
+			output.push_back(std::make_unique<SuccessResponse>(message.requestID));
+
+			TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
+			info.state = task->state;
+			info.createTime = task->createTime();
+			info.times.insert(info.times.end(), task->m_times.begin(), task->m_times.end());
+			info.finishTime = task->m_finishTime;
+
+			output.push_back(std::make_unique<TaskInfoMessage>(info));
+		}
+		else
+		{
+			output.push_back(std::make_unique<FailureResponse>(message.requestID, std::format("Task with ID {} does not exist.", message.taskID)));
+		}
+		break;
+	}
 	}
 }
 
@@ -152,16 +174,16 @@ void MessageProcessVisitor::visit(const BasicMessage& message)
 	if (message.packetType == PacketType::REQUEST_CONFIGURATION)
 	{
 		const auto send_task = [&](const Task& task)
-		{
-			auto info = std::make_unique<TaskInfoMessage>(task.taskID(), task.parentID(), task.m_name);
-			info->state = task.state;
-			info->createTime = task.createTime();
-			info->finishTime = task.m_finishTime;
-			auto times = task.m_times;
-			info->times = std::vector<TaskTimes>(times.begin(), times.end());
+			{
+				auto info = std::make_unique<TaskInfoMessage>(task.taskID(), task.parentID(), task.m_name);
+				info->state = task.state;
+				info->createTime = task.createTime();
+				info->finishTime = task.m_finishTime;
+				auto times = task.m_times;
+				info->times = std::vector<TaskTimes>(times.begin(), times.end());
 
-			output.push_back(std::move(info));
-		};
+				output.push_back(std::move(info));
+			};
 
 		app.for_each_task_sorted(send_task);
 
