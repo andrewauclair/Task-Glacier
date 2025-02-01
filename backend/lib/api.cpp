@@ -84,7 +84,7 @@ void MessageProcessVisitor::start_task(const TaskMessage& message)
 			TaskInfoMessage info(currentActiveTask->taskID(), currentActiveTask->parentID(), currentActiveTask->m_name);
 			info.state = currentActiveTask->state;
 			info.createTime = currentActiveTask->createTime();
-			info.times.insert(info.times.end(), currentActiveTask->times().begin(), currentActiveTask->times().end());
+			info.times.insert(info.times.end(), currentActiveTask->m_times.begin(), currentActiveTask->m_times.end());
 
 			output.push_back(std::make_unique<TaskInfoMessage>(info));
 		}
@@ -94,7 +94,7 @@ void MessageProcessVisitor::start_task(const TaskMessage& message)
 		TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
 		info.state = task->state;
 		info.createTime = task->createTime();
-		info.times.insert(info.times.end(), task->times().begin(), task->times().end());
+		info.times.insert(info.times.end(), task->m_times.begin(), task->m_times.end());
 
 		output.push_back(std::make_unique<TaskInfoMessage>(info));
 	}
@@ -117,7 +117,7 @@ void MessageProcessVisitor::stop_task(const TaskMessage& message)
 		TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
 		info.state = task->state;
 		info.createTime = task->createTime();
-		info.times.insert(info.times.end(), task->times().begin(), task->times().end());
+		info.times.insert(info.times.end(), task->m_times.begin(), task->m_times.end());
 
 		output.push_back(std::make_unique<TaskInfoMessage>(info));
 	}
@@ -140,7 +140,8 @@ void MessageProcessVisitor::finish_task(const TaskMessage& message)
 		TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
 		info.state = task->state;
 		info.createTime = task->createTime();
-		info.times.insert(info.times.end(), task->times().begin(), task->times().end());
+		info.times.insert(info.times.end(), task->m_times.begin(), task->m_times.end());
+		info.finishTime = task->m_finishTime;
 
 		output.push_back(std::make_unique<TaskInfoMessage>(info));
 	}
@@ -155,8 +156,8 @@ void MessageProcessVisitor::visit(const BasicMessage& message)
 			auto info = std::make_unique<TaskInfoMessage>(task.taskID(), task.parentID(), task.m_name);
 			info->state = task.state;
 			info->createTime = task.createTime();
-			info->finishTime = task.finishTime();
-			auto times = task.times();
+			info->finishTime = task.m_finishTime;
+			auto times = task.m_times;
 			info->times = std::vector<TaskTimes>(times.begin(), times.end());
 
 			output.push_back(std::move(info));

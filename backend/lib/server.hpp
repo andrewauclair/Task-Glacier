@@ -26,10 +26,10 @@ private:
 	TaskID m_parentID;
 
 	std::chrono::milliseconds m_createTime;
-	std::vector<TaskTimes> m_times;
-	std::optional<std::chrono::milliseconds> m_finishTime;
 
 public:
+	std::vector<TaskTimes> m_times;
+	std::optional<std::chrono::milliseconds> m_finishTime;
 	Task(std::string name, TaskID id, TaskID parentID, std::chrono::milliseconds createTime);
 
 	bool operator==(const Task& task) const;
@@ -38,8 +38,8 @@ public:
 	TaskID parentID() const { return m_parentID; }
 
 	std::chrono::milliseconds createTime() const { return m_createTime; }
-	std::span<const TaskTimes> times() const { return m_times; }
-	std::optional<std::chrono::milliseconds> finishTime() const { return m_finishTime; }
+	//std::span<const TaskTimes> times() const { return m_times; }
+	//std::optional<std::chrono::milliseconds> finishTime() const { return m_finishTime; }
 
 	std::string m_name;
 	TaskState state = TaskState::INACTIVE;

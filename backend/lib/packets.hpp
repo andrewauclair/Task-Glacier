@@ -170,12 +170,11 @@ struct CreateTaskMessage : RequestMessage
 	}
 };
 
-struct TaskMessage : Message
+struct TaskMessage : RequestMessage
 {
 	TaskID taskID;
-	RequestID requestID;
 
-	TaskMessage(PacketType type, RequestID requestID, TaskID taskID) : Message(type), requestID(requestID), taskID(taskID) {}
+	TaskMessage(PacketType type, RequestID requestID, TaskID taskID) : RequestMessage(type, requestID), taskID(taskID) {}
 
 	void visit(MessageVisitor& visitor) const override;
 

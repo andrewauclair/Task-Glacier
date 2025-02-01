@@ -43,8 +43,10 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 		if (m_activeTask)
 		{
 			m_activeTask->state = TaskState::INACTIVE;
+			m_activeTask->m_times.back().stop = m_clock->now();
 		}
 		task->state = TaskState::ACTIVE;
+		task->m_times.emplace_back(m_clock->now());
 
 		m_activeTask = task;
 
@@ -64,6 +66,7 @@ std::optional<std::string> MicroTask::stop_task(TaskID id)
 		m_activeTask = nullptr;
 
 		task->state = TaskState::INACTIVE;
+		task->m_times.back().stop = m_clock->now();
 
 		*m_output << "stop " << id._val << ' ' << m_clock->now().count() << std::endl;
 
@@ -78,10 +81,16 @@ std::optional<std::string> MicroTask::finish_task(TaskID id)
 
 	if (task && task->state != TaskState::FINISHED)
 	{
+		auto finish_time = m_clock->now();
+
 		if (task == m_activeTask)
 		{
+			task->m_times.back().stop = finish_time;
+
 			m_activeTask = nullptr;
 		}
+
+		task->m_finishTime = finish_time;
 
 		task->state = TaskState::FINISHED;
 

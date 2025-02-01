@@ -31,20 +31,29 @@ void verify_message(const T& expected, const Message& actual, std::source_locati
 struct TestHelper
 {
 	TestClock clock;
+
 	std::istringstream fileInput;
 	std::ostringstream fileOutput;
+
 	API api = API(clock, fileInput, fileOutput);
+
 	std::vector<std::unique_ptr<Message>> output;
 
-	TestHelper()
+	RequestID next_request_id()
 	{
-
+		auto id = m_next_request_id++;
+		m_prev_request_id = id;
+		return id;
 	}
 
-	RequestID nextRequestID()
+	RequestID prev_request_id() const
 	{
-		auto id = m_nextRequestID++;
-		return id;
+		return m_prev_request_id;
+	}
+
+	void clear_output()
+	{
+		fileOutput.str("");
 	}
 
 	void expect_success(const RequestMessage& message)
@@ -83,7 +92,7 @@ struct TestHelper
 		}
 	}
 
-	void required_messages(const std::vector<Message*>& messages)
+	void required_messages(const std::vector<Message*>& messages, std::source_location location = std::source_location::current())
 	{
 		// expected message sequence:
 		// m1
@@ -127,20 +136,23 @@ struct TestHelper
 			}
 		}
 
+		INFO(location.file_name() << ":" << location.line());
+
 		CHECK(match);
 	}
 
 private:
-	RequestID m_nextRequestID = RequestID(1);
+	RequestID m_next_request_id = RequestID(1);
+	RequestID m_prev_request_id = RequestID(1);
 };
 
-TEST_CASE("create task", "[api][task]")
+TEST_CASE("Create Task", "[api][task]")
 {
 	TestHelper helper;
 
-	SECTION("success")
+	SECTION("Success")
 	{
-		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.nextRequestID(), "this is a test"));
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test"));
 
 		auto success = SuccessResponse(RequestID(1));
 
@@ -152,68 +164,167 @@ TEST_CASE("create task", "[api][task]")
 		helper.required_messages({ &success, &taskInfo });
 	}
 
-	SECTION("failure")
+	SECTION("Failure")
 	{
-		helper.expect_failure(CreateTaskMessage(TaskID(2), helper.nextRequestID(), "this is a test"), "Task with ID 2 does not exist.");
+		helper.expect_failure(CreateTaskMessage(TaskID(2), helper.next_request_id(), "this is a test"), "Task with ID 2 does not exist.");
 
 		auto failure = FailureResponse(RequestID(1), "Task with ID 2 does not exist.");
 
 		helper.required_messages({ &failure });
 	}
 
-	SECTION("persist")
+	SECTION("Persist")
 	{
-		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.nextRequestID(), "this is a test"));
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test"));
 
 		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
-		CHECK(helper.fileOutput.str() == "create 1 0 1737344039870 (this is a test)\n");
+		CHECK(helper.fileOutput.str() == "create 1 0 1737344939870 (this is a test)\n");
 	}
 }
 
-TEST_CASE("start task", "[api][task]")
+TEST_CASE("Start Task", "[api][task]")
 {
-	TestClock clock;
-	std::istringstream fileInput;
-	std::ostringstream fileOutput;
-	API api(clock, fileInput, fileOutput);
-	std::vector<std::unique_ptr<Message>> output;
+	TestHelper helper;
 
-	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "test 1"), output);
-	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(2), "test 2"), output);
+	SECTION("Success")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 2"));
 
-	output.clear();
+		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
 
-	api.process_packet(StartTaskMessage(TaskID(1), RequestID(3)), output);
+		auto success = SuccessResponse(RequestID(3));
 
-	REQUIRE(output.size() == 2);
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(std::chrono::milliseconds(1737347639870));
+		taskInfo.state = TaskState::ACTIVE;
+		taskInfo.newTask = false;
 
-	verify_message(SuccessResponse{ RequestID(3) }, *output[0]);
+		helper.required_messages({ &success, &taskInfo });
+	}
 
-	auto taskInfo1 = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
-	taskInfo1.createTime = std::chrono::milliseconds(1737344039870);
-	taskInfo1.state = TaskState::ACTIVE;
+	SECTION("Success - Start Another Task")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 2"));
 
-	verify_message(taskInfo1, *output[1]);
+		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
+		helper.expect_success(StartTaskMessage(TaskID(2), helper.next_request_id()));
 
-	output.clear();
+		auto success = SuccessResponse(RequestID(4));
 
-	api.process_packet(StartTaskMessage(TaskID(2), RequestID(4)), output);
+		auto taskInfo1 = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+		taskInfo1.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo1.times.emplace_back(std::chrono::milliseconds(1737347639870), std::chrono::milliseconds(1737349439870));
+		taskInfo1.state = TaskState::INACTIVE;
+		taskInfo1.newTask = false;
 
-	REQUIRE(output.size() == 3);
+		auto taskInfo2 = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
+		taskInfo2.createTime = std::chrono::milliseconds(1737345839870);
+		taskInfo2.times.emplace_back(std::chrono::milliseconds(1737350339870));
+		taskInfo2.state = TaskState::ACTIVE;
+		taskInfo2.newTask = false;
 
-	verify_message(SuccessResponse{ RequestID(4) }, *output[0]);
+		helper.required_messages({ &success, &taskInfo1, &taskInfo2 });
+	}
 
-	taskInfo1.state = TaskState::INACTIVE;
+	SECTION("Failure - Task Does Not Exist")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 2"));
 
-	verify_message(taskInfo1, *output[1]);
+		helper.expect_failure(StartTaskMessage(TaskID(3), helper.next_request_id()), "Task with ID 3 does not exist.");
 
-	auto taskInfo2 = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
-	taskInfo2.createTime = std::chrono::milliseconds(1737344039870);
-	taskInfo2.state = TaskState::ACTIVE;
+		auto failure = FailureResponse(RequestID(3), "Task with ID 3 does not exist.");
 
-	verify_message(taskInfo2, *output[2]);
+		helper.required_messages({ &failure });
+	}
+
+	SECTION("Persist")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test"));
+
+		helper.clear_output();
+
+		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
+
+		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
+		CHECK(helper.fileOutput.str() == "start 1 1737346739870\n");
+	}
 }
 
+TEST_CASE("Stop Task", "[api][task]")
+{
+	TestHelper helper;
+
+	SECTION("Success - Stop Active Task")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
+		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
+
+		helper.expect_success(StopTaskMessage(TaskID(1), helper.next_request_id()));
+
+		auto success = SuccessResponse(RequestID(3));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(std::chrono::milliseconds(1737345839870), std::chrono::milliseconds(1737347639870));
+		taskInfo.state = TaskState::INACTIVE;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &success, &taskInfo });
+	}
+
+	SECTION("Failure - Task Is Not Active")
+	{
+
+	}
+
+	SECTION("Persist")
+	{
+
+	}
+}
+
+TEST_CASE("Finish Task", "[api][task]")
+{
+	TestHelper helper;
+
+	SECTION("Success - Finish Active Task")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+		helper.expect_success(StartTaskMessage(TaskID(1), helper.next_request_id()));
+
+		helper.expect_success(FinishTaskMessage(TaskID(1), helper.next_request_id()));
+
+		auto success = SuccessResponse(helper.prev_request_id());
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(std::chrono::milliseconds(1737345839870), std::chrono::milliseconds(1737347639870));
+		taskInfo.finishTime = std::chrono::milliseconds(1737347639870);
+		taskInfo.state = TaskState::FINISHED;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &success, &taskInfo });
+	}
+
+	SECTION("Success - Finish Task That Is Not Active")
+	{
+
+	}
+
+	SECTION("Failure - Task Is Already Finished")
+	{
+
+	}
+
+	SECTION("Persist")
+	{
+
+	}
+}
 // TODO for now we're just going to do this in one big test
 TEST_CASE("Persist Tasks", "[api][task]")
 {
@@ -246,82 +357,45 @@ TEST_CASE("Persist Tasks", "[api][task]")
 	auto finish_task_4 = FinishTaskMessage(TaskID(4), RequestID(18));
 
 	api.process_packet(create_task_1, output);
-	clock.time += std::chrono::hours(1);
-	
 	api.process_packet(create_task_2, output);
-	clock.time += std::chrono::hours(1);
-	
 	api.process_packet(start_task_2, output);
-	clock.time += std::chrono::hours(1);
-
 	api.process_packet(create_task_3, output);
-	clock.time += std::chrono::hours(1);
-	
 	api.process_packet(stop_task_2, output);
-	clock.time += std::chrono::hours(1);
-
 	api.process_packet(start_task_3, output);
-	clock.time += std::chrono::hours(1);
-
 	api.process_packet(create_task_4, output);
-	clock.time += std::chrono::hours(1);
-	
 	api.process_packet(create_task_5, output);
-	clock.time += std::chrono::hours(1);
-
 	api.process_packet(stop_task_3, output);
-	clock.time += std::chrono::hours(1);
-
 	api.process_packet(create_task_6, output);
-	clock.time += std::chrono::hours(1);
-
 	api.process_packet(start_task_2, output);
-	clock.time += std::chrono::hours(1);
-
 	api.process_packet(stop_task_2, output);
-	clock.time += std::chrono::hours(1);
-
 	api.process_packet(start_task_4, output);
-	clock.time += std::chrono::hours(1);
-
 	api.process_packet(finish_task_4, output);
-	clock.time += std::chrono::hours(1);
-
 	api.process_packet(finish_task_3, output);
-	clock.time += std::chrono::hours(1);
-
 	api.process_packet(finish_task_2, output);
-	clock.time += std::chrono::hours(1);
-
 	api.process_packet(start_task_6, output);
-	clock.time += std::chrono::hours(1);
-
 	api.process_packet(start_task_5, output);
-	clock.time += std::chrono::hours(1);
-
 	api.process_packet(start_task_1, output);
-	clock.time += std::chrono::hours(1);
 
 	std::ostringstream expected;
-	expected << "create 1 0 1737344039870 (task 1)\n";
-	expected << "create 2 1 1737347639870 (task 2)\n";
-	expected << "start 2 1737351239870\n";
-	expected << "create 3 2 1737354839870 (task 3)\n";
-	expected << "stop 2 1737358439870\n";
-	expected << "start 3 1737362039870\n";
-	expected << "create 4 2 1737365639870 (task 4)\n";
-	expected << "create 5 3 1737369239870 (task 5)\n";
-	expected << "stop 3 1737372839870\n";
-	expected << "create 6 4 1737376439870 (task 6)\n";
-	expected << "start 2 1737380039870\n";
-	expected << "stop 2 1737383639870\n";
-	expected << "start 4 1737387239870\n";
-	expected << "finish 4 1737390839870\n";
-	expected << "finish 3 1737394439870\n";
-	expected << "finish 2 1737398039870\n";
-	expected << "start 6 1737401639870\n";
-	expected << "start 5 1737405239870\n";
-	expected << "start 1 1737408839870\n";
+	expected << "create 1 0 1737344939870 (task 1)\n";
+	expected << "create 2 1 1737346739870 (task 2)\n";
+	expected << "start 2 1737348539870\n";
+	expected << "create 3 2 1737350339870 (task 3)\n";
+	expected << "stop 2 1737351239870\n";
+	expected << "start 3 1737353039870\n";
+	expected << "create 4 2 1737354839870 (task 4)\n";
+	expected << "create 5 3 1737356639870 (task 5)\n";
+	expected << "stop 3 1737357539870\n";
+	expected << "create 6 4 1737359339870 (task 6)\n";
+	expected << "start 2 1737361139870\n";
+	expected << "stop 2 1737362039870\n";
+	expected << "start 4 1737363839870\n";
+	expected << "finish 4 1737364739870\n";
+	expected << "finish 3 1737365639870\n";
+	expected << "finish 2 1737366539870\n";
+	expected << "start 6 1737368339870\n";
+	expected << "start 5 1737370139870\n";
+	expected << "start 1 1737371939870\n";
 
 	CHECK(fileOutput.str() == expected.str());
 }
@@ -438,11 +512,11 @@ TEST_CASE("request configuration at startup", "[api]")
 	REQUIRE(output.size() == 7);
 	
 	verify_message(TaskInfoMessage(TaskID(1), NO_PARENT, "task 1", std::chrono::milliseconds(1737344039870)), *output[0]);
-	verify_message(TaskInfoMessage(TaskID(2), TaskID(1), "task 2", std::chrono::milliseconds(1737344039870)), *output[1]);
-	verify_message(TaskInfoMessage(TaskID(3), TaskID(2), "task 3", std::chrono::milliseconds(1737344039870)), *output[2]);
-	verify_message(TaskInfoMessage(TaskID(4), TaskID(2), "task 4", std::chrono::milliseconds(1737344039870)), *output[3]);
-	verify_message(TaskInfoMessage(TaskID(5), TaskID(3), "task 5", std::chrono::milliseconds(1737344039870)), *output[4]);
-	verify_message(TaskInfoMessage(TaskID(6), TaskID(4), "task 6", std::chrono::milliseconds(1737344039870)), *output[5]);
+	verify_message(TaskInfoMessage(TaskID(2), TaskID(1), "task 2", std::chrono::milliseconds(1737345839870)), *output[1]);
+	verify_message(TaskInfoMessage(TaskID(3), TaskID(2), "task 3", std::chrono::milliseconds(1737347639870)), *output[2]);
+	verify_message(TaskInfoMessage(TaskID(4), TaskID(2), "task 4", std::chrono::milliseconds(1737349439870)), *output[3]);
+	verify_message(TaskInfoMessage(TaskID(5), TaskID(3), "task 5", std::chrono::milliseconds(1737351239870)), *output[4]);
+	verify_message(TaskInfoMessage(TaskID(6), TaskID(4), "task 6", std::chrono::milliseconds(1737353039870)), *output[5]);
 	
 	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[6]);
 }
