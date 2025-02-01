@@ -32,7 +32,7 @@ void MessageProcessVisitor::visit(const CreateTaskMessage& message)
 
 	if (result)
 	{
-		//output.push_back(std::make_unique<SuccessResponse>(message.requestID));
+		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
 
 		auto* task = app.find_task(result.value());
 

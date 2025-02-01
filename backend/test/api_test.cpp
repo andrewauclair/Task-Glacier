@@ -47,22 +47,40 @@ struct TestHelper
 		return id;
 	}
 
-	void expect_success(const Message& message)
+	void expect_success(const RequestMessage& message)
 	{
 		output.clear();
 
 		api.process_packet(message, output);
 
 		// check output for a success message for the request ID
+		if (!output.empty())
+		{
+			INFO("First message sent should be the response");
+			CHECK(*output[0] == SuccessResponse(message.requestID));
+		}
+		else
+		{
+			FAIL("Expected output message of SuccessResponse with request ID " << message.requestID._val);
+		}
 	}
 
-	void expect_failure(const Message& message, const std::string& error)
+	void expect_failure(const RequestMessage& message, const std::string& error)
 	{
 		output.clear();
 
 		api.process_packet(message, output);
 
 		// check output for a failure message for the request ID
+		if (!output.empty())
+		{
+			INFO("First message sent should be the response");
+			CHECK(*output[0] == FailureResponse(message.requestID, error));
+		}
+		else
+		{
+			FAIL("Expected output message of FailureResponse with request ID " << message.requestID._val << " and error: " << error);
+		}
 	}
 
 	void required_messages(const std::vector<Message*>& messages)
@@ -86,15 +104,26 @@ struct TestHelper
 		if (!match)
 		{
 			UNSCOPED_INFO("Expected message sequence:");
+			UNSCOPED_INFO("");
+
+			int count = 1;
 
 			for (auto&& msg : messages)
 			{
-				UNSCOPED_INFO(msg);
+				UNSCOPED_INFO(count << ". " << *msg);
+				count++;
 			}
+			
+			UNSCOPED_INFO("");
 			UNSCOPED_INFO("Found message sequence:");
+			UNSCOPED_INFO("");
+			
+			count = 1;
+
 			for (auto&& msg : output)
 			{
-				UNSCOPED_INFO(msg);
+				UNSCOPED_INFO(count << ". " << *msg);
+				count++;
 			}
 		}
 

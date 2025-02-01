@@ -96,7 +96,11 @@ public:
 
 	virtual std::vector<std::byte> pack() const = 0;
 
-	virtual std::ostream& print(std::ostream& out) const = 0;
+	virtual std::ostream& print(std::ostream& out) const = 0
+	{
+		out << "packetType: " << static_cast<std::int32_t>(m_packetType);
+		return out;
+	}
 
 	friend std::ostream& operator<<(std::ostream& out, const Message& message)
 	{
@@ -107,13 +111,31 @@ private:
 	PacketType m_packetType;
 };
 
-struct CreateTaskMessage : Message
+struct RequestMessage : Message
+{
+	RequestID requestID;
+
+	RequestMessage(PacketType packetType, RequestID requestID) : Message(packetType), requestID(requestID) {}
+
+	std::ostream& print(std::ostream& out) const override
+	{
+		Message::print(out);
+		out << ", requestID: " << requestID._val;
+		return out;
+	}
+
+	friend std::ostream& operator<<(std::ostream& out, const RequestMessage& message)
+	{
+		return message.print(out);
+	}
+};
+
+struct CreateTaskMessage : RequestMessage
 {
 	TaskID parentID;
-	RequestID requestID;
 	std::string name;
 
-	CreateTaskMessage(TaskID parentID, RequestID requestID, std::string name) : Message(PacketType::CREATE_TASK), parentID(parentID), requestID(requestID), name(std::move(name)) {}
+	CreateTaskMessage(TaskID parentID, RequestID requestID, std::string name) : RequestMessage(PacketType::CREATE_TASK, requestID), parentID(parentID), name(std::move(name)) {}
 
 	void visit(MessageVisitor& visitor) const override;
 
@@ -136,14 +158,16 @@ struct CreateTaskMessage : Message
 
 	std::ostream& print(std::ostream& out) const override
 	{
-		out << "CreateTaskMessage { parentID: " << parentID._val << ", RequestID: " << requestID._val << ", Name: \"" << name << "\" }";
+		out << "CreateTaskMessage { ";
+		RequestMessage::print(out);
+		out << ", parentID: " << parentID._val << ", RequestID: " << requestID._val << ", Name: \"" << name << "\" }";
 		return out;
 	}
 
-	/*friend std::ostream& operator<<(std::ostream& out, const CreateTaskMessage& message)
+	friend std::ostream& operator<<(std::ostream& out, const CreateTaskMessage& message)
 	{
 		return message.print(out);
-	}*/
+	}
 };
 
 struct TaskMessage : Message
