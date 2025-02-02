@@ -2,6 +2,7 @@ package data;
 
 import packets.TaskInfo;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -77,6 +78,7 @@ public class TaskModel {
         else {
             Task task = new Task(info.taskID, info.parentID, info.name);
             task.state = info.state;
+            task.createTime = info.createTime;
             tasks.add(task);
 
             Optional<Task> first = tasks.stream().filter(parent -> parent.id == info.parentID)

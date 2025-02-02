@@ -1,5 +1,6 @@
 package data;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +9,8 @@ public class Task {
     public int parentID;
     public TaskState state = TaskState.INACTIVE;
     public String name;
+
+    public Instant createTime;
 
     public List<Task> children = new ArrayList<>();
 

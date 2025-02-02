@@ -5,6 +5,9 @@ import data.Task;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 public class TaskInfoSubPanel extends JPanel {
     private Task task = null;
@@ -12,7 +15,9 @@ public class TaskInfoSubPanel extends JPanel {
     private JLabel taskID = new JLabel();
     private JLabel createTime = new JLabel();
     private JLabel finishTime = new JLabel();
-    
+
+    private JPanel times = new JPanel();
+
     public TaskInfoSubPanel() {
         super(new GridBagLayout());
 
@@ -28,6 +33,14 @@ public class TaskInfoSubPanel extends JPanel {
         id.add(taskID);
 
         add(id, gbc);
+        gbc.gridy++;
+
+        JPanel create = new JPanel();
+
+        create.add(new JLabel("Create Time: "));
+        create.add(createTime);
+
+        add(create, gbc);
     }
 
     private void clear() {
@@ -40,5 +53,9 @@ public class TaskInfoSubPanel extends JPanel {
             return;
         }
         taskID.setText(String.valueOf(task.id));
+
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy hh:mm:ss a");
+
+        createTime.setText(task.createTime.atZone(ZoneId.systemDefault()).format(dateTimeFormatter));
     }
 }

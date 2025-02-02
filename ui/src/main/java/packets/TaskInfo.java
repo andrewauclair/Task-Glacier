@@ -5,6 +5,7 @@ import data.TaskState;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.time.Instant;
 
 public class TaskInfo implements Packet {
     public int taskID = 0;
@@ -12,6 +13,9 @@ public class TaskInfo implements Packet {
     public TaskState state = TaskState.INACTIVE;
     public boolean newTask = false;
     public String name = "";
+
+    public Instant createTime;
+    public Instant finishTime;
 
     public static TaskInfo parse(DataInputStream input) throws IOException {
         TaskInfo info = new TaskInfo();
@@ -28,7 +32,7 @@ public class TaskInfo implements Packet {
 
         info.name = new String(bytes);
 
-        input.readLong(); // create time
+        info.createTime = Instant.ofEpochSecond(input.readLong()); // create time
 
         int timesCount = input.readInt();// number of times
 
@@ -40,7 +44,7 @@ public class TaskInfo implements Packet {
         }
 
         input.readByte(); // finish present
-        input.readLong(); // finish time
+        info.finishTime = Instant.ofEpochSecond(input.readLong()); // finish time
 
         return info;
     }
