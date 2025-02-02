@@ -92,8 +92,6 @@ public:
 
 	PacketType packetType() const { return m_packetType; }
 
-	virtual void visit(MessageVisitor& visitor) const = 0;
-	
 	virtual bool operator==(const Message& message) const = 0;
 
 	virtual std::vector<std::byte> pack() const = 0;
@@ -139,8 +137,6 @@ struct CreateTaskMessage : RequestMessage
 
 	CreateTaskMessage(TaskID parentID, RequestID requestID, std::string name) : RequestMessage(PacketType::CREATE_TASK, requestID), parentID(parentID), name(std::move(name)) {}
 
-	void visit(MessageVisitor& visitor) const override;
-
 	bool operator==(const Message& message) const override
 	{
 		if (const auto* other = dynamic_cast<const CreateTaskMessage*>(&message))
@@ -181,8 +177,6 @@ struct TaskMessage : RequestMessage
 		assert(type == PacketType::START_TASK || type == PacketType::STOP_TASK || type == PacketType::FINISH_TASK || type == PacketType::REQUEST_TASK);
 	}
 
-	void visit(MessageVisitor& visitor) const override;
-
 	bool operator==(const Message& message) const override
 	{
 		if (const auto* other = dynamic_cast<const TaskMessage*>(&message))
@@ -218,8 +212,6 @@ struct SuccessResponse : Message
 	RequestID requestID;
 
 	SuccessResponse(RequestID requestID) : Message(PacketType::SUCCESS_RESPONSE), requestID(requestID) {}
-
-	void visit(MessageVisitor& visitor) const override {};
 
 	bool operator==(const Message& message) const override
 	{
@@ -257,8 +249,6 @@ struct FailureResponse : Message
 
 	FailureResponse(RequestID requestID, std::string message) : Message(PacketType::FAILURE_RESPONSE), requestID(requestID), message(std::move(message)) {}
 
-	void visit(MessageVisitor& visitor) const override {};
-
 	bool operator==(const Message& message) const override
 	{
 		if (const auto* other = dynamic_cast<const FailureResponse*>(&message))
@@ -290,11 +280,7 @@ struct FailureResponse : Message
 
 struct BasicMessage : Message
 {
-	PacketType packetType;
-
-	BasicMessage(PacketType type) : Message(packetType), packetType(type) {}
-
-	void visit(MessageVisitor& visitor) const override;
+	BasicMessage(PacketType type) : Message(type) {}
 
 	bool operator==(const Message& message) const override
 	{
@@ -307,7 +293,7 @@ struct BasicMessage : Message
 
 	bool operator==(const BasicMessage& message) const
 	{
-		return packetType == message.packetType;
+		return packetType() == message.packetType();
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -315,13 +301,13 @@ struct BasicMessage : Message
 
 	std::ostream& print(std::ostream& out) const override
 	{
-		out << "BasicMessage { PacketType: " << static_cast<std::int32_t>(packetType) << " }";
+		out << "BasicMessage { PacketType: " << static_cast<std::int32_t>(packetType()) << " }";
 		return out;
 	}
 
 	friend std::ostream& operator<<(std::ostream& out, const BasicMessage& message)
 	{
-		out << "BasicMessage { PacketType: " << static_cast<std::int32_t>(message.packetType) << " }";
+		out << "BasicMessage { PacketType: " << static_cast<std::int32_t>(message.packetType()) << " }";
 		return out;
 	}
 };
@@ -347,8 +333,6 @@ struct TaskInfoMessage : Message
 
 	TaskInfoMessage(TaskID taskID, TaskID parentID, std::string name, std::chrono::milliseconds createTime = std::chrono::milliseconds(0)) : Message(PacketType::TASK_INFO), taskID(taskID), parentID(parentID), name(std::move(name)), createTime(createTime) {}
 	
-	void visit(MessageVisitor& visitor) const override;
-
 	bool operator==(const Message& message) const override
 	{
 		if (const auto* other = dynamic_cast<const TaskInfoMessage*>(&message))
@@ -408,8 +392,6 @@ struct BugzillaInfoMessage : Message
 	std::string apiKey;
 
 	BugzillaInfoMessage(std::string URL, std::string apiKey) : Message(PacketType::BUGZILLA_INFO), URL(std::move(URL)), apiKey(std::move(apiKey)) {}
-
-	void visit(MessageVisitor& visitor) const override;
 
 	bool operator==(const Message& message) const override
 	{
@@ -481,8 +463,6 @@ struct DailyReportMessage : Message
 	DailyReport report;
 
 	DailyReportMessage() : Message(PacketType::DAILY_REPORT) {}
-
-	void visit(MessageVisitor& visitor) const override;
 
 	bool operator==(const Message& message) const override
 	{
@@ -557,15 +537,15 @@ struct SearchResultMessage : Message
 // a time category, it's no longer in use. so in this case, you should probably change any
 // active tasks to another time category.
 
-struct MessageVisitor {
-	virtual void visit(const CreateTaskMessage&) = 0;
-	virtual void visit(const TaskMessage&) {}
-	virtual void visit(const SuccessResponse&) {}
-	virtual void visit(const FailureResponse&) {}
-	virtual void visit(const BasicMessage&) = 0;
-	virtual void visit(const TaskInfoMessage&) {}
-	virtual void visit(const BugzillaInfoMessage&) {}
-};
+//struct MessageVisitor {
+//	virtual void visit(const CreateTaskMessage&) = 0;
+//	virtual void visit(const TaskMessage&) {}
+//	virtual void visit(const SuccessResponse&) {}
+//	virtual void visit(const FailureResponse&) {}
+//	virtual void visit(const BasicMessage&) = 0;
+//	virtual void visit(const TaskInfoMessage&) {}
+//	virtual void visit(const BugzillaInfoMessage&) {}
+//};
 
 class PacketBuilder
 {

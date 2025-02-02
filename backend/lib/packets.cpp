@@ -1,7 +1,5 @@
 #include "packets.hpp"
 
-void CreateTaskMessage::visit(MessageVisitor& visitor) const { visitor.visit(*this); }
-
 std::vector<std::byte> CreateTaskMessage::pack() const
 {
 	PacketBuilder builder;
@@ -32,8 +30,6 @@ std::expected<CreateTaskMessage, UnpackError> CreateTaskMessage::unpack(std::spa
 		return std::unexpected(e.error());
 	}
 }
-
-void TaskMessage::visit(MessageVisitor& visitor) const { visitor.visit(*this); }
 
 std::vector<std::byte> TaskMessage::pack() const
 {
@@ -85,16 +81,11 @@ std::vector<std::byte> FailureResponse::pack() const
 	return builder.build();
 }
 
-void BasicMessage::visit(MessageVisitor& visitor) const
-{
-	visitor.visit(*this);
-}
-
 std::vector<std::byte> BasicMessage::pack() const
 {
 	PacketBuilder builder;
 
-	builder.add(packetType);
+	builder.add(packetType());
 
 	return builder.build();
 }
@@ -110,11 +101,6 @@ std::expected<BasicMessage, UnpackError> BasicMessage::unpack(std::span<const st
 		return BasicMessage(packetType.value());
 	}
 	return std::unexpected(packetType.error());
-}
-
-void TaskInfoMessage::visit(MessageVisitor& visitor) const
-{
-	visitor.visit(*this);
 }
 
 std::vector<std::byte> TaskInfoMessage::pack() const
@@ -194,11 +180,6 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 	{
 		return std::unexpected(e.error());
 	}
-}
-
-void BugzillaInfoMessage::visit(MessageVisitor& visitor) const
-{
-	visitor.visit(*this);
 }
 
 std::vector<std::byte> BugzillaInfoMessage::pack() const

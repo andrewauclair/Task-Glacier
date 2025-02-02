@@ -17,6 +17,14 @@ public:
 	void process_packet(const Message& message, std::vector<std::unique_ptr<Message>>& output);
 
 private:
+	void create_task(const CreateTaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
+	void start_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
+	void stop_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
+	void finish_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
+	void request_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
+
+	void handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<Message>>& output);
+
 	const Clock* m_clock;
 	MicroTask m_app;
 };
