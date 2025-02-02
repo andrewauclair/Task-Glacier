@@ -82,7 +82,11 @@ enum class PacketType : std::int32_t
 	// request the server to search for tasks matching the provided information
 	SEARCH_REQUEST = 20,
 	// return the results to the UI. This is a list of task IDs matching the search request
-	SEARCH_RESULTS = 21
+	SEARCH_RESULTS = 21,
+
+	BACKUP_CONFIGURATION = 23,
+	BACKUP_PERFORMED = 24,
+	BACKUP_FAILED = 25,
 };
 
 struct Message
