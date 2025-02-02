@@ -9,7 +9,20 @@ import javax.swing.*;
 import java.awt.*;
 
 public class AddModifyTask extends JDialog {
+    public static AddModifyTask openInstance = null;
+
+    public void failureResponse(String message) {
+        JOptionPane.showMessageDialog(this, message, "Failure", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public void close() {
+        openInstance = null;
+        AddModifyTask.this.dispose();
+    }
+
     public AddModifyTask(MainFrame mainFrame, int parentID, boolean modify) {
+        openInstance = this;
+
         // name, time tracking and project info
         // some of this info can be automatically filled
         JTextField name = new JTextField(50);
@@ -32,7 +45,8 @@ public class AddModifyTask extends JDialog {
             add.addActionListener(e -> {
                 CreateTask create = new CreateTask(name.getText(), Integer.parseInt(parent.getText()), RequestID.nextRequestID());
                 mainFrame.getConnection().sendPacket(create);
-                AddModifyTask.this.dispose();
+
+                //AddModifyTask.this.dispose();
             });
         }
 
