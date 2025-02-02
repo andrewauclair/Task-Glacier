@@ -1,5 +1,6 @@
 package data;
 
+import packets.FailureResponse;
 import packets.Packet;
 import packets.PacketType;
 import packets.TaskInfo;
@@ -55,6 +56,11 @@ public class ServerConnection {
                 }
                 else if (packetType == PacketType.REQUEST_CONFIGURATION_COMPLETE) {
                     SwingUtilities.invokeLater(MainFrame::restoreLayout);
+                }
+                else if (packetType == PacketType.FAILURE_RESPONSE) {
+                    FailureResponse failure = FailureResponse.parse(new DataInputStream((new ByteArrayInputStream(bytes))));
+
+                    System.out.println("Failure: " + failure.message);
                 }
             }
         } catch (IOException e) {

@@ -94,11 +94,15 @@ int main(int argc, char** argv)
 
 			if (result.packet)
 			{
+				std::cout << "[RX] " << result.packet << '\n';
+
 				std::vector<std::unique_ptr<Message>> toSend;
 				api.process_packet(*result.packet, toSend);
 
 				for (auto&& message : toSend)
 				{
+					std::cout << "[TX] " << *message << '\n';
+
 					const auto output = message->pack();
 					socket->write_n(output.data(), output.size());
 				}

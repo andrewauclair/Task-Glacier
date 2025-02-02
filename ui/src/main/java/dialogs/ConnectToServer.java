@@ -44,7 +44,14 @@ public class ConnectToServer extends JDialog {
         JButton connectButton = new JButton("Connect");
         add(connectButton, gbc);
 
-        Preferences preferences = Preferences.userNodeForPackage(MainFrame.class);
+        Preferences preferences;
+
+        if (System.getenv("TASK_GLACIER_DEV_INSTANCE") != null) {
+            preferences = Preferences.userNodeForPackage(ConnectToServer.class);
+        }
+        else {
+            preferences = Preferences.userNodeForPackage(MainFrame.class);
+        }
 
         IP.setText(preferences.get("IP-Address", "127.0.0.1"));
         port.setText(String.valueOf(preferences.getInt("Port", 5000)));

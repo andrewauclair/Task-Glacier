@@ -9,11 +9,12 @@ import javax.swing.*;
 import java.util.Objects;
 
 public class TaskTreeTableNode extends AbstractMutableTreeTableNode {
-    private final TaskTreeTableNode parent;
+//    private final TaskTreeTableNode parent;
     private Task task;
 
     public TaskTreeTableNode(TaskTreeTableNode parent, Task task) {
-        this.parent = parent;
+//        this.parent = parent;
+        setParent(parent);
         this.task = task;
     }
 
@@ -32,11 +33,6 @@ public class TaskTreeTableNode extends AbstractMutableTreeTableNode {
     @Override
     public int getColumnCount() {
         return 1; // just name for now
-    }
-
-    @Override
-    public TreeTableNode getParent() {
-        return parent;
     }
 
     @Override

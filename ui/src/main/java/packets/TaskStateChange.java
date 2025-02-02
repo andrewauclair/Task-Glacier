@@ -12,7 +12,7 @@ public class TaskStateChange implements Packet {
     public void writeToOutput(DataOutputStream output) throws IOException {
         output.write(ByteBuffer.allocate(4).putInt(16).array());
         output.write(ByteBuffer.allocate(4).putInt(packetType.value()).array());
-        output.write(ByteBuffer.allocate(4).putInt(taskID).array());
         output.write(ByteBuffer.allocate(4).putInt(requestID).array());
+        output.write(ByteBuffer.allocate(4).putInt(taskID).array());
     }
 }

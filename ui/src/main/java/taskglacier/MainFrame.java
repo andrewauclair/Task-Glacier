@@ -5,6 +5,7 @@ import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import data.ServerConnection;
 import data.TaskModel;
+import dialogs.ConnectToServer;
 import io.github.andrewauclair.moderndocking.app.AppState;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import io.github.andrewauclair.moderndocking.app.RootDockingPanel;
@@ -91,7 +92,14 @@ public class MainFrame extends JFrame {
         File layoutFile = new File(System.getenv("LOCALAPPDATA") + "/TaskGlacier/layout.xml");
         AppState.setPersistFile(layoutFile);
 
-        Preferences preferences = Preferences.userNodeForPackage(MainFrame.class);
+        Preferences preferences;
+
+        if (System.getenv("TASK_GLACIER_DEV_INSTANCE") != null) {
+            preferences = Preferences.userNodeForPackage(ConnectToServer.class);
+        }
+        else {
+            preferences = Preferences.userNodeForPackage(MainFrame.class);
+        }
 
         if (preferences.get("IP-Address", null) != null) {
             try {
