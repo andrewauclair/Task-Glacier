@@ -7,6 +7,8 @@ import taskglacier.MainFrame;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 public class AddModifyTask extends JDialog {
     public static AddModifyTask openInstance = null;
@@ -22,6 +24,8 @@ public class AddModifyTask extends JDialog {
 
     public AddModifyTask(MainFrame mainFrame, int parentID, boolean modify) {
         openInstance = this;
+
+        setModal(true);
 
         // name, time tracking and project info
         // some of this info can be automatically filled
@@ -39,14 +43,24 @@ public class AddModifyTask extends JDialog {
         JButton add = new JButton("Add");
 
         if (modify) {
-
+            setTitle("Modify Task ");
         }
         else {
+            setTitle("Add Task");
+
             add.addActionListener(e -> {
                 CreateTask create = new CreateTask(name.getText(), Integer.parseInt(parent.getText()), RequestID.nextRequestID());
                 mainFrame.getConnection().sendPacket(create);
+            });
 
-                //AddModifyTask.this.dispose();
+            // TODO we'll have to add this to all components on the dialog
+            name.addKeyListener(new KeyAdapter() {
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                        add.doClick();
+                    }
+                }
             });
         }
 
@@ -56,7 +70,7 @@ public class AddModifyTask extends JDialog {
         gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
         setLayout(new GridBagLayout());
 
-        add(createFlow("Name:", name), gbc);
+        add(createFlow("Name: ", name), gbc);
         gbc.gridy++;
 
         add(createFlow("Parent: ", parent), gbc);

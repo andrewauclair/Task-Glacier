@@ -189,8 +189,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
                 Docking.dock(newList, TasksLists.this, DockingRegion.CENTER);
             }
             else {
-                // TODO add this when Modern Docking has Docking.bringToFront(String)
-//                Docking.bringToFront("task-list-" + task.id);
+                Docking.display("task-list-" + task.id);
             }
         });
 
