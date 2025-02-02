@@ -74,12 +74,7 @@ void API::start_task(const TaskMessage& message, std::vector<std::unique_ptr<Mes
 
 		auto* task = m_app.find_task(message.taskID);
 
-		TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
-		info.state = task->state;
-		info.createTime = task->createTime();
-		info.times.insert(info.times.end(), task->m_times.begin(), task->m_times.end());
-
-		output.push_back(std::make_unique<TaskInfoMessage>(info));
+		send_task_info(*task, output);
 	}
 }
 
@@ -97,12 +92,7 @@ void API::stop_task(const TaskMessage& message, std::vector<std::unique_ptr<Mess
 
 		auto* task = m_app.find_task(message.taskID);
 
-		TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
-		info.state = task->state;
-		info.createTime = task->createTime();
-		info.times.insert(info.times.end(), task->m_times.begin(), task->m_times.end());
-
-		output.push_back(std::make_unique<TaskInfoMessage>(info));
+		send_task_info(*task, output);
 	}
 }
 
@@ -120,13 +110,7 @@ void API::finish_task(const TaskMessage& message, std::vector<std::unique_ptr<Me
 
 		auto* task = m_app.find_task(message.taskID);
 
-		TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
-		info.state = task->state;
-		info.createTime = task->createTime();
-		info.times.insert(info.times.end(), task->m_times.begin(), task->m_times.end());
-		info.finishTime = task->m_finishTime;
-
-		output.push_back(std::make_unique<TaskInfoMessage>(info));
+		send_task_info(*task, output);
 	}
 }
 
@@ -138,13 +122,7 @@ void API::request_task(const TaskMessage& message, std::vector<std::unique_ptr<M
 	{
 		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
 
-		TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
-		info.state = task->state;
-		info.createTime = task->createTime();
-		info.times.insert(info.times.end(), task->m_times.begin(), task->m_times.end());
-		info.finishTime = task->m_finishTime;
-
-		output.push_back(std::make_unique<TaskInfoMessage>(info));
+		send_task_info(*task, output);
 	}
 	else
 	{
@@ -156,20 +134,23 @@ void API::handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<
 {
 	if (message.packetType() == PacketType::REQUEST_CONFIGURATION)
 	{
-		const auto send_task = [&](const Task& task)
-			{
-				auto info = std::make_unique<TaskInfoMessage>(task.taskID(), task.parentID(), task.m_name);
-				info->state = task.state;
-				info->createTime = task.createTime();
-				info->finishTime = task.m_finishTime;
-				auto times = task.m_times;
-				info->times = std::vector<TaskTimes>(times.begin(), times.end());
-
-				output.push_back(std::move(info));
-			};
+		const auto send_task = [&](const Task& task) { send_task_info(task, output); };
 
 		m_app.for_each_task_sorted(send_task);
 
 		output.push_back(std::make_unique<BasicMessage>(PacketType::REQUEST_CONFIGURATION_COMPLETE));
 	}
+}
+
+void API::send_task_info(const Task& task, std::vector<std::unique_ptr<Message>>& output)
+{
+	auto info = std::make_unique<TaskInfoMessage>(task.taskID(), task.parentID(), task.m_name);
+
+	info->state = task.state;
+	info->createTime = task.createTime();
+	info->finishTime = task.m_finishTime;
+	auto times = task.m_times;
+	info->times = std::vector<TaskTimes>(times.begin(), times.end());
+
+	output.push_back(std::move(info));
 }

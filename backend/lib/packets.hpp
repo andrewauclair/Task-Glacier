@@ -251,16 +251,19 @@ struct SuccessResponse : Message
 	}
 
 	std::vector<std::byte> pack() const override;
+	static std::expected<SuccessResponse, UnpackError> unpack(std::span<const std::byte> data);
 
 	std::ostream& print(std::ostream& out) const override
 	{
-		out << "SuccessResponse { RequestID: " << requestID._val << " }";
+		out << "SuccessResponse { ";
+		Message::print(out);
+		out << ", requestID: " << requestID._val << " }";
 		return out;
 	}
 
 	friend std::ostream& operator<<(std::ostream& out, const SuccessResponse& message)
 	{
-		out << "SuccessResponse { RequestID: " << message.requestID._val << " }";
+		message.print(out);
 		return out;
 	}
 };
@@ -287,16 +290,19 @@ struct FailureResponse : Message
 	}
 
 	std::vector<std::byte> pack() const override;
+	static std::expected<FailureResponse, UnpackError> unpack(std::span<const std::byte> data);
 
 	std::ostream& print(std::ostream& out) const override
 	{
-		out << "FailureResponse { RequestID: " << requestID._val << ", message: \"" << message << "\" }";
+		out << "FailureResponse { ";
+		Message::print(out);
+		out << ", requestID: " << requestID._val << ", message: \"" << message << "\" }";
 		return out;
 	}
 
 	friend std::ostream& operator<<(std::ostream& out, const FailureResponse& message)
 	{
-		out << "FailureResponse { RequestID: " << message.requestID._val << ", message: \"" << message.message << "\" }";
+		message.print(out);
 		return out;
 	}
 };
@@ -324,13 +330,15 @@ struct BasicMessage : Message
 
 	std::ostream& print(std::ostream& out) const override
 	{
-		out << "BasicMessage { PacketType: " << static_cast<std::int32_t>(packetType()) << " }";
+		out << "BasicMessage { ";
+		Message::print(out);
+		out << " }";
 		return out;
 	}
 
 	friend std::ostream& operator<<(std::ostream& out, const BasicMessage& message)
 	{
-		out << "BasicMessage { PacketType: " << static_cast<std::int32_t>(message.packetType()) << " }";
+		message.print(out);
 		return out;
 	}
 };
@@ -798,6 +806,14 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 		case FINISH_TASK:
 		case REQUEST_TASK:
 			result.packet = std::make_unique<TaskMessage>(TaskMessage::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
+			break;
+		case SUCCESS_RESPONSE:
+			result.packet = std::make_unique<SuccessResponse>(SuccessResponse::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
+			break;
+		case FAILURE_RESPONSE:
+			result.packet = std::make_unique<FailureResponse>(FailureResponse::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 			break;
 		case REQUEST_CONFIGURATION:

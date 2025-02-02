@@ -25,6 +25,8 @@ private:
 
 	void handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<Message>>& output);
 
+	void send_task_info(const Task& task, std::vector<std::unique_ptr<Message>>& output);
+
 	const Clock* m_clock;
 	MicroTask m_app;
 };

@@ -313,35 +313,182 @@ TEST_CASE("Task", "[messages]")
 	}
 }
 
-TEST_CASE("pack the success response packet", "[message][pack]")
+TEST_CASE("Success Response", "[messages]")
 {
-	PacketBuilder builder;
+	const auto response = SuccessResponse(RequestID(10));
+	CAPTURE(response);
 
-	const auto response = SuccessResponse(RequestID(15));
+	SECTION("Compare - Through Message")
+	{
+		SECTION("Does Not Match Other Message")
+		{
+			const auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+			CAPTURE(create_task);
 
-	auto verifier = PacketVerifier(response.pack(), 12);
+			const Message* message = &create_task;
 
-	verifier
-		.verify_value<std::uint32_t>(12, "packet length")
-		.verify_value<std::uint32_t>(8, "packet ID")
-		.verify_value<std::uint32_t>(15, "request ID");
+			CHECK(!(response == *message));
+		}
+
+		SECTION("Match")
+		{
+			const auto response2 = SuccessResponse(RequestID(10));
+			CAPTURE(response2);
+
+			const Message* message = &response2;
+
+			CHECK(response == *message);
+		}
+	}
+
+	SECTION("Compare - Directly")
+	{
+		const auto response2 = SuccessResponse(RequestID(10));
+		CAPTURE(response2);
+
+		CHECK(response == response2);
+	}
+
+	SECTION("Compare Messages That Do Not Match")
+	{
+		auto response2 = SuccessResponse(RequestID(15));
+		CAPTURE(response2);
+
+		CHECK(!(response == response2));
+	}
+
+	SECTION("Print")
+	{
+		std::ostringstream ss;
+
+		response.print(ss);
+
+		auto expected_text = "SuccessResponse { packetType: 8, requestID: 10 }";
+
+		CHECK(ss.str() == expected_text);
+
+		ss.str("");
+
+		ss << response;
+
+		CHECK(ss.str() == expected_text);
+
+		ss.str("");
+
+		const Message* message = &response;
+
+		ss << *message;
+
+		CHECK(ss.str() == expected_text);
+	}
+
+	SECTION("Pack")
+	{
+		auto verifier = PacketVerifier(response.pack(), 12);
+
+		verifier
+			.verify_value<std::uint32_t>(12, "packet length")
+			.verify_value(static_cast<std::int32_t>(PacketType::SUCCESS_RESPONSE), "packet ID")
+			.verify_value<std::uint32_t>(10, "request ID");
+	}
+
+	SECTION("Unpack")
+	{
+		PacketTestHelper helper;
+		helper.expect_packet<SuccessResponse>(response, 12);
+	}
 }
 
-// don't need to care about parsing SuccessResponse atm
-
-TEST_CASE("pack the failure response packet", "[message][pack]")
+TEST_CASE("Failure Response", "[messages]")
 {
-	PacketBuilder builder;
+	const auto response = FailureResponse(RequestID(10), "Task does not exist.");
+	CAPTURE(response);
 
-	const auto response = FailureResponse(RequestID(10), "this is a failure message");
+	SECTION("Compare - Through Message")
+	{
+		SECTION("Does Not Match Other Message")
+		{
+			const auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+			CAPTURE(create_task);
 
-	auto verifier = PacketVerifier(response.pack(), 39);
+			const Message* message = &create_task;
 
-	verifier
-		.verify_value<std::uint32_t>(39, "packet length")
-		.verify_value<std::uint32_t>(9, "packet ID")
-		.verify_value<std::uint32_t>(10, "request ID")
-		.verify_string("this is a failure message", "error message");
+			CHECK(!(response == *message));
+		}
+
+		SECTION("Match")
+		{
+			const auto response2 = FailureResponse(RequestID(10), "Task does not exist.");
+			CAPTURE(response2);
+
+			const Message* message = &response2;
+
+			CHECK(response == *message);
+		}
+	}
+
+	SECTION("Compare - Directly")
+	{
+		const auto response2 = FailureResponse(RequestID(10), "Task does not exist.");
+		CAPTURE(response2);
+
+		CHECK(response == response2);
+	}
+
+	SECTION("Compare Messages That Do Not Match")
+	{
+		auto response2 = FailureResponse(RequestID(15), "Task does not exist.");
+		CAPTURE(response2);
+
+		CHECK(!(response == response2));
+
+		response2.message = "Task is active.";
+		CAPTURE(response2);
+
+		CHECK(!(response == response2));
+	}
+
+	SECTION("Print")
+	{
+		std::ostringstream ss;
+
+		response.print(ss);
+
+		auto expected_text = "FailureResponse { packetType: 9, requestID: 10, message: \"Task does not exist.\" }";
+
+		CHECK(ss.str() == expected_text);
+
+		ss.str("");
+
+		ss << response;
+
+		CHECK(ss.str() == expected_text);
+
+		ss.str("");
+
+		const Message* message = &response;
+
+		ss << *message;
+
+		CHECK(ss.str() == expected_text);
+	}
+
+	SECTION("Pack")
+	{
+		auto verifier = PacketVerifier(response.pack(), 34);
+
+		verifier
+			.verify_value<std::uint32_t>(34, "packet length")
+			.verify_value(static_cast<std::int32_t>(PacketType::FAILURE_RESPONSE), "packet ID")
+			.verify_value<std::uint32_t>(10, "request ID")
+			.verify_string("Task does not exist.", "message");
+	}
+
+	SECTION("Unpack")
+	{
+		PacketTestHelper helper;
+		helper.expect_packet<FailureResponse>(response, 34);
+	}
 }
 
 // don't need to care about parsing FailureResponse atm
