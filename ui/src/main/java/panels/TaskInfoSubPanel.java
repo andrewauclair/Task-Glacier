@@ -10,7 +10,9 @@ public class TaskInfoSubPanel extends JPanel {
     private Task task = null;
 
     private JLabel taskID = new JLabel();
-
+    private JLabel createTime = new JLabel();
+    private JLabel finishTime = new JLabel();
+    
     public TaskInfoSubPanel() {
         super(new GridBagLayout());
 
@@ -31,6 +33,7 @@ public class TaskInfoSubPanel extends JPanel {
     private void clear() {
         taskID.setText("");
     }
+
     public void displayForTask(Task task) {
         if (task == null) {
             clear();

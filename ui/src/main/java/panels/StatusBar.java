@@ -7,6 +7,8 @@ import data.TaskState;
 import javax.swing.*;
 import java.awt.*;
 
+import static taskglacier.MainFrame.mainFrame;
+
 public class StatusBar extends JPanel implements TaskModel.Listener {
     private final JLabel activeTaskDisplay = new JLabel("No Active Task");
     private Task activeTask = null;
@@ -21,9 +23,22 @@ public class StatusBar extends JPanel implements TaskModel.Listener {
         add(activeTaskDisplay, gbc);
     }
 
-    private void updateDisplay() {
+    private void updateDisplay(TaskModel taskModel) {
         if (activeTask != null) {
-            activeTaskDisplay.setText(activeTask.id + " - " + activeTask.name);
+            StringBuilder text = new StringBuilder(activeTask.id + " - ");
+
+            int parentID = activeTask.parentID;
+
+            while (parentID != 0) {
+                Task task = taskModel.getTask(parentID);
+
+                text.append(task.name);
+                text.append(" / ");
+
+                parentID = task.parentID;
+            }
+
+            activeTaskDisplay.setText(text.toString());
         }
         else {
             activeTaskDisplay.setText("No Active Task");
@@ -35,7 +50,7 @@ public class StatusBar extends JPanel implements TaskModel.Listener {
         // a new task could be the active task, if I decide to implement it that way
         if (task.state == TaskState.ACTIVE) {
             activeTask = task;
-            updateDisplay();
+            updateDisplay(mainFrame.getTaskModel());
         }
     }
 
@@ -43,11 +58,11 @@ public class StatusBar extends JPanel implements TaskModel.Listener {
     public void updatedTask(Task task) {
         if (task == activeTask && task.state != TaskState.ACTIVE) {
             activeTask = null;
-            updateDisplay();
+            updateDisplay(mainFrame.getTaskModel());
         }
         else if (task.state == TaskState.ACTIVE) {
             activeTask = task;
-            updateDisplay();
+            updateDisplay(mainFrame.getTaskModel());
         }
     }
 }

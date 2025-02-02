@@ -15,7 +15,7 @@ public class MenuBar extends JMenuBar {
         JMenu task = new JMenu("Task");
         add = new JMenuItem("Add");
         add.setEnabled(false);
-        add.addActionListener(e -> new AddModifyTask(mainFrame).setVisible(true));
+        add.addActionListener(e -> new AddModifyTask(mainFrame, false).setVisible(true));
         task.add(add);
 
         add(task);
