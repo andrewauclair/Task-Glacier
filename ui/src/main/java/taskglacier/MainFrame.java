@@ -17,6 +17,7 @@ import panels.TasksLists;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowListener;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -78,7 +79,7 @@ public class MainFrame extends JFrame {
 
         new TasksLists(this, "tasks", "Tasks");
 
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         WindowLayoutBuilder builder = new WindowLayoutBuilder("tasks");
 
@@ -87,7 +88,7 @@ public class MainFrame extends JFrame {
         setJMenuBar(new MenuBar(this));
 
         // now that the main frame is set up with the defaults, we can restore the layout
-        File layoutFile = new File("layout.xml");
+        File layoutFile = new File(System.getenv("LOCALAPPDATA") + "/TaskGlacier/layout.xml");
         AppState.setPersistFile(layoutFile);
 
         Preferences preferences = Preferences.userNodeForPackage(MainFrame.class);

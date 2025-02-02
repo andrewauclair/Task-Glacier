@@ -1,5 +1,6 @@
 plugins {
-    id("java")
+    java
+    application
 }
 
 repositories {
@@ -28,4 +29,12 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.withType<Jar> {
+    manifest {
+        attributes["Main-Class"] = "taskglacier.MainFrame"
+    }
+    from(configurations.runtimeClasspath.get().map({ if (it.isDirectory) it else zipTree(it) }))
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
