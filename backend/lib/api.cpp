@@ -1,40 +1,39 @@
 #include "api.hpp"
 
-namespace
-{
-struct MessageProcessVisitor : MessageVisitor
-{
-	MicroTask& app;
-	std::vector<std::unique_ptr<Message>>& output;
-
-	MessageProcessVisitor(MicroTask& app, std::vector<std::unique_ptr<Message>>& output) : app(app), output(output) {}
-
-	void visit(const CreateTaskMessage& message) override;
-	void visit(const TaskMessage& message) override;
-	void visit(const BasicMessage& message) override;
-
-private:
-	void start_task(const TaskMessage& message);
-	void stop_task(const TaskMessage& message);
-	void finish_task(const TaskMessage& message);
-};
-}
-
 void API::process_packet(const Message& message, std::vector<std::unique_ptr<Message>>& output)
 {
-	auto handler = MessageProcessVisitor(m_app, output);
-	message.visit(handler);
+	switch (message.packetType())
+	{
+	case PacketType::CREATE_TASK:
+		create_task(static_cast<const CreateTaskMessage&>(message), output);
+		break;
+	case PacketType::START_TASK:
+		start_task(static_cast<const TaskMessage&>(message), output);
+		break;
+	case PacketType::STOP_TASK:
+		stop_task(static_cast<const TaskMessage&>(message), output);
+		break;
+	case PacketType::FINISH_TASK:
+		finish_task(static_cast<const TaskMessage&>(message), output);
+		break;
+	case PacketType::REQUEST_TASK:
+		request_task(static_cast<const TaskMessage&>(message), output);
+		break;
+	case PacketType::REQUEST_CONFIGURATION:
+		handle_basic(static_cast<const BasicMessage&>(message), output);
+		break;
+	}
 }
 
-void MessageProcessVisitor::visit(const CreateTaskMessage& message)
+void API::create_task(const CreateTaskMessage& message, std::vector<std::unique_ptr<Message>>& output)
 {
-	const auto result = app.create_task(message.name, message.parentID);
+	const auto result = m_app.create_task(message.name, message.parentID);
 
 	if (result)
 	{
 		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
 
-		auto* task = app.find_task(result.value());
+		auto* task = m_app.find_task(result.value());
 
 		TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
 		info.newTask = true;
@@ -49,27 +48,11 @@ void MessageProcessVisitor::visit(const CreateTaskMessage& message)
 	}
 }
 
-void MessageProcessVisitor::visit(const TaskMessage& message)
+void API::start_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output)
 {
-	switch (message.packetType())
-	{
-	case PacketType::START_TASK:
-		start_task(message);
-		break;
-	case PacketType::STOP_TASK:
-		stop_task(message);
-		break;
-	case PacketType::FINISH_TASK:
-		finish_task(message);
-		break;
-	}
-}
+	auto* currentActiveTask = m_app.active_task();
 
-void MessageProcessVisitor::start_task(const TaskMessage& message)
-{
-	auto* currentActiveTask = app.active_task();
-
-	const auto result = app.start_task(message.taskID);
+	const auto result = m_app.start_task(message.taskID);
 
 	if (result)
 	{
@@ -89,20 +72,15 @@ void MessageProcessVisitor::start_task(const TaskMessage& message)
 			output.push_back(std::make_unique<TaskInfoMessage>(info));
 		}
 
-		auto* task = app.find_task(message.taskID);
+		auto* task = m_app.find_task(message.taskID);
 
-		TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
-		info.state = task->state;
-		info.createTime = task->createTime();
-		info.times.insert(info.times.end(), task->m_times.begin(), task->m_times.end());
-
-		output.push_back(std::make_unique<TaskInfoMessage>(info));
+		send_task_info(*task, output);
 	}
 }
 
-void MessageProcessVisitor::stop_task(const TaskMessage& message)
+void API::stop_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output)
 {
-	const auto result = app.stop_task(message.taskID);
+	const auto result = m_app.stop_task(message.taskID);
 
 	if (result)
 	{
@@ -112,20 +90,15 @@ void MessageProcessVisitor::stop_task(const TaskMessage& message)
 	{
 		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
 
-		auto* task = app.find_task(message.taskID);
+		auto* task = m_app.find_task(message.taskID);
 
-		TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
-		info.state = task->state;
-		info.createTime = task->createTime();
-		info.times.insert(info.times.end(), task->m_times.begin(), task->m_times.end());
-
-		output.push_back(std::make_unique<TaskInfoMessage>(info));
+		send_task_info(*task, output);
 	}
 }
 
-void MessageProcessVisitor::finish_task(const TaskMessage& message)
+void API::finish_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output)
 {
-	const auto result = app.finish_task(message.taskID);
+	const auto result = m_app.finish_task(message.taskID);
 
 	if (result)
 	{
@@ -135,36 +108,49 @@ void MessageProcessVisitor::finish_task(const TaskMessage& message)
 	{
 		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
 
-		auto* task = app.find_task(message.taskID);
+		auto* task = m_app.find_task(message.taskID);
 
-		TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
-		info.state = task->state;
-		info.createTime = task->createTime();
-		info.times.insert(info.times.end(), task->m_times.begin(), task->m_times.end());
-		info.finishTime = task->m_finishTime;
-
-		output.push_back(std::make_unique<TaskInfoMessage>(info));
+		send_task_info(*task, output);
 	}
 }
 
-void MessageProcessVisitor::visit(const BasicMessage& message)
+void API::request_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output)
 {
-	if (message.packetType == PacketType::REQUEST_CONFIGURATION)
+	const auto* task = m_app.find_task(message.taskID);
+
+	if (task)
 	{
-		const auto send_task = [&](const Task& task)
-		{
-			auto info = std::make_unique<TaskInfoMessage>(task.taskID(), task.parentID(), task.m_name);
-			info->state = task.state;
-			info->createTime = task.createTime();
-			info->finishTime = task.m_finishTime;
-			auto times = task.m_times;
-			info->times = std::vector<TaskTimes>(times.begin(), times.end());
+		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
 
-			output.push_back(std::move(info));
-		};
+		send_task_info(*task, output);
+	}
+	else
+	{
+		output.push_back(std::make_unique<FailureResponse>(message.requestID, std::format("Task with ID {} does not exist.", message.taskID)));
+	}
+}
 
-		app.for_each_task_sorted(send_task);
+void API::handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<Message>>& output)
+{
+	if (message.packetType() == PacketType::REQUEST_CONFIGURATION)
+	{
+		const auto send_task = [&](const Task& task) { send_task_info(task, output); };
+
+		m_app.for_each_task_sorted(send_task);
 
 		output.push_back(std::make_unique<BasicMessage>(PacketType::REQUEST_CONFIGURATION_COMPLETE));
 	}
+}
+
+void API::send_task_info(const Task& task, std::vector<std::unique_ptr<Message>>& output)
+{
+	auto info = std::make_unique<TaskInfoMessage>(task.taskID(), task.parentID(), task.m_name);
+
+	info->state = task.state;
+	info->createTime = task.createTime();
+	info->finishTime = task.m_finishTime;
+	auto times = task.m_times;
+	info->times = std::vector<TaskTimes>(times.begin(), times.end());
+
+	output.push_back(std::move(info));
 }

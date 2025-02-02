@@ -13,14 +13,17 @@ public class MenuBar extends JMenuBar {
 
     public MenuBar(MainFrame mainFrame) {
         JMenu task = new JMenu("Task");
+        task.setMnemonic('T');
+
         add = new JMenuItem("Add");
         add.setEnabled(false);
-        add.addActionListener(e -> new AddModifyTask(mainFrame, false).setVisible(true));
+        add.addActionListener(e -> new AddModifyTask(mainFrame, 0, false).setVisible(true));
         task.add(add);
 
         add(task);
 
         JMenu server = new JMenu("Server");
+        server.setMnemonic('S');
 
         connect.addActionListener(e -> {
             ConnectToServer connectToServer = new ConnectToServer(mainFrame);

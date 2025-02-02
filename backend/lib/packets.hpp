@@ -12,10 +12,11 @@
 #include <span>
 #include <optional>
 #include <chrono>
-
-#include <strong_type/strong_type.hpp>
 #include <map>
 #include <array>
+#include <cassert>
+
+#include <strong_type/strong_type.hpp>
 
 enum class UnpackError {
 	NOT_ENOUGH_BYTES
@@ -54,6 +55,7 @@ enum class PacketType : std::int32_t
 	STOP_TASK = 6,
 	FINISH_TASK = 7,
 	UPDATE_TASK = 15, // TODO redo numbers when we're done
+	REQUEST_TASK = 22,
 
 	SUCCESS_RESPONSE = 8,
 	FAILURE_RESPONSE = 9,
@@ -80,7 +82,14 @@ enum class PacketType : std::int32_t
 	// request the server to search for tasks matching the provided information
 	SEARCH_REQUEST = 20,
 	// return the results to the UI. This is a list of task IDs matching the search request
-	SEARCH_RESULTS = 21
+	SEARCH_RESULTS = 21,
+
+	// configure the backup, including the IP and port of the backup service, how often to perform a backup, and how many backups to keep
+	BACKUP_CONFIGURATION = 23,
+	// backup has been successfully performed
+	BACKUP_PERFORMED = 24,
+	// backup has failed. error message and last successful backup time are provided
+	BACKUP_FAILED = 25,
 };
 
 struct Message
@@ -90,8 +99,6 @@ public:
 
 	PacketType packetType() const { return m_packetType; }
 
-	virtual void visit(MessageVisitor& visitor) const = 0;
-	
 	virtual bool operator==(const Message& message) const = 0;
 
 	virtual std::vector<std::byte> pack() const = 0;
@@ -117,6 +124,20 @@ struct RequestMessage : Message
 
 	RequestMessage(PacketType packetType, RequestID requestID) : Message(packetType), requestID(requestID) {}
 
+	bool operator==(const Message& message) const override
+	{
+		if (const auto* other = dynamic_cast<const RequestMessage*>(&message))
+		{
+			return *this == *other;
+		}
+		return false;
+	}
+
+	bool operator==(const RequestMessage& message) const
+	{
+		return packetType() == message.packetType() && requestID == message.requestID;
+	}
+
 	std::ostream& print(std::ostream& out) const override
 	{
 		Message::print(out);
@@ -136,8 +157,6 @@ struct CreateTaskMessage : RequestMessage
 	std::string name;
 
 	CreateTaskMessage(TaskID parentID, RequestID requestID, std::string name) : RequestMessage(PacketType::CREATE_TASK, requestID), parentID(parentID), name(std::move(name)) {}
-
-	void visit(MessageVisitor& visitor) const override;
 
 	bool operator==(const Message& message) const override
 	{
@@ -160,7 +179,7 @@ struct CreateTaskMessage : RequestMessage
 	{
 		out << "CreateTaskMessage { ";
 		RequestMessage::print(out);
-		out << ", parentID: " << parentID._val << ", RequestID: " << requestID._val << ", Name: \"" << name << "\" }";
+		out << ", parentID: " << parentID._val << ", name: \"" << name << "\" }";
 		return out;
 	}
 
@@ -174,9 +193,10 @@ struct TaskMessage : RequestMessage
 {
 	TaskID taskID;
 
-	TaskMessage(PacketType type, RequestID requestID, TaskID taskID) : RequestMessage(type, requestID), taskID(taskID) {}
-
-	void visit(MessageVisitor& visitor) const override;
+	TaskMessage(PacketType type, RequestID requestID, TaskID taskID) : RequestMessage(type, requestID), taskID(taskID)
+	{
+		assert(type == PacketType::START_TASK || type == PacketType::STOP_TASK || type == PacketType::FINISH_TASK || type == PacketType::REQUEST_TASK);
+	}
 
 	bool operator==(const Message& message) const override
 	{
@@ -197,30 +217,17 @@ struct TaskMessage : RequestMessage
 
 	std::ostream& print(std::ostream& out) const override
 	{
-		out << "TaskMessage { packetType: " << static_cast<std::int32_t>(packetType()) << ", requestID: " << requestID._val << ", taskID: " << taskID._val << "\" }";
+		out << "TaskMessage { ";
+		RequestMessage::print(out);
+		out << ", taskID: " << taskID._val << " }";
 		return out;
 	}
 
 	friend std::ostream& operator<<(std::ostream& out, const TaskMessage& message)
 	{
-		out << "TaskMessage { packetType: " << static_cast<std::int32_t>(message.packetType()) << ", requestID: " << message.requestID._val << ", taskID: " << message.taskID._val << "\" }";
+		message.print(out);
 		return out;
 	}
-};
-
-struct StartTaskMessage : TaskMessage
-{
-	StartTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::START_TASK, requestID, taskID) {}
-};
-
-struct StopTaskMessage : TaskMessage
-{
-	StopTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::STOP_TASK, requestID, taskID) {}
-};
-
-struct FinishTaskMessage : TaskMessage
-{
-	FinishTaskMessage(TaskID taskID, RequestID requestID) : TaskMessage(PacketType::FINISH_TASK, requestID, taskID) {}
 };
 
 struct SuccessResponse : Message
@@ -228,8 +235,6 @@ struct SuccessResponse : Message
 	RequestID requestID;
 
 	SuccessResponse(RequestID requestID) : Message(PacketType::SUCCESS_RESPONSE), requestID(requestID) {}
-
-	void visit(MessageVisitor& visitor) const override {};
 
 	bool operator==(const Message& message) const override
 	{
@@ -246,16 +251,19 @@ struct SuccessResponse : Message
 	}
 
 	std::vector<std::byte> pack() const override;
+	static std::expected<SuccessResponse, UnpackError> unpack(std::span<const std::byte> data);
 
 	std::ostream& print(std::ostream& out) const override
 	{
-		out << "SuccessResponse { RequestID: " << requestID._val << " }";
+		out << "SuccessResponse { ";
+		Message::print(out);
+		out << ", requestID: " << requestID._val << " }";
 		return out;
 	}
 
 	friend std::ostream& operator<<(std::ostream& out, const SuccessResponse& message)
 	{
-		out << "SuccessResponse { RequestID: " << message.requestID._val << " }";
+		message.print(out);
 		return out;
 	}
 };
@@ -266,8 +274,6 @@ struct FailureResponse : Message
 	std::string message;
 
 	FailureResponse(RequestID requestID, std::string message) : Message(PacketType::FAILURE_RESPONSE), requestID(requestID), message(std::move(message)) {}
-
-	void visit(MessageVisitor& visitor) const override {};
 
 	bool operator==(const Message& message) const override
 	{
@@ -284,27 +290,26 @@ struct FailureResponse : Message
 	}
 
 	std::vector<std::byte> pack() const override;
+	static std::expected<FailureResponse, UnpackError> unpack(std::span<const std::byte> data);
 
 	std::ostream& print(std::ostream& out) const override
 	{
-		out << "FailureResponse { RequestID: " << requestID._val << ", message: \"" << message << "\" }";
+		out << "FailureResponse { ";
+		Message::print(out);
+		out << ", requestID: " << requestID._val << ", message: \"" << message << "\" }";
 		return out;
 	}
 
 	friend std::ostream& operator<<(std::ostream& out, const FailureResponse& message)
 	{
-		out << "FailureResponse { RequestID: " << message.requestID._val << ", message: \"" << message.message << "\" }";
+		message.print(out);
 		return out;
 	}
 };
 
 struct BasicMessage : Message
 {
-	PacketType packetType;
-
-	BasicMessage(PacketType type) : Message(packetType), packetType(type) {}
-
-	void visit(MessageVisitor& visitor) const override;
+	BasicMessage(PacketType type) : Message(type) {}
 
 	bool operator==(const Message& message) const override
 	{
@@ -317,7 +322,7 @@ struct BasicMessage : Message
 
 	bool operator==(const BasicMessage& message) const
 	{
-		return packetType == message.packetType;
+		return packetType() == message.packetType();
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -325,13 +330,15 @@ struct BasicMessage : Message
 
 	std::ostream& print(std::ostream& out) const override
 	{
-		out << "BasicMessage { PacketType: " << static_cast<std::int32_t>(packetType) << " }";
+		out << "BasicMessage { ";
+		Message::print(out);
+		out << " }";
 		return out;
 	}
 
 	friend std::ostream& operator<<(std::ostream& out, const BasicMessage& message)
 	{
-		out << "BasicMessage { PacketType: " << static_cast<std::int32_t>(message.packetType) << " }";
+		message.print(out);
 		return out;
 	}
 };
@@ -357,8 +364,6 @@ struct TaskInfoMessage : Message
 
 	TaskInfoMessage(TaskID taskID, TaskID parentID, std::string name, std::chrono::milliseconds createTime = std::chrono::milliseconds(0)) : Message(PacketType::TASK_INFO), taskID(taskID), parentID(parentID), name(std::move(name)), createTime(createTime) {}
 	
-	void visit(MessageVisitor& visitor) const override;
-
 	bool operator==(const Message& message) const override
 	{
 		if (const auto* other = dynamic_cast<const TaskInfoMessage*>(&message))
@@ -418,8 +423,6 @@ struct BugzillaInfoMessage : Message
 	std::string apiKey;
 
 	BugzillaInfoMessage(std::string URL, std::string apiKey) : Message(PacketType::BUGZILLA_INFO), URL(std::move(URL)), apiKey(std::move(apiKey)) {}
-
-	void visit(MessageVisitor& visitor) const override;
 
 	bool operator==(const Message& message) const override
 	{
@@ -491,8 +494,6 @@ struct DailyReportMessage : Message
 	DailyReport report;
 
 	DailyReportMessage() : Message(PacketType::DAILY_REPORT) {}
-
-	void visit(MessageVisitor& visitor) const override;
 
 	bool operator==(const Message& message) const override
 	{
@@ -567,15 +568,15 @@ struct SearchResultMessage : Message
 // a time category, it's no longer in use. so in this case, you should probably change any
 // active tasks to another time category.
 
-struct MessageVisitor {
-	virtual void visit(const CreateTaskMessage&) = 0;
-	virtual void visit(const TaskMessage&) {}
-	virtual void visit(const SuccessResponse&) {}
-	virtual void visit(const FailureResponse&) {}
-	virtual void visit(const BasicMessage&) = 0;
-	virtual void visit(const TaskInfoMessage&) {}
-	virtual void visit(const BugzillaInfoMessage&) {}
-};
+//struct MessageVisitor {
+//	virtual void visit(const CreateTaskMessage&) = 0;
+//	virtual void visit(const TaskMessage&) {}
+//	virtual void visit(const SuccessResponse&) {}
+//	virtual void visit(const FailureResponse&) {}
+//	virtual void visit(const BasicMessage&) = 0;
+//	virtual void visit(const TaskInfoMessage&) {}
+//	virtual void visit(const BugzillaInfoMessage&) {}
+//};
 
 class PacketBuilder
 {
@@ -803,7 +804,16 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 		case START_TASK:
 		case STOP_TASK:
 		case FINISH_TASK:
+		case REQUEST_TASK:
 			result.packet = std::make_unique<TaskMessage>(TaskMessage::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
+			break;
+		case SUCCESS_RESPONSE:
+			result.packet = std::make_unique<SuccessResponse>(SuccessResponse::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
+			break;
+		case FAILURE_RESPONSE:
+			result.packet = std::make_unique<FailureResponse>(FailureResponse::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 			break;
 		case REQUEST_CONFIGURATION:

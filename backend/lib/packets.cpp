@@ -1,7 +1,5 @@
 #include "packets.hpp"
 
-void CreateTaskMessage::visit(MessageVisitor& visitor) const { visitor.visit(*this); }
-
 std::vector<std::byte> CreateTaskMessage::pack() const
 {
 	PacketBuilder builder;
@@ -32,8 +30,6 @@ std::expected<CreateTaskMessage, UnpackError> CreateTaskMessage::unpack(std::spa
 		return std::unexpected(e.error());
 	}
 }
-
-void TaskMessage::visit(MessageVisitor& visitor) const { visitor.visit(*this); }
 
 std::vector<std::byte> TaskMessage::pack() const
 {
@@ -68,10 +64,24 @@ std::vector<std::byte> SuccessResponse::pack() const
 {
 	PacketBuilder builder;
 
-	builder.add(PacketType::SUCCESS_RESPONSE);
+	builder.add(static_cast<std::int32_t>(PacketType::SUCCESS_RESPONSE));
 	builder.add(requestID);
 
 	return builder.build();
+}
+
+std::expected<SuccessResponse, UnpackError> SuccessResponse::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto requestID = parser.parse_next<RequestID>();
+
+	if (requestID)
+	{
+		return SuccessResponse(requestID.value());
+	}
+	return std::unexpected(requestID.error());
 }
 
 std::vector<std::byte> FailureResponse::pack() const
@@ -85,16 +95,29 @@ std::vector<std::byte> FailureResponse::pack() const
 	return builder.build();
 }
 
-void BasicMessage::visit(MessageVisitor& visitor) const
+std::expected<FailureResponse, UnpackError> FailureResponse::unpack(std::span<const std::byte> data)
 {
-	visitor.visit(*this);
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto requestID = parser.parse_next<RequestID>();
+	const auto name = parser.parse_next<std::string>();
+
+	try
+	{
+		return FailureResponse(requestID.value(), name.value());
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
 }
 
 std::vector<std::byte> BasicMessage::pack() const
 {
 	PacketBuilder builder;
 
-	builder.add(packetType);
+	builder.add(packetType());
 
 	return builder.build();
 }
@@ -110,11 +133,6 @@ std::expected<BasicMessage, UnpackError> BasicMessage::unpack(std::span<const st
 		return BasicMessage(packetType.value());
 	}
 	return std::unexpected(packetType.error());
-}
-
-void TaskInfoMessage::visit(MessageVisitor& visitor) const
-{
-	visitor.visit(*this);
 }
 
 std::vector<std::byte> TaskInfoMessage::pack() const
@@ -194,11 +212,6 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 	{
 		return std::unexpected(e.error());
 	}
-}
-
-void BugzillaInfoMessage::visit(MessageVisitor& visitor) const
-{
-	visitor.visit(*this);
 }
 
 std::vector<std::byte> BugzillaInfoMessage::pack() const

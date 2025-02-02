@@ -1,5 +1,7 @@
 package data;
 
+import dialogs.AddModifyTask;
+import packets.FailureResponse;
 import packets.Packet;
 import packets.PacketType;
 import packets.TaskInfo;
@@ -55,6 +57,25 @@ public class ServerConnection {
                 }
                 else if (packetType == PacketType.REQUEST_CONFIGURATION_COMPLETE) {
                     SwingUtilities.invokeLater(MainFrame::restoreLayout);
+                }
+                else if (packetType == PacketType.FAILURE_RESPONSE) {
+                    FailureResponse failure = FailureResponse.parse(new DataInputStream((new ByteArrayInputStream(bytes))));
+
+                    SwingUtilities.invokeLater(() -> {
+                        if (AddModifyTask.openInstance != null) {
+                            AddModifyTask.openInstance.failureResponse(failure.message);
+                        }
+                        else {
+                             JOptionPane.showMessageDialog(mainFrame, failure.message, "Failure", JOptionPane.ERROR_MESSAGE);
+                        }
+                    });
+                }
+                else if (packetType == PacketType.SUCCESS_RESPONSE) {
+                    SwingUtilities.invokeLater(() -> {
+                        if (AddModifyTask.openInstance != null) {
+                            AddModifyTask.openInstance.close();
+                        }
+                    });
                 }
             }
         } catch (IOException e) {

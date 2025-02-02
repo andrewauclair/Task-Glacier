@@ -1,6 +1,7 @@
 package panels;
 
 import data.Task;
+import data.TaskState;
 import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 import org.jdesktop.swingx.treetable.TreeTableNode;
 
@@ -35,6 +36,10 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
     }
 
     public void addTask(Task task) {
+        // don't add finished tasks for now. maybe eventually we'll use some sort of filter to hide them instead of removing the nodes.
+        if (task.state == TaskState.FINISHED) {
+            return;
+        }
         // find the parent task first, then add the node to that
         if (task.parentID == 0) {
             TaskTreeTableNode child = new TaskTreeTableNode(parentTask, task);
@@ -46,9 +51,10 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
             TaskTreeTableNode node = findTaskNode(parentTask, task.parentID);
 
             if (node != null) {
-                node.add(new TaskTreeTableNode(node, task));
+                TaskTreeTableNode child = new TaskTreeTableNode(node, task);
+                node.add(child);
 
-                modelSupport.fireChildAdded(new TreePath(getPathToRoot(node)), node.getParent().getIndex(node), node);
+                modelSupport.fireChildAdded(new TreePath(getPathToRoot(node)), node.getIndex(child), child);
             }
         }
 
@@ -62,7 +68,15 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
 
         if (node != null) {
             node.setUserObject(task);
-            modelSupport.fireChildChanged(new TreePath(getPathToRoot(node.getParent())), node.getParent().getIndex(node), node);
+
+            TreePath parentPath = new TreePath(getPathToRoot(node.getParent()));
+            int index = node.getParent().getIndex(node);
+
+            if (task.state == TaskState.FINISHED) {
+                node.removeFromParent();
+                modelSupport.fireChildRemoved(parentPath, index, node);
+            }
+            modelSupport.fireChildChanged(parentPath, index, node);
         }
     }
 

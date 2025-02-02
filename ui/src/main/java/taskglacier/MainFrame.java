@@ -5,6 +5,7 @@ import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import data.ServerConnection;
 import data.TaskModel;
+import dialogs.ConnectToServer;
 import io.github.andrewauclair.moderndocking.app.AppState;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import io.github.andrewauclair.moderndocking.app.RootDockingPanel;
@@ -17,6 +18,7 @@ import panels.TasksLists;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowListener;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -78,7 +80,7 @@ public class MainFrame extends JFrame {
 
         new TasksLists(this, "tasks", "Tasks");
 
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         WindowLayoutBuilder builder = new WindowLayoutBuilder("tasks");
 
@@ -87,10 +89,17 @@ public class MainFrame extends JFrame {
         setJMenuBar(new MenuBar(this));
 
         // now that the main frame is set up with the defaults, we can restore the layout
-        File layoutFile = new File("layout.xml");
+        File layoutFile = new File(System.getenv("LOCALAPPDATA") + "/TaskGlacier/layout.xml");
         AppState.setPersistFile(layoutFile);
 
-        Preferences preferences = Preferences.userNodeForPackage(MainFrame.class);
+        Preferences preferences;
+
+        if (System.getenv("TASK_GLACIER_DEV_INSTANCE") != null) {
+            preferences = Preferences.userNodeForPackage(ConnectToServer.class);
+        }
+        else {
+            preferences = Preferences.userNodeForPackage(MainFrame.class);
+        }
 
         if (preferences.get("IP-Address", null) != null) {
             try {

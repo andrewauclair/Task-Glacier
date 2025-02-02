@@ -1,3 +1,3 @@
 call gradlew build
 
-jpackage --app-version 0.0.1 -i build/libs --main-class Main --main-jar task-glacier-ui.jar
+jpackage --name "Task Glacier" --app-version 0.0.5 -i build/libs --main-class taskglacier.MainFrame --main-jar task-glacier-ui.jar --win-menu --win-dir-chooser
