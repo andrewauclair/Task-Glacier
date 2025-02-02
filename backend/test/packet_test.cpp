@@ -6,6 +6,8 @@
 #include "server.hpp"
 #include "packets.hpp"
 
+#include <source_location>
+
 std::vector<std::byte> bytes(auto... a)
 {
 	return std::vector<std::byte>{ static_cast<std::byte>(a)... };
@@ -34,16 +36,19 @@ public:
 	}
 
 	template<typename T>
-	PacketVerifier& verify_value(T expected, std::string_view field_name)
+	PacketVerifier& verify_value(T expected, std::string_view field_name, std::source_location location = std::source_location::current())
 	{
 		INFO("field: " << field_name << ", expected value: " << expected);
+
+		INFO("");
+		INFO(location.file_name() << ":" << location.line());
 
 		CHECK_THAT(std::span(m_bytes).subspan(m_current_pos, sizeof(T)), Catch::Matchers::RangeEquals(convert_to_bytes(std::byteswap(expected))));
 		m_current_pos += sizeof(T);
 		return *this;
 	}
 
-	PacketVerifier& verify_string(const std::string& string, std::string_view field_name)
+	PacketVerifier& verify_string(const std::string& string, std::string_view field_name, std::source_location location = std::source_location::current())
 	{
 		INFO("field: " << field_name << ", expected value: " << string);
 
@@ -52,8 +57,14 @@ public:
 		
 		if (m_current_pos + size >= m_bytes.size())
 		{
+			INFO("");
+			INFO(location.file_name() << ":" << location.line());
+
 			FAIL("not enough bytes");
 		}
+
+		INFO("");
+		INFO(location.file_name() << ":" << location.line());
 
 		CHECK_THAT(std::span(m_bytes).subspan(m_current_pos, size_type_length), Catch::Matchers::RangeEquals(bytes((size & 0xFF00) >> 8, size & 0xFF)));
 		
@@ -74,9 +85,111 @@ public:
 	}
 };
 
+struct PacketTestHelper
+{
+	TestClock clock;
+	std::ostringstream output;
+	MicroTask app = MicroTask(clock, output);
+
+	template<typename T>
+	void expect_packet(const Message& message, std::size_t size, std::source_location location = std::source_location::current())
+	{
+		const auto result = parse_packet(message.pack());
+
+		INFO("");
+		INFO(location.file_name() << ":" << location.line());
+
+		REQUIRE(result.packet);
+
+		const auto* packet = dynamic_cast<T*>(result.packet.get());
+
+		REQUIRE(packet);
+
+		CHECK(*packet == message);
+		CHECK(result.bytes_read == size);
+	}
+};
+
 TEST_CASE("Create Task", "[message]")
 {
 	const auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+	CAPTURE(create_task);
+
+	SECTION("Compare - Through Message")
+	{
+		SECTION("Does Not Match Other Message")
+		{
+			const auto task = TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(1));
+			CAPTURE(task);
+
+			const Message* message = &task;
+
+			CHECK(!(create_task == *message));
+		}
+
+		SECTION("Match")
+		{
+			const auto create_task2 = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+			CAPTURE(create_task2);
+
+			const Message* message = &create_task2;
+
+			CHECK(create_task == *message);
+		}
+	}
+
+	SECTION("Compare - Directly")
+	{
+		const auto create_task2 = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+		CAPTURE(create_task2);
+
+		CHECK(create_task == create_task2);
+	}
+
+	SECTION("Compare Messages That Do Not Match")
+	{
+		auto create_task2 = CreateTaskMessage(TaskID(15), RequestID(10), "this is a test");
+		CAPTURE(create_task2);
+
+		CHECK(!(create_task == create_task2));
+
+		create_task2.parentID = create_task.parentID;
+		create_task2.requestID = RequestID(15);
+		CAPTURE(create_task2);
+
+		CHECK(!(create_task == create_task2));
+
+		create_task2.requestID = create_task.requestID;
+		create_task2.name = "another task";
+		CAPTURE(create_task2);
+
+		CHECK(!(create_task == create_task2));
+	}
+
+	SECTION("Print")
+	{
+		std::ostringstream ss;
+
+		create_task.print(ss);
+
+		auto expected_text = "CreateTaskMessage { packetType: 3, requestID: 10, parentID: 5, name: \"this is a test\" }";
+
+		CHECK(ss.str() == expected_text);
+
+		ss.str("");
+
+		ss << create_task;
+
+		CHECK(ss.str() == expected_text);
+
+		ss.str("");
+
+		const Message* message = &create_task;
+
+		ss << *message;
+
+		CHECK(ss.str() == expected_text);
+	}
 
 	SECTION("Pack")
 	{
@@ -92,18 +205,111 @@ TEST_CASE("Create Task", "[message]")
 
 	SECTION("Unpack")
 	{
-		TestClock clock;
-		std::ostringstream output;
-		MicroTask app(clock, output);
+		PacketTestHelper helper;
+		helper.expect_packet<CreateTaskMessage>(create_task, 32);
+	}
+}
 
-		const auto result = parse_packet(create_task.pack());
+TEST_CASE("Task", "[messages]")
+{
+	const auto packet_type = GENERATE(PacketType::START_TASK, PacketType::STOP_TASK, PacketType::FINISH_TASK, PacketType::REQUEST_TASK);
+	CAPTURE(packet_type);
 
-		REQUIRE(result.packet);
+	const auto task = TaskMessage(packet_type, RequestID(10), TaskID(20));
+	CAPTURE(task);
 
-		const auto packet = dynamic_cast<CreateTaskMessage&>(*result.packet.get());
+	SECTION("Compare - Through Message")
+	{
+		SECTION("Does Not Match Other Message")
+		{
+			const auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+			CAPTURE(create_task);
 
-		CHECK(packet == create_task);
-		CHECK(result.bytes_read == 32);
+			const Message* message = &create_task;
+
+			CHECK(!(task == *message));
+		}
+
+		SECTION("Match")
+		{
+			const auto task2 = TaskMessage(packet_type, RequestID(10), TaskID(20));
+			CAPTURE(task2);
+
+			const Message* message = &task2;
+
+			CHECK(task == *message);
+		}
+	}
+
+	SECTION("Compare - Directly")
+	{
+		const auto task2 = TaskMessage(packet_type, RequestID(10), TaskID(20));
+		CAPTURE(task2);
+
+		CHECK(task == task2);
+	}
+
+	SECTION("Compare Messages That Do Not Match")
+	{
+		auto types = std::vector{ PacketType::START_TASK, PacketType::STOP_TASK, PacketType::FINISH_TASK, PacketType::REQUEST_TASK };
+		std::erase(types, packet_type);
+
+		auto task2 = TaskMessage(types[0], RequestID(10), TaskID(20));
+		CAPTURE(task2);
+
+		CHECK(!(task == task2));
+
+		task2 = TaskMessage(packet_type, RequestID(15), TaskID(20));
+		CAPTURE(task2);
+
+		CHECK(!(task == task2));
+
+		task2 = TaskMessage(packet_type, RequestID(10), TaskID(25));
+		CAPTURE(task2);
+
+		CHECK(!(task == task2));
+	}
+
+	SECTION("Print")
+	{
+		std::ostringstream ss;
+
+		task.print(ss);
+
+		auto expected_text = std::format("TaskMessage {{ packetType: {}, requestID: 10, taskID: 20 }}", static_cast<std::int32_t>(packet_type));
+
+		CHECK(ss.str() == expected_text);
+
+		ss.str("");
+
+		ss << task;
+
+		CHECK(ss.str() == expected_text);
+
+		ss.str("");
+
+		const Message* message = &task;
+
+		ss << *message;
+
+		CHECK(ss.str() == expected_text);
+	}
+
+	SECTION("Pack")
+	{
+		auto verifier = PacketVerifier(task.pack(), 16);
+
+		verifier
+			.verify_value<std::uint32_t>(16, "packet length")
+			.verify_value(static_cast<std::int32_t>(packet_type), "packet ID")
+			.verify_value<std::uint32_t>(10, "request ID")
+			.verify_value<std::uint32_t>(20, "task ID");
+	}
+
+	SECTION("Unpack")
+	{
+		PacketTestHelper helper;
+		helper.expect_packet<TaskMessage>(task, 16);
 	}
 }
 

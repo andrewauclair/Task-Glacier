@@ -84,8 +84,11 @@ enum class PacketType : std::int32_t
 	// return the results to the UI. This is a list of task IDs matching the search request
 	SEARCH_RESULTS = 21,
 
+	// configure the backup, including the IP and port of the backup service, how often to perform a backup, and how many backups to keep
 	BACKUP_CONFIGURATION = 23,
+	// backup has been successfully performed
 	BACKUP_PERFORMED = 24,
+	// backup has failed. error message and last successful backup time are provided
 	BACKUP_FAILED = 25,
 };
 
@@ -120,6 +123,20 @@ struct RequestMessage : Message
 	RequestID requestID;
 
 	RequestMessage(PacketType packetType, RequestID requestID) : Message(packetType), requestID(requestID) {}
+
+	bool operator==(const Message& message) const override
+	{
+		if (const auto* other = dynamic_cast<const RequestMessage*>(&message))
+		{
+			return *this == *other;
+		}
+		return false;
+	}
+
+	bool operator==(const RequestMessage& message) const
+	{
+		return packetType() == message.packetType() && requestID == message.requestID;
+	}
 
 	std::ostream& print(std::ostream& out) const override
 	{
@@ -162,7 +179,7 @@ struct CreateTaskMessage : RequestMessage
 	{
 		out << "CreateTaskMessage { ";
 		RequestMessage::print(out);
-		out << ", parentID: " << parentID._val << ", RequestID: " << requestID._val << ", Name: \"" << name << "\" }";
+		out << ", parentID: " << parentID._val << ", name: \"" << name << "\" }";
 		return out;
 	}
 
@@ -200,13 +217,15 @@ struct TaskMessage : RequestMessage
 
 	std::ostream& print(std::ostream& out) const override
 	{
-		out << "TaskMessage { packetType: " << static_cast<std::int32_t>(packetType()) << ", requestID: " << requestID._val << ", taskID: " << taskID._val << "\" }";
+		out << "TaskMessage { ";
+		RequestMessage::print(out);
+		out << ", taskID: " << taskID._val << " }";
 		return out;
 	}
 
 	friend std::ostream& operator<<(std::ostream& out, const TaskMessage& message)
 	{
-		out << "TaskMessage { packetType: " << static_cast<std::int32_t>(message.packetType()) << ", requestID: " << message.requestID._val << ", taskID: " << message.taskID._val << "\" }";
+		message.print(out);
 		return out;
 	}
 };
@@ -777,6 +796,7 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 		case START_TASK:
 		case STOP_TASK:
 		case FINISH_TASK:
+		case REQUEST_TASK:
 			result.packet = std::make_unique<TaskMessage>(TaskMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 			break;
