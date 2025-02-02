@@ -3,6 +3,7 @@ package panels;
 import data.Task;
 import data.TaskModel;
 import data.TaskState;
+import dialogs.AddModifyTask;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingProperty;
 import io.github.andrewauclair.moderndocking.DockingRegion;
@@ -155,6 +156,22 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         start.addActionListener(e -> changeTaskState(PacketType.START_TASK));
         stop.addActionListener(e -> changeTaskState(PacketType.STOP_TASK));
         finish.addActionListener(e -> changeTaskState(PacketType.FINISH_TASK));
+
+        add.addActionListener(e -> new AddModifyTask(mainFrame, 0, false).setVisible(true));
+
+        addSubTask.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+
+            if (selectedRow == -1) {
+                return;
+            }
+
+            TreePath pathForRow = table.getPathForRow(selectedRow);
+            TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
+            Task task = (Task) node.getUserObject();
+
+            new AddModifyTask(mainFrame, task.id, false).setVisible(true);
+        });
 
         openInNewWindow.addActionListener(e -> {
             int selectedRow = table.getSelectedRow();

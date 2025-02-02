@@ -9,13 +9,13 @@ import javax.swing.*;
 import java.awt.*;
 
 public class AddModifyTask extends JDialog {
-    public AddModifyTask(MainFrame mainFrame, boolean modify) {
+    public AddModifyTask(MainFrame mainFrame, int parentID, boolean modify) {
         // name, time tracking and project info
         // some of this info can be automatically filled
         JTextField name = new JTextField(50);
 
         JTextField parent = new JTextField();
-        parent.setText("0");
+        parent.setText(String.valueOf(parentID));
 
         JCheckBox inheritTime = new JCheckBox("Inherit Time From Parent");
 
