@@ -120,6 +120,11 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         }
     }
 
+    @Override
+    public boolean isClosable() {
+        return taskID != 0;
+    }
+
     private void configure() {
         DefaultTreeCellRenderer  treeCellRenderer = new DefaultTreeCellRenderer () {
             @Override
@@ -149,11 +154,18 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         JMenuItem add = new JMenuItem("Add Task...");
         JMenuItem addSubTask = new JMenuItem("Add Sub-Task...");
         JMenuItem start = new JMenuItem("Start");
+        JMenuItem startStopActive = new JMenuItem("Start (Stop Active)");
+        JMenuItem startFinishActive = new JMenuItem("Start (Finish Active)");
         JMenuItem stop = new JMenuItem("Stop");
         JMenuItem finish = new JMenuItem("Finish");
         JMenuItem openInNewWindow = new JMenuItem("Open in New List");
 
         start.addActionListener(e -> changeTaskState(PacketType.START_TASK));
+        startStopActive.addActionListener(e -> changeTaskState(PacketType.START_TASK));
+        startFinishActive.addActionListener(e -> {
+            finishActiveTask();
+            changeTaskState(PacketType.START_TASK);
+        });
         stop.addActionListener(e -> changeTaskState(PacketType.STOP_TASK));
         finish.addActionListener(e -> changeTaskState(PacketType.FINISH_TASK));
 
@@ -207,7 +219,14 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
                         return;
                     }
 
-                    contextMenu.add(start);
+                    if (mainFrame.getTaskModel().getActiveTaskID().isPresent() && !mainFrame.getTaskModel().taskHasNonFinishedChildren(mainFrame.getTaskModel().getActiveTaskID().get())) {
+                        contextMenu.add(startStopActive);
+                        contextMenu.add(startFinishActive);
+                    }
+                    else {
+                        contextMenu.add(start);
+                    }
+
                     contextMenu.add(stop);
                     contextMenu.add(finish);
                     contextMenu.addSeparator();
@@ -217,7 +236,8 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
                     TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
                     Task task = (Task) node.getUserObject();
 
-                    start.setEnabled(task.state == TaskState.INACTIVE);
+                    startStopActive.setEnabled(task.state == TaskState.INACTIVE);
+                    startFinishActive.setEnabled(task.state == TaskState.INACTIVE);
                     stop.setEnabled(task.state == TaskState.ACTIVE);
                     finish.setEnabled(task.state != TaskState.FINISHED);
 
@@ -251,6 +271,13 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         split.setRightComponent(infoSubPanel);
 
         add(split);
+    }
+
+    private void finishActiveTask() {
+        TaskStateChange change = new TaskStateChange();
+        change.packetType = PacketType.FINISH_TASK;
+        change.taskID = mainFrame.getTaskModel().getActiveTaskID().get();
+        mainFrame.getConnection().sendPacket(change);
     }
 
     private void changeTaskState(PacketType type) {

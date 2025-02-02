@@ -5,6 +5,7 @@ import packets.TaskInfo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public class TaskModel {
     public Task getTask(int taskID) {
@@ -26,6 +27,21 @@ public class TaskModel {
                 .map(task -> task.state)
                 .findFirst()
                 .orElse(TaskState.INACTIVE);
+    }
+
+    public Optional<Integer> getActiveTaskID() {
+        return tasks.stream().filter(task -> task.state == TaskState.ACTIVE)
+                .map(task -> task.id)
+                .findFirst();
+    }
+
+    public boolean taskHasNonFinishedChildren(int taskID) {
+        Optional<Task> optional = tasks.stream()
+                .filter(task -> task.id == taskID)
+                .findFirst();
+
+        return optional.map(value -> value.children.stream()
+                .anyMatch(task -> task.state != TaskState.FINISHED)).orElse(false);
     }
 
     public interface Listener {
