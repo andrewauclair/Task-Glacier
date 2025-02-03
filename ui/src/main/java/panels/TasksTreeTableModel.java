@@ -21,6 +21,11 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
     }
 
     public TreeTableNode[] getPathToRoot(TreeTableNode aNode) {
+        if (aNode == null) {
+            TreeTableNode[] treeTableNodes = new TreeTableNode[1];
+            treeTableNodes[0] = parentTask;
+            return treeTableNodes;
+        }
         Objects.requireNonNull(aNode);
 
         List<TreeTableNode> path = new ArrayList<>();
@@ -40,26 +45,28 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
         if (task.state == TaskState.FINISHED) {
             return;
         }
+
         // find the parent task first, then add the node to that
-        if (task.parentID == 0) {
-            TaskTreeTableNode child = new TaskTreeTableNode(parentTask, task);
-            parentTask.add(child);
+//        if (task.parentID == 0) {
+//            TaskTreeTableNode child = new TaskTreeTableNode(parentTask, task);
+//            parentTask.add(child);
+//
+//            modelSupport.fireChildAdded(new TreePath(parentTask), parentTask.getIndex(child), child);
+//        }
+//        else {
+//
+//        }
+        TaskTreeTableNode parent = findTaskNode(parentTask, task.parentID);
 
-            modelSupport.fireChildAdded(new TreePath(parentTask), parentTask.getIndex(child), child);
-        }
-        else {
-            TaskTreeTableNode node = findTaskNode(parentTask, task.parentID);
+        if (parent != null) {
+            TaskTreeTableNode childNode = new TaskTreeTableNode(parent, task);
+            parent.add(childNode);
 
-            if (node != null) {
-                TaskTreeTableNode child = new TaskTreeTableNode(node, task);
-                node.add(child);
+            modelSupport.fireChildAdded(new TreePath(getPathToRoot(parent)), parent.getIndex(childNode), childNode);
 
-                modelSupport.fireChildAdded(new TreePath(getPathToRoot(node)), node.getIndex(child), child);
+            for (Task child : task.children) {
+                addTask(child);
             }
-        }
-
-        for (Task child : task.children) {
-            addTask(child);
         }
     }
 
@@ -95,6 +102,9 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
                 }
             }
         }
+        if (node.getTaskID() == taskID) {
+            return node;
+        }
         return null;
     }
 
@@ -125,6 +135,7 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
 
     public void setRoot(TaskTreeTableNode root) {
         this.root = root;
+        parentTask = root;
         modelSupport.fireNewRoot();
     }
 }

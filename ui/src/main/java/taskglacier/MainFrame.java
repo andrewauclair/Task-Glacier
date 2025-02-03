@@ -110,7 +110,7 @@ public class MainFrame extends JFrame {
         }
 
         // if we're connected, we'll wait for the request config to complete before restoring
-        if (isConnected()) {
+        if (!isConnected()) {
             restoreLayout();
         }
     }

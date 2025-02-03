@@ -454,6 +454,46 @@ struct BugzillaInfoMessage : Message
 	}
 };
 
+struct RequestDailyReportMessage : RequestMessage
+{
+	int day;
+
+	RequestDailyReportMessage(RequestID requestID, int day) : RequestMessage(PacketType::REQUEST_DAILY_REPORT, requestID), day(day)
+	{
+	}
+
+	bool operator==(const Message& message) const override
+	{
+		if (const auto* other = dynamic_cast<const RequestDailyReportMessage*>(&message))
+		{
+			return *this == *other;
+		}
+		return false;
+	}
+
+	bool operator==(const RequestDailyReportMessage& message) const
+	{
+		return packetType() == message.packetType() && taskID == message.taskID && requestID == message.requestID;
+	}
+
+	std::vector<std::byte> pack() const override;
+	static std::expected<RequestDailyReportMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	std::ostream& print(std::ostream& out) const override
+	{
+		out << "RequestDailyReportMessage { ";
+		RequestMessage::print(out);
+		out << ", taskID: " << taskID._val << " }";
+		return out;
+	}
+
+	friend std::ostream& operator<<(std::ostream& out, const RequestDailyReportMessage& message)
+	{
+		message.print(out);
+		return out;
+	}
+};
+
 struct DailyReport
 {
 	// reports for days that have no task start/stops is invalid (the UI will say there's no data or something for that day)

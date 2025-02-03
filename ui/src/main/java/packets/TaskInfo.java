@@ -32,7 +32,7 @@ public class TaskInfo implements Packet {
 
         info.name = new String(bytes);
 
-        info.createTime = Instant.ofEpochSecond(input.readLong()); // create time
+        info.createTime = Instant.ofEpochMilli(input.readLong()); // create time
 
         int timesCount = input.readInt();// number of times
 
@@ -44,7 +44,7 @@ public class TaskInfo implements Packet {
         }
 
         input.readByte(); // finish present
-        info.finishTime = Instant.ofEpochSecond(input.readLong()); // finish time
+        info.finishTime = Instant.ofEpochMilli(input.readLong()); // finish time
 
         return info;
     }
