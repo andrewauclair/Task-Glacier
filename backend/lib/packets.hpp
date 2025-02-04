@@ -456,9 +456,11 @@ struct BugzillaInfoMessage : Message
 
 struct RequestDailyReportMessage : RequestMessage
 {
+	int month;
 	int day;
+	int year;
 
-	RequestDailyReportMessage(RequestID requestID, int day) : RequestMessage(PacketType::REQUEST_DAILY_REPORT, requestID), day(day)
+	RequestDailyReportMessage(RequestID requestID, int month, int day, int year) : RequestMessage(PacketType::REQUEST_DAILY_REPORT, requestID), month(month), day(day), year(year)
 	{
 	}
 
@@ -473,7 +475,7 @@ struct RequestDailyReportMessage : RequestMessage
 
 	bool operator==(const RequestDailyReportMessage& message) const
 	{
-		return packetType() == message.packetType() && taskID == message.taskID && requestID == message.requestID;
+		return packetType() == message.packetType() && requestID == message.requestID && month == message.month && day == message.day && year == message.year;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -483,7 +485,7 @@ struct RequestDailyReportMessage : RequestMessage
 	{
 		out << "RequestDailyReportMessage { ";
 		RequestMessage::print(out);
-		out << ", taskID: " << taskID._val << " }";
+		out << ", month: " << month << ", day: " << day << ", year: " << year << " }";
 		return out;
 	}
 
@@ -607,16 +609,6 @@ struct SearchResultMessage : Message
 // be needed for existing tasks that are using the time category. Presumably, if you are archiving
 // a time category, it's no longer in use. so in this case, you should probably change any
 // active tasks to another time category.
-
-//struct MessageVisitor {
-//	virtual void visit(const CreateTaskMessage&) = 0;
-//	virtual void visit(const TaskMessage&) {}
-//	virtual void visit(const SuccessResponse&) {}
-//	virtual void visit(const FailureResponse&) {}
-//	virtual void visit(const BasicMessage&) = 0;
-//	virtual void visit(const TaskInfoMessage&) {}
-//	virtual void visit(const BugzillaInfoMessage&) {}
-//};
 
 class PacketBuilder
 {
@@ -872,6 +864,10 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 
 			break;
 		}
+		case REQUEST_DAILY_REPORT:
+			result.packet = std::make_unique<RequestDailyReportMessage>(RequestDailyReportMessage::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
+			break;
 		default:
 			break;
 		}

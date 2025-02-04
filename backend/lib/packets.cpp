@@ -242,3 +242,36 @@ std::expected<BugzillaInfoMessage, UnpackError> BugzillaInfoMessage::unpack(std:
 		return std::unexpected(e.error());
 	}
 }
+
+std::vector<std::byte> RequestDailyReportMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(PacketType::REQUEST_DAILY_REPORT);
+	builder.add(requestID);
+	builder.add<std::int8_t>(month);
+	builder.add<std::int8_t>(day);
+	builder.add<std::int16_t>(year);
+
+	return builder.build();
+}
+
+std::expected<RequestDailyReportMessage, UnpackError> RequestDailyReportMessage::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto requestID = parser.parse_next<RequestID>();
+	const auto month = parser.parse_next<std::int8_t>();
+	const auto day = parser.parse_next<std::int8_t>();
+	const auto year = parser.parse_next<std::int16_t>();
+
+	try
+	{
+		return RequestDailyReportMessage(requestID.value(), month.value(), day.value(), year.value());
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
+}

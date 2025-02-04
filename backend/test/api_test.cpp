@@ -607,6 +607,11 @@ TEST_CASE("Finish Task", "[api][task]")
 	}
 }
 
+TEST_CASE("Request Daily Report", "[api]")
+{
+
+}
+
 // TODO for now we're just going to do this in one big test
 TEST_CASE("Persist Tasks", "[api][task]")
 {

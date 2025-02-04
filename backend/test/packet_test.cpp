@@ -491,7 +491,112 @@ TEST_CASE("Failure Response", "[messages]")
 	}
 }
 
-// don't need to care about parsing FailureResponse atm
+TEST_CASE("Request Daily Report", "[messages]")
+{
+	const auto request = RequestDailyReportMessage(RequestID(10), 2, 3, 2025);
+	CAPTURE(request);
+
+	SECTION("Compare - Through Message")
+	{
+		SECTION("Does Not Match Other Message")
+		{
+			const auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+			CAPTURE(create_task);
+
+			const Message* message = &create_task;
+
+			CHECK(!(request == *message));
+		}
+
+		SECTION("Match")
+		{
+			const auto request2 = RequestDailyReportMessage(RequestID(10), 2, 3, 2025);
+			CAPTURE(request2);
+
+			const Message* message = &request2;
+
+			CHECK(request == *message);
+		}
+	}
+
+	SECTION("Compare - Directly")
+	{
+		const auto request2 = RequestDailyReportMessage(RequestID(10), 2, 3, 2025);
+		CAPTURE(request2);
+
+		CHECK(request == request2);
+	}
+
+	SECTION("Compare Messages That Do Not Match")
+	{
+		auto request2 = RequestDailyReportMessage(RequestID(12), 2, 3, 2025);
+		CAPTURE(request2);
+
+		CHECK(!(request == request2));
+
+		request2.requestID = request.requestID;
+		request2.month = 3;
+		CAPTURE(request2);
+
+		CHECK(!(request == request2));
+
+		request2.month = request.month;
+		request2.day = 4;
+		CAPTURE(request2);
+
+		CHECK(!(request == request2));
+
+		request2.day = request.day;
+		request2.year = 2026;
+		CAPTURE(request2);
+
+		CHECK(!(request == request2));
+	}
+
+	SECTION("Print")
+	{
+		std::ostringstream ss;
+
+		request.print(ss);
+
+		auto expected_text = "RequestDailyReportMessage { packetType: 17, requestID: 10, month: 2, day: 3, year: 2025 }";
+
+		CHECK(ss.str() == expected_text);
+
+		ss.str("");
+
+		ss << request;
+
+		CHECK(ss.str() == expected_text);
+
+		ss.str("");
+
+		const Message* message = &request;
+
+		ss << *message;
+
+		CHECK(ss.str() == expected_text);
+	}
+
+	SECTION("Pack")
+	{
+		auto verifier = PacketVerifier(request.pack(), 16);
+
+		verifier
+			.verify_value<std::uint32_t>(16, "packet length")
+			.verify_value(static_cast<std::int32_t>(PacketType::REQUEST_DAILY_REPORT), "packet ID")
+			.verify_value<std::uint32_t>(10, "request ID")
+			.verify_value<std::int8_t>(2, "month")
+			.verify_value<std::int8_t>(3, "day")
+			.verify_value<std::int16_t>(2025, "year");
+	}
+
+	SECTION("Unpack")
+	{
+		PacketTestHelper helper;
+		helper.expect_packet<RequestDailyReportMessage>(request, 16);
+	}
+}
 
 TEST_CASE("pack the empty packet", "[message][pack]")
 {

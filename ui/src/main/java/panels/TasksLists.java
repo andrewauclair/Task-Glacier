@@ -112,7 +112,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         else {
             Task task = mainFrame.getTaskModel().getTask(taskID);
 
-            if (task != null ) {
+            if (task != null) {
                 table.setRootVisible(true);
                 treeTableModel.setRoot(new TaskTreeTableNode(null, task));
                 addTasks(task);
