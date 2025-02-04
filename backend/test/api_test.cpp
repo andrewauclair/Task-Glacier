@@ -609,6 +609,45 @@ TEST_CASE("Finish Task", "[api][task]")
 
 TEST_CASE("Request Daily Report", "[api]")
 {
+	TestHelper helper;
+
+	// TODO we're going to need some nice testing classes for adding data at exact dates and times. maybe there's a semi-easy way to do this in std::chrono
+
+	SECTION("No Report Found")
+	{
+		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
+
+		helper.api.process_packet(request, helper.output);
+
+		auto report = DailyReportMessage(helper.prev_request_id());
+
+		helper.required_messages({ &report });
+	}
+
+	SECTION("Report Found")
+	{
+		helper.clock.time = std::chrono::milliseconds(1738591200000); // 2/3/2025, 9:00am
+
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
+
+		helper.api.process_packet(request, helper.output);
+
+		auto report = DailyReportMessage(helper.prev_request_id());
+		report.reportFound = true;
+		report.report.month = 2;
+		report.report.day = 3;
+		report.report.year = 2025;
+
+		helper.required_messages({ &report });
+	}
+
+	// TODO add tasks created to report. verify that only the tasks created on the given day are listed
+	// TODO test the start of day
+	// TODO test the end of day (when there is no active task)
+	// TODO test the end of day estimated (when there is an active task) based on 8 hour days
 
 }
 

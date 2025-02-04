@@ -14,10 +14,13 @@ import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
 import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
 import packets.RequestConfig;
 import panels.StatusBar;
+import panels.SystemTrayDisplay;
 import panels.TasksLists;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowListener;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -25,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Objects;
 import java.util.prefs.Preferences;
 
 public class MainFrame extends JFrame {
@@ -33,6 +37,8 @@ public class MainFrame extends JFrame {
 
     private ServerConnection connection = new ServerConnection(null, null);
     private TaskModel taskModel = new TaskModel();
+
+    private SystemTrayDisplay systemTrayDisplay = new SystemTrayDisplay();
 
     public boolean isConnected() {
         return connection != null;
@@ -71,6 +77,25 @@ public class MainFrame extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         add(statusBar, gbc);
+
+        if (SystemTray.isSupported()) {
+            SystemTray tray = SystemTray.getSystemTray();
+
+            TrayIcon trayIcon = new TrayIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/active.png"))).getImage(), "");
+
+            trayIcon.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    systemTrayDisplay.setVisible(!systemTrayDisplay.isVisible());
+                }
+            });
+
+            try {
+                tray.add(trayIcon);
+            } catch (AWTException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         setSize(600, 400);
         Docking.initialize(this);

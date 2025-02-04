@@ -22,6 +22,9 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 	case PacketType::REQUEST_CONFIGURATION:
 		handle_basic(static_cast<const BasicMessage&>(message), output);
 		break;
+	case PacketType::REQUEST_DAILY_REPORT:
+		output.push_back(std::make_unique<DailyReportMessage>(static_cast<const RequestDailyReportMessage&>(message).requestID));
+		break;
 	}
 }
 

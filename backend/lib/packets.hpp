@@ -502,6 +502,9 @@ struct DailyReport
 	int day = 0;
 	int year = 0;
 
+	std::vector<TaskID> tasksCreated;
+	std::vector<TaskID> tasksFinished;
+
 	// start time for the day
 	std::chrono::milliseconds startTime = std::chrono::milliseconds(0);
 
@@ -512,7 +515,8 @@ struct DailyReport
 	// list of task ids and the start/stop index
 	struct TimePair
 	{
-		TaskID taskID; std::int32_t startStopIndex;
+		TaskID taskID;
+		std::int32_t startStopIndex;
 
 		constexpr auto operator<=>(const TimePair&) const = default;
 	};
