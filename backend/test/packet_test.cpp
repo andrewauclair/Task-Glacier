@@ -598,6 +598,156 @@ TEST_CASE("Request Daily Report", "[messages]")
 	}
 }
 
+TEST_CASE("Daily Report", "[messages]")
+{
+	const auto report = DailyReportMessage(RequestID(10));
+	CAPTURE(report);
+
+	SECTION("Compare - Through Message")
+	{
+		SECTION("Does Not Match Other Message")
+		{
+			const auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+			CAPTURE(create_task);
+
+			const Message* message = &create_task;
+
+			CHECK(!(report == *message));
+		}
+
+		SECTION("Match")
+		{
+			const auto report2 = DailyReportMessage(RequestID(10));
+			CAPTURE(report2);
+
+			const Message* message = &report2;
+
+			CHECK(report == *message);
+		}
+	}
+
+	SECTION("Compare - Directly")
+	{
+		const auto report2 = DailyReportMessage(RequestID(10));
+		CAPTURE(report2);
+
+		CHECK(report == report2);
+	}
+
+	SECTION("Compare Messages That Do Not Match")
+	{
+		auto report2 = DailyReportMessage(RequestID(12));
+		CAPTURE(report2);
+
+		CHECK(!(report == report2));
+
+		report2.requestID = report.requestID;
+		report2.reportFound = true;
+		CAPTURE(report2);
+
+		CHECK(!(report == report2));
+
+		/*
+		request2.month = request.month;
+		request2.day = 4;
+		CAPTURE(request2);
+
+		CHECK(!(request == request2));
+
+		request2.day = request.day;
+		request2.year = 2026;
+		CAPTURE(request2);
+
+		CHECK(!(request == request2));*/
+	}
+
+	SECTION("Print - No Report Found")
+	{
+		std::ostringstream ss;
+
+		report.print(ss);
+
+		auto expected_text = "DailyReportMessage { packetType: 16, reportFound: 0 }";
+
+		CHECK(ss.str() == expected_text);
+
+		ss.str("");
+
+		ss << report;
+
+		CHECK(ss.str() == expected_text);
+
+		ss.str("");
+
+		const Message* message = &report;
+
+		ss << *message;
+
+		CHECK(ss.str() == expected_text);
+	}
+
+	SECTION("Print - Report Found")
+	{
+		auto newReport = DailyReportMessage(RequestID(10));
+		newReport.reportFound = true;
+		newReport.report = { 2, 3, 2025 };
+
+		CAPTURE(newReport);
+
+		std::ostringstream ss;
+
+		newReport.print(ss);
+
+		auto expected_text = "DailyReportMessage { packetType: 16, reportFound: 1, report: { month: 2, day: 3, year: 2025 } }";
+
+		CHECK(ss.str() == expected_text);
+	}
+
+	SECTION("Pack - No Report Found")
+	{
+		auto verifier = PacketVerifier(report.pack(), 13);
+
+		verifier
+			.verify_value<std::uint32_t>(13, "packet length")
+			.verify_value(static_cast<std::int32_t>(PacketType::DAILY_REPORT), "packet ID")
+			.verify_value<std::uint32_t>(10, "request ID");
+	}
+
+	SECTION("Pack - Report Found")
+	{
+		auto newReport = DailyReportMessage(RequestID(10));
+		newReport.reportFound = true;
+		newReport.report = { 2, 3, 2025 };
+
+		auto verifier = PacketVerifier(newReport.pack(), 17);
+
+		verifier
+			.verify_value<std::uint32_t>(17, "packet length")
+			.verify_value(static_cast<std::int32_t>(PacketType::DAILY_REPORT), "packet ID")
+			.verify_value<std::uint32_t>(10, "request ID")
+			.verify_value<bool>(true, "report found")
+			.verify_value<std::int8_t>(2, "month")
+			.verify_value<std::int8_t>(3, "day")
+			.verify_value<std::int16_t>(2025, "year");
+	}
+
+	SECTION("Unpack - No Report Found")
+	{
+		PacketTestHelper helper;
+		helper.expect_packet<DailyReportMessage>(report, 13);
+	}
+
+	SECTION("Unpack - Report Found")
+	{
+		auto newReport = DailyReportMessage(RequestID(10));
+		newReport.reportFound = true;
+		newReport.report = { 2, 3, 2025 };
+
+		PacketTestHelper helper;
+		helper.expect_packet<DailyReportMessage>(newReport, 17);
+	}
+}
+
 TEST_CASE("pack the empty packet", "[message][pack]")
 {
 	PacketBuilder builder;

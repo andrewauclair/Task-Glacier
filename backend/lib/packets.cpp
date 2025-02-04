@@ -275,3 +275,56 @@ std::expected<RequestDailyReportMessage, UnpackError> RequestDailyReportMessage:
 		return std::unexpected(e.error());
 	}
 }
+
+std::vector<std::byte> DailyReportMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(PacketType::DAILY_REPORT);
+	builder.add(requestID);
+	builder.add(reportFound);
+	
+	if (reportFound)
+	{
+		builder.add<std::int8_t>(report.month);
+		builder.add<std::int8_t>(report.day);
+		builder.add<std::int16_t>(report.year);
+	}
+
+	return builder.build();
+}
+
+std::expected<DailyReportMessage, UnpackError> DailyReportMessage::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto requestID = parser.parse_next<RequestID>();
+	const auto reportFound = parser.parse_next<bool>();
+	
+
+	try
+	{
+		if (!reportFound.value())
+		{
+			return DailyReportMessage(requestID.value());
+		}
+
+		const auto month = parser.parse_next<std::int8_t>();
+		const auto day = parser.parse_next<std::int8_t>();
+		const auto year = parser.parse_next<std::int16_t>();
+
+		auto report = DailyReportMessage(requestID.value());
+
+		report.reportFound = true;
+		report.report.month = month.value();
+		report.report.day = day.value();
+		report.report.year = year.value();
+
+		return report;
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
+}

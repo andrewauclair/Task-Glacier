@@ -498,18 +498,20 @@ struct RequestDailyReportMessage : RequestMessage
 
 struct DailyReport
 {
-	// reports for days that have no task start/stops is invalid (the UI will say there's no data or something for that day)
-	bool isValidReport = false;
+	int month = 0;
+	int day = 0;
+	int year = 0;
 
 	// start time for the day
-	std::chrono::milliseconds startTime;
+	std::chrono::milliseconds startTime = std::chrono::milliseconds(0);
 
 	// estimated end time for the day (assuming 8 hours)
 	bool estimatedEndTime = false;
-	std::chrono::milliseconds endTime;
+	std::chrono::milliseconds endTime = std::chrono::milliseconds(0);
 
 	// list of task ids and the start/stop index
-	struct TimePair {
+	struct TimePair
+	{
 		TaskID taskID; std::int32_t startStopIndex;
 
 		constexpr auto operator<=>(const TimePair&) const = default;
@@ -518,7 +520,7 @@ struct DailyReport
 	std::vector<TimePair> times;
 
 	// total time for the day
-	std::chrono::milliseconds totalTime;
+	std::chrono::milliseconds totalTime = std::chrono::milliseconds(0);
 
 	// total time per time category for the day
 	std::map<std::string, std::chrono::milliseconds> timePerCategory;
@@ -527,15 +529,19 @@ struct DailyReport
 
 	friend std::ostream& operator<<(std::ostream& out, const DailyReport& report)
 	{
+		out << "{ month: " << report.month << ", day: " << report.day << ", year: " << report.year << " }";
 		return out;
 	}
 };
 
 struct DailyReportMessage : Message
 {
+	RequestID requestID;
+
+	bool reportFound = false;
 	DailyReport report;
 
-	DailyReportMessage() : Message(PacketType::DAILY_REPORT) {}
+	DailyReportMessage(RequestID requestID) : Message(PacketType::DAILY_REPORT), requestID(requestID) {}
 
 	bool operator==(const Message& message) const override
 	{
@@ -548,7 +554,7 @@ struct DailyReportMessage : Message
 
 	bool operator==(const DailyReportMessage& message) const
 	{
-		return report == message.report;
+		return requestID == message.requestID && reportFound == message.reportFound && report == message.report;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -556,13 +562,21 @@ struct DailyReportMessage : Message
 
 	std::ostream& print(std::ostream& out) const override
 	{
-		out << "DailyReportMessage { " << report << " }";
+		out << "DailyReportMessage { ";
+		Message::print(out);
+		out << ", reportFound: " << reportFound;
+
+		if (reportFound)
+		{
+			out << ", report: " << report;
+		}
+		out << " }";
 		return out;
 	}
 
 	friend std::ostream& operator<<(std::ostream& out, const DailyReportMessage& message)
 	{
-		out << "DailyReportMessage { " << message.report << " }";
+		message.print(out);
 		return out;
 	}
 };
@@ -866,6 +880,10 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 		}
 		case REQUEST_DAILY_REPORT:
 			result.packet = std::make_unique<RequestDailyReportMessage>(RequestDailyReportMessage::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
+			break;
+		case DAILY_REPORT:
+			result.packet = std::make_unique<DailyReportMessage>(DailyReportMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 			break;
 		default:
