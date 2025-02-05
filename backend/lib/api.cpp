@@ -23,8 +23,12 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 		handle_basic(static_cast<const BasicMessage&>(message), output);
 		break;
 	case PacketType::REQUEST_DAILY_REPORT:
-		output.push_back(std::make_unique<DailyReportMessage>(static_cast<const RequestDailyReportMessage&>(message).requestID));
+	{
+		const auto& request = static_cast<const RequestDailyReportMessage&>(message);
+
+		create_daily_report(request.requestID, request.month, request.day, request.year, output);
 		break;
+	}
 	}
 }
 
@@ -156,4 +160,36 @@ void API::send_task_info(const Task& task, std::vector<std::unique_ptr<Message>>
 	info->times = std::vector<TaskTimes>(times.begin(), times.end());
 
 	output.push_back(std::move(info));
+}
+
+void API::create_daily_report(RequestID requestID, int month, int day, int year, std::vector<std::unique_ptr<Message>>& output)
+{
+	auto report = std::make_unique<DailyReportMessage>(requestID);
+
+	// search for tasks on the given day
+
+	std::vector<MicroTask::FindTasksOnDay> tasks = m_app.find_tasks_on_day(month, day, year);
+
+	report->reportFound = !tasks.empty();
+
+	if (report->reportFound)
+	{
+		report->report = { month, day, year };
+
+		bool first = true;
+		for (auto&& task : tasks)
+		{
+			if (first)
+			{
+				report->report.startTime = task.task->m_times[task.time.startStopIndex].start;
+			}
+			else if (report->report.startTime > task.task->m_times[task.time.startStopIndex].start)
+			{
+				report->report.startTime = task.task->m_times[task.time.startStopIndex].start;
+			}
+			first = false;
+		}
+	}
+
+	output.push_back(std::move(report));
 }

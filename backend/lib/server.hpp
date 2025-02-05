@@ -55,6 +55,13 @@ public:
 	Task* active_task() const { return m_activeTask; }
 	Task* find_task(TaskID id);
 
+	struct FindTasksOnDay
+	{
+		Task* task;
+		DailyReport::TimePair time;
+	};
+	std::vector<FindTasksOnDay> find_tasks_on_day(int month, int year, int day);
+
 	std::optional<std::string> start_task(TaskID id);
 	std::optional<std::string> stop_task(TaskID id);
 	std::optional<std::string> finish_task(TaskID id);

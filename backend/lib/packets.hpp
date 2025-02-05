@@ -1,8 +1,6 @@
 #ifndef MICRO_TASK_PACKETS_HPP
 #define MICRO_TASK_PACKETS_HPP
 
-//#include "server.hpp"
-
 #include <vector>
 #include <variant>
 #include <string>
@@ -533,7 +531,7 @@ struct DailyReport
 
 	friend std::ostream& operator<<(std::ostream& out, const DailyReport& report)
 	{
-		out << "{ month: " << report.month << ", day: " << report.day << ", year: " << report.year << " }";
+		out << "{ month: " << report.month << ", day: " << report.day << ", year: " << report.year << ", startTime: " << report.startTime << " }";
 		return out;
 	}
 };

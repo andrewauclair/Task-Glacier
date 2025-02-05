@@ -698,7 +698,7 @@ TEST_CASE("Daily Report", "[messages]")
 
 		newReport.print(ss);
 
-		auto expected_text = "DailyReportMessage { packetType: 16, reportFound: 1, report: { month: 2, day: 3, year: 2025 } }";
+		auto expected_text = "DailyReportMessage { packetType: 16, reportFound: 1, report: { month: 2, day: 3, year: 2025, startTime: 0ms } }";
 
 		CHECK(ss.str() == expected_text);
 	}

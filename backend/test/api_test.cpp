@@ -51,9 +51,14 @@ struct TestHelper
 		return m_prev_request_id;
 	}
 
-	void clear_output()
+	void clear_file_output()
 	{
 		fileOutput.str("");
+	}
+
+	void clear_message_output()
+	{
+		output.clear();
 	}
 
 	void expect_success(const RequestMessage& message, std::source_location location = std::source_location::current())
@@ -324,7 +329,7 @@ TEST_CASE("Start Task", "[api][task]")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test"));
 
-		helper.clear_output();
+		helper.clear_file_output();
 
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 
@@ -435,7 +440,7 @@ TEST_CASE("Stop Task", "[api][task]")
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test"));
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 
-		helper.clear_output();
+		helper.clear_file_output();
 
 		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
 
@@ -598,7 +603,7 @@ TEST_CASE("Finish Task", "[api][task]")
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test"));
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 
-		helper.clear_output();
+		helper.clear_file_output();
 
 		helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1)));
 
@@ -626,10 +631,12 @@ TEST_CASE("Request Daily Report", "[api]")
 
 	SECTION("Report Found")
 	{
-		helper.clock.time = std::chrono::milliseconds(1738591200000); // 2/3/2025, 9:00am
+		helper.clock.time = date_to_ms(2, 3, 2025) + std::chrono::hours(5);
 
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+		helper.clear_message_output();
 
 		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
 
@@ -640,12 +647,76 @@ TEST_CASE("Request Daily Report", "[api]")
 		report.report.month = 2;
 		report.report.day = 3;
 		report.report.year = 2025;
+		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(30);
 
 		helper.required_messages({ &report });
 	}
 
+	SECTION("Report Tasks For Previous Day")
+	{
+		helper.clock.time = date_to_ms(2, 3, 2025) + std::chrono::hours(5);
+
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+		helper.clock.time += std::chrono::days(1);
+		helper.clear_message_output();
+
+		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
+
+		helper.api.process_packet(request, helper.output);
+
+		auto report = DailyReportMessage(helper.prev_request_id());
+		report.reportFound = true;
+		report.report.month = 2;
+		report.report.day = 3;
+		report.report.year = 2025;
+		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(30);
+
+		helper.required_messages({ &report });
+	}
+
+	SECTION("Only Report Tasks For Tasks on Day")
+	{
+		helper.clock.time = date_to_ms(2, 3, 2025);
+
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+		helper.clear_message_output();
+
+		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 4, 2025);
+
+		helper.api.process_packet(request, helper.output);
+
+		auto report = DailyReportMessage(helper.prev_request_id());
+
+		helper.required_messages({ &report });
+	}
+
+	SECTION("Start of Day")
+	{
+		helper.clock.time = date_to_ms(2, 3, 2025) + std::chrono::hours(5);
+
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+		helper.clear_message_output();
+
+		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
+
+		helper.api.process_packet(request, helper.output);
+
+		auto report = DailyReportMessage(helper.prev_request_id());
+		report.reportFound = true;
+		report.report.month = 2;
+		report.report.day = 3;
+		report.report.year = 2025;
+		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(30);
+
+		helper.required_messages({ &report });
+	}
 	// TODO add tasks created to report. verify that only the tasks created on the given day are listed
-	// TODO test the start of day
 	// TODO test the end of day (when there is no active task)
 	// TODO test the end of day estimated (when there is an active task) based on 8 hour days
 

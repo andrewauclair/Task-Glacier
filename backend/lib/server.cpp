@@ -1,4 +1,5 @@
 #include "server.hpp"
+#include "clock.hpp"
 
 #include <format>
 
@@ -38,6 +39,32 @@ Task* MicroTask::find_task(TaskID taskID)
 	auto result = m_tasks.find(taskID);
 
 	return result != m_tasks.end() ? &result->second : nullptr;
+}
+
+std::vector<MicroTask::FindTasksOnDay> MicroTask::find_tasks_on_day(int month, int year, int day)
+{
+	std::vector<FindTasksOnDay> tasks;
+
+	auto range = range_for_date(month, year, day);
+
+	for (auto&& task : m_tasks)
+	{
+		int index = 0;
+		for (auto&& times : task.second.m_times)
+		{
+			if (times.start >= range.start && times.start <= range.end)
+			{
+				tasks.emplace_back(&task.second, DailyReport::TimePair{ task.first, index });
+			}
+			else if (times.stop >= range.start && times.stop <= range.end)
+			{
+				tasks.emplace_back(&task.second, DailyReport::TimePair{ task.first, index });
+			}
+			index++;
+		}
+	}
+
+	return tasks;
 }
 
 std::optional<std::string> MicroTask::start_task(TaskID id)
