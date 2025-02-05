@@ -19,9 +19,7 @@ import panels.TasksLists;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowListener;
+import java.awt.event.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -39,6 +37,7 @@ public class MainFrame extends JFrame {
     private TaskModel taskModel = new TaskModel();
 
     private SystemTrayDisplay systemTrayDisplay = new SystemTrayDisplay();
+    boolean systemTrayPanelDisplayed = false;
 
     public boolean isConnected() {
         return connection != null;
@@ -77,16 +76,63 @@ public class MainFrame extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         add(statusBar, gbc);
+        ImageIcon appIcon64 = new ImageIcon(Objects.requireNonNull(getClass().getResource("/glacier (1).png")));
 
+        setIconImage(appIcon64.getImage());
         if (SystemTray.isSupported()) {
             SystemTray tray = SystemTray.getSystemTray();
 
-            TrayIcon trayIcon = new TrayIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/active.png"))).getImage(), "");
+            ImageIcon appIcon16 = new ImageIcon(Objects.requireNonNull(getClass().getResource("/glacier (2).png")));
 
+            TrayIcon trayIcon = new TrayIcon(appIcon16.getImage(), "");
+
+
+            FocusListener trayFocus = new FocusListener() {
+                @Override
+                public void focusGained(FocusEvent e) {
+                }
+
+                @Override
+                public void focusLost(FocusEvent e) {
+                    systemTrayDisplay.setVisible(false);
+                    systemTrayDisplay.removeFocusListener(this);
+                }
+            };
             trayIcon.addMouseListener(new MouseAdapter() {
                 @Override
-                public void mouseClicked(MouseEvent e) {
-                    systemTrayDisplay.setVisible(!systemTrayDisplay.isVisible());
+                public void mousePressed(MouseEvent e) {
+                    double scale = java.awt.GraphicsEnvironment
+                            .getLocalGraphicsEnvironment()
+                            .getDefaultScreenDevice() // or cycle your getScreenDevices()
+                            .getDefaultConfiguration()
+                            .getDefaultTransform()
+                            .getScaleX();
+
+                    if (!systemTrayPanelDisplayed) {
+                        systemTrayDisplay.addFocusListener(trayFocus);
+                        systemTrayDisplay.setVisible(true);
+                    }
+                    else {
+
+                    }
+                    systemTrayPanelDisplayed = !systemTrayPanelDisplayed;
+
+//                    if (!systemTrayDisplay.isVisible()) {
+//                        systemTrayDisplay.addFocusListener(trayFocus);
+//                    }
+//                    else {
+//                        systemTrayDisplay.removeFocusListener(trayFocus);
+//                    }
+//                    systemTrayDisplay.setVisible(!systemTrayDisplay.isVisible());
+
+                    Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment()
+                            .getDefaultScreenDevice()
+                            .getDefaultConfiguration()
+                            .getBounds();
+
+                    Point p = new Point(bounds.width - systemTrayDisplay.getWidth() - 10, (int) ((e.getLocationOnScreen().y / scale) - systemTrayDisplay.getHeight() - 40));
+
+                    systemTrayDisplay.setLocation(p);
                 }
             });
 
