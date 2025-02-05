@@ -101,11 +101,7 @@ public:
 
 	virtual std::vector<std::byte> pack() const = 0;
 
-	virtual std::ostream& print(std::ostream& out) const = 0
-	{
-		out << "packetType: " << static_cast<std::int32_t>(m_packetType);
-		return out;
-	}
+	virtual std::ostream& print(std::ostream& out) const = 0;
 
 	friend std::ostream& operator<<(std::ostream& out, const Message& message)
 	{
@@ -115,6 +111,12 @@ public:
 private:
 	PacketType m_packetType;
 };
+
+inline std::ostream& Message::print(std::ostream& out) const
+{
+	out << "packetType: " << static_cast<std::int32_t>(m_packetType);
+	return out;
+}
 
 struct RequestMessage : Message
 {
