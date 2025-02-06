@@ -35,7 +35,7 @@ public class MainFrame extends JFrame {
 
     private ServerConnection connection = new ServerConnection(null, null);
     private TaskModel taskModel = new TaskModel();
-    ImageIcon appIcon16 = new ImageIcon(Objects.requireNonNull(getClass().getResource("/glacier (2).png")));
+    ImageIcon appIcon16 = new ImageIcon(Objects.requireNonNull(System.getenv("TASK_GLACIER_DEV_INSTANCE") != null ? getClass().getResource("/work-in-progress (1).png") : getClass().getResource("/glacier (2).png")));
     TrayIcon trayIcon = new TrayIcon(appIcon16.getImage(), "");
 
     private SystemTrayDisplay systemTrayDisplay = new SystemTrayDisplay(trayIcon);
@@ -77,7 +77,7 @@ public class MainFrame extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         add(statusBar, gbc);
-        ImageIcon appIcon64 = new ImageIcon(Objects.requireNonNull(getClass().getResource("/glacier (1).png")));
+        ImageIcon appIcon64 = new ImageIcon(Objects.requireNonNull(System.getenv("TASK_GLACIER_DEV_INSTANCE") != null ? getClass().getResource("/work-in-progress.png") : getClass().getResource("/glacier (1).png")));
 
         setIconImage(appIcon64.getImage());
         if (SystemTray.isSupported()) {
@@ -107,17 +107,19 @@ public class MainFrame extends JFrame {
         setJMenuBar(new MenuBar(this));
 
         // now that the main frame is set up with the defaults, we can restore the layout
-        File layoutFile = new File(System.getenv("LOCALAPPDATA") + "/TaskGlacier/layout.xml");
-        AppState.setPersistFile(layoutFile);
-
+        File layoutFile;
         Preferences preferences;
 
         if (System.getenv("TASK_GLACIER_DEV_INSTANCE") != null) {
             preferences = Preferences.userNodeForPackage(ConnectToServer.class);
+            layoutFile = new File(System.getenv("LOCALAPPDATA") + "/TaskGlacier/dev-layout.xml");
         }
         else {
             preferences = Preferences.userNodeForPackage(MainFrame.class);
+            layoutFile = new File(System.getenv("LOCALAPPDATA") + "/TaskGlacier/layout.xml");
         }
+
+        AppState.setPersistFile(layoutFile);
 
         if (preferences.get("IP-Address", null) != null) {
             try {
