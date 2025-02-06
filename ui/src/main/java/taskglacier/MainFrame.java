@@ -35,9 +35,10 @@ public class MainFrame extends JFrame {
 
     private ServerConnection connection = new ServerConnection(null, null);
     private TaskModel taskModel = new TaskModel();
+    ImageIcon appIcon16 = new ImageIcon(Objects.requireNonNull(getClass().getResource("/glacier (2).png")));
+    TrayIcon trayIcon = new TrayIcon(appIcon16.getImage(), "");
 
-    private SystemTrayDisplay systemTrayDisplay = new SystemTrayDisplay();
-    boolean systemTrayPanelDisplayed = false;
+    private SystemTrayDisplay systemTrayDisplay = new SystemTrayDisplay(trayIcon);
 
     public boolean isConnected() {
         return connection != null;
@@ -82,50 +83,6 @@ public class MainFrame extends JFrame {
         if (SystemTray.isSupported()) {
             SystemTray tray = SystemTray.getSystemTray();
 
-            ImageIcon appIcon16 = new ImageIcon(Objects.requireNonNull(getClass().getResource("/glacier (2).png")));
-
-            TrayIcon trayIcon = new TrayIcon(appIcon16.getImage(), "");
-
-
-            FocusListener trayFocus = new FocusListener() {
-                @Override
-                public void focusGained(FocusEvent e) {
-                }
-
-                @Override
-                public void focusLost(FocusEvent e) {
-                    systemTrayDisplay.setVisible(false);
-                    systemTrayDisplay.removeFocusListener(this);
-                }
-            };
-            trayIcon.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mousePressed(MouseEvent e) {
-                    double scale = java.awt.GraphicsEnvironment
-                            .getLocalGraphicsEnvironment()
-                            .getDefaultScreenDevice() // or cycle your getScreenDevices()
-                            .getDefaultConfiguration()
-                            .getDefaultTransform()
-                            .getScaleX();
-
-                    if (!systemTrayPanelDisplayed) {
-                        systemTrayDisplay.addFocusListener(trayFocus);
-                        systemTrayDisplay.setVisible(true);
-                    }
-
-                    systemTrayPanelDisplayed = !systemTrayPanelDisplayed;
-
-                    Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment()
-                            .getDefaultScreenDevice()
-                            .getDefaultConfiguration()
-                            .getBounds();
-
-                    Point p = new Point(bounds.width - systemTrayDisplay.getWidth() - 10, (int) ((e.getLocationOnScreen().y / scale) - systemTrayDisplay.getHeight() - 40));
-
-                    systemTrayDisplay.setLocation(p);
-                }
-            });
-
             try {
                 tray.add(trayIcon);
             } catch (AWTException e) {
@@ -141,7 +98,7 @@ public class MainFrame extends JFrame {
 
         new TasksLists(this, "tasks", "Tasks");
 
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
         WindowLayoutBuilder builder = new WindowLayoutBuilder("tasks");
 
