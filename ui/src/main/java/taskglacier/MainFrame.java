@@ -112,18 +112,8 @@ public class MainFrame extends JFrame {
                         systemTrayDisplay.addFocusListener(trayFocus);
                         systemTrayDisplay.setVisible(true);
                     }
-                    else {
 
-                    }
                     systemTrayPanelDisplayed = !systemTrayPanelDisplayed;
-
-//                    if (!systemTrayDisplay.isVisible()) {
-//                        systemTrayDisplay.addFocusListener(trayFocus);
-//                    }
-//                    else {
-//                        systemTrayDisplay.removeFocusListener(trayFocus);
-//                    }
-//                    systemTrayDisplay.setVisible(!systemTrayDisplay.isVisible());
 
                     Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment()
                             .getDefaultScreenDevice()
