@@ -151,6 +151,21 @@ std::optional<std::string> MicroTask::finish_task(TaskID id)
 	return std::format("Task with ID {} does not exist.", id);
 }
 
+std::optional<std::string> MicroTask::rename_task(TaskID id, std::string_view name)
+{
+	auto* task = find_task(id);
+
+	if (task)
+	{
+		task->m_name = name;
+
+		*m_output << "rename " << id._val << ' ' << '(' << name << ')' << std::endl;
+
+		return std::nullopt;
+	}
+	return std::format("Task with ID {} does not exist.", id);
+}
+
 std::expected<TaskState, std::string> MicroTask::task_state(TaskID id)
 {
 	const auto* task = find_task(id);

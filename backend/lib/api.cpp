@@ -16,6 +16,9 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 	case PacketType::FINISH_TASK:
 		finish_task(static_cast<const TaskMessage&>(message), output);
 		break;
+	case PacketType::UPDATE_TASK:
+		update_task(static_cast<const UpdateTaskMessage&>(message), output);
+		break;
 	case PacketType::REQUEST_TASK:
 		request_task(static_cast<const TaskMessage&>(message), output);
 		break;
@@ -106,6 +109,24 @@ void API::stop_task(const TaskMessage& message, std::vector<std::unique_ptr<Mess
 void API::finish_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output)
 {
 	const auto result = m_app.finish_task(message.taskID);
+
+	if (result)
+	{
+		output.push_back(std::make_unique<FailureResponse>(message.requestID, result.value()));
+	}
+	else
+	{
+		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
+
+		auto* task = m_app.find_task(message.taskID);
+
+		send_task_info(*task, output);
+	}
+}
+
+void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_ptr<Message>>& output)
+{
+	const auto result = m_app.rename_task(message.taskID, message.name);
 
 	if (result)
 	{

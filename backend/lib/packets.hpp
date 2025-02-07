@@ -42,6 +42,7 @@ using RequestID = strong::type<std::int32_t, struct request_id_, strong::equalit
 
 struct MessageVisitor;
 
+// TODO redo numbers when we're done
 enum class PacketType : std::int32_t
 {
 	VERSION_REQUEST = 1,
@@ -52,7 +53,7 @@ enum class PacketType : std::int32_t
 	START_TASK = 5,
 	STOP_TASK = 6,
 	FINISH_TASK = 7,
-	UPDATE_TASK = 15, // TODO redo numbers when we're done
+	UPDATE_TASK = 15,
 	REQUEST_TASK = 22,
 
 	SUCCESS_RESPONSE = 8,
@@ -184,6 +185,44 @@ struct CreateTaskMessage : RequestMessage
 	}
 
 	friend std::ostream& operator<<(std::ostream& out, const CreateTaskMessage& message)
+	{
+		return message.print(out);
+	}
+};
+
+struct UpdateTaskMessage : RequestMessage
+{
+	TaskID taskID;
+	std::string name;
+
+	UpdateTaskMessage(TaskID taskID, RequestID requestID, std::string name) : RequestMessage(PacketType::UPDATE_TASK, requestID), taskID(taskID), name(std::move(name)) {}
+
+	bool operator==(const Message& message) const override
+	{
+		if (const auto* other = dynamic_cast<const UpdateTaskMessage*>(&message))
+		{
+			return *this == *other;
+		}
+		return false;
+	}
+
+	bool operator==(const UpdateTaskMessage& message) const
+	{
+		return taskID == message.taskID && requestID == message.requestID && name == message.name;
+	}
+
+	std::vector<std::byte> pack() const override;
+	static std::expected<UpdateTaskMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	std::ostream& print(std::ostream& out) const override
+	{
+		out << "UpdateTaskMessage { ";
+		RequestMessage::print(out);
+		out << ", taskID: " << taskID._val << ", name: \"" << name << "\" }";
+		return out;
+	}
+
+	friend std::ostream& operator<<(std::ostream& out, const UpdateTaskMessage& message)
 	{
 		return message.print(out);
 	}
@@ -856,6 +895,10 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 		case FINISH_TASK:
 		case REQUEST_TASK:
 			result.packet = std::make_unique<TaskMessage>(TaskMessage::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
+			break;
+		case UPDATE_TASK:
+			result.packet = std::make_unique<UpdateTaskMessage>(UpdateTaskMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 			break;
 		case SUCCESS_RESPONSE:

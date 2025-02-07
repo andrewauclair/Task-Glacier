@@ -65,6 +65,8 @@ public:
 	std::optional<std::string> start_task(TaskID id);
 	std::optional<std::string> stop_task(TaskID id);
 	std::optional<std::string> finish_task(TaskID id);
+
+	std::optional<std::string> rename_task(TaskID id, std::string_view name);
 	
 	std::expected<TaskState, std::string> task_state(TaskID id);
 

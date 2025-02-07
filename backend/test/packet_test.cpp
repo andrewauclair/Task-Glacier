@@ -210,6 +210,106 @@ TEST_CASE("Create Task", "[message]")
 	}
 }
 
+TEST_CASE("Update Task", "[message]")
+{
+	const auto update_task = UpdateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+	CAPTURE(update_task);
+
+	SECTION("Compare - Through Message")
+	{
+		SECTION("Does Not Match Other Message")
+		{
+			const auto task = TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(1));
+			CAPTURE(task);
+
+			const Message* message = &task;
+
+			CHECK(!(update_task == *message));
+		}
+
+		SECTION("Match")
+		{
+			const auto update_task2 = UpdateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+			CAPTURE(update_task2);
+
+			const Message* message = &update_task2;
+
+			CHECK(update_task == *message);
+		}
+	}
+
+	SECTION("Compare - Directly")
+	{
+		const auto update_task2 = UpdateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+		CAPTURE(update_task2);
+
+		CHECK(update_task == update_task2);
+	}
+
+	SECTION("Compare Messages That Do Not Match")
+	{
+		auto update_task2 = UpdateTaskMessage(TaskID(15), RequestID(10), "this is a test");
+		CAPTURE(update_task2);
+
+		CHECK(!(update_task == update_task2));
+
+		update_task2.taskID = update_task.taskID;
+		update_task2.requestID = RequestID(15);
+		CAPTURE(update_task2);
+
+		CHECK(!(update_task == update_task2));
+
+		update_task2.requestID = update_task.requestID;
+		update_task2.name = "another task";
+		CAPTURE(update_task2);
+
+		CHECK(!(update_task == update_task2));
+	}
+
+	SECTION("Print")
+	{
+		std::ostringstream ss;
+
+		update_task.print(ss);
+
+		auto expected_text = "UpdateTaskMessage { packetType: 15, requestID: 10, taskID: 5, name: \"this is a test\" }";
+
+		CHECK(ss.str() == expected_text);
+
+		ss.str("");
+
+		ss << update_task;
+
+		CHECK(ss.str() == expected_text);
+
+		ss.str("");
+
+		const Message* message = &update_task;
+
+		ss << *message;
+
+		CHECK(ss.str() == expected_text);
+	}
+
+	SECTION("Pack")
+	{
+		auto verifier = PacketVerifier(update_task.pack(), 32);
+
+		verifier
+			.verify_value<std::uint32_t>(32, "packet length")
+			.verify_value<std::uint32_t>(15, "packet ID")
+			.verify_value<std::uint32_t>(10, "request ID")
+			.verify_value<std::uint32_t>(5, "parent ID")
+			.verify_string("this is a test", "task name");
+	}
+
+	SECTION("Unpack")
+	{
+		PacketTestHelper helper;
+		helper.expect_packet<UpdateTaskMessage>(update_task, 32);
+	}
+}
+
 TEST_CASE("Task", "[messages]")
 {
 	const auto packet_type = GENERATE(PacketType::START_TASK, PacketType::STOP_TASK, PacketType::FINISH_TASK, PacketType::REQUEST_TASK);

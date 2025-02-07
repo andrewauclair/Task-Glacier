@@ -612,6 +612,42 @@ TEST_CASE("Finish Task", "[api][task]")
 	}
 }
 
+TEST_CASE("Modify Task", "[api][task]")
+{
+	TestHelper helper;
+
+	SECTION("Success - Rename Task")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+		helper.expect_success(UpdateTaskMessage(TaskID(1), helper.next_request_id(), "something else"));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "something else");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.state = TaskState::INACTIVE;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
+	}
+
+	SECTION("Failure - Task Does Not Exist")
+	{
+		helper.expect_failure(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1)), "Task with ID 1 does not exist.");
+	}
+
+	SECTION("Persist")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+		
+		helper.clear_file_output();
+
+		helper.expect_success(UpdateTaskMessage(TaskID(1), helper.next_request_id(), "something else"));
+
+		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
+		CHECK(helper.fileOutput.str() == "rename 1 (something else)\n");
+	}
+}
+
 TEST_CASE("Request Daily Report", "[api]")
 {
 	TestHelper helper;

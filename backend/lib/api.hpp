@@ -21,6 +21,7 @@ private:
 	void start_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
 	void stop_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
 	void finish_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
+	void update_task(const UpdateTaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
 	void request_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
 
 	void handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<Message>>& output);
