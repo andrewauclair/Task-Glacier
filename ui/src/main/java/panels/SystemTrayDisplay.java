@@ -64,6 +64,15 @@ public class SystemTrayDisplay extends JFrame {
             }
         });
 
+        PopupMenu popup = new PopupMenu();
+        MenuItem exit = new MenuItem("Exit");
+
+        exit.addActionListener(e -> System.exit(0));
+
+        popup.add(exit);
+
+        trayIcon.setPopupMenu(popup);
+
         // the frame is undecorated, so we have to do it all ourselves
         setLayout(new GridBagLayout());
 

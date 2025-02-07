@@ -120,6 +120,39 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
 
     @Override
     public Object getChild(Object parent, int index) {
+        /*
+        exception when finishing a child of a child
+        Exception in thread "AWT-EventQueue-0" java.lang.IndexOutOfBoundsException: Index 1 out of bounds for length 1
+	at java.base/jdk.internal.util.Preconditions.outOfBounds(Preconditions.java:100)
+	at java.base/jdk.internal.util.Preconditions.outOfBoundsCheckIndex(Preconditions.java:106)
+	at java.base/jdk.internal.util.Preconditions.checkIndex(Preconditions.java:302)
+	at java.base/java.util.Objects.checkIndex(Objects.java:385)
+	at java.base/java.util.ArrayList.get(ArrayList.java:427)
+	at org.jdesktop.swingx.treetable.AbstractMutableTreeTableNode.getChildAt(AbstractMutableTreeTableNode.java:166)
+	at panels.TasksTreeTableModel.getChild(TasksTreeTableModel.java:123)
+	at java.desktop/javax.swing.plaf.basic.BasicTreeUI$Handler.treeNodesChanged(BasicTreeUI.java:4329)
+	at org.jdesktop.swingx.tree.TreeModelSupport.fireChildrenChanged(TreeModelSupport.java:192)
+	at org.jdesktop.swingx.tree.TreeModelSupport.fireChildChanged(TreeModelSupport.java:158)
+	at panels.TasksTreeTableModel.updateTask(TasksTreeTableModel.java:86)
+	at panels.TasksLists.updatedTask(TasksLists.java:330)
+	at data.TaskModel.lambda$receiveInfo$12(TaskModel.java:75)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at data.TaskModel.receiveInfo(TaskModel.java:75)
+	at data.ServerConnection.lambda$run$0(ServerConnection.java:56)
+	at java.desktop/java.awt.event.InvocationEvent.dispatch(InvocationEvent.java:318)
+	at java.desktop/java.awt.EventQueue.dispatchEventImpl(EventQueue.java:773)
+	at java.desktop/java.awt.EventQueue$4.run(EventQueue.java:720)
+	at java.desktop/java.awt.EventQueue$4.run(EventQueue.java:714)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:400)
+	at java.base/java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(ProtectionDomain.java:87)
+	at java.desktop/java.awt.EventQueue.dispatchEvent(EventQueue.java:742)
+	at java.desktop/java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:203)
+	at java.desktop/java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:124)
+	at java.desktop/java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:113)
+	at java.desktop/java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:109)
+	at java.desktop/java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:101)
+	at java.desktop/java.awt.EventDispatchThread.run(EventDispatchThread.java:90)
+         */
         return ((TaskTreeTableNode) parent).getChildAt(index);
     }
 
