@@ -94,7 +94,7 @@ int main(int argc, char** argv)
 
 			if (result.packet)
 			{
-				std::cout << "[RX] " << result.packet << '\n';
+				std::cout << "[RX] " << *result.packet << '\n';
 
 				std::vector<std::unique_ptr<Message>> toSend;
 				api.process_packet(*result.packet, toSend);

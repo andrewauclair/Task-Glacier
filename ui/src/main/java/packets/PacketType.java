@@ -9,6 +9,8 @@ public enum PacketType {
     START_TASK(5),
     STOP_TASK(6),
     FINISH_TASK(7),
+    UPDATE_TASK(15),
+    REQUEST_TASK(22),
 
     SUCCESS_RESPONSE(8),
     FAILURE_RESPONSE(9),
@@ -19,7 +21,20 @@ public enum PacketType {
     TASK_INFO(12),
 
     BUGZILLA_INFO(13),
-    BUGZILLA_REFRESH(14);
+    BUGZILLA_REFRESH(14),
+
+    DAILY_REPORT(16),
+    REQUEST_DAILY_REPORT(17),
+
+    WEEKLY_REPORT(18),
+    REQUEST_WEEKLY_REPORT(19),
+
+    SEARCH_REQUEST(20),
+    SEARCH_RESULTS(21),
+
+    BACKUP_CONFIGURATION(23),
+    BACKUP_PERFORMED(24),
+    BACKUP_FAILED(25);
 
     private final int value;
 

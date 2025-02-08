@@ -4,6 +4,7 @@ import data.Task;
 import data.TaskModel;
 import data.TaskState;
 import dialogs.AddModifyTask;
+import dialogs.RenameTask;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingProperty;
 import io.github.andrewauclair.moderndocking.DockingRegion;
@@ -161,6 +162,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
 
         JMenuItem add = new JMenuItem("Add Task...");
         JMenuItem addSubTask = new JMenuItem("Add Sub-Task...");
+        JMenuItem rename = new JMenuItem("Rename...");
         JMenuItem start = new JMenuItem("Start");
         JMenuItem startStopActive = new JMenuItem("Start (Stop Active)");
         JMenuItem startFinishActive = new JMenuItem("Start (Finish Active)");
@@ -191,6 +193,22 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
             Task task = (Task) node.getUserObject();
 
             new AddModifyTask(mainFrame, task.id, false).setVisible(true);
+        });
+
+        rename.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+
+            if (selectedRow == -1) {
+                return;
+            }
+
+            TreePath pathForRow = table.getPathForRow(selectedRow);
+            TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
+            Task task = (Task) node.getUserObject();
+
+            RenameTask dialog = new RenameTask(mainFrame, task.id, task.name);
+
+            dialog.setVisible(true);
         });
 
         openInNewWindow.addActionListener(e -> {
@@ -239,6 +257,8 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
                     contextMenu.add(finish);
                     contextMenu.addSeparator();
                     contextMenu.add(addSubTask);
+                    contextMenu.addSeparator();
+                    contextMenu.add(rename);
 
                     TreePath pathForRow = table.getPathForRow(selectedRow);
                     TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();

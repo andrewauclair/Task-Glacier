@@ -269,6 +269,10 @@ void MicroTask::load_from_file(std::istream& input)
 			task->state = TaskState::FINISHED;
 			task->m_finishTime = finishTime;
 		}
+		else if (line.starts_with("rename"))
+		{
+
+		}
 		else
 		{
 			throw std::runtime_error("Invalid command: " + line);
