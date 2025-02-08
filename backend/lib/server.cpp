@@ -151,6 +151,26 @@ std::optional<std::string> MicroTask::finish_task(TaskID id)
 	return std::format("Task with ID {} does not exist.", id);
 }
 
+std::optional<std::string> MicroTask::reparent_task(TaskID id, TaskID new_parent_id)
+{
+	auto* task = find_task(id);
+	auto* parent_task = find_task(new_parent_id);
+
+	if (task && (parent_task || new_parent_id == NO_PARENT))
+	{
+		task->m_parentID = new_parent_id;
+
+		*m_output << "reparent " << id._val << ' ' << new_parent_id._val << std::endl;
+
+		return std::nullopt;
+	}
+	if (!parent_task)
+	{
+		return std::format("Task with ID {} does not exist.", new_parent_id);
+	}
+	return std::format("Task with ID {} does not exist.", id);
+}
+
 std::optional<std::string> MicroTask::rename_task(TaskID id, std::string_view name)
 {
 	auto* task = find_task(id);
@@ -271,7 +291,28 @@ void MicroTask::load_from_file(std::istream& input)
 		}
 		else if (line.starts_with("rename"))
 		{
+			auto values = split(line, ' ');
+			TaskID id = TaskID(std::stoi(values[1]));
+			auto first = line.find_first_of('(') + 1;
+			std::string name = line.substr(first, line.size() - first - 1);
 
+			auto* task = find_task(id);
+
+			if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
+
+			task->m_name = name;
+		}
+		else if (line.starts_with("reparent"))
+		{
+			auto values = split(line, ' ');
+			TaskID id = TaskID(std::stoi(values[1]));
+			TaskID parent_id = TaskID(std::stoi(values[2]));
+
+			auto* task = find_task(id);
+
+			if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
+
+			task->m_parentID = parent_id;
 		}
 		else
 		{

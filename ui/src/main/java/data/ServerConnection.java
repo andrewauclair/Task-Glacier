@@ -57,6 +57,8 @@ public class ServerConnection {
                 }
                 else if (packetType == PacketType.REQUEST_CONFIGURATION_COMPLETE) {
                     SwingUtilities.invokeLater(MainFrame::restoreLayout);
+
+                    SwingUtilities.invokeLater(() -> mainFrame.getTaskModel().configurationComplete());
                 }
                 else if (packetType == PacketType.FAILURE_RESPONSE) {
                     FailureResponse failure = FailureResponse.parse(new DataInputStream((new ByteArrayInputStream(bytes))));

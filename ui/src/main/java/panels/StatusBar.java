@@ -32,6 +32,9 @@ public class StatusBar extends JPanel implements TaskModel.Listener {
             while (parentID != 0) {
                 Task task = taskModel.getTask(parentID);
 
+                if (task == null) {
+                    break;
+                }
                 text.append(task.name);
                 text.append(" / ");
 
@@ -56,7 +59,7 @@ public class StatusBar extends JPanel implements TaskModel.Listener {
     }
 
     @Override
-    public void updatedTask(Task task) {
+    public void updatedTask(Task task, boolean parentChanged) {
         if (task == activeTask && task.state != TaskState.ACTIVE) {
             activeTask = null;
             updateDisplay(mainFrame.getTaskModel());

@@ -193,9 +193,10 @@ struct CreateTaskMessage : RequestMessage
 struct UpdateTaskMessage : RequestMessage
 {
 	TaskID taskID;
+	TaskID parentID;
 	std::string name;
 
-	UpdateTaskMessage(TaskID taskID, RequestID requestID, std::string name) : RequestMessage(PacketType::UPDATE_TASK, requestID), taskID(taskID), name(std::move(name)) {}
+	UpdateTaskMessage(RequestID requestID, TaskID taskID, TaskID parentID, std::string name) : RequestMessage(PacketType::UPDATE_TASK, requestID), taskID(taskID), parentID(parentID), name(std::move(name)) {}
 
 	bool operator==(const Message& message) const override
 	{
@@ -208,7 +209,7 @@ struct UpdateTaskMessage : RequestMessage
 
 	bool operator==(const UpdateTaskMessage& message) const
 	{
-		return taskID == message.taskID && requestID == message.requestID && name == message.name;
+		return requestID == message.requestID && taskID == message.taskID && parentID == message.parentID && name == message.name;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -218,7 +219,7 @@ struct UpdateTaskMessage : RequestMessage
 	{
 		out << "UpdateTaskMessage { ";
 		RequestMessage::print(out);
-		out << ", taskID: " << taskID._val << ", name: \"" << name << "\" }";
+		out << ", taskID: " << taskID._val << ", parentID: " << parentID._val << ", name: \"" << name << "\" }";
 		return out;
 	}
 

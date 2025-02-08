@@ -11,15 +11,17 @@ import io.github.andrewauclair.moderndocking.DockingRegion;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import org.jdesktop.swingx.JXTreeTable;
 import packets.PacketType;
+import packets.RequestID;
 import packets.TaskStateChange;
+import packets.UpdateTask;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Objects;
@@ -134,6 +136,63 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         return taskID != 0;
     }
 
+    class TaskTransferHandler extends TransferHandler {
+        private int[] rows;
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            return MOVE;
+        }
+
+        @Override
+        protected Transferable createTransferable(JComponent c) {
+            rows = table.getSelectedRows();
+
+            int parent = -1;
+
+            // all the rows must have the same parent
+            for (int row : rows) {
+                TreePath pathForRow = table.getPathForRow(row);
+                TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
+                Task task = (Task) node.getUserObject();
+
+                if (parent == -1) {
+                    parent = task.parentID;
+                }
+                else if (task.parentID != parent) {
+                    return null;
+                }
+            }
+
+            return new StringSelection("");
+        }
+
+        @Override
+        public boolean canImport(TransferSupport support) {
+            return true;
+        }
+
+        @Override
+        public boolean importData(TransferSupport support) {
+            // send to server
+            for (int row : rows) {
+                TreePath pathForRow = table.getPathForRow(row);
+                TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
+                Task task = (Task) node.getUserObject();
+
+                JTable.DropLocation dl = (JTable.DropLocation) support.getDropLocation();
+
+                TaskTreeTableNode parentNode = (TaskTreeTableNode) table.getPathForRow(dl.getRow()).getLastPathComponent();
+                Task parentTask = (Task) parentNode.getUserObject();
+
+                // move task: request id, task id, new parent id
+                UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task.id, parentTask.id, task.name);
+                mainFrame.getConnection().sendPacket(update);
+            }
+            return true;
+        }
+    }
+
     private void configure() {
         DefaultTreeCellRenderer  treeCellRenderer = new DefaultTreeCellRenderer () {
             @Override
@@ -159,6 +218,10 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
             }
         };
         table.setTreeCellRenderer(treeCellRenderer);
+        table.setDragEnabled(true);
+        table.setDropMode(DropMode.ON_OR_INSERT_ROWS);
+
+        table.setTransferHandler(new TaskTransferHandler());
 
         JMenuItem add = new JMenuItem("Add Task...");
         JMenuItem addSubTask = new JMenuItem("Add Sub-Task...");
@@ -206,7 +269,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
             TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
             Task task = (Task) node.getUserObject();
 
-            RenameTask dialog = new RenameTask(mainFrame, task.id, task.name);
+            RenameTask dialog = new RenameTask(mainFrame, task.id, task.parentID, task.name);
 
             dialog.setVisible(true);
         });
@@ -346,7 +409,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
     }
 
     @Override
-    public void updatedTask(Task task) {
-        treeTableModel.updateTask(task);
+    public void updatedTask(Task task, boolean parentChanged) {
+        treeTableModel.updateTask(task, parentChanged);
     }
 }

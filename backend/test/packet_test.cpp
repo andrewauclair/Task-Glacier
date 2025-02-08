@@ -212,7 +212,7 @@ TEST_CASE("Create Task", "[message]")
 
 TEST_CASE("Update Task", "[message]")
 {
-	const auto update_task = UpdateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+	const auto update_task = UpdateTaskMessage(RequestID(10), TaskID(5), TaskID(1), "this is a test");
 	CAPTURE(update_task);
 
 	SECTION("Compare - Through Message")
@@ -229,7 +229,7 @@ TEST_CASE("Update Task", "[message]")
 
 		SECTION("Match")
 		{
-			const auto update_task2 = UpdateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+			const auto update_task2 = UpdateTaskMessage(RequestID(10), TaskID(5), TaskID(1), "this is a test");
 			CAPTURE(update_task2);
 
 			const Message* message = &update_task2;
@@ -240,7 +240,7 @@ TEST_CASE("Update Task", "[message]")
 
 	SECTION("Compare - Directly")
 	{
-		const auto update_task2 = UpdateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+		const auto update_task2 = UpdateTaskMessage(RequestID(10), TaskID(5), TaskID(1), "this is a test");
 		CAPTURE(update_task2);
 
 		CHECK(update_task == update_task2);
@@ -248,7 +248,7 @@ TEST_CASE("Update Task", "[message]")
 
 	SECTION("Compare Messages That Do Not Match")
 	{
-		auto update_task2 = UpdateTaskMessage(TaskID(15), RequestID(10), "this is a test");
+		auto update_task2 = UpdateTaskMessage(RequestID(10), TaskID(15), TaskID(1), "this is a test");
 		CAPTURE(update_task2);
 
 		CHECK(!(update_task == update_task2));
@@ -264,6 +264,12 @@ TEST_CASE("Update Task", "[message]")
 		CAPTURE(update_task2);
 
 		CHECK(!(update_task == update_task2));
+
+		update_task2.name = update_task.name;
+		update_task2.parentID = TaskID(2);
+		CAPTURE(update_task2);
+
+		CHECK(!(update_task == update_task2));
 	}
 
 	SECTION("Print")
@@ -272,7 +278,7 @@ TEST_CASE("Update Task", "[message]")
 
 		update_task.print(ss);
 
-		auto expected_text = "UpdateTaskMessage { packetType: 15, requestID: 10, taskID: 5, name: \"this is a test\" }";
+		auto expected_text = "UpdateTaskMessage { packetType: 15, requestID: 10, taskID: 5, parentID: 1, name: \"this is a test\" }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -293,20 +299,21 @@ TEST_CASE("Update Task", "[message]")
 
 	SECTION("Pack")
 	{
-		auto verifier = PacketVerifier(update_task.pack(), 32);
+		auto verifier = PacketVerifier(update_task.pack(), 36);
 
 		verifier
-			.verify_value<std::uint32_t>(32, "packet length")
+			.verify_value<std::uint32_t>(36, "packet length")
 			.verify_value<std::uint32_t>(15, "packet ID")
 			.verify_value<std::uint32_t>(10, "request ID")
-			.verify_value<std::uint32_t>(5, "parent ID")
+			.verify_value<std::uint32_t>(5, "task ID")
+			.verify_value<std::uint32_t>(1, "parent ID")
 			.verify_string("this is a test", "task name");
 	}
 
 	SECTION("Unpack")
 	{
 		PacketTestHelper helper;
-		helper.expect_packet<UpdateTaskMessage>(update_task, 32);
+		helper.expect_packet<UpdateTaskMessage>(update_task, 36);
 	}
 }
 

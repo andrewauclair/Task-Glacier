@@ -10,7 +10,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 public class RenameTask extends JDialog {
-    public RenameTask(MainFrame mainFrame, int taskID, String name) {
+    public RenameTask(MainFrame mainFrame, int taskID, int parentID, String name) {
         setTitle("Rename Task");
 
         setLayout(new FlowLayout(
@@ -25,7 +25,7 @@ public class RenameTask extends JDialog {
         add(rename);
 
         rename.addActionListener(e -> {
-            UpdateTask update = new UpdateTask(taskID, RequestID.nextRequestID(), taskName.getText());
+            UpdateTask update = new UpdateTask(RequestID.nextRequestID(), taskID, parentID, taskName.getText());
             mainFrame.getConnection().sendPacket(update);
 
             RenameTask.this.dispose();

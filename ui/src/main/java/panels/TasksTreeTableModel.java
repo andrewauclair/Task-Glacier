@@ -46,16 +46,6 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
             return;
         }
 
-        // find the parent task first, then add the node to that
-//        if (task.parentID == 0) {
-//            TaskTreeTableNode child = new TaskTreeTableNode(parentTask, task);
-//            parentTask.add(child);
-//
-//            modelSupport.fireChildAdded(new TreePath(parentTask), parentTask.getIndex(child), child);
-//        }
-//        else {
-//
-//        }
         TaskTreeTableNode parent = findTaskNode(parentTask, task.parentID);
 
         if (parent != null) {
@@ -70,22 +60,33 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
         }
     }
 
-    public void updateTask(Task task) {
+    public void updateTask(Task task, boolean parentChanged) {
         TaskTreeTableNode node = findTaskNode(parentTask, task.id);
 
         if (node != null) {
             node.setUserObject(task);
 
-            TreePath parentPath = new TreePath(getPathToRoot(node.getParent()));
-            int index = node.getParent().getIndex(node);
+            TreeTableNode currentParent = node.getParent();
+            TreePath parentPath = new TreePath(getPathToRoot(currentParent));
+            int index = currentParent.getIndex(node);
 
-            if (task.state == TaskState.FINISHED) {
+            if (task.state == TaskState.FINISHED || parentChanged) {
                 node.removeFromParent();
                 modelSupport.fireChildRemoved(parentPath, index, node);
             }
             else {
                 modelSupport.fireChildChanged(parentPath, index, node);
             }
+
+            if (parentChanged) {
+                TaskTreeTableNode parent = findTaskNode(parentTask, task.parentID);
+                parent.add(node);
+
+                modelSupport.fireChildAdded(new TreePath(getPathToRoot(parent)), parent.getIndex(node), node);
+            }
+        }
+        else {
+            addTask(task);
         }
     }
 

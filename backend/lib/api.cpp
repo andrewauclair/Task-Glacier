@@ -126,7 +126,28 @@ void API::finish_task(const TaskMessage& message, std::vector<std::unique_ptr<Me
 
 void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_ptr<Message>>& output)
 {
-	const auto result = m_app.rename_task(message.taskID, message.name);
+	auto* task = m_app.find_task(message.taskID);
+
+	if (!task)
+	{
+		output.push_back(std::make_unique<FailureResponse>(message.requestID, std::format("Task with ID {} does not exist.", message.taskID)));
+		return;
+	}
+
+	std::optional<std::string> result;
+	if (message.name != task->m_name)
+	{
+		result = m_app.rename_task(message.taskID, message.name);
+	}
+	else if (message.parentID != task->parentID())
+	{
+		result = m_app.reparent_task(message.taskID, message.parentID);
+	}
+	else
+	{
+		// TODO failure
+	}
+	
 
 	if (result)
 	{
@@ -136,7 +157,7 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 	{
 		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
 
-		auto* task = m_app.find_task(message.taskID);
+		
 
 		send_task_info(*task, output);
 	}

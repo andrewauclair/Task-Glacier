@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TaskModel {
@@ -47,7 +48,7 @@ public class TaskModel {
 
     public interface Listener {
         void newTask(Task task);
-        void updatedTask(Task task);
+        void updatedTask(Task task, boolean parentChanged);
     }
 
     private List<Task> tasks = new ArrayList<>();
@@ -73,7 +74,11 @@ public class TaskModel {
             if (first.isPresent()) {
                 first.get().name = info.name;
                 first.get().state = info.state;
-                listeners.forEach(listener -> listener.updatedTask(first.get()));
+
+                boolean parentChanged = first.get().parentID != info.parentID;
+                first.get().parentID = info.parentID;
+
+                listeners.forEach(listener -> listener.updatedTask(first.get(), parentChanged));
             }
         }
         else {
@@ -87,10 +92,28 @@ public class TaskModel {
 
             if (first.isPresent()) {
                 first.get().children.add(task);
-                listeners.forEach(listener -> listener.updatedTask(first.get()));
+                listeners.forEach(listener -> listener.updatedTask(first.get(), false));
             }
 
             listeners.forEach(listener -> listener.newTask(task));
+        }
+    }
+
+    // it's possible that we receive data out-of-order the first time. for updates for everything
+    public void configurationComplete() {
+        forceUpdates();
+    }
+
+    private void forceUpdates() {
+        for (int i = 0; i < tasks.size() + 1; i++) {
+            final int parentID = i;
+            List<Task> toUpdate = tasks.stream()
+                    .filter(t -> t.parentID == parentID)
+                    .toList();
+
+            for (Task task1 : toUpdate) {
+                listeners.forEach(listener -> listener.updatedTask(task1, false));
+            }
         }
     }
 }

@@ -619,7 +619,7 @@ TEST_CASE("Modify Task", "[api][task]")
 	SECTION("Success - Rename Task")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
-		helper.expect_success(UpdateTaskMessage(TaskID(1), helper.next_request_id(), "something else"));
+		helper.expect_success(UpdateTaskMessage(helper.next_request_id(), TaskID(1), NO_PARENT, "something else"));
 
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "something else");
 
@@ -630,21 +630,55 @@ TEST_CASE("Modify Task", "[api][task]")
 		helper.required_messages({ &taskInfo });
 	}
 
-	SECTION("Failure - Task Does Not Exist")
+	SECTION("Success - Reparent Task")
 	{
-		helper.expect_failure(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1)), "Task with ID 1 does not exist.");
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+		helper.expect_success(UpdateTaskMessage(helper.next_request_id(), TaskID(1), TaskID(2), "test"));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), TaskID(2), "test");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.state = TaskState::INACTIVE;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
 	}
 
-	SECTION("Persist")
+	SECTION("Failure - Task Does Not Exist")
+	{
+		helper.expect_failure(UpdateTaskMessage(helper.next_request_id(), TaskID(1), NO_PARENT, "test"), "Task with ID 1 does not exist.");
+	}
+
+	SECTION("Failure - Parent Task Does Not Exist")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+		helper.expect_failure(UpdateTaskMessage(helper.next_request_id(), TaskID(1), TaskID(2), "test"), "Task with ID 2 does not exist.");
+	}
+
+	SECTION("Persist - Rename Task")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
 		
 		helper.clear_file_output();
 
-		helper.expect_success(UpdateTaskMessage(TaskID(1), helper.next_request_id(), "something else"));
+		helper.expect_success(UpdateTaskMessage(helper.next_request_id(), TaskID(1), NO_PARENT, "something else"));
 
 		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
 		CHECK(helper.fileOutput.str() == "rename 1 (something else)\n");
+	}
+
+	SECTION("Persist - Reparent Task")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+
+		helper.clear_file_output();
+
+		helper.expect_success(UpdateTaskMessage(helper.next_request_id(), TaskID(1), TaskID(2), "test"));
+
+		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
+		CHECK(helper.fileOutput.str() == "reparent 1 2\n");
 	}
 }
 
@@ -789,6 +823,9 @@ TEST_CASE("Persist Tasks", "[api][task]")
 	auto finish_task_3 = TaskMessage(PacketType::FINISH_TASK, RequestID(17), TaskID(3));
 	auto finish_task_4 = TaskMessage(PacketType::FINISH_TASK, RequestID(18), TaskID(4));
 
+	auto rename = UpdateTaskMessage(RequestID(19), TaskID(1), NO_PARENT, "task 1 - rename");
+	auto reparent = UpdateTaskMessage(RequestID(20), TaskID(2), NO_PARENT, "task 2");
+
 	api.process_packet(create_task_1, output);
 	api.process_packet(create_task_2, output);
 	api.process_packet(start_task_2, output);
@@ -808,6 +845,8 @@ TEST_CASE("Persist Tasks", "[api][task]")
 	api.process_packet(start_task_6, output);
 	api.process_packet(start_task_5, output);
 	api.process_packet(start_task_1, output);
+	api.process_packet(rename, output);
+	api.process_packet(reparent, output);
 
 	std::ostringstream expected;
 	expected << "create 1 0 1737344939870 (task 1)\n";
@@ -829,6 +868,8 @@ TEST_CASE("Persist Tasks", "[api][task]")
 	expected << "start 6 1737373739870\n";
 	expected << "start 5 1737376439870\n";
 	expected << "start 1 1737379139870\n";
+	expected << "rename 1 (task 1 - rename)\n";
+	expected << "reparent 2 0\n";
 
 	CHECK(fileOutput.str() == expected.str());
 }
@@ -857,6 +898,8 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	fileOutput << "start 6 1737373739870\n";
 	fileOutput << "start 5 1737376439870\n";
 	fileOutput << "start 1 1737379139870\n";
+	fileOutput << "rename 1 (task 1 - renamed)\n";
+	fileOutput << "reparent 2 0\n";
 
 	fileInput = std::istringstream(fileOutput.str());
 	fileOutput.clear();
@@ -871,8 +914,8 @@ TEST_CASE("Reload Tasks From File", "[api]")
 
 	REQUIRE(output.size() == 7);
 
-	auto task1 = TaskInfoMessage(TaskID(1), NO_PARENT, "task 1");
-	auto task2 = TaskInfoMessage(TaskID(2), TaskID(1), "task 2");
+	auto task1 = TaskInfoMessage(TaskID(1), NO_PARENT, "task 1 - renamed");
+	auto task2 = TaskInfoMessage(TaskID(2), NO_PARENT, "task 2");
 	auto task3 = TaskInfoMessage(TaskID(3), TaskID(2), "task 3");
 	auto task4 = TaskInfoMessage(TaskID(4), TaskID(2), "task 4");
 	auto task5 = TaskInfoMessage(TaskID(5), TaskID(3), "task 5");

@@ -107,16 +107,18 @@ public class TimeCategories extends JDialog {
             }
         });
 
+        categories.setFillsViewportHeight(true);
+
         JScrollPane scroll = new JScrollPane(categories);
 
-        scroll.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
-                    contextMenu.show(scroll, e.getX(), e.getY());
-                }
-            }
-        });
+//        scroll.addMouseListener(new MouseAdapter() {
+//            @Override
+//            public void mouseClicked(MouseEvent e) {
+//                if (SwingUtilities.isRightMouseButton(e)) {
+//                    contextMenu.show(scroll, e.getX(), e.getY());
+//                }
+//            }
+//        });
 
         return scroll;
     }
@@ -178,16 +180,18 @@ public class TimeCategories extends JDialog {
             }
         });
 
+        codes.setFillsViewportHeight(true);
+
         JScrollPane scroll = new JScrollPane(codes);
 
-        scroll.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
-                    contextMenu.show(scroll, e.getX(), e.getY());
-                }
-            }
-        });
+//        scroll.addMouseListener(new MouseAdapter() {
+//            @Override
+//            public void mouseClicked(MouseEvent e) {
+//                if (SwingUtilities.isRightMouseButton(e)) {
+//                    contextMenu.show(scroll, e.getX(), e.getY());
+//                }
+//            }
+//        });
 
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
