@@ -22,6 +22,13 @@ public class AddModifyTask extends JDialog {
         AddModifyTask.this.dispose();
     }
 
+    JPanel createFlow(String name, JComponent comp) {
+        JPanel panel = new JPanel(new FlowLayout());
+        panel.add(new JLabel(name));
+        panel.add(comp);
+        return panel;
+    }
+
     public AddModifyTask(MainFrame mainFrame, int parentID, boolean modify) {
         openInstance = this;
 
@@ -78,7 +85,7 @@ public class AddModifyTask extends JDialog {
 
         add(inheritTime, gbc);
         gbc.gridy++;
-        
+
         add(createFlow("Time A: ", time1), gbc);
         gbc.gridy++;
 
@@ -92,12 +99,5 @@ public class AddModifyTask extends JDialog {
 
         // center on the main frame
         setLocationRelativeTo(mainFrame);
-    }
-
-    JPanel createFlow(String name, JComponent comp) {
-        JPanel panel = new JPanel(new FlowLayout());
-        panel.add(new JLabel(name));
-        panel.add(comp);
-        return panel;
     }
 }

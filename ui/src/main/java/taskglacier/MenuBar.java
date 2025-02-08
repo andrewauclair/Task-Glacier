@@ -2,6 +2,7 @@ package taskglacier;
 
 import dialogs.AddModifyTask;
 import dialogs.ConnectToServer;
+import dialogs.TimeCategories;
 
 import javax.swing.*;
 
@@ -23,12 +24,18 @@ public class MenuBar extends JMenuBar {
         JMenu task = new JMenu("Task");
         task.setMnemonic('T');
 
-        add = new JMenuItem("Add");
+        add = new JMenuItem("Add...");
         add.setEnabled(false);
         add.addActionListener(e -> new AddModifyTask(mainFrame, 0, false).setVisible(true));
         task.add(add);
 
+        JMenuItem timeCategories = new JMenuItem("Time Categories...");
+        task.add(timeCategories);
+
+        timeCategories.addActionListener(e -> new TimeCategories(mainFrame).setVisible(true));
+
         add(task);
+
 
         JMenu server = new JMenu("Server");
         server.setMnemonic('S');
