@@ -71,6 +71,7 @@ public class TaskModel {
                     .findFirst();
 
             if (first.isPresent()) {
+                first.get().name = info.name;
                 first.get().state = info.state;
                 listeners.forEach(listener -> listener.updatedTask(first.get()));
             }

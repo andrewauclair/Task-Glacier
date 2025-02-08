@@ -25,8 +25,10 @@ public class RenameTask extends JDialog {
         add(rename);
 
         rename.addActionListener(e -> {
-            UpdateTask create = new UpdateTask(taskID, RequestID.nextRequestID(), taskName.getText());
-            mainFrame.getConnection().sendPacket(create);
+            UpdateTask update = new UpdateTask(taskID, RequestID.nextRequestID(), taskName.getText());
+            mainFrame.getConnection().sendPacket(update);
+
+            RenameTask.this.dispose();
         });
 
         // TODO we'll have to add this to all components on the dialog
