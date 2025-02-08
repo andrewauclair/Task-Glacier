@@ -12,6 +12,14 @@ public class MenuBar extends JMenuBar {
     private final JMenuItem disconnect = new JMenuItem("Disconnect");
 
     public MenuBar(MainFrame mainFrame) {
+        JMenu file = new JMenu("File");
+        file.setMnemonic('F');
+
+        JMenuItem exit = new JMenuItem("Exit");
+        exit.addActionListener(e -> System.exit(0));
+        file.add(exit);
+        add(file);
+
         JMenu task = new JMenu("Task");
         task.setMnemonic('T');
 
