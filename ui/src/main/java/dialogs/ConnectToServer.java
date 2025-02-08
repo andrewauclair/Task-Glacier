@@ -12,7 +12,8 @@ public class ConnectToServer extends JDialog {
     public ConnectToServer(MainFrame mainFrame) {
         setLayout(new GridBagLayout());
         setTitle("Connect");
-
+        setModal(true);
+        
         GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
