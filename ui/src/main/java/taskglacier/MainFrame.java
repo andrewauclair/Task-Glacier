@@ -35,7 +35,7 @@ public class MainFrame extends JFrame {
 
     private ServerConnection connection = new ServerConnection(null, null);
     private TaskModel taskModel = new TaskModel();
-    ImageIcon appIcon16 = new ImageIcon(Objects.requireNonNull(System.getenv("TASK_GLACIER_DEV_INSTANCE") != null ? getClass().getResource("/work-in-progress (1).png") : getClass().getResource("/glacier (2).png")));
+    ImageIcon appIcon16 = new ImageIcon(Objects.requireNonNull(System.getenv("TASK_GLACIER_DEV_INSTANCE") != null ? getClass().getResource("/work-in-progress (1).png") : getClass().getResource("/app-icon-16.png")));
     TrayIcon trayIcon = new TrayIcon(appIcon16.getImage(), "");
 
     private SystemTrayDisplay systemTrayDisplay = new SystemTrayDisplay(trayIcon);
@@ -77,7 +77,7 @@ public class MainFrame extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         add(statusBar, gbc);
-        ImageIcon appIcon64 = new ImageIcon(Objects.requireNonNull(System.getenv("TASK_GLACIER_DEV_INSTANCE") != null ? getClass().getResource("/work-in-progress.png") : getClass().getResource("/glacier (1).png")));
+        ImageIcon appIcon64 = new ImageIcon(Objects.requireNonNull(System.getenv("TASK_GLACIER_DEV_INSTANCE") != null ? getClass().getResource("/work-in-progress.png") : getClass().getResource("/app-icon-64.png")));
 
         setIconImage(appIcon64.getImage());
         if (SystemTray.isSupported()) {
