@@ -21,46 +21,70 @@ public class SystemTrayDisplay extends JFrame {
     JButton unspecifiedTask = new JButton(new ImageIcon(Objects.requireNonNull(getClass().getResource("/cognitive.png"))));
     JButton dailyReport = new JButton(new ImageIcon(Objects.requireNonNull(getClass().getResource("/clipboard.png"))));
 
+    Timer timer;
+    MouseEvent e;
     MouseAdapter listener = new MouseAdapter() {
         @Override
-        public void mouseReleased(MouseEvent e) {
-            double scale = GraphicsEnvironment
-                    .getLocalGraphicsEnvironment()
-                    .getDefaultScreenDevice() // or cycle your getScreenDevices()
-                    .getDefaultConfiguration()
-                    .getDefaultTransform()
-                    .getScaleX();
+        public void mouseClicked(MouseEvent e) {
+            if (isVisible()) {
+                return;
+            }
+            SystemTrayDisplay.this.e = e;
 
-            setVisible(true);
+            if (e.getClickCount() > 1) {
+                MainFrame.mainFrame.setVisible(true);
+                timer.stop();
+                return;
+            }
 
-            trayIcon.removeMouseListener(listener);
-
-            Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment()
-                    .getDefaultScreenDevice()
-                    .getDefaultConfiguration()
-                    .getBounds();
-
-            Point p = new Point(bounds.width - getWidth() - 10, (int) ((e.getLocationOnScreen().y / scale) - getHeight() - 40));
-
-            setLocation(p);
+            if (!timer.isRunning()) {
+                timer.start();
+            }
         }
     };
 
     public SystemTrayDisplay(TrayIcon trayIcon) {
         this.trayIcon = trayIcon;
 
-        Timer timer = new Timer(500, e -> SwingUtilities.invokeLater(() -> trayIcon.addMouseListener(listener)));
+        timer = new Timer(250, e1 -> {
+            if (isVisible()) {
+                // hide
+                setVisible(!isVisible());
+            }
+            else if (e != null) {
+                double scale = GraphicsEnvironment
+                        .getLocalGraphicsEnvironment()
+                        .getDefaultScreenDevice() // or cycle your getScreenDevices()
+                        .getDefaultConfiguration()
+                        .getDefaultTransform()
+                        .getScaleX();
+
+                setVisible(true);
+
+                Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment()
+                        .getDefaultScreenDevice()
+                        .getDefaultConfiguration()
+                        .getBounds();
+
+                Point p = new Point(bounds.width - getWidth() - 10, (int) ((e.getLocationOnScreen().y / scale) - getHeight() - 40));
+
+                setLocation(p);
+            }
+        });
+        timer.setRepeats(false);
         timer.start();
+
+        trayIcon.addMouseListener(listener);
 
         setUndecorated(true);
         setShape(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 25, 25));
 
-        addWindowListener(new WindowAdapter() {
+        addWindowFocusListener(new WindowAdapter() {
             @Override
-            public void windowDeactivated(WindowEvent e) {
-                setVisible(false);
-                trayIcon.removeMouseListener(listener);
-                timer.restart();
+            public void windowLostFocus(WindowEvent e) {
+                if (!timer.isRunning()) {
+                    timer.restart();
+                }
             }
         });
 
