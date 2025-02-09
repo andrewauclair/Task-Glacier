@@ -40,6 +40,64 @@ inline constexpr TaskID NO_PARENT = TaskID(0);
 
 using RequestID = strong::type<std::int32_t, struct request_id_, strong::equality, strong::incrementable>;
 
+template <>
+struct std::formatter<RequestID> : std::formatter<std::int32_t> {
+	auto format(RequestID p, format_context& ctx) const {
+		return std::formatter<std::int32_t>::format(p._val, ctx);
+	}
+};
+
+using TimeCodeID = strong::type<std::int32_t, struct time_code_id_, strong::equality, strong::incrementable>;
+
+template <>
+struct std::formatter<TimeCodeID> : std::formatter<std::int32_t> {
+	auto format(TimeCodeID p, format_context& ctx) const {
+		return std::formatter<std::int32_t>::format(p._val, ctx);
+	}
+};
+
+struct TaskTimes
+{
+	std::chrono::milliseconds start = std::chrono::milliseconds(0);
+	std::optional<std::chrono::milliseconds> stop;
+	std::vector<TimeCodeID> timeCodes;
+};
+
+struct TimeCode
+{
+	TimeCodeID id; // the ID will be continuously incremented, even when deleting time codes that were just created
+	std::string name;
+	bool archived = false;
+	
+	friend std::ostream& operator<<(std::ostream& out, const TimeCode& code)
+	{
+		out << "TimeCode { id: " << code.id._val << ", name: " << code.name << ", archived: " << code.archived << " }";
+
+		return out;
+	}
+};
+
+struct TimeCategory
+{
+	std::string name;
+	std::vector<TimeCode> codes;
+	bool archived = false;
+
+	friend std::ostream& operator<<(std::ostream& out, const TimeCategory& category)
+	{
+		out << "TimeCategory { name: " << category.name << ", archived: " << category.archived << '\n';
+		
+		for (auto&& code : category.codes)
+		{
+			out << code << '\n';
+		}
+
+		out << " }";
+
+		return out;
+	}
+};
+
 struct MessageVisitor;
 
 // TODO redo numbers when we're done
@@ -89,6 +147,10 @@ enum class PacketType : std::int32_t
 	BACKUP_PERFORMED = 24,
 	// backup has failed. error message and last successful backup time are provided
 	BACKUP_FAILED = 25,
+
+	TIME_CATEGORIES_REQUEST = 26,
+	TIME_CATEGORIES_DATA = 27,
+	TIME_CATEGORIES_MODIFY = 28,
 };
 
 struct Message
@@ -270,6 +332,138 @@ struct TaskMessage : RequestMessage
 	}
 };
 
+struct TimeCodePacket
+{
+	TimeCodeID id;
+	std::string name;
+	bool inUse;
+	std::int32_t taskCount;
+	bool archived;
+
+	constexpr auto operator<=>(const TimeCodePacket&) const = default;
+
+	friend std::ostream& operator<<(std::ostream& out, const TimeCodePacket& code)
+	{
+		out << "TimeCode { id: " << code.id._val << ", name: " << code.name << ", inUse: " << code.inUse << ", taskCount: " << code.taskCount << ", archived: " << code.archived << " }";
+
+		return out;
+	}
+};
+
+struct TimeCategoryPacket
+{
+	std::string name;
+	bool inUse;
+	std::int32_t taskCount;
+	bool archived;
+	std::vector<TimeCodePacket> codes;
+
+	constexpr auto operator<=>(const TimeCategoryPacket&) const = default;
+
+	friend std::ostream& operator<<(std::ostream& out, const TimeCategoryPacket& category)
+	{
+		out << "TimeCategory { name: " << category.name << ", inUse: " << category.inUse << ", taskCount: " << category.taskCount << ", archived: " << category.archived << '\n';
+
+		for (auto&& code : category.codes)
+		{
+			out << code << '\n';
+		}
+
+		out << " }";
+
+		return out;
+	}
+};
+
+struct TimeCategoriesData : Message
+{
+	std::vector<TimeCategoryPacket> timeCategories;
+
+	TimeCategoriesData() : Message(PacketType::TIME_CATEGORIES_DATA)
+	{
+	}
+
+	bool operator==(const Message& message) const override
+	{
+		if (const auto* other = dynamic_cast<const TimeCategoriesData*>(&message))
+		{
+			return *this == *other;
+		}
+		return false;
+	}
+
+	bool operator==(const TimeCategoriesData& message) const
+	{
+		return packetType() == message.packetType();
+	}
+
+	std::vector<std::byte> pack() const override;
+	static std::expected<TimeCategoriesData, UnpackError> unpack(std::span<const std::byte> data);
+
+	std::ostream& print(std::ostream& out) const override
+	{
+		out << "TimeCategoriesData { ";
+		Message::print(out);
+
+		for (auto&& category : timeCategories)
+		{
+			out << category;
+		}
+		return out;
+	}
+
+	friend std::ostream& operator<<(std::ostream& out, const TimeCategoriesData& message)
+	{
+		message.print(out);
+		return out;
+	}
+};
+
+struct TimeCategoriesModify : RequestMessage
+{
+	std::vector<TimeCategory> timeCategories;
+
+	TimeCategoriesModify(RequestID requestID, std::vector<TimeCategory> timeCategories) : RequestMessage(PacketType::TIME_CATEGORIES_MODIFY, requestID), timeCategories(std::move(timeCategories))
+	{
+
+	}
+
+	bool operator==(const Message& message) const override
+	{
+		if (const auto* other = dynamic_cast<const TimeCategoriesModify*>(&message))
+		{
+			return *this == *other;
+		}
+		return false;
+	}
+
+	bool operator==(const TimeCategoriesModify& message) const
+	{
+		return packetType() == message.packetType();
+	}
+
+	std::vector<std::byte> pack() const override;
+	static std::expected<TimeCategoriesModify, UnpackError> unpack(std::span<const std::byte> data);
+
+	std::ostream& print(std::ostream& out) const override
+	{
+		out << "TimeCategoriesModify { ";
+		RequestMessage::print(out);
+		
+		for (auto&& category : timeCategories)
+		{
+			out << category;
+		}
+		return out;
+	}
+
+	friend std::ostream& operator<<(std::ostream& out, const TimeCategoriesModify& message)
+	{
+		message.print(out);
+		return out;
+	}
+};
+
 struct SuccessResponse : Message
 {
 	RequestID requestID;
@@ -381,12 +575,6 @@ struct BasicMessage : Message
 		message.print(out);
 		return out;
 	}
-};
-
-struct TaskTimes
-{
-	std::chrono::milliseconds start = std::chrono::milliseconds(0);
-	std::optional<std::chrono::milliseconds> stop;
 };
 
 struct TaskInfoMessage : Message

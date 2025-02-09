@@ -28,6 +28,8 @@ private:
 
 	void send_task_info(const Task& task, std::vector<std::unique_ptr<Message>>& output);
 
+	void time_categories_modify(const TimeCategoriesModify& message, std::vector<std::unique_ptr<Message>>& output);
+
 	void create_daily_report(RequestID requestID, int month, int day, int year, std::vector<std::unique_ptr<Message>>& output);
 
 	const Clock* m_clock;

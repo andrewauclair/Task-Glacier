@@ -30,6 +30,7 @@ private:
 public:
 	std::vector<TaskTimes> m_times;
 	std::optional<std::chrono::milliseconds> m_finishTime;
+
 	Task(std::string name, TaskID id, TaskID parentID, std::chrono::milliseconds createTime);
 
 	bool operator==(const Task& task) const;
@@ -38,8 +39,6 @@ public:
 	TaskID parentID() const { return m_parentID; }
 
 	std::chrono::milliseconds createTime() const { return m_createTime; }
-	//std::span<const TaskTimes> times() const { return m_times; }
-	//std::optional<std::chrono::milliseconds> finishTime() const { return m_finishTime; }
 
 	std::string m_name;
 	TaskState state = TaskState::INACTIVE;
@@ -92,11 +91,43 @@ public:
 
 	void load_from_file(std::istream& input);
 
+	const std::vector<TimeCategory> timeCategories() const { return m_timeCategories; }
+	std::optional<std::string> add_time_category(std::string_view name)
+	{
+		// error if time category with name already exists
+
+		return std::nullopt;
+	}
+	
+	std::optional<std::string> add_time_code(TimeCodeID id, std::string_view category, std::string_view name)
+	{
+		// error if time category doesn't exist
+
+		// error if time category already has time code with name
+
+		return std::nullopt;
+	}
+	
+	std::optional<std::string> add_time_code(std::string_view category, std::string_view name)
+	{
+		auto id = m_nextTimeCodeID;
+		m_nextTimeCodeID++;
+
+		// error if time category doesn't exist
+
+		// error if time category already has time code with name
+
+		return std::nullopt;
+	}
+
 private:
 	std::unordered_map<TaskID, Task> m_tasks;
 	Task* m_activeTask = nullptr;
 
 	TaskID m_nextTaskID = TaskID(1);
+
+	std::vector<TimeCategory> m_timeCategories;
+	TimeCodeID m_nextTimeCodeID = TimeCodeID(1);
 
 	const Clock* m_clock;
 	std::ostream* m_output;

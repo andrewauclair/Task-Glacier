@@ -420,6 +420,98 @@ TEST_CASE("Task", "[messages]")
 	}
 }
 
+TEST_CASE("Time Categories Modify", "[messages]")
+{
+	std::vector<TimeCategory> timeCategories;
+	timeCategories.emplace_back(TimeCategory{ "one", std::vector{ TimeCode{ TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}} });
+	const auto modify = TimeCategoriesModify(RequestID(10), timeCategories);
+	CAPTURE(modify);
+
+	SECTION("Compare - Through Message")
+	{
+		SECTION("Does Not Match Other Message")
+		{
+			const auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+			CAPTURE(create_task);
+
+			const Message* message = &create_task;
+
+			CHECK(!(modify == *message));
+		}
+
+		SECTION("Match")
+		{
+			auto modify2 = TimeCategoriesModify(RequestID(10), timeCategories);
+			modify2.timeCategories.push_back(TimeCategory{ "one", { { TimeCodeID(1), "a" }, { TimeCodeID(2), "b" } } });
+			CAPTURE(modify2);
+
+			const Message* message = &modify2;
+
+			CHECK(modify == *message);
+		}
+	}
+
+	SECTION("Compare - Directly")
+	{
+		auto modify2 = TimeCategoriesModify(RequestID(10), timeCategories);
+		modify2.timeCategories.push_back(TimeCategory{ "one", { { TimeCodeID(1), "a" }, { TimeCodeID(2), "b" } } });
+		CAPTURE(modify2);
+
+		CHECK(modify == modify2);
+	}
+
+	SECTION("Compare Messages That Do Not Match")
+	{
+		std::vector<TimeCategory> timeCategories2;
+		timeCategories2.emplace_back(TimeCategory{ "two", std::vector{ TimeCode{ TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}} });
+		auto modify2 = TimeCategoriesModify(RequestID(15), timeCategories2);
+		CAPTURE(modify2);
+
+		CHECK(!(modify == modify2));
+	}
+
+	SECTION("Print")
+	{
+		std::ostringstream ss;
+
+		modify.print(ss);
+
+		auto expected_text = "TimeCategoriesModify { packetType: 8, requestID: 10 }";
+
+		CHECK(ss.str() == expected_text);
+
+		ss.str("");
+
+		ss << modify;
+
+		CHECK(ss.str() == expected_text);
+
+		ss.str("");
+
+		const Message* message = &modify;
+
+		ss << *message;
+
+		CHECK(ss.str() == expected_text);
+	}
+
+	SECTION("Pack")
+	{
+		auto verifier = PacketVerifier(modify.pack(), 12);
+
+		verifier
+			.verify_value<std::uint32_t>(12, "packet length")
+			.verify_value(static_cast<std::int32_t>(PacketType::TIME_CATEGORIES_MODIFY), "packet ID")
+			.verify_value<std::uint32_t>(10, "request ID");
+	}
+
+	SECTION("Unpack")
+	{
+		PacketTestHelper helper;
+		helper.expect_packet<TimeCategoriesModify>(modify, 12);
+	}
+}
+
 TEST_CASE("Success Response", "[messages]")
 {
 	const auto response = SuccessResponse(RequestID(10));

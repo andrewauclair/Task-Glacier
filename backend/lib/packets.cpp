@@ -93,6 +93,61 @@ std::expected<TaskMessage, UnpackError> TaskMessage::unpack(std::span<const std:
 	}
 }
 
+std::vector<std::byte> TimeCategoriesData::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(static_cast<std::int32_t>(packetType()));
+
+	return builder.build();
+}
+
+std::expected<TimeCategoriesData, UnpackError> TimeCategoriesData::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto requestID = parser.parse_next<RequestID>();
+	const auto taskID = parser.parse_next<TaskID>();
+
+	try
+	{
+		return TimeCategoriesData();
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
+}
+
+std::vector<std::byte> TimeCategoriesModify::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(static_cast<std::int32_t>(packetType()));
+	builder.add(requestID);
+
+	return builder.build();
+}
+
+std::expected<TimeCategoriesModify, UnpackError> TimeCategoriesModify::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto requestID = parser.parse_next<RequestID>();
+	const auto taskID = parser.parse_next<TaskID>();
+
+	try
+	{
+		return TimeCategoriesModify(requestID.value(), {});
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
+}
+
 std::vector<std::byte> SuccessResponse::pack() const
 {
 	PacketBuilder builder;

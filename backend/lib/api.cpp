@@ -32,6 +32,11 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 		create_daily_report(request.requestID, request.month, request.day, request.year, output);
 		break;
 	}
+	case PacketType::TIME_CATEGORIES_MODIFY:
+		time_categories_modify(static_cast<const TimeCategoriesModify&>(message), output);
+		break;
+	case PacketType::TIME_CATEGORIES_REQUEST:
+		break;
 	}
 }
 
@@ -202,6 +207,11 @@ void API::send_task_info(const Task& task, std::vector<std::unique_ptr<Message>>
 	info->times = std::vector<TaskTimes>(times.begin(), times.end());
 
 	output.push_back(std::move(info));
+}
+
+void API::time_categories_modify(const TimeCategoriesModify& message, std::vector<std::unique_ptr<Message>>& output)
+{
+	output.push_back(std::make_unique<SuccessResponse>(message.requestID));
 }
 
 void API::create_daily_report(RequestID requestID, int month, int day, int year, std::vector<std::unique_ptr<Message>>& output)

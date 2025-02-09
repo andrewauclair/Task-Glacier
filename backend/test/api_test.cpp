@@ -682,7 +682,42 @@ TEST_CASE("Modify Task", "[api][task]")
 	}
 }
 
-TEST_CASE("Request Daily Report", "[api]")
+TEST_CASE("Time Categories and Time Codes", "[api][task]")
+{
+	// success 
+	// - add time category
+	// - add time code
+	// - time code id increments
+	// - time code id is not reused when deleting time code
+	// - delete time category
+	// - delete time code
+	
+	// failure
+	// - time category already exists
+	// - time category does not exist (when adding time code)
+	// - time code already exists on time category
+	// - time category cannot be deleted once in use
+	// - time code cannot be deleted once in use
+	// - time category can be archived if all associated tasks are finished
+	// - time code can be archived if all associated tasks are finished
+	// - task cannot be changed back to inactive from finished if using an archived time category or time code (I don't think this feature exists yet)
+	TestHelper helper;
+
+	SECTION("Add Time Category")
+	{
+		auto modify = TimeCategoriesModify(helper.next_request_id(), {});
+		modify.timeCategories.emplace_back("New");
+
+		helper.expect_success(modify);
+
+		auto data = TimeCategoriesData();
+		data.timeCategories.emplace_back("New");
+
+		helper.required_messages({ &data });
+	}
+}
+
+TEST_CASE("Request Daily Report", "[api][task]")
 {
 	TestHelper helper;
 
