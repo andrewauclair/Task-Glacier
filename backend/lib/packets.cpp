@@ -1,5 +1,32 @@
 #include "packets.hpp"
 
+std::vector<std::byte> RequestMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(static_cast<std::int32_t>(packetType()));
+	builder.add(requestID);
+
+	return builder.build();
+}
+
+std::expected<RequestMessage, UnpackError> RequestMessage::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto requestID = parser.parse_next<RequestID>();
+
+	try
+	{
+		return RequestMessage(packetType.value(), requestID.value());
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
+}
+
 std::vector<std::byte> CreateTaskMessage::pack() const
 {
 	PacketBuilder builder;

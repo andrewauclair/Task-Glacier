@@ -7,7 +7,7 @@ FetchContent_Declare(
     GIT_TAG         d080e301ec71061c46049d23fedfb8106be3153f
 )
 
-set(CURLPP_BUILD_SHARED_LIBS OFF)
+set(CURLPP_BUILD_SHARED_LIBS ON)
 
 FetchContent_MakeAvailable(curlpp)
 
@@ -20,8 +20,14 @@ add_executable(task-glacier-server main.cpp)
 
 set_target_properties(task-glacier-server PROPERTIES CXX_STANDARD 23)
 
+#target_compile_definitions(task-glacier-server PRIVATE CURL_STATICLIB)
+
+#target_include_directories(task-glacier-server PRIVATE
+#    ${CURL_INCLUDE_DIR}
+#)
+
 target_link_libraries(task-glacier-server PRIVATE
  	task-glacier-server-lib
  	sockpp-static
-    ${CURLPP_LDFLAGS}
+    curlpp::curlpp
 )

@@ -32,6 +32,14 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 		create_daily_report(request.requestID, request.month, request.day, request.year, output);
 		break;
 	}
+	case PacketType::BUGZILLA_INFO:
+	{
+		break;
+	}
+	case PacketType::BUGZILLA_REFRESH:
+	{
+		break;
+	}
 	}
 }
 

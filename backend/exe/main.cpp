@@ -1,6 +1,7 @@
 ﻿#include "packets.hpp"
 #include "server.hpp"
 #include "api.hpp"
+#include "curl.hpp"
 
 #include <iostream>
 #include <cstdlib>
@@ -9,6 +10,10 @@
 #include <fstream>
 
 #include <sockpp/tcp_acceptor.h>
+
+#include <curlpp/cURLpp.hpp>
+#include <curlpp/Easy.hpp>
+#include <curlpp/Options.hpp>
 
 inline std::uint32_t read_u32(const std::vector<std::byte>& input, std::size_t index)
 {
@@ -32,6 +37,14 @@ private:
 	RequestID nextID = RequestID(1);
 };
 
+struct curlpp_ : cURL
+{
+	void execute_request(std::string_view url) override
+	{
+		std::cout << curlpp::options::Url(std::string(url));
+	}
+};
+
 /*
 * task-glacier 127.0.0.1 5000 /var/lib/task-glacier
 */
@@ -44,6 +57,9 @@ int main(int argc, char** argv)
 	}
 
 	sockpp::initialize();
+
+	curlpp_ curl;
+	curl.execute_request("http://example.com");
 
 	const std::string ip_address = argv[1];
 

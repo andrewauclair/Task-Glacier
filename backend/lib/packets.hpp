@@ -139,6 +139,9 @@ struct RequestMessage : Message
 		return packetType() == message.packetType() && requestID == message.requestID;
 	}
 
+	std::vector<std::byte> pack() const override;
+	static std::expected<RequestMessage, UnpackError> unpack(std::span<const std::byte> data);
+
 	std::ostream& print(std::ostream& out) const override
 	{
 		Message::print(out);
@@ -912,11 +915,16 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 			break;
 		case REQUEST_CONFIGURATION:
 		case REQUEST_CONFIGURATION_COMPLETE:
-		case BUGZILLA_REFRESH:
 		{
 			result.packet = std::make_unique<BasicMessage>(BasicMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 
+			break;
+		}
+		case BUGZILLA_REFRESH:
+		{
+			result.packet = std::make_unique<RequestMessage>(RequestMessage::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
 			break;
 		}
 		case BUGZILLA_INFO:
