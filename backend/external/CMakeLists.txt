@@ -38,4 +38,11 @@ FetchContent_Declare(
     GIT_TAG         e7e3c35b415761e11c268436e6d1659d5a3fdbf5
 )
 
-FetchContent_MakeAvailable(Catch2 sockpp strong_type libassert)
+FetchContent_Declare(
+    simdjson
+    GIT_SHALLOW     TRUE
+    GIT_REPOSITORY  https://github.com/simdjson/simdjson
+    GIT_TAG         v3.9.2
+)
+
+FetchContent_MakeAvailable(Catch2 sockpp strong_type libassert simdjson)

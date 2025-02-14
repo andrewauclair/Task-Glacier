@@ -1,8 +1,12 @@
 package taskglacier;
 
 import dialogs.AddModifyTask;
+import dialogs.Bugzilla;
 import dialogs.ConnectToServer;
 import dialogs.TimeCategories;
+import packets.BugzillaInfo;
+import packets.BugzillaRefresh;
+import packets.RequestID;
 
 import javax.swing.*;
 
@@ -54,6 +58,24 @@ public class MenuBar extends JMenuBar {
         server.add(disconnect);
 
         add(server);
+
+        JMenu bugzilla = new JMenu("Bugzilla");
+        bugzilla.setMnemonic('B');
+
+        JMenuItem configure = new JMenuItem("Configure...");
+        configure.addActionListener(e -> {
+            Bugzilla config = new Bugzilla(mainFrame);
+            config.setVisible(true);
+        });
+        bugzilla.add(configure);
+
+        JMenuItem refresh = new JMenuItem("Refresh");
+        refresh.addActionListener(e -> {
+            BugzillaRefresh packet = new BugzillaRefresh(RequestID.nextRequestID());
+            mainFrame.getConnection().sendPacket(packet);
+        });
+        bugzilla.add(refresh);
+        add(bugzilla);
     }
 
     public void connected() {

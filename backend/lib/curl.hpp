@@ -4,5 +4,5 @@
 
 struct cURL
 {
-	virtual void execute_request(std::string_view url) = 0;
+	virtual std::string execute_request(std::string_view url) = 0;
 };

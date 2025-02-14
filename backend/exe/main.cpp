@@ -39,9 +39,13 @@ private:
 
 struct curlpp_ : cURL
 {
-	void execute_request(std::string_view url) override
+	// TODO probably return a JSON object
+	std::string execute_request(std::string_view url) override
 	{
-		std::cout << curlpp::options::Url(std::string(url));
+		std::ostringstream ss;
+		ss << curlpp::options::Url(std::string("https://bugzilla.mozilla.org/rest/bug/707428/comment"));//&apiKey = BEdfnK3MyKHwbyHYrtS6OU74jTk4CTcMkv5eavuS"));
+
+		return ss.str();
 	}
 };
 
@@ -59,7 +63,7 @@ int main(int argc, char** argv)
 	sockpp::initialize();
 
 	curlpp_ curl;
-	curl.execute_request("http://example.com");
+	//curl.execute_request("http://example.com");
 
 	const std::string ip_address = argv[1];
 
@@ -73,7 +77,7 @@ int main(int argc, char** argv)
 	std::ifstream input(argv[3]);
 	std::ofstream output(argv[3], std::ios::out | std::ios::app);
 	
-	API api(clock, input, output);
+	API api(clock, curl, input, output);
 
 	// ctrl-c app to kill it
 	while (true)

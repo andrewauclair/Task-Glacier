@@ -1,5 +1,7 @@
 #include "api.hpp"
 
+#include <iostream>
+
 void API::process_packet(const Message& message, std::vector<std::unique_ptr<Message>>& output)
 {
 	switch (message.packetType())
@@ -34,10 +36,21 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 	}
 	case PacketType::BUGZILLA_INFO:
 	{
+		const auto& info = static_cast<const BugzillaInfoMessage&>(message);
+
+		m_bugzillaURL = info.URL;
+		m_bugzillaKey = info.apiKey;
+
 		break;
 	}
 	case PacketType::BUGZILLA_REFRESH:
 	{
+		if (m_curl)
+		{
+			auto result = m_curl->execute_request(m_bugzillaURL + "/rest/bug&" + m_bugzillaKey);
+
+			std::cout << result << '\n';
+		}
 		break;
 	}
 	}
