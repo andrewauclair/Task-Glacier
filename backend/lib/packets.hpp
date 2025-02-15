@@ -464,6 +464,9 @@ struct BugzillaInfoMessage : Message
 {
 	std::string URL;
 	std::string apiKey;
+	std::string username;
+	TaskID rootTaskID = TaskID(1);
+	std::string groupTasksBy;
 
 	BugzillaInfoMessage(std::string URL, std::string apiKey) : Message(PacketType::BUGZILLA_INFO), URL(std::move(URL)), apiKey(std::move(apiKey)) {}
 

@@ -1,10 +1,9 @@
 package taskglacier;
 
 import dialogs.AddModifyTask;
-import dialogs.Bugzilla;
+import dialogs.BugzillaConfiguration;
 import dialogs.ConnectToServer;
 import dialogs.TimeCategories;
-import packets.BugzillaInfo;
 import packets.BugzillaRefresh;
 import packets.RequestID;
 
@@ -15,6 +14,7 @@ public class MenuBar extends JMenuBar {
 
     private final JMenuItem connect = new JMenuItem("Connect...");
     private final JMenuItem disconnect = new JMenuItem("Disconnect");
+    private final JMenu bugzilla = new JMenu("Bugzilla");
 
     public MenuBar(MainFrame mainFrame) {
         JMenu file = new JMenu("File");
@@ -59,12 +59,12 @@ public class MenuBar extends JMenuBar {
 
         add(server);
 
-        JMenu bugzilla = new JMenu("Bugzilla");
         bugzilla.setMnemonic('B');
+        bugzilla.setEnabled(false);
 
         JMenuItem configure = new JMenuItem("Configure...");
         configure.addActionListener(e -> {
-            Bugzilla config = new Bugzilla(mainFrame);
+            BugzillaConfiguration config = new BugzillaConfiguration(mainFrame);
             config.setVisible(true);
         });
         bugzilla.add(configure);
@@ -82,11 +82,13 @@ public class MenuBar extends JMenuBar {
         add.setEnabled(true);
         connect.setEnabled(false);
         disconnect.setEnabled(true);
+        bugzilla.setEnabled(true);
     }
 
     public void disconnected() {
         add.setEnabled(false);
         connect.setEnabled(true);
         disconnect.setEnabled(false);
+        bugzilla.setEnabled(false);
     }
 }
