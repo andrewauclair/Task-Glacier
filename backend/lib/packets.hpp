@@ -465,8 +465,9 @@ struct BugzillaInfoMessage : Message
 	std::string URL;
 	std::string apiKey;
 	std::string username;
-	TaskID rootTaskID = TaskID(1);
+	TaskID rootTaskID = NO_PARENT;
 	std::string groupTasksBy;
+	std::map<std::string, std::string> labelToField;
 
 	BugzillaInfoMessage(std::string URL, std::string apiKey) : Message(PacketType::BUGZILLA_INFO), URL(std::move(URL)), apiKey(std::move(apiKey)) {}
 
@@ -481,7 +482,8 @@ struct BugzillaInfoMessage : Message
 
 	bool operator==(const BugzillaInfoMessage& message) const
 	{
-		return URL == message.URL && apiKey == message.apiKey;
+		return URL == message.URL && apiKey == message.apiKey && username == message.username && rootTaskID == message.rootTaskID &&
+			groupTasksBy == message.groupTasksBy && labelToField == message.labelToField;
 	}
 
 	std::vector<std::byte> pack() const override;

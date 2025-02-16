@@ -7,6 +7,8 @@ import taskglacier.MainFrame;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.prefs.Preferences;
 
 public class BugzillaConfiguration extends JDialog {
@@ -31,6 +33,7 @@ public class BugzillaConfiguration extends JDialog {
         add(createLabeledComponent("API Key", apiKey), gbc);
         gbc.gridy++;
 
+        // TODO currently we'll do all searching by 'assigned_to' in the bugzilla search. In the future we should support searching by other fields as well, such as component.
         JTextField username = new JTextField();
         add(createLabeledComponent("Username", username), gbc);
         gbc.gridy++;
@@ -42,13 +45,22 @@ public class BugzillaConfiguration extends JDialog {
         // option to split tasks by a specific bugzilla field
         JTextField groupTasksBy = new JTextField("target_milestone");
         add(createLabeledComponent("Group Tasks By", groupTasksBy), gbc);
+        gbc.gridy++;
 
         // configure search parameters and task arrangement
         // configure labels
-        DefaultTableModel tableModel = new DefaultTableModel(new Object[] { "label", "bugzilla field"}, 0);
+        DefaultTableModel tableModel = new DefaultTableModel(new Object[] { "Label", "Bugzilla Field"}, 0);
         JTable table = new JTable(tableModel);
 
+        tableModel.addRow(new Object[] { "Priority", "priority" });
+        tableModel.addRow(new Object[] { "Status", "status" });
+        tableModel.addRow(new Object[] { "Resolution", "resolution" });
+        tableModel.addRow(new Object[] { "Severity", "severity" });
+        tableModel.addRow(new Object[] { "Target", "target_milestone" });
+        tableModel.addRow(new Object[] { "Component", "component" });
+
         add(new JScrollPane(table), gbc);
+        gbc.gridy++;
 
         JButton save = new JButton("Save");
         add(save, gbc);
@@ -68,6 +80,13 @@ public class BugzillaConfiguration extends JDialog {
 
         save.addActionListener(e -> {
             BugzillaInfo info = new BugzillaInfo(URL.getText(), apiKey.getText(), username.getText());
+            info.setGroupTasksBy(groupTasksBy.getText());
+            info.setRootTaskID(Integer.parseInt(rootTask.getText()));
+            Map<String, String> labelToField = new HashMap<>();
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                labelToField.put((String) tableModel.getValueAt(i, 0), (String) tableModel.getValueAt(i, 1));
+            }
+            info.setLabelToField(labelToField);
             mainFrame.getConnection().sendPacket(info);
 
             preferences.put("Bugzilla-URL", URL.getText());
