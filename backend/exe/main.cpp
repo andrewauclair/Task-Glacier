@@ -40,12 +40,37 @@ private:
 struct curlpp_ : cURL
 {
 	// TODO probably return a JSON object
-	std::string execute_request(std::string_view url) override
+	std::string execute_request(const std::string& url) override
 	{
-		std::ostringstream ss;
-		ss << curlpp::options::Url(std::string("https://bugzilla.mozilla.org/rest/bug/707428/comment"));//&apiKey = BEdfnK3MyKHwbyHYrtS6OU74jTk4CTcMkv5eavuS"));
+		try {
+			curlpp::Cleanup cleaner;
 
-		return ss.str();
+			std::ostringstream ss;
+			ss << curlpp::options::Url(url);
+
+			curlpp::Easy request;
+
+			request.setOpt(new curlpp::options::Url(url));
+			request.setOpt(new curlpp::options::Verbose(true));
+
+			std::list<std::string> header;
+			header.push_back("Content-Type: application/octet-stream");
+
+			request.setOpt(new curlpp::options::HttpHeader(header));
+
+			//request.setOpt(new curlpp::options::PostFields("abcd"));
+			//request.setOpt(new curlpp::options::PostFieldSize(5));
+
+			request.perform();
+			return ss.str();
+		}
+		catch (curlpp::LogicError& e) {
+			std::cout << e.what() << std::endl;
+		}
+		catch (curlpp::RuntimeError& e) {
+			std::cout << e.what() << std::endl;
+		}
+		return "";
 	}
 };
 
@@ -63,7 +88,6 @@ int main(int argc, char** argv)
 	sockpp::initialize();
 
 	curlpp_ curl;
-	//curl.execute_request("http://example.com");
 
 	const std::string ip_address = argv[1];
 

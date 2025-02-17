@@ -38,6 +38,7 @@ private:
 
 	std::string m_bugzillaURL;
 	std::string m_bugzillaKey;
+	std::string m_bugzillaUsername;
 
 	const Clock* m_clock;
 	cURL* m_curl = nullptr;

@@ -322,6 +322,8 @@ std::expected<BugzillaInfoMessage, UnpackError> BugzillaInfoMessage::unpack(std:
 
 			info.labelToField.emplace(label.value(), field.value());
 		}
+
+		return info;
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{

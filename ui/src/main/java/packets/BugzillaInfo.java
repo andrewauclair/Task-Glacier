@@ -22,9 +22,10 @@ public class BugzillaInfo implements Packet {
 
     @Override
     public void writeToOutput(DataOutputStream output) throws IOException {
-        AtomicInteger size = new AtomicInteger(20 + url.length() + apiKey.length() + username.length());
+        AtomicInteger size = new AtomicInteger(24 + url.length() + apiKey.length() + username.length());
         size.addAndGet(groupTasksBy.length());
         labelToField.forEach((s, s2) -> {
+            size.addAndGet(4);
             size.addAndGet(s.length());
             size.addAndGet(s2.length());
         });
@@ -36,6 +37,11 @@ public class BugzillaInfo implements Packet {
         output.write(apiKey.getBytes());
         output.writeShort((short) username.length());
         output.write(username.getBytes());
+        output.writeInt(rootTaskID);
+        output.writeShort(groupTasksBy.length());
+        output.write(groupTasksBy.getBytes());
+
+        output.writeInt(labelToField.keySet().size());
 
         for (String label : labelToField.keySet()) {
             String field = labelToField.get(label);

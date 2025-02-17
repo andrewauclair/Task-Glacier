@@ -40,6 +40,7 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 
 		m_bugzillaURL = info.URL;
 		m_bugzillaKey = info.apiKey;
+		m_bugzillaUsername = info.username;
 
 		break;
 	}
@@ -47,7 +48,7 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 	{
 		if (m_curl)
 		{
-			auto result = m_curl->execute_request(m_bugzillaURL + "/rest/bug&" + m_bugzillaKey);
+			auto result = m_curl->execute_request(m_bugzillaURL + "/rest/bug?assigned_to=" + m_bugzillaUsername + "&apiKey=" + m_bugzillaKey);
 
 			std::cout << result << '\n';
 		}
