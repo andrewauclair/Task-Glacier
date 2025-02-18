@@ -53,10 +53,10 @@ struct curlpp_ : cURL
 			request.setOpt(new curlpp::options::Url(url));
 			request.setOpt(new curlpp::options::Verbose(true));
 
-			std::list<std::string> header;
+			/*std::list<std::string> header;
 			header.push_back("Content-Type: application/octet-stream");
 
-			request.setOpt(new curlpp::options::HttpHeader(header));
+			request.setOpt(new curlpp::options::HttpHeader(header));*/
 
 			//request.setOpt(new curlpp::options::PostFields("abcd"));
 			//request.setOpt(new curlpp::options::PostFieldSize(5));
@@ -64,10 +64,10 @@ struct curlpp_ : cURL
 			request.perform();
 			return ss.str();
 		}
-		catch (curlpp::LogicError& e) {
+		catch (const curlpp::LogicError& e) {
 			std::cout << e.what() << std::endl;
 		}
-		catch (curlpp::RuntimeError& e) {
+		catch (const curlpp::RuntimeError& e) {
 			std::cout << e.what() << std::endl;
 		}
 		return "";
