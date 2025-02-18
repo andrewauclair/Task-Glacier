@@ -1,8 +1,11 @@
 package taskglacier;
 
 import dialogs.AddModifyTask;
+import dialogs.BugzillaConfiguration;
 import dialogs.ConnectToServer;
 import dialogs.TimeCategories;
+import packets.BugzillaRefresh;
+import packets.RequestID;
 
 import javax.swing.*;
 
@@ -11,6 +14,7 @@ public class MenuBar extends JMenuBar {
 
     private final JMenuItem connect = new JMenuItem("Connect...");
     private final JMenuItem disconnect = new JMenuItem("Disconnect");
+    private final JMenu bugzilla = new JMenu("Bugzilla");
 
     public MenuBar(MainFrame mainFrame) {
         JMenu file = new JMenu("File");
@@ -54,17 +58,37 @@ public class MenuBar extends JMenuBar {
         server.add(disconnect);
 
         add(server);
+
+        bugzilla.setMnemonic('B');
+        bugzilla.setEnabled(false);
+
+        JMenuItem configure = new JMenuItem("Configure...");
+        configure.addActionListener(e -> {
+            BugzillaConfiguration config = new BugzillaConfiguration(mainFrame);
+            config.setVisible(true);
+        });
+        bugzilla.add(configure);
+
+        JMenuItem refresh = new JMenuItem("Refresh");
+        refresh.addActionListener(e -> {
+            BugzillaRefresh packet = new BugzillaRefresh(RequestID.nextRequestID());
+            mainFrame.getConnection().sendPacket(packet);
+        });
+        bugzilla.add(refresh);
+        add(bugzilla);
     }
 
     public void connected() {
         add.setEnabled(true);
         connect.setEnabled(false);
         disconnect.setEnabled(true);
+        bugzilla.setEnabled(true);
     }
 
     public void disconnected() {
         add.setEnabled(false);
         connect.setEnabled(true);
         disconnect.setEnabled(false);
+        bugzilla.setEnabled(false);
     }
 }

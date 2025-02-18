@@ -1,6 +1,7 @@
 ﻿#include "packets.hpp"
 #include "server.hpp"
 #include "api.hpp"
+#include "curl.hpp"
 
 #include <iostream>
 #include <cstdlib>
@@ -9,6 +10,10 @@
 #include <fstream>
 
 #include <sockpp/tcp_acceptor.h>
+
+#include <curlpp/cURLpp.hpp>
+#include <curlpp/Easy.hpp>
+#include <curlpp/Options.hpp>
 
 inline std::uint32_t read_u32(const std::vector<std::byte>& input, std::size_t index)
 {
@@ -32,6 +37,43 @@ private:
 	RequestID nextID = RequestID(1);
 };
 
+struct curlpp_ : cURL
+{
+	// TODO probably return a JSON object
+	std::string execute_request(const std::string& url) override
+	{
+		try {
+			curlpp::Cleanup cleaner;
+
+			std::ostringstream ss;
+			ss << curlpp::options::Url(url);
+
+			curlpp::Easy request;
+
+			request.setOpt(new curlpp::options::Url(url));
+			request.setOpt(new curlpp::options::Verbose(true));
+
+			/*std::list<std::string> header;
+			header.push_back("Content-Type: application/octet-stream");
+
+			request.setOpt(new curlpp::options::HttpHeader(header));*/
+
+			//request.setOpt(new curlpp::options::PostFields("abcd"));
+			//request.setOpt(new curlpp::options::PostFieldSize(5));
+
+			request.perform();
+			return ss.str();
+		}
+		catch (const curlpp::LogicError& e) {
+			std::cout << e.what() << std::endl;
+		}
+		catch (const curlpp::RuntimeError& e) {
+			std::cout << e.what() << std::endl;
+		}
+		return "";
+	}
+};
+
 /*
 * task-glacier 127.0.0.1 5000 /var/lib/task-glacier
 */
@@ -45,6 +87,8 @@ int main(int argc, char** argv)
 
 	sockpp::initialize();
 
+	curlpp_ curl;
+
 	const std::string ip_address = argv[1];
 
 	const int port = std::atoi(argv[2]);
@@ -57,7 +101,7 @@ int main(int argc, char** argv)
 	std::ifstream input(argv[3]);
 	std::ofstream output(argv[3], std::ios::out | std::ios::app);
 	
-	API api(clock, input, output);
+	API api(clock, curl, input, output);
 
 	// ctrl-c app to kill it
 	while (true)

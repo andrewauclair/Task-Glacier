@@ -1,5 +1,32 @@
 #include "packets.hpp"
 
+std::vector<std::byte> RequestMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(static_cast<std::int32_t>(packetType()));
+	builder.add(requestID);
+
+	return builder.build();
+}
+
+std::expected<RequestMessage, UnpackError> RequestMessage::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto requestID = parser.parse_next<RequestID>();
+
+	try
+	{
+		return RequestMessage(packetType.value(), requestID.value());
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
+}
+
 std::vector<std::byte> CreateTaskMessage::pack() const
 {
 	PacketBuilder builder;
@@ -309,7 +336,17 @@ std::vector<std::byte> BugzillaInfoMessage::pack() const
 	builder.add(PacketType::BUGZILLA_INFO);
 	builder.add_string(URL);
 	builder.add_string(apiKey);
+	builder.add_string(username);
+	builder.add(rootTaskID);
+	builder.add_string(groupTasksBy);
+	
+	builder.add<std::int32_t>(labelToField.size());
 
+	for (auto&& value : labelToField)
+	{
+		builder.add_string(value.first);
+		builder.add_string(value.second);
+	}
 	return builder.build();
 }
 
@@ -320,10 +357,28 @@ std::expected<BugzillaInfoMessage, UnpackError> BugzillaInfoMessage::unpack(std:
 	const auto packetType = parser.parse_next<PacketType>();
 	const auto URL = parser.parse_next<std::string>();
 	const auto apiKey = parser.parse_next<std::string>();
+	const auto username = parser.parse_next<std::string>();
+	const auto rootTaskID = parser.parse_next<TaskID>();
+	const auto groupTasksBy = parser.parse_next<std::string>();
 
 	try
 	{
-		return BugzillaInfoMessage(URL.value(), apiKey.value());
+		auto info = BugzillaInfoMessage(URL.value(), apiKey.value());
+		info.username = username.value();
+		info.rootTaskID = rootTaskID.value();
+		info.groupTasksBy = groupTasksBy.value();
+
+		const std::int32_t count = parser.parse_next<std::int32_t>().value();
+
+		for (int i = 0; i < count; i++)
+		{
+			const auto label = parser.parse_next<std::string>();
+			const auto field = parser.parse_next<std::string>();
+
+			info.labelToField.emplace(label.value(), field.value());
+		}
+
+		return info;
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{

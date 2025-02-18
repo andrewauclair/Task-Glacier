@@ -989,10 +989,10 @@ TEST_CASE("Bugzilla Info Packet", "[message]")
 
 	SECTION("Pack")
 	{
-		auto verifier = PacketVerifier(message.pack(), 43);
+		auto verifier = PacketVerifier(message.pack(), 55);
 
 		verifier
-			.verify_value<std::uint32_t>(43, "packet length")
+			.verify_value<std::uint32_t>(55, "packet length")
 			.verify_value<std::uint32_t>(13, "packet ID")
 			.verify_string("bugzilla", "URL")
 			.verify_string("aBSEFASDfOJOEFfjlsojFEF", "API Key");
@@ -1007,6 +1007,6 @@ TEST_CASE("Bugzilla Info Packet", "[message]")
 		const auto packet = dynamic_cast<BugzillaInfoMessage&>(*result.packet.get());
 
 		CHECK(packet == message);
-		CHECK(result.bytes_read == 43);
+		CHECK(result.bytes_read == 55);
 	}
 }

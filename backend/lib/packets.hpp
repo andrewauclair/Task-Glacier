@@ -201,6 +201,9 @@ struct RequestMessage : Message
 		return packetType() == message.packetType() && requestID == message.requestID;
 	}
 
+	std::vector<std::byte> pack() const override;
+	static std::expected<RequestMessage, UnpackError> unpack(std::span<const std::byte> data);
+
 	std::ostream& print(std::ostream& out) const override
 	{
 		Message::print(out);
@@ -649,6 +652,10 @@ struct BugzillaInfoMessage : Message
 {
 	std::string URL;
 	std::string apiKey;
+	std::string username;
+	TaskID rootTaskID = NO_PARENT;
+	std::string groupTasksBy;
+	std::map<std::string, std::string> labelToField;
 
 	BugzillaInfoMessage(std::string URL, std::string apiKey) : Message(PacketType::BUGZILLA_INFO), URL(std::move(URL)), apiKey(std::move(apiKey)) {}
 
@@ -663,7 +670,8 @@ struct BugzillaInfoMessage : Message
 
 	bool operator==(const BugzillaInfoMessage& message) const
 	{
-		return URL == message.URL && apiKey == message.apiKey;
+		return URL == message.URL && apiKey == message.apiKey && username == message.username && rootTaskID == message.rootTaskID &&
+			groupTasksBy == message.groupTasksBy && labelToField == message.labelToField;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -1100,11 +1108,16 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 			break;
 		case REQUEST_CONFIGURATION:
 		case REQUEST_CONFIGURATION_COMPLETE:
-		case BUGZILLA_REFRESH:
 		{
 			result.packet = std::make_unique<BasicMessage>(BasicMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 
+			break;
+		}
+		case BUGZILLA_REFRESH:
+		{
+			result.packet = std::make_unique<RequestMessage>(RequestMessage::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
 			break;
 		}
 		case BUGZILLA_INFO:
