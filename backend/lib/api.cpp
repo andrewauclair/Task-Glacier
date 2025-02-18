@@ -53,7 +53,10 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 	{
 		if (m_curl)
 		{
-			auto result = m_curl->execute_request(m_bugzillaURL + "/rest/bug?assigned_to=" + m_bugzillaUsername + "&apiKey=" + m_bugzillaKey);
+			// find all bugs that are not resolved
+			// TODO find only bugs that have changed since the last refresh
+			// TODO special processing for the initial refresh
+			auto result = m_curl->execute_request(m_bugzillaURL + "/rest/bug?assigned_to=" + m_bugzillaUsername + "&resolution=---&apiKey=" + m_bugzillaKey);
 
 			std::cout << result << '\n';
 		}
