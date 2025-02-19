@@ -47,6 +47,17 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 		m_bugzillaKey = info.apiKey;
 		m_bugzillaUsername = info.username;
 
+		*m_output << "bugzilla: " << m_bugzillaURL << ' ' << m_bugzillaKey << '\n';
+		*m_output << m_bugzillaUsername << '\n';
+		*m_output << info.rootTaskID._val << '\n';
+		*m_output << info.groupTasksBy << '\n';
+		*m_output << info.labelToField.size() << '\n';
+
+		for (auto&& f : info.labelToField)
+		{
+			*m_output << f.first << '\n' << f.second << '\n';
+		}
+
 		break;
 	}
 	case PacketType::BUGZILLA_REFRESH:

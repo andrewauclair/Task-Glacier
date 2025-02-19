@@ -3,6 +3,7 @@
 add_executable(task-glacier-tests 
 	api_test.cpp
 	packet_test.cpp
+	bugzilla_test.cpp
 )
 
 set_target_properties(task-glacier-tests PROPERTIES CXX_STANDARD 23)

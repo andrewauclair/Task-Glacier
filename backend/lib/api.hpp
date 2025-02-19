@@ -10,12 +10,12 @@
 class API
 {
 public:
-	API(const Clock& clock, std::istream& input, std::ostream& output) : m_clock(&clock), m_app(clock, output)
+	API(const Clock& clock, std::istream& input, std::ostream& output) : m_clock(&clock), m_app(clock, output), m_output(&output)
 	{
 		m_app.load_from_file(input);
 	}
 
-	API(const Clock& clock, cURL& curl, std::istream& input, std::ostream& output) : m_clock(&clock), m_curl(&curl), m_app(clock, output)
+	API(const Clock& clock, cURL& curl, std::istream& input, std::ostream& output) : m_clock(&clock), m_curl(&curl), m_app(clock, output), m_output(&output)
 	{
 		m_app.load_from_file(input);
 	}
@@ -45,6 +45,7 @@ private:
 	const Clock* m_clock;
 	cURL* m_curl = nullptr;
 	MicroTask m_app;
+	std::ostream* m_output;
 };
 
 #endif
