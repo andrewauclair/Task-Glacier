@@ -2,6 +2,24 @@
 
 #include <source_location>
 
+template<typename T>
+void verify_message(const T& expected, const Message& actual, std::source_location location = std::source_location::current())
+{
+	INFO(location.file_name() << ":" << location.line());
+
+	UNSCOPED_INFO("packet type: " << static_cast<std::int32_t>(actual.packetType()));
+
+	if (const auto* actual_message = dynamic_cast<const T*>(&actual))
+	{
+		CHECK(*actual_message == expected);
+	}
+	else
+	{
+		UNSCOPED_INFO("expected message: " << expected);
+		FAIL();
+	}
+}
+
 struct curlTest : cURL
 {
 	mutable std::string request;

@@ -56,6 +56,15 @@ struct std::formatter<TimeCodeID> : std::formatter<std::int32_t> {
 	}
 };
 
+using TimeCategoryID = strong::type<std::int32_t, struct time_category_id_, strong::equality, strong::incrementable>;
+
+template <>
+struct std::formatter<TimeCategoryID> : std::formatter<std::int32_t> {
+	auto format(TimeCategoryID p, format_context& ctx) const {
+		return std::formatter<std::int32_t>::format(p._val, ctx);
+	}
+};
+
 struct TaskTimes
 {
 	std::chrono::milliseconds start = std::chrono::milliseconds(0);
@@ -75,10 +84,13 @@ struct TimeCode
 
 		return out;
 	}
+
+	constexpr auto operator<=>(const TimeCode&) const = default;
 };
 
 struct TimeCategory
 {
+	TimeCategoryID id; // the ID will be continuously incremented, even when deleting time categories that were just created
 	std::string name;
 	std::vector<TimeCode> codes;
 	bool archived = false;
@@ -96,6 +108,8 @@ struct TimeCategory
 
 		return out;
 	}
+
+	constexpr auto operator<=>(const TimeCategory&) const = default;
 };
 
 struct MessageVisitor;
@@ -343,6 +357,8 @@ struct TimeCodePacket
 	std::int32_t taskCount;
 	bool archived;
 
+	TimeCodePacket(TimeCodeID id, std::string name) : id(id), name(std::move(name)) {}
+
 	constexpr auto operator<=>(const TimeCodePacket&) const = default;
 
 	friend std::ostream& operator<<(std::ostream& out, const TimeCodePacket& code)
@@ -355,11 +371,14 @@ struct TimeCodePacket
 
 struct TimeCategoryPacket
 {
+	TimeCategoryID id;
 	std::string name;
 	bool inUse;
 	std::int32_t taskCount;
 	bool archived;
 	std::vector<TimeCodePacket> codes;
+
+	TimeCategoryPacket(TimeCategoryID id, std::string name) : id(id), name(std::move(name)) {}
 
 	constexpr auto operator<=>(const TimeCategoryPacket&) const = default;
 
@@ -442,7 +461,7 @@ struct TimeCategoriesModify : RequestMessage
 
 	bool operator==(const TimeCategoriesModify& message) const
 	{
-		return packetType() == message.packetType();
+		return packetType() == message.packetType() && requestID == message.requestID && timeCategories == message.timeCategories;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -452,11 +471,17 @@ struct TimeCategoriesModify : RequestMessage
 	{
 		out << "TimeCategoriesModify { ";
 		RequestMessage::print(out);
+
+		if (!timeCategories.empty())
+		{
+			out << ", ";
+		}
 		
 		for (auto&& category : timeCategories)
 		{
 			out << category;
 		}
+		out << " }";
 		return out;
 	}
 
@@ -1133,6 +1158,10 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 			break;
 		case DAILY_REPORT:
 			result.packet = std::make_unique<DailyReportMessage>(DailyReportMessage::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
+			break;
+		case TIME_CATEGORIES_MODIFY:
+			result.packet = std::make_unique<TimeCategoriesModify>(TimeCategoriesModify::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 			break;
 		default:

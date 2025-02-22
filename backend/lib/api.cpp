@@ -64,10 +64,25 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 	{
 		if (m_curl)
 		{
+			const bool initial_refresh = !m_lastBugzillaRefresh.has_value();
+
 			// find all bugs that are not resolved
 			// TODO find only bugs that have changed since the last refresh
 			// TODO special processing for the initial refresh
-			auto result = m_curl->execute_request(m_bugzillaURL + "/rest/bug?assigned_to=" + m_bugzillaUsername + "&resolution=---&api_key=" + m_bugzillaKey);
+			std::string request = m_bugzillaURL + "/rest/bug?assigned_to=" + m_bugzillaUsername + "&resolution=---&api_key=" + m_bugzillaKey;
+
+			if (!initial_refresh)
+			{
+				// YYYY-MM-DDTHH24:MI:SSZ
+				const auto ms = m_clock->now();
+				auto time = std::chrono::system_clock::time_point(ms);
+
+				std::chrono::year_month_day ymd = std::chrono::year_month_day{ std::chrono::floor<std::chrono::days>(time) };
+				std::chrono::hh_mm_ss hms = std::chrono::hh_mm_ss{ ms };
+
+				request += "&last_modified_time=" + std::format("{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z", (int)ymd.year(), (unsigned int)ymd.month(), (unsigned int)ymd.day(), hms.hours().count(), hms.minutes().count(), hms.seconds().count());
+			}
+			auto result = m_curl->execute_request(request);
 
 			std::cout << result << '\n';
 		}
@@ -247,7 +262,29 @@ void API::send_task_info(const Task& task, std::vector<std::unique_ptr<Message>>
 
 void API::time_categories_modify(const TimeCategoriesModify& message, std::vector<std::unique_ptr<Message>>& output)
 {
+	for (auto&& category : message.timeCategories)
+	{
+		if (category.id == TimeCategoryID(0))
+		{
+			// creating new time category
+			// TODO check if one with the given name already exists
+
+			auto newCategory = category;
+			newCategory.id = TimeCategoryID(1);
+
+			m_timeCategories.push_back(newCategory);
+		}
+	}
 	output.push_back(std::make_unique<SuccessResponse>(message.requestID));
+
+	TimeCategoriesData data;
+
+	for (auto&& category : m_timeCategories)
+	{
+		//TimeCategoryPacket packet }
+		//data.timeCategories.emplace_back();
+	}
+	output.push_back(std::make_unique<TimeCategoriesData>(data));
 }
 
 void API::create_daily_report(RequestID requestID, int month, int day, int year, std::vector<std::unique_ptr<Message>>& output)

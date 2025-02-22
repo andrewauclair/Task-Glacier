@@ -11,24 +11,6 @@
 #include <vector>
 #include <source_location>
 
-template<typename T>
-void verify_message(const T& expected, const Message& actual, std::source_location location = std::source_location::current())
-{
-	INFO(location.file_name() << ":" << location.line());
-
-	UNSCOPED_INFO("packet type: " << static_cast<std::int32_t>(actual.packetType()));
-	
-	if (const auto* actual_message = dynamic_cast<const T*>(&actual))
-	{
-		CHECK(*actual_message == expected);
-	}
-	else
-	{
-		UNSCOPED_INFO("expected message: " << expected);
-		FAIL();
-	}
-}
-
 TEST_CASE("no parent ID is 0", "[task]")
 {
 	CHECK(NO_PARENT == TaskID(0));
@@ -561,17 +543,109 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 	// - task cannot be changed back to inactive from finished if using an archived time category or time code (I don't think this feature exists yet)
 	TestHelper helper;
 
-	SECTION("Add Time Category")
+	SECTION("Success - Add Time Category")
 	{
 		auto modify = TimeCategoriesModify(helper.next_request_id(), {});
-		modify.timeCategories.emplace_back("New");
+		auto& newCategory = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
 
 		helper.expect_success(modify);
 
 		auto data = TimeCategoriesData();
-		data.timeCategories.emplace_back("New");
+		auto& verifyCategory = data.timeCategories.emplace_back(TimeCategoryID(1), "New");
 
 		helper.required_messages({ &data });
+	}
+
+	SECTION("Success - Add Time Code")
+	{
+		auto modify = TimeCategoriesModify(helper.next_request_id(), {});
+		auto& newCategory = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
+		newCategory.codes.emplace_back(TimeCodeID(0), "Code 1");
+
+		helper.expect_success(modify);
+
+		auto data = TimeCategoriesData();
+		auto& verifyCategory = data.timeCategories.emplace_back(TimeCategoryID(1), "New");
+		verifyCategory.codes.emplace_back(TimeCodeID(1), "Code 1");
+
+		helper.required_messages({ &data });
+	}
+
+	SECTION("Success - Add Multiple Time Categories")
+	{
+		auto modify = TimeCategoriesModify(helper.next_request_id(), {});
+		modify.timeCategories.emplace_back(TimeCategoryID(0), "New 1");
+		modify.timeCategories.emplace_back(TimeCategoryID(0), "New 2");
+
+		helper.expect_success(modify);
+
+		auto data = TimeCategoriesData();
+		data.timeCategories.emplace_back(TimeCategoryID(1), "New 1");
+		data.timeCategories.emplace_back(TimeCategoryID(2), "New 2");
+
+		helper.required_messages({ &data });
+	}
+
+	SECTION("Success - Add Multiple Time Codes")
+	{
+		auto modify = TimeCategoriesModify(helper.next_request_id(), {});
+		
+		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 1");
+		category1.codes.emplace_back(TimeCodeID(0), "Code 1");
+		category1.codes.emplace_back(TimeCodeID(0), "Code 2");
+
+		auto& category2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 2");
+		category2.codes.emplace_back(TimeCodeID(0), "Code 3");
+		category2.codes.emplace_back(TimeCodeID(0), "Code 4");
+
+		helper.expect_success(modify);
+
+		auto data = TimeCategoriesData();
+
+		auto& verifyCategory1 = data.timeCategories.emplace_back(TimeCategoryID(1), "New 1");
+		verifyCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
+		verifyCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
+
+		auto& verifyCategory2 = data.timeCategories.emplace_back(TimeCategoryID(2), "New 2");
+		verifyCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
+		verifyCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
+
+		helper.required_messages({ &data });
+	}
+
+	SECTION("Success - Delete Time Category")
+	{
+
+	}
+
+	SECTION("Success - Delete Time Code")
+	{
+
+	}
+
+	SECTION("Success - Time Category IDs Are Not Reused")
+	{
+
+	}
+
+	SECTION("Success - Time Code IDs Are Not Reused")
+	{
+
+	}
+
+	SECTION("Failure - Time Category Already Exists")
+	{
+
+	}
+
+	SECTION("Failure - Time Category Does Not Exist")
+	{
+
+	}
+
+	SECTION("Failure - Time Code Already Exists")
+	{
+
 	}
 }
 

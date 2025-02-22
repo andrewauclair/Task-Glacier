@@ -38,9 +38,15 @@ private:
 
 	void create_daily_report(RequestID requestID, int month, int day, int year, std::vector<std::unique_ptr<Message>>& output);
 
+	std::vector<TimeCategory> m_timeCategories;
+
 	std::string m_bugzillaURL;
 	std::string m_bugzillaKey;
 	std::string m_bugzillaUsername;
+	std::string m_groupTasksBy;
+	std::map<std::string, std::string> m_labelToField;
+
+	std::optional<std::chrono::milliseconds> m_lastBugzillaRefresh;
 
 	const Clock* m_clock;
 	cURL* m_curl = nullptr;

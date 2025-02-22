@@ -153,7 +153,24 @@ std::vector<std::byte> TimeCategoriesModify::pack() const
 
 	builder.add(static_cast<std::int32_t>(packetType()));
 	builder.add(requestID);
+	builder.add<std::int32_t>(timeCategories.size());
 
+	for (auto&& category : timeCategories)
+	{
+		builder.add(category.id);
+		builder.add_string(category.name);
+		builder.add(category.archived);
+
+		builder.add<std::int32_t>(category.codes.size());
+
+		for (auto&& code : category.codes)
+		{
+			builder.add(code.id);
+			builder.add_string(code.name);
+			builder.add(code.archived);
+		}
+	}
+	
 	return builder.build();
 }
 
@@ -163,11 +180,30 @@ std::expected<TimeCategoriesModify, UnpackError> TimeCategoriesModify::unpack(st
 
 	const auto packetType = parser.parse_next<PacketType>();
 	const auto requestID = parser.parse_next<RequestID>();
-	const auto taskID = parser.parse_next<TaskID>();
+
+	const auto categoryCount = parser.parse_next<std::int32_t>();
 
 	try
 	{
-		return TimeCategoriesModify(requestID.value(), {});
+		std::vector<TimeCategory> categories;
+
+		for (int i = 0; i < categoryCount.value(); i++)
+		{
+			TimeCategory category(parser.parse_next<TimeCategoryID>().value());
+
+			category.name = parser.parse_next<std::string>().value();
+			category.archived = parser.parse_next<bool>().value();
+
+			for (int j = 0; j < parser.parse_next<std::int32_t>().value(); j++)
+			{
+				const auto id = parser.parse_next<TimeCodeID>();
+				const auto name = parser.parse_next<std::string>();
+				const auto archived = parser.parse_next<bool>();
+
+				category.codes.emplace_back(id.value(), name.value(), archived.value());
+			}
+		}
+		return TimeCategoriesModify(requestID.value(), categories);
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{

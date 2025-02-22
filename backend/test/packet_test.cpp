@@ -423,7 +423,8 @@ TEST_CASE("Task", "[messages]")
 TEST_CASE("Time Categories Modify", "[messages]")
 {
 	std::vector<TimeCategory> timeCategories;
-	timeCategories.emplace_back(TimeCategory{ "one", std::vector{ TimeCode{ TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}} });
+	timeCategories.emplace_back(TimeCategory{ TimeCategoryID(5), "one", std::vector{ TimeCode{ TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}} });
+
 	const auto modify = TimeCategoriesModify(RequestID(10), timeCategories);
 	CAPTURE(modify);
 
@@ -442,7 +443,6 @@ TEST_CASE("Time Categories Modify", "[messages]")
 		SECTION("Match")
 		{
 			auto modify2 = TimeCategoriesModify(RequestID(10), timeCategories);
-			modify2.timeCategories.push_back(TimeCategory{ "one", { { TimeCodeID(1), "a" }, { TimeCodeID(2), "b" } } });
 			CAPTURE(modify2);
 
 			const Message* message = &modify2;
@@ -454,7 +454,6 @@ TEST_CASE("Time Categories Modify", "[messages]")
 	SECTION("Compare - Directly")
 	{
 		auto modify2 = TimeCategoriesModify(RequestID(10), timeCategories);
-		modify2.timeCategories.push_back(TimeCategory{ "one", { { TimeCodeID(1), "a" }, { TimeCodeID(2), "b" } } });
 		CAPTURE(modify2);
 
 		CHECK(modify == modify2);
@@ -463,7 +462,7 @@ TEST_CASE("Time Categories Modify", "[messages]")
 	SECTION("Compare Messages That Do Not Match")
 	{
 		std::vector<TimeCategory> timeCategories2;
-		timeCategories2.emplace_back(TimeCategory{ "two", std::vector{ TimeCode{ TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}} });
+		timeCategories2.emplace_back(TimeCategory{ TimeCategoryID(5), "two", std::vector{ TimeCode{ TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}} });
 		auto modify2 = TimeCategoriesModify(RequestID(15), timeCategories2);
 		CAPTURE(modify2);
 
@@ -476,7 +475,7 @@ TEST_CASE("Time Categories Modify", "[messages]")
 
 		modify.print(ss);
 
-		auto expected_text = "TimeCategoriesModify { packetType: 8, requestID: 10 }";
+		auto expected_text = "TimeCategoriesModify { packetType: 28, requestID: 10, TimeCategory { name: one, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
 
 		CHECK(ss.str() == expected_text);
 
