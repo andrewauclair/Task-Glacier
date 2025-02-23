@@ -139,11 +139,53 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 					info.createTime = task->createTime();
 
 					output.push_back(std::make_unique<TaskInfoMessage>(info));
+
+					m_app.m_bugzillaTasks.emplace(i, result.value());
 				}
 			}
 			else
 			{
 				// extra work to figure out if the task already exists. this will involve searching somehow for the bug
+				for (auto bug : doc["bugs"])
+				{
+					TaskID parentID = NO_PARENT;
+					const auto groupBy = std::string(std::string_view(bug[m_app.m_bugzillaGroupTasksBy]));
+
+					if (m_app.m_bugzillaGroupBy.contains(groupBy))
+					{
+						parentID = m_app.m_bugzillaGroupBy.at(groupBy);
+					}
+					else
+					{
+						parentID = m_app.create_task(groupBy, m_app.m_bugzillaRootTaskID).value();
+						m_app.m_bugzillaGroupBy.emplace(groupBy, parentID);
+
+						auto* task = m_app.find_task(parentID);
+
+						TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
+						info.newTask = true;
+						info.state = task->state;
+						info.createTime = task->createTime();
+
+						output.push_back(std::make_unique<TaskInfoMessage>(info));
+					}
+
+					auto id = bug["id"];
+					std::int64_t i = id.get_int64();
+
+					if (m_app.m_bugzillaTasks.contains(i))
+					{
+						auto* task = m_app.find_task(m_app.m_bugzillaTasks.at(i));
+
+						task->m_name = std::format("{} - {}", i, std::string_view(bug["summary"]));
+
+						TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
+						info.state = task->state;
+						info.createTime = task->createTime();
+
+						output.push_back(std::make_unique<TaskInfoMessage>(info));
+					}
+				}
 			}
 
 			m_app.m_lastBugzillaRefresh = now;
