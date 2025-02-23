@@ -105,9 +105,31 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 				// just adding a bunch of new tasks
 				for (auto bug : doc["bugs"])
 				{
+					TaskID parentID = NO_PARENT;
+					const auto groupBy = std::string(std::string_view(bug[m_app.m_bugzillaGroupTasksBy]));
+
+					if (m_app.m_bugzillaGroupBy.contains(groupBy))
+					{
+						parentID = m_app.m_bugzillaGroupBy.at(groupBy);
+					}
+					else
+					{
+						parentID = m_app.create_task(groupBy, m_app.m_bugzillaRootTaskID).value();
+						m_app.m_bugzillaGroupBy.emplace(groupBy, parentID);
+
+						auto* task = m_app.find_task(parentID);
+
+						TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
+						info.newTask = true;
+						info.state = task->state;
+						info.createTime = task->createTime();
+
+						output.push_back(std::make_unique<TaskInfoMessage>(info));
+					}
+
 					auto id = bug["id"];
 					std::int64_t i = id.get_int64();
-					const auto result = m_app.create_task(std::format("{} - {}", i, std::string_view(bug["summary"])), m_app.m_bugzillaRootTaskID);
+					const auto result = m_app.create_task(std::format("{} - {}", i, std::string_view(bug["summary"])), parentID);
 
 					auto* task = m_app.find_task(result.value());
 

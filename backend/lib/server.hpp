@@ -128,6 +128,9 @@ public:
 	std::map<std::string, std::string> m_bugzillaLabelToField;
 	std::optional<std::chrono::milliseconds> m_lastBugzillaRefresh;
 
+	std::map<int, TaskID> m_bugzillaTasks;
+	std::map<std::string, TaskID> m_bugzillaGroupBy;
+
 private:
 	std::unordered_map<TaskID, Task> m_tasks;
 	Task* m_activeTask = nullptr;
