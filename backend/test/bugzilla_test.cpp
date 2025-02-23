@@ -70,35 +70,35 @@ TEST_CASE("Initial Bugzilla Refresh Pulls All Open Bugs", "[bugzilla][api]")
 	CHECK(helper.curl.request == "bugzilla/rest/bug?assigned_to=test&resolution=---&api_key=asfesdFEASfslj");
 
 	auto minor = TaskInfoMessage(TaskID(2), TaskID(1), "Minor");
-	auto taskInfo2 = TaskInfoMessage(TaskID(3), TaskID(2), "50 - bug 1");
-	auto taskInfo3 = TaskInfoMessage(TaskID(4), TaskID(2), "55 - bug 2");
+	auto taskInfo3 = TaskInfoMessage(TaskID(3), TaskID(2), "50 - bug 1");
+	auto taskInfo4 = TaskInfoMessage(TaskID(4), TaskID(2), "55 - bug 2");
 	auto critical = TaskInfoMessage(TaskID(5), TaskID(1), "Critical");
-	auto taskInfo4 = TaskInfoMessage(TaskID(6), TaskID(5), "60 - bug 3");
+	auto taskInfo6 = TaskInfoMessage(TaskID(6), TaskID(5), "60 - bug 3");
 	auto blocker = TaskInfoMessage(TaskID(7), TaskID(1), "Blocker");
-	auto taskInfo5 = TaskInfoMessage(TaskID(8), TaskID(7), "65 - bug 4");
+	auto taskInfo8 = TaskInfoMessage(TaskID(8), TaskID(7), "65 - bug 4");
 	auto nitpick = TaskInfoMessage(TaskID(9), TaskID(1), "Nitpick");
-	auto taskInfo6 = TaskInfoMessage(TaskID(10), TaskID(9), "70 - bug 5");
+	auto taskInfo10 = TaskInfoMessage(TaskID(10), TaskID(9), "70 - bug 5");
 
 	minor.createTime = std::chrono::milliseconds(1737344039870);
-	taskInfo2.createTime = std::chrono::milliseconds(1737344039870);
 	taskInfo3.createTime = std::chrono::milliseconds(1737344039870);
-	critical.createTime = std::chrono::milliseconds(1737344039870);
 	taskInfo4.createTime = std::chrono::milliseconds(1737344039870);
-	blocker.createTime = std::chrono::milliseconds(1737344039870);
-	taskInfo5.createTime = std::chrono::milliseconds(1737344039870);
-	nitpick.createTime = std::chrono::milliseconds(1737344039870);
+	critical.createTime = std::chrono::milliseconds(1737344039870);
 	taskInfo6.createTime = std::chrono::milliseconds(1737344039870);
+	blocker.createTime = std::chrono::milliseconds(1737344039870);
+	taskInfo8.createTime = std::chrono::milliseconds(1737344039870);
+	nitpick.createTime = std::chrono::milliseconds(1737344039870);
+	taskInfo10.createTime = std::chrono::milliseconds(1737344039870);
 	minor.newTask = true;
-	taskInfo2.newTask = true;
 	taskInfo3.newTask = true;
-	critical.newTask = true;
 	taskInfo4.newTask = true;
-	blocker.newTask = true;
-	taskInfo5.newTask = true;
-	nitpick.newTask = true;
+	critical.newTask = true;
 	taskInfo6.newTask = true;
+	blocker.newTask = true;
+	taskInfo8.newTask = true;
+	nitpick.newTask = true;
+	taskInfo10.newTask = true;
 
-	helper.required_messages({ &minor, &taskInfo2, &taskInfo3, &critical, &taskInfo4, &blocker, &taskInfo5, &nitpick, &taskInfo6 });
+	helper.required_messages({ &minor, &taskInfo3, &taskInfo4, &critical, &taskInfo6, &blocker, &taskInfo8, &nitpick, &taskInfo10 });
 
 }
 
@@ -131,22 +131,39 @@ TEST_CASE("Subsequent Bugzilla Refresh Requests Updates Since Last Refresh", "[b
 
 	helper.expect_success(refresh);
 	helper.clock.time += std::chrono::hours(2);
+	helper.output.clear();
 
-	helper.curl.result = "{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1 name change\", \"status\": \"Assigned\", \"priority\": \"Normal\", \"severity\": \"Minor\" },"
-		"{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Reviewed\", \"priority\": \"Normal\", \"severity\": \"Major\" },"
-		"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"Medium\", \"severity\": \"Critical\" },"
-		"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"High\", \"severity\": \"Major\" } ] }";
-
-	helper.expect_success(refresh);
-
-	// verify curl request has previous refresh date
-	CHECK(helper.curl.request == "bugzilla/rest/bug?assigned_to=test&resolution=---&api_key=asfesdFEASfslj&last_change_time=2025-01-20T05:33:59Z");
+	
 
 	// verify various operations
 	// new tasks are added
 	// tasks are reparented if their grouping changes
 	// tasks are finished if the bug is resolved
 	// labels are added and removed
+
+	// TODO We should finish the grouping tasks if they are unused. Then we can unfinish them if required to
+
+	SECTION("Last Change Time")
+	{
+		helper.curl.result = "{ \"bugs\": [] }";
+
+		helper.expect_success(refresh);
+
+		// verify curl request has previous refresh date
+		CHECK(helper.curl.request == "bugzilla/rest/bug?assigned_to=test&resolution=---&api_key=asfesdFEASfslj&last_change_time=2025-01-20T05:33:59Z");
+	}
+
+	SECTION("Bug Summary Change")
+	{
+		helper.curl.result = "{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1 name change\", \"status\": \"Assigned\", \"priority\": \"Normal\", \"severity\": \"Minor\" } ] }";
+
+		helper.expect_success(refresh);
+
+		auto taskInfo3 = TaskInfoMessage(TaskID(3), TaskID(2), "50 - bug 1 name change");
+		taskInfo3.createTime = std::chrono::milliseconds(1737344039870);
+
+		helper.required_messages({ &taskInfo3 });
+	}
 }
 
 // TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
