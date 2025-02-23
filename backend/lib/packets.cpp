@@ -194,7 +194,8 @@ std::expected<TimeCategoriesModify, UnpackError> TimeCategoriesModify::unpack(st
 			category.name = parser.parse_next<std::string>().value();
 			category.archived = parser.parse_next<bool>().value();
 
-			for (int j = 0; j < parser.parse_next<std::int32_t>().value(); j++)
+			const auto codeCount = parser.parse_next<std::int32_t>().value();
+			for (int j = 0; j < codeCount; j++)
 			{
 				const auto id = parser.parse_next<TimeCodeID>();
 				const auto name = parser.parse_next<std::string>();
@@ -202,6 +203,7 @@ std::expected<TimeCategoriesModify, UnpackError> TimeCategoriesModify::unpack(st
 
 				category.codes.emplace_back(id.value(), name.value(), archived.value());
 			}
+			categories.push_back(category);
 		}
 		return TimeCategoriesModify(requestID.value(), categories);
 	}

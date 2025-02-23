@@ -6,12 +6,14 @@ import com.formdev.flatlaf.FlatLightLaf;
 import data.ServerConnection;
 import data.TaskModel;
 import dialogs.ConnectToServer;
+import io.github.andrewauclair.moderndocking.DockableTabPreference;
 import io.github.andrewauclair.moderndocking.app.AppState;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import io.github.andrewauclair.moderndocking.app.RootDockingPanel;
 import io.github.andrewauclair.moderndocking.app.WindowLayoutBuilder;
 import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
 import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
+import io.github.andrewauclair.moderndocking.settings.Settings;
 import packets.RequestConfig;
 import panels.StatusBar;
 import panels.SystemTrayDisplay;
@@ -33,7 +35,7 @@ public class MainFrame extends JFrame {
     private Thread listen;
     private Socket socket;
 
-    private ServerConnection connection = new ServerConnection(null, null);
+    private ServerConnection connection = null;
     private TaskModel taskModel = new TaskModel();
     ImageIcon appIcon16 = new ImageIcon(Objects.requireNonNull(System.getenv("TASK_GLACIER_DEV_INSTANCE") != null ? getClass().getResource("/work-in-progress (1).png") : getClass().getResource("/app-icon-16.png")));
     TrayIcon trayIcon = new TrayIcon(appIcon16.getImage(), "");
@@ -53,6 +55,9 @@ public class MainFrame extends JFrame {
     }
 
     public MainFrame() throws IOException {
+    }
+    @Override
+    public void setVisible(boolean visible) {
         mainFrame = this;
 
         setLayout(new GridBagLayout());
@@ -65,6 +70,7 @@ public class MainFrame extends JFrame {
         gbc.fill = GridBagConstraints.BOTH;
 
         RootDockingPanel root = new RootDockingPanel();
+//        root.setVisible(false);
         add(root, gbc);
 
         setTitle("Task Glacier (Not Connected)");
@@ -85,13 +91,15 @@ public class MainFrame extends JFrame {
 
             try {
                 tray.add(trayIcon);
-            } catch (AWTException e) {
-                throw new RuntimeException(e);
+            } catch (IllegalArgumentException | AWTException e) {
+//                throw new RuntimeException(e);
             }
         }
 
         setSize(600, 400);
         Docking.initialize(this);
+
+        Settings.setDefaultTabPreference(DockableTabPreference.TOP_ALWAYS);
 
         DockingUI.initialize();
         Docking.registerDockingPanel(root, this);
@@ -133,6 +141,7 @@ public class MainFrame extends JFrame {
         if (!isConnected()) {
             restoreLayout();
         }
+        super.setVisible(visible);
     }
 
     public static void restoreLayout() {

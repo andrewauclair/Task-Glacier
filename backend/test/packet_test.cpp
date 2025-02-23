@@ -496,10 +496,10 @@ TEST_CASE("Time Categories Modify", "[messages]")
 
 	SECTION("Pack")
 	{
-		auto verifier = PacketVerifier(modify.pack(), 12);
+		auto verifier = PacketVerifier(modify.pack(), 46);
 
 		verifier
-			.verify_value<std::uint32_t>(12, "packet length")
+			.verify_value<std::uint32_t>(46, "packet length")
 			.verify_value(static_cast<std::int32_t>(PacketType::TIME_CATEGORIES_MODIFY), "packet ID")
 			.verify_value<std::uint32_t>(10, "request ID");
 	}
@@ -507,7 +507,7 @@ TEST_CASE("Time Categories Modify", "[messages]")
 	SECTION("Unpack")
 	{
 		PacketTestHelper helper;
-		helper.expect_packet<TimeCategoriesModify>(modify, 12);
+		helper.expect_packet<TimeCategoriesModify>(modify, 46);
 	}
 }
 

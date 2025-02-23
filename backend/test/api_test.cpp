@@ -920,8 +920,8 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	verify_message(task4, *output[3]);
 	verify_message(task5, *output[4]);
 	verify_message(task6, *output[5]);
-
-	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[6]);
+	// 6 is bugzilla config
+	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[7]);
 }
 
 TEST_CASE("request configuration at startup", "[api]")
@@ -960,6 +960,6 @@ TEST_CASE("request configuration at startup", "[api]")
 	verify_message(TaskInfoMessage(TaskID(4), TaskID(2), "task 4", std::chrono::milliseconds(1737349439870)), *output[3]);
 	verify_message(TaskInfoMessage(TaskID(5), TaskID(3), "task 5", std::chrono::milliseconds(1737351239870)), *output[4]);
 	verify_message(TaskInfoMessage(TaskID(6), TaskID(4), "task 6", std::chrono::milliseconds(1737353039870)), *output[5]);
-	
-	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[6]);
+	// 6 is bugzilla config
+	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[7]);
 }

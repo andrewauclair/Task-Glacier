@@ -23,6 +23,13 @@ public class MenuBar extends JMenuBar {
         JMenuItem exit = new JMenuItem("Exit");
         exit.addActionListener(e -> System.exit(0));
         file.add(exit);
+
+        JMenuItem hide = new JMenuItem("Hide");
+        hide.addActionListener(e -> {
+            mainFrame.setVisible(false);
+        });
+        file.add(hide);
+
         add(file);
 
         JMenu task = new JMenu("Task");

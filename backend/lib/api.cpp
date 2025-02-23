@@ -1,4 +1,5 @@
 #include "api.hpp"
+#include "simdjson.h"
 
 #include <iostream>
 
@@ -67,6 +68,8 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 	{
 		if (m_curl)
 		{
+			const auto now = m_clock->now();
+
 			const auto& refresh = static_cast<const RequestMessage&>(message);
 
 			// TODO eventually we'll have to send back a failure if we weren't able to contact bugzilla
@@ -82,21 +85,48 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 			if (!initial_refresh)
 			{
 				// YYYY-MM-DDTHH24:MI:SSZ
-				const auto ms = m_clock->now();
-				auto time = std::chrono::system_clock::time_point(ms);
+				
+				auto time = std::chrono::system_clock::time_point(now);
 				 
 				std::chrono::year_month_day ymd = std::chrono::year_month_day{ std::chrono::floor<std::chrono::days>(time) };
-				std::chrono::hh_mm_ss hms = std::chrono::hh_mm_ss{ ms - m_clock->midnight() };
+				std::chrono::hh_mm_ss hms = std::chrono::hh_mm_ss{ now - m_clock->midnight() };
 
 				request += "&last_change_time=" + std::format("{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z", (int)ymd.year(), (unsigned int)ymd.month(), (unsigned int)ymd.day(), hms.hours().count(), hms.minutes().count(), hms.seconds().count());
 			}
+
 			auto result = m_curl->execute_request(request);
 
-			m_app.m_lastBugzillaRefresh = m_clock->now();
+			simdjson::ondemand::parser parser;
+			auto json = simdjson::padded_string(result);
+			simdjson::ondemand::document doc = parser.iterate(json);
+
+			if (initial_refresh)
+			{
+				// just adding a bunch of new tasks
+				for (auto bug : doc["bugs"])
+				{
+					auto id = bug["id"];
+					std::int64_t i = id.get_int64();
+					const auto result = m_app.create_task(std::format("{} - {}", i, std::string_view(bug["summary"])), m_app.m_bugzillaRootTaskID);
+
+					auto* task = m_app.find_task(result.value());
+
+					TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
+					info.newTask = true;
+					info.state = task->state;
+					info.createTime = task->createTime();
+
+					output.push_back(std::make_unique<TaskInfoMessage>(info));
+				}
+			}
+			else
+			{
+				// extra work to figure out if the task already exists. this will involve searching somehow for the bug
+			}
+
+			m_app.m_lastBugzillaRefresh = now;
 
 			*m_output << "bugzilla-refresh " << m_app.m_lastBugzillaRefresh->count() << '\n';
-
-			std::cout << result << '\n';
 		}
 		break;
 	}
