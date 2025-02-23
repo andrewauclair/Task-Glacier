@@ -879,7 +879,7 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	// now that we're setup, request the configuration and check the output
 	api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, output);
 
-	REQUIRE(output.size() == 7);
+	REQUIRE(output.size() == 8);
 
 	auto task1 = TaskInfoMessage(TaskID(1), NO_PARENT, "task 1 - renamed");
 	auto task2 = TaskInfoMessage(TaskID(2), NO_PARENT, "task 2");
@@ -952,7 +952,7 @@ TEST_CASE("request configuration at startup", "[api]")
 	// now that we're setup, request the configuration and check the output
 	api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, output);
 
-	REQUIRE(output.size() == 7);
+	REQUIRE(output.size() == 8);
 	
 	verify_message(TaskInfoMessage(TaskID(1), NO_PARENT, "task 1", std::chrono::milliseconds(1737344039870)), *output[0]);
 	verify_message(TaskInfoMessage(TaskID(2), TaskID(1), "task 2", std::chrono::milliseconds(1737345839870)), *output[1]);
