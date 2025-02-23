@@ -314,6 +314,40 @@ void MicroTask::load_from_file(std::istream& input)
 
 			task->m_parentID = parent_id;
 		}
+		else if (line.starts_with("bugzilla-config"))
+		{
+			auto values = split(line, ' ');
+
+			m_bugzillaURL = values[1];
+			m_bugzillaApiKey = values[2];
+			std::getline(input, m_bugzillaUsername);
+			
+			std::string temp;
+			std::getline(input, temp);
+			
+			m_bugzillaRootTaskID = TaskID(std::stoi(temp));
+
+			std::getline(input, m_bugzillaGroupTasksBy);
+			std::getline(input, temp);
+
+			const int labelCount = std::stoi(temp);
+
+			for (int i = 0; i < labelCount; i++)
+			{
+				std::string label;
+				std::string field;
+				std::getline(input, label);
+				std::getline(input, field);
+
+				m_bugzillaLabelToField[label] = field;
+			}
+		}
+		else if (line.starts_with("bugzilla-refresh"))
+		{
+			auto values = split(line, ' ');
+
+			m_lastBugzillaRefresh = std::chrono::milliseconds(std::stoll(values[1]));
+		}
 		else
 		{
 			throw std::runtime_error("Invalid command: " + line);

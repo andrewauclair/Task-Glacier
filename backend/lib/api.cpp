@@ -43,15 +43,18 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 	{
 		const auto& info = static_cast<const BugzillaInfoMessage&>(message);
 
-		m_bugzillaURL = info.URL;
-		m_bugzillaKey = info.apiKey;
-		m_bugzillaUsername = info.username;
+		m_app.m_bugzillaURL = info.URL;
+		m_app.m_bugzillaApiKey = info.apiKey;
+		m_app.m_bugzillaUsername = info.username;
+		m_app.m_bugzillaRootTaskID = info.rootTaskID;
+		m_app.m_bugzillaGroupTasksBy = info.groupTasksBy;
+		m_app.m_bugzillaLabelToField = info.labelToField;
 
-		*m_output << "bugzilla: " << m_bugzillaURL << ' ' << m_bugzillaKey << '\n';
-		*m_output << m_bugzillaUsername << '\n';
-		*m_output << info.rootTaskID._val << '\n';
-		*m_output << info.groupTasksBy << '\n';
-		*m_output << info.labelToField.size() << '\n';
+		*m_output << "bugzilla-config " << m_app.m_bugzillaURL << ' ' << m_app.m_bugzillaApiKey << '\n';
+		*m_output << m_app.m_bugzillaUsername << '\n';
+		*m_output << m_app.m_bugzillaRootTaskID._val << '\n';
+		*m_output << m_app.m_bugzillaGroupTasksBy << '\n';
+		*m_output << m_app.m_bugzillaLabelToField.size() << '\n';
 
 		for (auto&& f : info.labelToField)
 		{
@@ -64,25 +67,34 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 	{
 		if (m_curl)
 		{
-			const bool initial_refresh = !m_lastBugzillaRefresh.has_value();
+			const auto& refresh = static_cast<const RequestMessage&>(message);
+
+			// TODO eventually we'll have to send back a failure if we weren't able to contact bugzilla
+			output.push_back(std::make_unique<SuccessResponse>(refresh.requestID));
+
+			const bool initial_refresh = !m_app.m_lastBugzillaRefresh.has_value();
 
 			// find all bugs that are not resolved
 			// TODO find only bugs that have changed since the last refresh
 			// TODO special processing for the initial refresh
-			std::string request = m_bugzillaURL + "/rest/bug?assigned_to=" + m_bugzillaUsername + "&resolution=---&api_key=" + m_bugzillaKey;
+			std::string request = m_app.m_bugzillaURL + "/rest/bug?assigned_to=" + m_app.m_bugzillaUsername + "&resolution=---&api_key=" + m_app.m_bugzillaApiKey;
 
 			if (!initial_refresh)
 			{
 				// YYYY-MM-DDTHH24:MI:SSZ
 				const auto ms = m_clock->now();
 				auto time = std::chrono::system_clock::time_point(ms);
-
+				 
 				std::chrono::year_month_day ymd = std::chrono::year_month_day{ std::chrono::floor<std::chrono::days>(time) };
-				std::chrono::hh_mm_ss hms = std::chrono::hh_mm_ss{ ms };
+				std::chrono::hh_mm_ss hms = std::chrono::hh_mm_ss{ ms - m_clock->midnight() };
 
-				request += "&last_modified_time=" + std::format("{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z", (int)ymd.year(), (unsigned int)ymd.month(), (unsigned int)ymd.day(), hms.hours().count(), hms.minutes().count(), hms.seconds().count());
+				request += "&last_change_time=" + std::format("{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z", (int)ymd.year(), (unsigned int)ymd.month(), (unsigned int)ymd.day(), hms.hours().count(), hms.minutes().count(), hms.seconds().count());
 			}
 			auto result = m_curl->execute_request(request);
+
+			m_app.m_lastBugzillaRefresh = m_clock->now();
+
+			*m_output << "bugzilla-refresh " << m_app.m_lastBugzillaRefresh->count() << '\n';
 
 			std::cout << result << '\n';
 		}
@@ -243,6 +255,13 @@ void API::handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<
 
 		m_app.for_each_task_sorted(send_task);
 
+		auto bugzilla = BugzillaInfoMessage(m_app.m_bugzillaURL, m_app.m_bugzillaApiKey);
+		bugzilla.username = m_app.m_bugzillaUsername;
+		bugzilla.rootTaskID = m_app.m_bugzillaRootTaskID;
+		bugzilla.groupTasksBy = m_app.m_bugzillaGroupTasksBy;
+		bugzilla.labelToField = m_app.m_bugzillaLabelToField;
+
+		output.push_back(std::make_unique<BugzillaInfoMessage>(bugzilla));
 		output.push_back(std::make_unique<BasicMessage>(PacketType::REQUEST_CONFIGURATION_COMPLETE));
 	}
 }

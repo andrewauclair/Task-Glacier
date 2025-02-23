@@ -32,13 +32,9 @@ TEST_CASE("Configuring Bugzilla Information", "[bugzilla][api]")
 
 		helper.api.process_packet(request, helper.output);
 
-		helper.required_messages({ &configure });
-	}
+		auto complete = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
 
-	SECTION("Information is Persisted")
-	{
-		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
-		CHECK(helper.fileOutput.str() == "bugzilla: bugzilla asfesdFEASfslj\ntest\n5\nseverity\n2\nPriority\npriority\nStatus\nstatus\n");
+		helper.required_messages({ &configure, &complete });
 	}
 }
 
@@ -63,7 +59,7 @@ TEST_CASE("Initial Bugzilla Refresh Pulls All Open Bugs", "[bugzilla][api]")
 	helper.expect_success(refresh);
 
 	CHECK(helper.curl.request == "bugzilla/rest/bug?assigned_to=test&resolution=---&api_key=asfesdFEASfslj");
-	
+
 	// verify various operations
 	// initial tasks are created
 }
@@ -91,7 +87,7 @@ TEST_CASE("Subsequent Bugzilla Refresh Requests Updates Since Last Refresh", "[b
 	helper.expect_success(refresh);
 
 	// verify curl request has previous refresh date
-	CHECK(helper.curl.request == "bugzilla/rest/bug?assigned_to=test&resolution=---&last_update_time=&api_key=asfesdFEASfslj");
+	CHECK(helper.curl.request == "bugzilla/rest/bug?assigned_to=test&resolution=---&api_key=asfesdFEASfslj&last_change_time=2025-01-20T05:48:59Z");
 
 	// verify various operations
 	// new tasks are added
@@ -100,33 +96,55 @@ TEST_CASE("Subsequent Bugzilla Refresh Requests Updates Since Last Refresh", "[b
 	// labels are added and removed
 }
 
-TEST_CASE("Reloading Bugzilla Information From File", "[bugzilla][api]")
+// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
+TEST_CASE("Bugzilla Persistence", "[bugzilla][api]")
 {
-	std::istringstream fileInput;
-	std::ostringstream fileOutput;
+	TestHelper helper;
 
-	fileOutput << "bugzilla: bugzilla asfesdFEASfslj\ntest\n5\nseverity\n2\nPriority\npriority\nStatus\nstatus\n";
+	SECTION("Save")
+	{
+		auto configure = BugzillaInfoMessage("bugzilla", "asfesdFEASfslj");
+		configure.username = "test";
+		configure.rootTaskID = TaskID(5);
+		configure.groupTasksBy = "severity";
 
-	fileInput = std::istringstream(fileOutput.str());
-	fileOutput.clear();
+		configure.labelToField["Priority"] = "priority";
+		configure.labelToField["Status"] = "status";
 
-	TestClock clock;
-	API api(clock, fileInput, fileOutput);
+		helper.api.process_packet(configure, helper.output);
 
-	std::vector<std::unique_ptr<Message>> output;
+		const auto refresh = RequestMessage(PacketType::BUGZILLA_REFRESH, helper.next_request_id());
 
-	// now that we're setup, request the configuration and check the output
-	api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, output);
+		helper.expect_success(refresh);
+		helper.clock.time += std::chrono::hours(2);
+		helper.expect_success(refresh);
 
-	CHECK(output.size() == 1);
+		CHECK(helper.fileOutput.str() == "bugzilla-config bugzilla asfesdFEASfslj\ntest\n5\nseverity\n2\nPriority\npriority\nStatus\nstatus\nbugzilla-refresh 1737344039870\nbugzilla-refresh 1737353039870\n");
+	}
 
-	auto configure = BugzillaInfoMessage("bugzilla", "asfesdFEASfslj");
-	configure.username = "test";
-	configure.rootTaskID = TaskID(5);
-	configure.groupTasksBy = "severity";
+	SECTION("Load")
+	{
+		helper.fileOutput << "bugzilla-config bugzilla asfesdFEASfslj\ntest\n5\nseverity\n2\nPriority\npriority\nStatus\nstatus\nbugzilla-refresh 1737344039870\nbugzilla-refresh 1737353039870\n";
+		helper.fileInput = std::istringstream(helper.fileOutput.str());
+		helper.fileOutput.clear();
 
-	configure.labelToField["Priority"] = "priority";
-	configure.labelToField["Status"] = "status";
+		helper.api = API(helper.clock, helper.curl, helper.fileInput, helper.fileOutput);
 
-	verify_message(configure, *output[0]);
+		// now that we're setup, request the configuration and check the output
+		helper.api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, helper.output);
+
+		CHECK(helper.output.size() == 2);
+
+		auto configure = BugzillaInfoMessage("bugzilla", "asfesdFEASfslj");
+		configure.username = "test";
+		configure.rootTaskID = TaskID(5);
+		configure.groupTasksBy = "severity";
+
+		configure.labelToField["Priority"] = "priority";
+		configure.labelToField["Status"] = "status";
+
+		auto complete = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
+
+		helper.required_messages({ &configure, &complete });
+	}
 }

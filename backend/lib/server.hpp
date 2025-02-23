@@ -119,6 +119,14 @@ public:
 
 		return std::nullopt;
 	}
+	
+	std::string m_bugzillaURL;
+	std::string m_bugzillaApiKey;
+	std::string m_bugzillaUsername;
+	TaskID m_bugzillaRootTaskID = NO_PARENT;
+	std::string m_bugzillaGroupTasksBy;
+	std::map<std::string, std::string> m_bugzillaLabelToField;
+	std::optional<std::chrono::milliseconds> m_lastBugzillaRefresh;
 
 private:
 	std::unordered_map<TaskID, Task> m_tasks;
@@ -131,6 +139,8 @@ private:
 
 	const Clock* m_clock;
 	std::ostream* m_output;
+
+	
 };
 
 #endif
