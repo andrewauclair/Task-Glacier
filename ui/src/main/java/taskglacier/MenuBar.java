@@ -22,15 +22,15 @@ public class MenuBar extends JMenuBar {
         JMenu file = new JMenu("File");
         file.setMnemonic('F');
 
+        JMenuItem hide = new JMenuItem("Hide");
+        hide.addActionListener(e -> mainFrame.setVisible(false));
+        file.add(hide);
+
+        file.addSeparator();
+
         JMenuItem exit = new JMenuItem("Exit");
         exit.addActionListener(e -> System.exit(0));
         file.add(exit);
-
-        JMenuItem hide = new JMenuItem("Hide");
-        hide.addActionListener(e -> {
-            mainFrame.setVisible(false);
-        });
-        file.add(hide);
 
         add(file);
 

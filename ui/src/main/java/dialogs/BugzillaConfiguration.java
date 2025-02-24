@@ -12,8 +12,6 @@ import java.util.Map;
 import java.util.prefs.Preferences;
 
 public class BugzillaConfiguration extends JDialog {
-    // TODO configure: server address, api key, and search rules
-
     public BugzillaConfiguration(MainFrame mainFrame) {
         setLayout(new GridBagLayout());
         setTitle("Bugzilla Configuration");
@@ -26,7 +24,7 @@ public class BugzillaConfiguration extends JDialog {
         gbc.gridy = 0;
 
         JTextField URL = new JTextField();
-        add(createLabeledComponent("UR", URL), gbc);
+        add(createLabeledComponent("URL", URL), gbc);
         gbc.gridy++;
 
         JTextField apiKey = new JTextField();
@@ -43,7 +41,7 @@ public class BugzillaConfiguration extends JDialog {
         gbc.gridy++;
 
         // option to split tasks by a specific bugzilla field
-        JTextField groupTasksBy = new JTextField("target_milestone");
+        JTextField groupTasksBy = new JTextField();
         add(createLabeledComponent("Group Tasks By", groupTasksBy), gbc);
         gbc.gridy++;
 
@@ -77,6 +75,8 @@ public class BugzillaConfiguration extends JDialog {
         URL.setText(preferences.get("Bugzilla-URL", "bugzilla"));
         apiKey.setText(preferences.get("Bugzilla-API-Key", ""));
         username.setText(preferences.get("Bugzilla-Username", ""));
+        rootTask.setText(preferences.get("Bugzilla-Root-Task", ""));
+        groupTasksBy.setText(preferences.get("Bugzilla-GroupTasksBy", ""));
 
         save.addActionListener(e -> {
             BugzillaInfo info = new BugzillaInfo(URL.getText(), apiKey.getText(), username.getText());
@@ -92,6 +92,8 @@ public class BugzillaConfiguration extends JDialog {
             preferences.put("Bugzilla-URL", URL.getText());
             preferences.put("Bugzilla-API-Key", apiKey.getText());
             preferences.put("Bugzilla-Username", username.getText());
+            preferences.put("Bugzilla-Root-Task", rootTask.getText());
+            preferences.put("Bugzilla-GroupTasksBy", groupTasksBy.getText());
 
             BugzillaConfiguration.this.dispose();
         });
