@@ -4,6 +4,8 @@ import dialogs.AddModifyTask;
 import dialogs.BugzillaConfiguration;
 import dialogs.ConnectToServer;
 import dialogs.TimeCategories;
+import io.github.andrewauclair.moderndocking.app.DockingState;
+import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
 import packets.BugzillaRefresh;
 import packets.RequestID;
 
@@ -83,6 +85,15 @@ public class MenuBar extends JMenuBar {
         });
         bugzilla.add(refresh);
         add(bugzilla);
+
+        JMenu window = new JMenu("Window");
+        JMenuItem restoreDefaultLayout = new JMenuItem("Restore Default Layout");
+        restoreDefaultLayout.addActionListener(e -> {
+            DockingState.restoreApplicationLayout(DockingLayouts.getLayout("default"));
+        });
+
+        window.add(restoreDefaultLayout);
+        add(window);
     }
 
     public void connected() {

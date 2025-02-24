@@ -13,6 +13,7 @@ import io.github.andrewauclair.moderndocking.app.RootDockingPanel;
 import io.github.andrewauclair.moderndocking.app.WindowLayoutBuilder;
 import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
 import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
+import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
 import io.github.andrewauclair.moderndocking.settings.Settings;
 import packets.RequestConfig;
 import panels.StatusBar;
@@ -111,6 +112,7 @@ public class MainFrame extends JFrame {
         WindowLayoutBuilder builder = new WindowLayoutBuilder("tasks");
 
         AppState.setDefaultApplicationLayout(builder.buildApplicationLayout());
+        DockingLayouts.addLayout("default", builder.buildApplicationLayout());
 
         setJMenuBar(new MenuBar(this));
 
@@ -138,7 +140,8 @@ public class MainFrame extends JFrame {
         }
 
         // if we're connected, we'll wait for the request config to complete before restoring
-        if (!isConnected()) {
+        //if (!isConnected())
+        {
             restoreLayout();
         }
         super.setVisible(visible);
