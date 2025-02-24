@@ -160,7 +160,18 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 				for (auto bug : doc["bugs"])
 				{
 					TaskID parentID = NO_PARENT;
-					const auto groupBy = std::string(std::string_view(bug[m_app.m_bugzillaGroupTasksBy]));
+					simdjson::dom::element temp = bug[m_app.m_bugzillaGroupTasksBy];
+
+					std::string groupBy;
+
+					if (temp.is_array() && temp.get_array().size() > 0)
+					{
+						groupBy = temp.get_array().at(0);
+					}
+					else if (!temp.is_array())
+					{
+						groupBy = std::string(std::string_view(temp));
+					}
 
 					if (m_app.m_bugzillaGroupBy.contains(groupBy))
 					{
