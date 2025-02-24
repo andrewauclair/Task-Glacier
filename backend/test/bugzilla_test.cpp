@@ -59,11 +59,11 @@ TEST_CASE("Initial Bugzilla Refresh Pulls All Open Bugs", "[bugzilla][api]")
 	// send bugzilla refresh packet
 	const auto refresh = RequestMessage(PacketType::BUGZILLA_REFRESH, helper.next_request_id());
 
-	helper.curl.result = "{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"Normal\", \"severity\": \"Minor\" },"
-									   "{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"Normal\", \"severity\": \"Minor\" },"
-									   "{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"Low\", \"severity\": \"Critical\" },"
-									   "{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"High\", \"severity\": \"Blocker\" },"
-									   "{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"Highest\", \"severity\": \"Nitpick\" } ] }";
+	helper.curl.result = "{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"Normal\", \"severity\": [ \"Minor\" ] },"
+									   "{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"Normal\", \"severity\": [ \"Minor\" ] },"
+									   "{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"Low\", \"severity\": [ \"Critical\" ] },"
+									   "{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"High\", \"severity\": [ \"Blocker\" ] },"
+									   "{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"Highest\", \"severity\": [ \"Nitpick\" ] } ] }";
 
 	helper.expect_success(refresh);
 
