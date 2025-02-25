@@ -603,12 +603,12 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 		auto data = TimeCategoriesData();
 
 		auto& verifyCategory1 = data.timeCategories.emplace_back(TimeCategoryID(1), "New 1");
-		verifyCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
-		verifyCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
+		verifyCategory1.codes.emplace_back(TimeCodeID(1), "Code 1");
+		verifyCategory1.codes.emplace_back(TimeCodeID(2), "Code 2");
 
 		auto& verifyCategory2 = data.timeCategories.emplace_back(TimeCategoryID(2), "New 2");
-		verifyCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
-		verifyCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
+		verifyCategory2.codes.emplace_back(TimeCodeID(3), "Code 3");
+		verifyCategory2.codes.emplace_back(TimeCodeID(4), "Code 4");
 
 		helper.required_messages({ &data });
 	}
@@ -653,8 +653,6 @@ TEST_CASE("Request Daily Report", "[api][task]")
 {
 	TestHelper helper;
 
-	// TODO we're going to need some nice testing classes for adding data at exact dates and times. maybe there's a semi-easy way to do this in std::chrono
-
 	SECTION("No Report Found")
 	{
 		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
@@ -685,6 +683,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.day = 3;
 		report.report.year = 2025;
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(30);
+		report.report.times.emplace_back(TaskID(1), 0);
 
 		helper.required_messages({ &report });
 	}
@@ -709,6 +708,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.day = 3;
 		report.report.year = 2025;
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(30);
+		report.report.times.emplace_back(TaskID(1), 0);
 
 		helper.required_messages({ &report });
 	}
@@ -750,6 +750,103 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.day = 3;
 		report.report.year = 2025;
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(30);
+		report.report.times.emplace_back(TaskID(1), 0);
+
+		helper.required_messages({ &report });
+	}
+
+	SECTION("End of Day")
+	{
+		helper.clock.auto_increment_test_time = false;
+		helper.clock.time = date_to_ms(2, 3, 2025) + std::chrono::hours(5);
+
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.clock.time += std::chrono::hours(2);
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+
+		helper.clear_message_output();
+
+		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
+
+		helper.api.process_packet(request, helper.output);
+
+		auto report = DailyReportMessage(helper.prev_request_id());
+		report.reportFound = true;
+		report.report.month = 2;
+		report.report.day = 3;
+		report.report.year = 2025;
+		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5);
+		report.report.endTime = date_to_ms(2, 3, 2025) + std::chrono::hours(7);
+		report.report.times.emplace_back(TaskID(1), 0);
+
+		helper.required_messages({ &report });
+	}
+
+	SECTION("Basic Time Pair")
+	{
+		helper.clock.auto_increment_test_time = false;
+		helper.clock.time = date_to_ms(2, 3, 2025) + std::chrono::hours(5);
+
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.clock.time += std::chrono::hours(2);
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+
+		helper.clear_message_output();
+
+		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
+
+		helper.api.process_packet(request, helper.output);
+
+		auto report = DailyReportMessage(helper.prev_request_id());
+		report.reportFound = true;
+		report.report.month = 2;
+		report.report.day = 3;
+		report.report.year = 2025;
+		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5);
+		report.report.endTime = date_to_ms(2, 3, 2025) + std::chrono::hours(7);
+		report.report.times.emplace_back(TaskID(1), 0);
+
+		helper.required_messages({ &report });
+	}
+
+	SECTION("Time Pair for Task on Multiple Days")
+	{
+		helper.clock.auto_increment_test_time = false;
+		helper.clock.time = date_to_ms(2, 2, 2025) + std::chrono::hours(5);
+
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.clock.time += std::chrono::hours(2);
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+
+		helper.clock.time = date_to_ms(2, 3, 2025) + std::chrono::hours(5);
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.clock.time += std::chrono::hours(2);
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+
+		helper.clock.time = date_to_ms(2, 4, 2025) + std::chrono::hours(5);
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.clock.time += std::chrono::hours(2);
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+
+		helper.clear_message_output();
+
+		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
+
+		helper.api.process_packet(request, helper.output);
+
+		auto report = DailyReportMessage(helper.prev_request_id());
+		report.reportFound = true;
+		report.report.month = 2;
+		report.report.day = 3;
+		report.report.year = 2025;
+		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5);
+		report.report.endTime = date_to_ms(2, 3, 2025) + std::chrono::hours(7);
+		report.report.times.emplace_back(TaskID(1), 1);
 
 		helper.required_messages({ &report });
 	}

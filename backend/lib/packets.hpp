@@ -788,13 +788,27 @@ struct DailyReport
 	std::chrono::milliseconds totalTime = std::chrono::milliseconds(0);
 
 	// total time per time category for the day
-	std::map<std::string, std::chrono::milliseconds> timePerCategory;
+	std::map<TimeCodeID, std::chrono::milliseconds> timePerTimeCode;
 
 	constexpr auto operator<=>(const DailyReport&) const = default;
 
 	friend std::ostream& operator<<(std::ostream& out, const DailyReport& report)
 	{
-		out << "{ month: " << report.month << ", day: " << report.day << ", year: " << report.year << ", startTime: " << report.startTime << " }";
+		out << "{ month: " << report.month << ", day: " << report.day << ", year: " << report.year << ", startTime: " << report.startTime << ", endTime: " << report.endTime;
+		out << '\n';
+		out << "Time Pairs {";
+		for (auto&& time : report.times)
+		{
+			out << "\ntaskID: " << time.taskID._val << ", startStopIndex: " << time.startStopIndex;
+		}
+		out << "\n}\n";
+		out << "Time Per Time Code {";
+		for (auto&& [timeCode, time] : report.timePerTimeCode)
+		{
+			out << "\ntimeCode: " << timeCode._val << ", time: " << time;
+		}
+		out << '\n';
+		out << "} }";
 		return out;
 	}
 };

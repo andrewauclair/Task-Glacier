@@ -439,6 +439,8 @@ void API::create_daily_report(RequestID requestID, int month, int day, int year,
 		bool first = true;
 		for (auto&& task : tasks)
 		{
+			report->report.times.emplace_back(task.task->taskID(), task.time.startStopIndex);
+
 			if (first)
 			{
 				report->report.startTime = task.task->m_times[task.time.startStopIndex].start;
@@ -446,6 +448,11 @@ void API::create_daily_report(RequestID requestID, int month, int day, int year,
 			else if (report->report.startTime > task.task->m_times[task.time.startStopIndex].start)
 			{
 				report->report.startTime = task.task->m_times[task.time.startStopIndex].start;
+			}
+
+			if (task.task->m_times[task.time.startStopIndex].stop.has_value() && task.task->m_times[task.time.startStopIndex].stop.value() > report->report.endTime)
+			{
+				report->report.endTime = task.task->m_times[task.time.startStopIndex].stop.value();
 			}
 			first = false;
 		}
