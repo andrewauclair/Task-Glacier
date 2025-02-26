@@ -850,10 +850,11 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.required_messages({ &report });
 	}
-	// TODO add tasks created to report. verify that only the tasks created on the given day are listed
-	// TODO test the end of day (when there is no active task)
-	// TODO test the end of day estimated (when there is an active task) based on 8 hour days
 
+	SECTION("Totals Per Time Code")
+	{
+
+	}
 }
 
 // TODO for now we're just going to do this in one big test

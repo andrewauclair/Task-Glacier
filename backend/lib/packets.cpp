@@ -35,7 +35,11 @@ std::vector<std::byte> CreateTaskMessage::pack() const
 	builder.add(requestID);
 	builder.add(parentID);
 	builder.add_string(name);
-
+	builder.add(static_cast<std::int32_t>(timeCodes.size()));
+	for (auto code : timeCodes)
+	{
+		builder.add(code);
+	}
 	return builder.build();
 }
 
@@ -50,7 +54,16 @@ std::expected<CreateTaskMessage, UnpackError> CreateTaskMessage::unpack(std::spa
 
 	try
 	{
-		return CreateTaskMessage(parentID.value(), requestID.value(), name.value());
+		auto task = CreateTaskMessage(parentID.value(), requestID.value(), name.value());
+
+		const auto count = parser.parse_next<std::int32_t>();
+
+		for (int i = 0; i < count.value(); i++)
+		{
+			task.timeCodes.push_back(parser.parse_next<TimeCodeID>().value());
+		}
+
+		return task;
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{

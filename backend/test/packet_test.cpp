@@ -112,7 +112,9 @@ struct PacketTestHelper
 
 TEST_CASE("Create Task", "[message]")
 {
-	const auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+	auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+	create_task.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+
 	CAPTURE(create_task);
 
 	SECTION("Compare - Through Message")
@@ -129,7 +131,8 @@ TEST_CASE("Create Task", "[message]")
 
 		SECTION("Match")
 		{
-			const auto create_task2 = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+			auto create_task2 = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+			create_task2.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
 			CAPTURE(create_task2);
 
 			const Message* message = &create_task2;
@@ -140,7 +143,8 @@ TEST_CASE("Create Task", "[message]")
 
 	SECTION("Compare - Directly")
 	{
-		const auto create_task2 = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+		auto create_task2 = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
+		create_task2.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
 		CAPTURE(create_task2);
 
 		CHECK(create_task == create_task2);
@@ -149,6 +153,7 @@ TEST_CASE("Create Task", "[message]")
 	SECTION("Compare Messages That Do Not Match")
 	{
 		auto create_task2 = CreateTaskMessage(TaskID(15), RequestID(10), "this is a test");
+		create_task2.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
 		CAPTURE(create_task2);
 
 		CHECK(!(create_task == create_task2));
@@ -164,6 +169,12 @@ TEST_CASE("Create Task", "[message]")
 		CAPTURE(create_task2);
 
 		CHECK(!(create_task == create_task2));
+
+		create_task2.name = create_task.name;
+		create_task2.timeCodes.push_back(TimeCodeID(1));
+		CAPTURE(create_task2);
+
+		CHECK(!(create_task == create_task2));
 	}
 
 	SECTION("Print")
@@ -172,7 +183,7 @@ TEST_CASE("Create Task", "[message]")
 
 		create_task.print(ss);
 
-		auto expected_text = "CreateTaskMessage { packetType: 3, requestID: 10, parentID: 5, name: \"this is a test\" }";
+		auto expected_text = "CreateTaskMessage { packetType: 3, requestID: 10, parentID: 5, name: \"this is a test\", timeCodes: [ 1, 2, ] }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -193,20 +204,23 @@ TEST_CASE("Create Task", "[message]")
 
 	SECTION("Pack")
 	{
-		auto verifier = PacketVerifier(create_task.pack(), 32);
+		auto verifier = PacketVerifier(create_task.pack(), 44);
 
 		verifier
-			.verify_value<std::uint32_t>(32, "packet length")
+			.verify_value<std::uint32_t>(44, "packet length")
 			.verify_value<std::uint32_t>(3, "packet ID")
 			.verify_value<std::uint32_t>(10, "request ID")
 			.verify_value<std::uint32_t>(5, "parent ID")
-			.verify_string("this is a test", "task name");
+			.verify_string("this is a test", "task name")
+			.verify_value<std::int32_t>(2, "time code count")
+			.verify_value<std::int32_t>(1, "time code 1")
+			.verify_value<std::int32_t>(2, "time code 2");
 	}
 
 	SECTION("Unpack")
 	{
 		PacketTestHelper helper;
-		helper.expect_packet<CreateTaskMessage>(create_task, 32);
+		helper.expect_packet<CreateTaskMessage>(create_task, 44);
 	}
 }
 

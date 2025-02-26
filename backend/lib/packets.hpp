@@ -235,6 +235,7 @@ struct CreateTaskMessage : RequestMessage
 {
 	TaskID parentID;
 	std::string name;
+	std::vector<TimeCodeID> timeCodes;
 
 	CreateTaskMessage(TaskID parentID, RequestID requestID, std::string name) : RequestMessage(PacketType::CREATE_TASK, requestID), parentID(parentID), name(std::move(name)) {}
 
@@ -249,7 +250,7 @@ struct CreateTaskMessage : RequestMessage
 	
 	bool operator==(const CreateTaskMessage& message) const
 	{
-		return parentID == message.parentID && requestID == message.requestID && name == message.name;
+		return parentID == message.parentID && requestID == message.requestID && name == message.name && timeCodes == message.timeCodes;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -259,7 +260,13 @@ struct CreateTaskMessage : RequestMessage
 	{
 		out << "CreateTaskMessage { ";
 		RequestMessage::print(out);
-		out << ", parentID: " << parentID._val << ", name: \"" << name << "\" }";
+		out << ", parentID: " << parentID._val << ", name: \"" << name << "\", timeCodes: [ ";
+		for (auto code : timeCodes)
+		{
+			out << code._val << ", ";
+		}
+		out << "] }";
+
 		return out;
 	}
 
