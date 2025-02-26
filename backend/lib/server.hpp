@@ -28,6 +28,7 @@ private:
 	std::chrono::milliseconds m_createTime;
 
 public:
+	std::vector<TimeCodeID> timeCodes;
 	std::vector<TaskTimes> m_times;
 	std::optional<std::chrono::milliseconds> m_finishTime;
 
@@ -50,6 +51,8 @@ public:
 	MicroTask(const Clock& clock, std::ostream& output) : m_clock(&clock), m_output(&output) {}
 
 	std::expected<TaskID, std::string> create_task(const std::string& name, TaskID parentID = NO_PARENT);
+
+	std::optional<std::string> configure_task_time_codes(TaskID taskID, std::span<const TimeCodeID> timeCodes);
 
 	Task* active_task() const { return m_activeTask; }
 	Task* find_task(TaskID id);

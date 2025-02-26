@@ -32,7 +32,7 @@ private:
 
 	void handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<Message>>& output);
 
-	void send_task_info(const Task& task, std::vector<std::unique_ptr<Message>>& output);
+	void send_task_info(const Task& task, bool newTask, std::vector<std::unique_ptr<Message>>& output);
 
 	void time_categories_modify(const TimeCategoriesModify& message, std::vector<std::unique_ptr<Message>>& output);
 

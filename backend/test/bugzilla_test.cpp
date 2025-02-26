@@ -210,6 +210,7 @@ TEST_CASE("Subsequent Bugzilla Refresh Requests Updates Since Last Refresh", "[b
 		auto major = TaskInfoMessage(TaskID(4), TaskID(1), "Major");
 		major.createTime = std::chrono::milliseconds(1737344039870);
 		major.state = TaskState::FINISHED;
+		major.finishTime = std::chrono::milliseconds(1737351239870);
 
 		helper.required_messages({ &taskInfo3, &major });
 
@@ -223,7 +224,7 @@ TEST_CASE("Subsequent Bugzilla Refresh Requests Updates Since Last Refresh", "[b
 			taskInfo3.createTime = std::chrono::milliseconds(1737344039870);
 
 			major.state = TaskState::INACTIVE;
-
+			
 			helper.required_messages({ &taskInfo3, &major });
 		}
 	}

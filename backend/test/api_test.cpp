@@ -47,6 +47,24 @@ TEST_CASE("Create Task", "[api][task]")
 		helper.required_messages({ &taskInfo });
 	}
 
+	SECTION("Success - Create Task Time Codes")
+	{
+		auto create = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1");
+		create.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+
+		helper.expect_success(create);
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.state = TaskState::INACTIVE;
+		taskInfo.newTask = true;
+
+		taskInfo.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+		
+		helper.required_messages({ &taskInfo });
+	}
+
 	SECTION("Failure - Parent Task Does Not Exist")
 	{
 		helper.expect_failure(CreateTaskMessage(TaskID(2), helper.next_request_id(), "this is a test"), "Task with ID 2 does not exist.");

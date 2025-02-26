@@ -625,6 +625,8 @@ struct TaskInfoMessage : Message
 	std::vector<TaskTimes> times;
 	std::optional<std::chrono::milliseconds> finishTime;
 
+	std::vector<TimeCodeID> timeCodes;
+
 	TaskInfoMessage(TaskID taskID, TaskID parentID, std::string name, std::chrono::milliseconds createTime = std::chrono::milliseconds(0)) : Message(PacketType::TASK_INFO), taskID(taskID), parentID(parentID), name(std::move(name)), createTime(createTime) {}
 	
 	bool operator==(const Message& message) const override

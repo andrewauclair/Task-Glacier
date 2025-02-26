@@ -34,6 +34,18 @@ std::expected<TaskID, std::string> MicroTask::create_task(const std::string& nam
 	return std::expected<TaskID, std::string>(id);
 }
 
+std::optional<std::string> MicroTask::configure_task_time_codes(TaskID taskID, std::span<const TimeCodeID> timeCodes)
+{
+	auto* task = find_task(taskID);
+
+	if (task)
+	{
+		task->timeCodes = std::vector<TimeCodeID>(timeCodes.begin(), timeCodes.end());
+	}
+
+	return std::nullopt;
+}
+
 Task* MicroTask::find_task(TaskID taskID)
 {
 	auto result = m_tasks.find(taskID);
