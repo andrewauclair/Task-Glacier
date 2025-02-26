@@ -41,6 +41,18 @@ Task* MicroTask::find_task(TaskID taskID)
 	return result != m_tasks.end() ? &result->second : nullptr;
 }
 
+bool MicroTask::task_has_children(TaskID id) const
+{
+	for (auto&& [taskID, task] : m_tasks)
+	{
+		if (task.parentID() == id)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 std::vector<MicroTask::FindTasksOnDay> MicroTask::find_tasks_on_day(int month, int year, int day)
 {
 	std::vector<FindTasksOnDay> tasks;

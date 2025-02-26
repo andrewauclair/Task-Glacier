@@ -54,6 +54,8 @@ public:
 	Task* active_task() const { return m_activeTask; }
 	Task* find_task(TaskID id);
 
+	bool task_has_children(TaskID id) const;
+
 	struct FindTasksOnDay
 	{
 		Task* task;

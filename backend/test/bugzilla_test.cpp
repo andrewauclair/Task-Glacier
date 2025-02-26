@@ -56,19 +56,6 @@ TEST_CASE("Initial Bugzilla Refresh Pulls All Open Bugs", "[bugzilla][api]")
 
 	helper.api.process_packet(configure, helper.output);
 
-	// send bugzilla refresh packet
-	const auto refresh = RequestMessage(PacketType::BUGZILLA_REFRESH, helper.next_request_id());
-
-	helper.curl.result = "{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"Normal\", \"severity\": [ \"Minor\" ] },"
-									   "{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"Normal\", \"severity\": [ \"Minor\" ] },"
-									   "{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"Low\", \"severity\": [ \"Critical\" ] },"
-									   "{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"High\", \"severity\": [ \"Blocker\" ] },"
-									   "{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"Highest\", \"severity\": [ \"Nitpick\" ] } ] }";
-
-	helper.expect_success(refresh);
-
-	CHECK(helper.curl.request == "bugzilla/rest/bug?assigned_to=test&resolution=---&api_key=asfesdFEASfslj");
-
 	auto minor = TaskInfoMessage(TaskID(2), TaskID(1), "Minor");
 	auto taskInfo3 = TaskInfoMessage(TaskID(3), TaskID(2), "50 - bug 1");
 	auto taskInfo4 = TaskInfoMessage(TaskID(4), TaskID(2), "55 - bug 2");
@@ -98,8 +85,41 @@ TEST_CASE("Initial Bugzilla Refresh Pulls All Open Bugs", "[bugzilla][api]")
 	nitpick.newTask = true;
 	taskInfo10.newTask = true;
 
-	helper.required_messages({ &minor, &taskInfo3, &taskInfo4, &critical, &taskInfo6, &blocker, &taskInfo8, &nitpick, &taskInfo10 });
+	SECTION("Group By Task As String")
+	{
+		// send bugzilla refresh packet
+		const auto refresh = RequestMessage(PacketType::BUGZILLA_REFRESH, helper.next_request_id());
 
+		helper.curl.result = "{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"Normal\", \"severity\": \"Minor\" },"
+			"{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"Normal\", \"severity\": \"Minor\" },"
+			"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"Low\", \"severity\": \"Critical\" },"
+			"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"High\", \"severity\": \"Blocker\" },"
+			"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"Highest\", \"severity\": \"Nitpick\" } ] }";
+
+		helper.expect_success(refresh);
+
+		CHECK(helper.curl.request == "bugzilla/rest/bug?assigned_to=test&resolution=---&api_key=asfesdFEASfslj");
+
+		helper.required_messages({ &minor, &taskInfo3, &taskInfo4, &critical, &taskInfo6, &blocker, &taskInfo8, &nitpick, &taskInfo10 });
+	}
+	
+	SECTION("Group By Task As Array of Strings")
+	{
+		// send bugzilla refresh packet
+		const auto refresh = RequestMessage(PacketType::BUGZILLA_REFRESH, helper.next_request_id());
+
+		helper.curl.result = "{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"Normal\", \"severity\": [ \"Minor\" ] },"
+			"{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"Normal\", \"severity\": [ \"Minor\" ] },"
+			"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"Low\", \"severity\": [ \"Critical\" ] },"
+			"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"High\", \"severity\": [ \"Blocker\" ] },"
+			"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"Highest\", \"severity\": [ \"Nitpick\" ] } ] }";
+
+		helper.expect_success(refresh);
+
+		CHECK(helper.curl.request == "bugzilla/rest/bug?assigned_to=test&resolution=---&api_key=asfesdFEASfslj");
+
+		helper.required_messages({ &minor, &taskInfo3, &taskInfo4, &critical, &taskInfo6, &blocker, &taskInfo8, &nitpick, &taskInfo10 });
+	}
 }
 
 TEST_CASE("Subsequent Bugzilla Refresh Requests Updates Since Last Refresh", "[bugzilla][api]")
@@ -127,7 +147,8 @@ TEST_CASE("Subsequent Bugzilla Refresh Requests Updates Since Last Refresh", "[b
 		"{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"Normal\", \"severity\": \"Major\" },"
 		"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"Low\", \"severity\": \"Critical\" },"
 		"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"High\", \"severity\": \"Blocker\" },"
-		"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"Highest\", \"severity\": \"Nitpick\" } ] }";
+		"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"Highest\", \"severity\": \"Nitpick\" },"
+		"{ \"id\": 75, \"summary\": \"bug 6\", \"status\": \"Confirmed\", \"priority\": \"Highest\", \"severity\": \"Minor\" } ] }";
 
 	helper.expect_success(refresh);
 	helper.clock.time += std::chrono::hours(2);
@@ -163,6 +184,64 @@ TEST_CASE("Subsequent Bugzilla Refresh Requests Updates Since Last Refresh", "[b
 		taskInfo3.createTime = std::chrono::milliseconds(1737344039870);
 
 		helper.required_messages({ &taskInfo3 });
+	}
+
+	SECTION("Reparent When Group By Field Changes")
+	{
+		helper.curl.result = "{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"Normal\", \"severity\": \"Major\" } ] }";
+
+		helper.expect_success(refresh);
+
+		auto taskInfo3 = TaskInfoMessage(TaskID(3), TaskID(4), "50 - bug 1");
+		taskInfo3.createTime = std::chrono::milliseconds(1737344039870);
+
+		helper.required_messages({ &taskInfo3 });
+	}
+
+	SECTION("Finish Parent Task When It Has No Children")
+	{
+		helper.curl.result = "{ \"bugs\": [ { \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"Normal\", \"severity\": \"Critical\" } ] }";
+
+		helper.expect_success(refresh);
+
+		auto taskInfo3 = TaskInfoMessage(TaskID(5), TaskID(6), "55 - bug 2");
+		taskInfo3.createTime = std::chrono::milliseconds(1737344039870);
+
+		auto major = TaskInfoMessage(TaskID(4), TaskID(1), "Major");
+		major.createTime = std::chrono::milliseconds(1737344039870);
+		major.state = TaskState::FINISHED;
+
+		helper.required_messages({ &taskInfo3, &major });
+
+		SECTION("Return Parent Task to Active When It Has Children")
+		{
+			helper.curl.result = "{ \"bugs\": [ { \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"Normal\", \"severity\": \"Major\" } ] }";
+
+			helper.expect_success(refresh);
+
+			taskInfo3 = TaskInfoMessage(TaskID(5), TaskID(4), "55 - bug 2");
+			taskInfo3.createTime = std::chrono::milliseconds(1737344039870);
+
+			major.state = TaskState::INACTIVE;
+
+			helper.required_messages({ &taskInfo3, &major });
+		}
+	}
+
+	SECTION("Create New Parent Task and Reparent When Group By Field Changes to Previously Unseen Value")
+	{
+		helper.curl.result = "{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1 name change\", \"status\": \"Assigned\", \"priority\": \"Normal\", \"severity\": \"New\" } ] }";
+
+		helper.expect_success(refresh);
+
+		auto newTask = TaskInfoMessage(TaskID(13), TaskID(1), "New");
+		newTask.createTime = std::chrono::milliseconds(1737351239870);
+		newTask.newTask = true;
+
+		auto taskInfo3 = TaskInfoMessage(TaskID(3), TaskID(13), "50 - bug 1 name change");
+		taskInfo3.createTime = std::chrono::milliseconds(1737344039870);
+
+		helper.required_messages({ &newTask, &taskInfo3 });
 	}
 }
 

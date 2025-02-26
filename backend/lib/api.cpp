@@ -199,6 +199,11 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 					{
 						auto* task = m_app.find_task(m_app.m_bugzillaTasks.at(i));
 
+						if (parentID != task->parentID())
+						{
+							m_app.reparent_task(m_app.m_bugzillaTasks.at(i), parentID);
+						}
+
 						task->m_name = std::format("{} - {}", i, std::string_view(bug["summary"]));
 
 						TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
@@ -207,6 +212,30 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 
 						output.push_back(std::make_unique<TaskInfoMessage>(info));
 					}
+				}
+
+				for (auto&& parent : m_app.m_bugzillaGroupBy)
+				{
+					auto* task = m_app.find_task(parent.second);
+
+					if (!m_app.task_has_children(parent.second))
+					{
+						m_app.finish_task(parent.second);
+					}
+					else if (task->state == TaskState::FINISHED)
+					{
+						task->state = TaskState::INACTIVE;
+					}
+					else
+					{
+						continue;
+					}
+
+					TaskInfoMessage info(task->taskID(), task->parentID(), task->m_name);
+					info.state = task->state;
+					info.createTime = task->createTime();
+
+					output.push_back(std::make_unique<TaskInfoMessage>(info));
 				}
 			}
 
