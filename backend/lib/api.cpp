@@ -449,9 +449,13 @@ void API::create_daily_report(RequestID requestID, int month, int day, int year,
 
 			if (task.task->m_times[task.time.startStopIndex].stop.has_value())
 			{
+				const auto timeForTask = task.task->m_times[task.time.startStopIndex].stop.value() - task.task->m_times[task.time.startStopIndex].start;
+
+				report->report.totalTime += timeForTask;
+
 				for (auto&& timeCode : task.task->timeCodes)
 				{
-					report->report.timePerTimeCode[timeCode] += task.task->m_times[task.time.startStopIndex].stop.value() - task.task->m_times[task.time.startStopIndex].start;
+					report->report.timePerTimeCode[timeCode] += timeForTask;
 				}
 			}
 

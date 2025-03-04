@@ -816,8 +816,8 @@ struct DailyReport
 		{
 			out << "\ntimeCode: " << timeCode._val << ", time: " << time;
 		}
-		out << '\n';
-		out << "} }";
+		out << "\n}\n";
+		out << "Total Time: " << report.totalTime << '\n';
 		return out;
 	}
 };
@@ -858,7 +858,11 @@ struct DailyReportMessage : Message
 		{
 			out << ", report: " << report;
 		}
-		out << " }";
+		else
+		{
+			out << ' ';
+		}
+		out << "}";
 		return out;
 	}
 

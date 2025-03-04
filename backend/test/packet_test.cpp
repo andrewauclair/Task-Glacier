@@ -910,7 +910,7 @@ TEST_CASE("Daily Report", "[messages]")
 
 		newReport.print(ss);
 
-		auto expected_text = "DailyReportMessage { packetType: 16, reportFound: 1, report: { month: 2, day: 3, year: 2025, startTime: 0ms, endTime: 0ms\nTime Pairs {\n}\nTime Per Time Code {\n} } }";
+		auto expected_text = "DailyReportMessage { packetType: 16, reportFound: 1, report: { month: 2, day: 3, year: 2025, startTime: 0ms, endTime: 0ms\nTime Pairs {\n}\nTime Per Time Code {\n}\nTotal Time: 0ms\n}";
 
 		CHECK(ss.str() == expected_text);
 	}
