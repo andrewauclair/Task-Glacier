@@ -36,10 +36,12 @@ std::vector<std::byte> CreateTaskMessage::pack() const
 	builder.add(parentID);
 	builder.add_string(name);
 	builder.add(static_cast<std::int32_t>(timeCodes.size()));
+
 	for (auto code : timeCodes)
 	{
 		builder.add(code);
 	}
+	
 	return builder.build();
 }
 
@@ -137,8 +139,28 @@ std::vector<std::byte> TimeCategoriesData::pack() const
 {
 	PacketBuilder builder;
 
-	builder.add(static_cast<std::int32_t>(packetType()));
+	builder.add(packetType());
 
+	builder.add(static_cast<std::int32_t>(timeCategories.size()));
+
+	for (auto&& timeCategory : timeCategories)
+	{
+		builder.add(timeCategory.id);
+		builder.add_string(timeCategory.name);
+		builder.add(timeCategory.inUse);
+		builder.add(timeCategory.taskCount);
+		builder.add(timeCategory.archived);
+		builder.add(static_cast<std::int32_t>(timeCategory.codes.size()));
+
+		for (auto&& timeCode : timeCategory.codes)
+		{
+			builder.add(timeCode.id);
+			builder.add_string(timeCode.name);
+			builder.add(timeCode.inUse);
+			builder.add(timeCode.taskCount);
+			builder.add(timeCode.archived);
+		}
+	}
 	return builder.build();
 }
 
