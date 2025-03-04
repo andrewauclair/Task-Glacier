@@ -871,7 +871,66 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 	SECTION("Totals Per Time Code")
 	{
+		// two tasks that happen on the same day twice, but also happen on other days
+		helper.clock.auto_increment_test_time = false;
+		helper.clock.time = date_to_ms(2, 2, 2025) + std::chrono::hours(5);
 
+		auto create1 = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1");
+		auto create2 = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 2");
+
+		create1.timeCodes.push_back(TimeCodeID(1));
+		create1.timeCodes.push_back(TimeCodeID(2));
+		create2.timeCodes.push_back(TimeCodeID(3));
+		create2.timeCodes.push_back(TimeCodeID(4));
+
+		helper.expect_success(create1);
+		helper.expect_success(create2);
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.clock.time += std::chrono::hours(2);
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(2)));
+		helper.clock.time += std::chrono::hours(2);
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(2)));
+
+		helper.clock.time = date_to_ms(2, 3, 2025) + std::chrono::hours(5);
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.clock.time += std::chrono::hours(3);
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(2)));
+		helper.clock.time += std::chrono::hours(2);
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.clock.time += std::chrono::hours(2);
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+
+		helper.clock.time = date_to_ms(2, 4, 2025) + std::chrono::hours(5);
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.clock.time += std::chrono::hours(2);
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(2)));
+		helper.clock.time += std::chrono::hours(2);
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(2)));
+
+		helper.clear_message_output();
+
+		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
+
+		helper.api.process_packet(request, helper.output);
+
+		auto report = DailyReportMessage(helper.prev_request_id());
+		report.reportFound = true;
+		report.report.month = 2;
+		report.report.day = 3;
+		report.report.year = 2025;
+		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5);
+		report.report.endTime = date_to_ms(2, 3, 2025) + std::chrono::hours(12);
+		report.report.times.emplace_back(TaskID(1), 1);
+		report.report.times.emplace_back(TaskID(1), 2);
+		report.report.times.emplace_back(TaskID(2), 1);
+		report.report.timePerTimeCode.emplace(TimeCodeID(1), std::chrono::hours(5));
+		report.report.timePerTimeCode.emplace(TimeCodeID(2), std::chrono::hours(5));
+		report.report.timePerTimeCode.emplace(TimeCodeID(3), std::chrono::hours(2));
+		report.report.timePerTimeCode.emplace(TimeCodeID(4), std::chrono::hours(2));
+
+		helper.required_messages({ &report });
 	}
 }
 

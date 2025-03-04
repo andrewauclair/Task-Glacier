@@ -38,7 +38,7 @@ enum class TaskState : std::int32_t
 
 inline constexpr TaskID NO_PARENT = TaskID(0);
 
-using RequestID = strong::type<std::int32_t, struct request_id_, strong::equality, strong::incrementable>;
+using RequestID = strong::type<std::int32_t, struct request_id_, strong::equality, strong::incrementable, strong::ordered>;
 
 template <>
 struct std::formatter<RequestID> : std::formatter<std::int32_t> {
@@ -47,7 +47,7 @@ struct std::formatter<RequestID> : std::formatter<std::int32_t> {
 	}
 };
 
-using TimeCodeID = strong::type<std::int32_t, struct time_code_id_, strong::equality, strong::incrementable>;
+using TimeCodeID = strong::type<std::int32_t, struct time_code_id_, strong::equality, strong::incrementable, strong::ordered>;
 
 template <>
 struct std::formatter<TimeCodeID> : std::formatter<std::int32_t> {
@@ -56,7 +56,7 @@ struct std::formatter<TimeCodeID> : std::formatter<std::int32_t> {
 	}
 };
 
-using TimeCategoryID = strong::type<std::int32_t, struct time_category_id_, strong::equality, strong::incrementable>;
+using TimeCategoryID = strong::type<std::int32_t, struct time_category_id_, strong::equality, strong::incrementable, strong::ordered>;
 
 template <>
 struct std::formatter<TimeCategoryID> : std::formatter<std::int32_t> {
