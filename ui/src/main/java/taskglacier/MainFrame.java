@@ -15,7 +15,9 @@ import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
 import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
 import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
 import io.github.andrewauclair.moderndocking.settings.Settings;
+import packets.DailyReportMessage;
 import packets.RequestConfig;
+import panels.DailyReportPanel;
 import panels.StatusBar;
 import panels.SystemTrayDisplay;
 import panels.TasksLists;
@@ -29,6 +31,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.prefs.Preferences;
 
@@ -40,6 +44,8 @@ public class MainFrame extends JFrame {
     private TaskModel taskModel = new TaskModel();
     ImageIcon appIcon16 = new ImageIcon(Objects.requireNonNull(System.getenv("TASK_GLACIER_DEV_INSTANCE") != null ? getClass().getResource("/work-in-progress (1).png") : getClass().getResource("/app-icon-16.png")));
     TrayIcon trayIcon = new TrayIcon(appIcon16.getImage(), "");
+
+    private DailyReportPanel dailyReportPanel;
 
     private SystemTrayDisplay systemTrayDisplay = new SystemTrayDisplay(trayIcon);
 
@@ -105,6 +111,8 @@ public class MainFrame extends JFrame {
         DockingUI.initialize();
         Docking.registerDockingPanel(root, this);
 
+        dailyReportPanel = new DailyReportPanel();
+
         new TasksLists(this, "tasks", "Tasks");
 
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
@@ -127,6 +135,12 @@ public class MainFrame extends JFrame {
         else {
             preferences = Preferences.userNodeForPackage(MainFrame.class);
             layoutFile = new File(System.getenv("LOCALAPPDATA") + "/TaskGlacier/layout.xml");
+        }
+
+        try {
+            Files.createDirectories(Paths.get(layoutFile.toURI()).getParent());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
         AppState.setPersistFile(layoutFile);
@@ -259,5 +273,13 @@ public class MainFrame extends JFrame {
         }
         UIManager.getDefaults().put("TabbedPane.contentBorderInsets", new Insets(0,0,0,0));
         UIManager.getDefaults().put("TabbedPane.tabsOverlapBorder", true);
+    }
+
+    public void receivedDailyReport(DailyReportMessage dailyReport) {
+        if (!dailyReport.isReportFound()) {
+            return;
+        }
+        dailyReportPanel.update(dailyReport);
+        Docking.display("daily-report");
     }
 }

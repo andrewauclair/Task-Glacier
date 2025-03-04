@@ -483,6 +483,26 @@ std::vector<std::byte> DailyReportMessage::pack() const
 		builder.add<std::int8_t>(report.month);
 		builder.add<std::int8_t>(report.day);
 		builder.add<std::int16_t>(report.year);
+
+		builder.add(report.startTime);
+		builder.add(report.endTime);
+		builder.add(report.totalTime);
+
+		builder.add<std::int32_t>(report.timePerTimeCode.size());
+
+		for (auto&& timeCode : report.timePerTimeCode)
+		{
+			builder.add(timeCode.first);
+			builder.add(timeCode.second);
+		}
+
+		builder.add<std::int32_t>(report.times.size());
+
+		for (auto&& pair : report.times)
+		{
+			builder.add(pair.taskID);
+			builder.add(pair.startStopIndex);
+		}
 	}
 
 	return builder.build();

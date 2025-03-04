@@ -7,6 +7,7 @@ import dialogs.TimeCategories;
 import io.github.andrewauclair.moderndocking.app.DockingState;
 import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
 import packets.BugzillaRefresh;
+import packets.RequestDailyReport;
 import packets.RequestID;
 
 import javax.swing.*;
@@ -66,6 +67,18 @@ public class MenuBar extends JMenuBar {
         server.add(connect);
         server.add(disconnect);
 
+        JMenuItem requestDailyReport = new JMenuItem("Request Daily Report");
+        server.add(requestDailyReport);
+
+        requestDailyReport.addActionListener(e -> {
+            RequestDailyReport request = new RequestDailyReport();
+            request.requestID = RequestID.nextRequestID();
+            request.month = 3;
+            request.day = 4;
+            request.year = 2025;
+
+            mainFrame.getConnection().sendPacket(request);
+        });
         add(server);
 
         bugzilla.setMnemonic('B');

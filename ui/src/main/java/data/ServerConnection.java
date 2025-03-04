@@ -1,10 +1,8 @@
 package data;
 
 import dialogs.AddModifyTask;
-import packets.FailureResponse;
-import packets.Packet;
-import packets.PacketType;
-import packets.TaskInfo;
+import packets.*;
+import panels.DailyReportPanel;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
@@ -59,6 +57,11 @@ public class ServerConnection {
                     SwingUtilities.invokeLater(MainFrame::restoreLayout);
 
                     SwingUtilities.invokeLater(() -> mainFrame.getTaskModel().configurationComplete());
+                }
+                else if (packetType == PacketType.DAILY_REPORT) {
+                    DailyReportMessage dailyReport = DailyReportMessage.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
+
+                    SwingUtilities.invokeLater(() -> mainFrame.receivedDailyReport(dailyReport));
                 }
                 else if (packetType == PacketType.FAILURE_RESPONSE) {
                     FailureResponse failure = FailureResponse.parse(new DataInputStream((new ByteArrayInputStream(bytes))));
