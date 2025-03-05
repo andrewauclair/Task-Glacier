@@ -5,6 +5,7 @@ import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import data.ServerConnection;
 import data.TaskModel;
+import data.TimeData;
 import dialogs.ConnectToServer;
 import io.github.andrewauclair.moderndocking.DockableTabPreference;
 import io.github.andrewauclair.moderndocking.app.AppState;
@@ -44,6 +45,8 @@ public class MainFrame extends JFrame {
     private TaskModel taskModel = new TaskModel();
     ImageIcon appIcon16 = new ImageIcon(Objects.requireNonNull(System.getenv("TASK_GLACIER_DEV_INSTANCE") != null ? getClass().getResource("/work-in-progress (1).png") : getClass().getResource("/app-icon-16.png")));
     TrayIcon trayIcon = new TrayIcon(appIcon16.getImage(), "");
+
+    TimeData timeData = new TimeData();
 
     private DailyReportPanel dailyReportPanel;
 
@@ -281,5 +284,9 @@ public class MainFrame extends JFrame {
         }
         dailyReportPanel.update(dailyReport);
         Docking.display("daily-report");
+    }
+
+    public TimeData getTimeData() {
+        return timeData;
     }
 }

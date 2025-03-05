@@ -169,12 +169,39 @@ std::expected<TimeCategoriesData, UnpackError> TimeCategoriesData::unpack(std::s
 	auto parser = PacketParser(data);
 
 	const auto packetType = parser.parse_next<PacketType>();
-	const auto requestID = parser.parse_next<RequestID>();
-	const auto taskID = parser.parse_next<TaskID>();
 
 	try
 	{
-		return TimeCategoriesData();
+		TimeCategoriesData data;
+
+		const std::int32_t timeCategoryCount = parser.parse_next<std::int32_t>().value();
+
+		for (int i = 0; i < timeCategoryCount; i++)
+		{
+			auto id = parser.parse_next<TimeCategoryID>().value();
+			auto name = parser.parse_next<std::string>().value();
+			TimeCategoryPacket timeCategory(id, name);
+			timeCategory.inUse = parser.parse_next<bool>().value();
+			timeCategory.taskCount = parser.parse_next<std::int32_t>().value();
+			timeCategory.archived = parser.parse_next<bool>().value();
+
+			const std::int32_t timeCodeCount = parser.parse_next<std::int32_t>().value();
+
+			for (int j = 0; j < timeCodeCount; j++)
+			{
+				auto codeID = parser.parse_next<TimeCodeID>().value();
+				auto codeName = parser.parse_next<std::string>().value();
+				TimeCodePacket timeCode(codeID, codeName);
+				timeCode.inUse = parser.parse_next<bool>().value();
+				timeCode.taskCount = parser.parse_next<std::int32_t>().value();
+				timeCode.archived = parser.parse_next<bool>().value();
+
+				timeCategory.codes.push_back(timeCode);
+			}
+			data.timeCategories.push_back(timeCategory);
+		}
+		
+		return data;
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{

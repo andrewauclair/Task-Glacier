@@ -360,9 +360,9 @@ struct TimeCodePacket
 {
 	TimeCodeID id;
 	std::string name;
-	bool inUse;
-	std::int32_t taskCount;
-	bool archived;
+	bool inUse = false;
+	std::int32_t taskCount = 0;
+	bool archived = false;
 
 	TimeCodePacket(TimeCodeID id, std::string name) : id(id), name(std::move(name)) {}
 
@@ -380,9 +380,9 @@ struct TimeCategoryPacket
 {
 	TimeCategoryID id;
 	std::string name;
-	bool inUse;
-	std::int32_t taskCount;
-	bool archived;
+	bool inUse = false;
+	std::int32_t taskCount = 0;
+	bool archived = false;
 	std::vector<TimeCodePacket> codes;
 
 	TimeCategoryPacket(TimeCategoryID id, std::string name) : id(id), name(std::move(name)) {}
@@ -423,7 +423,7 @@ struct TimeCategoriesData : Message
 
 	bool operator==(const TimeCategoriesData& message) const
 	{
-		return packetType() == message.packetType();
+		return packetType() == message.packetType() && timeCategories == message.timeCategories;
 	}
 
 	std::vector<std::byte> pack() const override;

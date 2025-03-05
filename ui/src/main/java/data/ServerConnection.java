@@ -63,6 +63,11 @@ public class ServerConnection {
 
                     SwingUtilities.invokeLater(() -> mainFrame.receivedDailyReport(dailyReport));
                 }
+                else if (packetType == PacketType.TIME_CATEGORIES_DATA) {
+                    TimeCategoriesMessage message = TimeCategoriesMessage.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
+
+                    SwingUtilities.invokeLater(() -> mainFrame.getTimeData().processPacket(message));
+                }
                 else if (packetType == PacketType.FAILURE_RESPONSE) {
                     FailureResponse failure = FailureResponse.parse(new DataInputStream((new ByteArrayInputStream(bytes))));
 

@@ -34,7 +34,11 @@ public enum PacketType {
 
     BACKUP_CONFIGURATION(23),
     BACKUP_PERFORMED(24),
-    BACKUP_FAILED(25);
+    BACKUP_FAILED(25),
+
+    TIME_CATEGORIES_REQUEST(26),
+    TIME_CATEGORIES_DATA(27),
+    TIME_CATEGORIES_MODIFY(28);
 
     private final int value;
 

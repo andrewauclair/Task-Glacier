@@ -1,5 +1,9 @@
 package dialogs;
 
+import data.TimeData;
+import packets.PacketType;
+import packets.RequestID;
+import packets.TimeCategoriesMessage;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
@@ -8,14 +12,18 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TimeCategories extends JDialog {
+    private final TimeData timeData;
     JComboBox<String> timeCategorySelection = new JComboBox<>();
     Map<String, DefaultTableModel> timeCodeModels = new HashMap<>();
     DefaultTableModel currentTimeCodeModel = null;
+    private DefaultTableModel categoriesModel;
 
     public TimeCategories(MainFrame mainFrame) {
+        this.timeData = mainFrame.getTimeData();
         setModal(true);
 
         // Time Category - Label - In Use - Count - Archived
@@ -32,8 +40,43 @@ public class TimeCategories extends JDialog {
         tabs.add("Categories", setupTimeCategoriesTable());
         tabs.add("Codes", setupCodes());
 
+        for (TimeData.TimeCategory timeCategory : timeData.getTimeCategories()) {
+            categoriesModel.addRow(new Object[] { timeCategory.name, "", "No", "0", "No" });
+
+            DefaultTableModel timeCodeModel = timeCodeModels.get(timeCategory.name);
+
+            for (TimeData.TimeCode timeCode : timeCategory.timeCodes) {
+                timeCodeModel.addRow(new Object[] { timeCode.name, "No", "0", "No" });
+            }
+        }
 
         JButton save = new JButton("Save");
+
+        save.addActionListener(e -> {
+            TimeCategoriesMessage message = new TimeCategoriesMessage(PacketType.TIME_CATEGORIES_MODIFY);
+            message.requestID = RequestID.nextRequestID();
+
+            List<TimeData.TimeCategory> timeCategories = message.getTimeCategories();
+
+            for (int i = 0; i < categoriesModel.getRowCount(); i++) {
+                TimeData.TimeCategory timeCategory = new TimeData.TimeCategory();
+                timeCategory.name = (String) categoriesModel.getValueAt(i, 0);
+                timeCategories.add(timeCategory);
+
+                DefaultTableModel timeCodeModel = timeCodeModels.get(timeCategory.name);
+
+                for (int j = 0; j < timeCodeModel.getRowCount(); j++) {
+                    TimeData.TimeCode timeCode = new TimeData.TimeCode();
+                    timeCode.name = (String) timeCodeModel.getValueAt(j, 0);
+
+                    timeCategory.timeCodes.add(timeCode);
+                }
+            }
+
+            mainFrame.getConnection().sendPacket(message);
+
+            TimeCategories.this.dispose();
+        });
 
         setLayout(new GridBagLayout());
 
@@ -60,10 +103,8 @@ public class TimeCategories extends JDialog {
     }
 
     private JScrollPane setupTimeCategoriesTable() {
-        DefaultTableModel categoriesModel = new DefaultTableModel(new Object[] { "Time Category", "Label", "In Use", "Count", "Archived" }, 0);
+        categoriesModel = new DefaultTableModel(new Object[] { "Time Category", "Label", "In Use", "Count", "Archived" }, 0);
         JTable categories = new JTable(categoriesModel);
-
-
 
         JPopupMenu contextMenu = new JPopupMenu();
         JMenuItem add = new JMenuItem("Add...");
@@ -77,7 +118,7 @@ public class TimeCategories extends JDialog {
                 JTextField category = new JTextField();
                 JTextField label = new JTextField();
 
-                JButton add = new JButton();
+                JButton add = new JButton("Add");
                 add.addActionListener(e -> {
                     categoriesModel.addRow(new Object[] { category.getText(), label.getText(), "No", "0", "No" });
                     timeCodeModels.put(category.getText(), new DefaultTableModel(new Object[] { "Time Code", "In Use", "Task Count", "Archived" }, 0));
@@ -87,7 +128,9 @@ public class TimeCategories extends JDialog {
 
                 setLayout(new FlowLayout());
 
+                add(new JLabel("Category"));
                 add(category);
+                add(new JLabel("Label"));
                 add(label);
                 add(add);
 
@@ -153,7 +196,7 @@ public class TimeCategories extends JDialog {
 
                 JTextField code = new JTextField();
 
-                JButton add = new JButton();
+                JButton add = new JButton("Add");
                 add.addActionListener(e -> {
                     currentTimeCodeModel.addRow(new Object[] { code.getText(), "No", "0", "No" });
                     CreateTimeCode.this.dispose();
@@ -161,6 +204,7 @@ public class TimeCategories extends JDialog {
 
                 setLayout(new FlowLayout());
 
+                add(new JLabel("Code"));
                 add(code);
                 add(add);
 

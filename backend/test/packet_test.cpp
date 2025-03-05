@@ -931,10 +931,10 @@ TEST_CASE("Daily Report", "[messages]")
 		newReport.reportFound = true;
 		newReport.report = { 2, 3, 2025 };
 
-		auto verifier = PacketVerifier(newReport.pack(), 17);
+		auto verifier = PacketVerifier(newReport.pack(), 49);
 
 		verifier
-			.verify_value<std::uint32_t>(17, "packet length")
+			.verify_value<std::uint32_t>(49, "packet length")
 			.verify_value(static_cast<std::int32_t>(PacketType::DAILY_REPORT), "packet ID")
 			.verify_value<std::uint32_t>(10, "request ID")
 			.verify_value<bool>(true, "report found")
@@ -956,7 +956,7 @@ TEST_CASE("Daily Report", "[messages]")
 		newReport.report = { 2, 3, 2025 };
 
 		PacketTestHelper helper;
-		helper.expect_packet<DailyReportMessage>(newReport, 17);
+		helper.expect_packet<DailyReportMessage>(newReport, 49);
 	}
 }
 

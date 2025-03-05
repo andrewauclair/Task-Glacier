@@ -413,8 +413,8 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 
 	for (auto&& category : m_timeCategories)
 	{
-		//TimeCategoryPacket packet }
-		//data.timeCategories.emplace_back();
+		TimeCategoryPacket packet = TimeCategoryPacket(category.id, category.name);
+		data.timeCategories.push_back(packet);
 	}
 	output.push_back(std::make_unique<TimeCategoriesData>(data));
 }

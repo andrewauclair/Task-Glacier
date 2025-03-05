@@ -1,6 +1,6 @@
 package data;
 
-import packets.TimeCategoriesData;
+import packets.TimeCategoriesMessage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +20,12 @@ public class TimeData {
 
     List<TimeCategory> timeCategories = new ArrayList<>();
 
-    public void processPacket(TimeCategoriesData data) {
+    public void processPacket(TimeCategoriesMessage data) {
         timeCategories = new ArrayList<>(data.getTimeCategories());
+    }
+
+    public List<TimeCategory> getTimeCategories() {
+        return timeCategories;
     }
 
     public TimeCategory timeCategoryForTimeCode(int timeCodeID) {
