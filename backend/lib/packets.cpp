@@ -169,10 +169,11 @@ std::expected<TimeCategoriesData, UnpackError> TimeCategoriesData::unpack(std::s
 	auto parser = PacketParser(data);
 
 	const auto packetType = parser.parse_next<PacketType>();
+	const auto modType = parser.parse_next<TimeCategoryModType>();
 
 	try
 	{
-		TimeCategoriesData data;
+		TimeCategoriesData data(modType.value());
 
 		const std::int32_t timeCategoryCount = parser.parse_next<std::int32_t>().value();
 
@@ -180,7 +181,7 @@ std::expected<TimeCategoriesData, UnpackError> TimeCategoriesData::unpack(std::s
 		{
 			auto id = parser.parse_next<TimeCategoryID>().value();
 			auto name = parser.parse_next<std::string>().value();
-			TimeCategoryPacket timeCategory(id, name);
+			TimeCategory timeCategory(id, name);
 			timeCategory.inUse = parser.parse_next<bool>().value();
 			timeCategory.taskCount = parser.parse_next<std::int32_t>().value();
 			timeCategory.archived = parser.parse_next<bool>().value();
@@ -191,7 +192,7 @@ std::expected<TimeCategoriesData, UnpackError> TimeCategoriesData::unpack(std::s
 			{
 				auto codeID = parser.parse_next<TimeCodeID>().value();
 				auto codeName = parser.parse_next<std::string>().value();
-				TimeCodePacket timeCode(codeID, codeName);
+				TimeCode timeCode(codeID, codeName);
 				timeCode.inUse = parser.parse_next<bool>().value();
 				timeCode.taskCount = parser.parse_next<std::int32_t>().value();
 				timeCode.archived = parser.parse_next<bool>().value();

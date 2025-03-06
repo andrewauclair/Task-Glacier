@@ -396,24 +396,62 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 {
 	for (auto&& category : message.timeCategories)
 	{
+		TimeCategory* timeCategory = nullptr;
+
 		if (category.id == TimeCategoryID(0))
 		{
 			// creating new time category
 			// TODO check if one with the given name already exists
 
-			auto newCategory = category;
-			newCategory.id = TimeCategoryID(1);
+			TimeCategory newCategory{ m_nextTimeCategoryID, category.name };
+
+			m_nextTimeCategoryID++;
 
 			m_timeCategories.push_back(newCategory);
+
+			timeCategory = &m_timeCategories.back();
+		}
+		else
+		{
+			auto result = std::find_if(m_timeCategories.begin(), m_timeCategories.end(), [&](auto&& cat) { return cat.id == category.id;});
+
+			if (result != m_timeCategories.end())
+			{
+				timeCategory = &(*result);
+			}
+			else
+			{
+				// failed to find a time category with the given ID
+			}
+		}
+
+		for (auto&& code : category.codes)
+		{
+			if (code.id == TimeCodeID(0))
+			{
+				auto newCode = code;
+				newCode.id = m_nextTimeCodeID;
+
+				m_nextTimeCodeID++;
+
+				timeCategory->codes.push_back(newCode);
+			}
 		}
 	}
 	output.push_back(std::make_unique<SuccessResponse>(message.requestID));
 
-	TimeCategoriesData data;
+	TimeCategoriesData data(TimeCategoryModType::UPDATE);
 
 	for (auto&& category : m_timeCategories)
 	{
-		TimeCategoryPacket packet = TimeCategoryPacket(category.id, category.name);
+		TimeCategory packet = TimeCategory(category.id, category.name);
+
+		for (auto&& code : category.codes)
+		{
+			TimeCode codePacket = TimeCode(code.id, code.name);
+
+			packet.codes.push_back(codePacket);
+		}
 		data.timeCategories.push_back(packet);
 	}
 	output.push_back(std::make_unique<TimeCategoriesData>(data));

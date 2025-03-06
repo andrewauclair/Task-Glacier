@@ -76,6 +76,8 @@ struct TimeCode
 {
 	TimeCodeID id; // the ID will be continuously incremented, even when deleting time codes that were just created
 	std::string name;
+	bool inUse = false;
+	std::int32_t taskCount;
 	bool archived = false;
 	
 	friend std::ostream& operator<<(std::ostream& out, const TimeCode& code)
@@ -93,6 +95,9 @@ struct TimeCategory
 	TimeCategoryID id; // the ID will be continuously incremented, even when deleting time categories that were just created
 	std::string name;
 	std::vector<TimeCode> codes;
+	bool inUse = false;
+	std::int32_t taskCount;
+	
 	bool archived = false;
 
 	friend std::ostream& operator<<(std::ostream& out, const TimeCategory& category)
@@ -356,59 +361,67 @@ struct TaskMessage : RequestMessage
 	}
 };
 
-struct TimeCodePacket
+//struct TimeCodePacket
+//{
+//	TimeCodeID id;
+//	std::string name;
+//	bool inUse = false;
+//	std::int32_t taskCount = 0;
+//	bool archived = false;
+//
+//	TimeCodePacket(TimeCodeID id, std::string name) : id(id), name(std::move(name)) {}
+//
+//	constexpr auto operator<=>(const TimeCodePacket&) const = default;
+//
+//	friend std::ostream& operator<<(std::ostream& out, const TimeCodePacket& code)
+//	{
+//		out << "TimeCode { id: " << code.id._val << ", name: " << code.name << ", inUse: " << code.inUse << ", taskCount: " << code.taskCount << ", archived: " << code.archived << " }";
+//
+//		return out;
+//	}
+//};
+//
+//struct TimeCategoryPacket
+//{
+//	TimeCategoryID id;
+//	std::string name;
+//	bool inUse = false;
+//	std::int32_t taskCount = 0;
+//	bool archived = false;
+//	std::vector<TimeCodePacket> codes;
+//
+//	TimeCategoryPacket(TimeCategoryID id, std::string name) : id(id), name(std::move(name)) {}
+//
+//	constexpr auto operator<=>(const TimeCategoryPacket&) const = default;
+//
+//	friend std::ostream& operator<<(std::ostream& out, const TimeCategoryPacket& category)
+//	{
+//		out << "TimeCategory { name: " << category.name << ", inUse: " << category.inUse << ", taskCount: " << category.taskCount << ", archived: " << category.archived << '\n';
+//
+//		for (auto&& code : category.codes)
+//		{
+//			out << code << '\n';
+//		}
+//
+//		out << " }";
+//
+//		return out;
+//	}
+//};
+
+enum class TimeCategoryModType
 {
-	TimeCodeID id;
-	std::string name;
-	bool inUse = false;
-	std::int32_t taskCount = 0;
-	bool archived = false;
-
-	TimeCodePacket(TimeCodeID id, std::string name) : id(id), name(std::move(name)) {}
-
-	constexpr auto operator<=>(const TimeCodePacket&) const = default;
-
-	friend std::ostream& operator<<(std::ostream& out, const TimeCodePacket& code)
-	{
-		out << "TimeCode { id: " << code.id._val << ", name: " << code.name << ", inUse: " << code.inUse << ", taskCount: " << code.taskCount << ", archived: " << code.archived << " }";
-
-		return out;
-	}
-};
-
-struct TimeCategoryPacket
-{
-	TimeCategoryID id;
-	std::string name;
-	bool inUse = false;
-	std::int32_t taskCount = 0;
-	bool archived = false;
-	std::vector<TimeCodePacket> codes;
-
-	TimeCategoryPacket(TimeCategoryID id, std::string name) : id(id), name(std::move(name)) {}
-
-	constexpr auto operator<=>(const TimeCategoryPacket&) const = default;
-
-	friend std::ostream& operator<<(std::ostream& out, const TimeCategoryPacket& category)
-	{
-		out << "TimeCategory { name: " << category.name << ", inUse: " << category.inUse << ", taskCount: " << category.taskCount << ", archived: " << category.archived << '\n';
-
-		for (auto&& code : category.codes)
-		{
-			out << code << '\n';
-		}
-
-		out << " }";
-
-		return out;
-	}
+	ADD = 0,
+	UPDATE = 1,
+	REMOVE = 2
 };
 
 struct TimeCategoriesData : Message
 {
-	std::vector<TimeCategoryPacket> timeCategories;
+	TimeCategoryModType type;
+	std::vector<TimeCategory> timeCategories;
 
-	TimeCategoriesData() : Message(PacketType::TIME_CATEGORIES_DATA)
+	TimeCategoriesData(TimeCategoryModType type) : Message(PacketType::TIME_CATEGORIES_DATA), type(type)
 	{
 	}
 

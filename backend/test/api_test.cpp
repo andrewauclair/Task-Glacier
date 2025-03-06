@@ -568,7 +568,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 		helper.expect_success(modify);
 
-		auto data = TimeCategoriesData();
+		auto data = TimeCategoriesData(TimeCategoryModType::UPDATE);
 		auto& verifyCategory = data.timeCategories.emplace_back(TimeCategoryID(1), "New");
 
 		helper.required_messages({ &data });
@@ -582,7 +582,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 		helper.expect_success(modify);
 
-		auto data = TimeCategoriesData();
+		auto data = TimeCategoriesData(TimeCategoryModType::UPDATE);
 		auto& verifyCategory = data.timeCategories.emplace_back(TimeCategoryID(1), "New");
 		verifyCategory.codes.emplace_back(TimeCodeID(1), "Code 1");
 
@@ -597,7 +597,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 		helper.expect_success(modify);
 
-		auto data = TimeCategoriesData();
+		auto data = TimeCategoriesData(TimeCategoryModType::UPDATE);
 		data.timeCategories.emplace_back(TimeCategoryID(1), "New 1");
 		data.timeCategories.emplace_back(TimeCategoryID(2), "New 2");
 
@@ -618,7 +618,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 		helper.expect_success(modify);
 
-		auto data = TimeCategoriesData();
+		auto data = TimeCategoriesData(TimeCategoryModType::UPDATE);
 
 		auto& verifyCategory1 = data.timeCategories.emplace_back(TimeCategoryID(1), "New 1");
 		verifyCategory1.codes.emplace_back(TimeCodeID(1), "Code 1");
