@@ -141,7 +141,7 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 
 					send_task_info(*task, true, output);
 
-					m_app.m_bugzillaTasks.emplace(i, result.value());
+					m_app.m_bugzillaTasks.emplace(static_cast<std::int32_t>(i), result.value());
 				}
 			}
 			else
