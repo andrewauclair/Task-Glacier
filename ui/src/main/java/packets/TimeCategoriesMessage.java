@@ -11,6 +11,7 @@ import java.util.List;
 public class TimeCategoriesMessage implements Packet {
     private final PacketType packetType;
     public int requestID;
+    public TimeCategoryModType type = TimeCategoryModType.UPDATE;
 
     public List<TimeData.TimeCategory> getTimeCategories() {
         return timeCategories;
@@ -32,11 +33,16 @@ public class TimeCategoriesMessage implements Packet {
 
             timeCategory.id = input.readInt();
 
-            int chars = input.readShort(); // string length
-
-            byte[] bytes = input.readNBytes(chars);
-
-            timeCategory.name = new String(bytes);
+            {
+                int chars = input.readShort(); // string length
+                byte[] bytes = input.readNBytes(chars);
+                timeCategory.name = new String(bytes);
+            }
+            {
+                int chars = input.readShort(); // string length
+                byte[] bytes = input.readNBytes(chars);
+                timeCategory.label = new String(bytes);
+            }
 
             input.readByte();
             input.readInt();
@@ -49,11 +55,11 @@ public class TimeCategoriesMessage implements Packet {
 
                 timeCode.id = input.readInt();
 
-                chars = input.readShort(); // string length
-
-                bytes = input.readNBytes(chars);
-
-                timeCode.name = new String(bytes);
+                {
+                    int chars = input.readShort(); // string length
+                    byte[] bytes = input.readNBytes(chars);
+                    timeCode.name = new String(bytes);
+                }
 
                 input.readByte();
                 input.readInt();
@@ -70,9 +76,9 @@ public class TimeCategoriesMessage implements Packet {
 
     @Override
     public void writeToOutput(DataOutputStream output) throws IOException {
-        int size = 16;
+        int size = 20;
         for (TimeData.TimeCategory timeCategory : timeCategories) {
-            size += 11 + timeCategory.name.length();
+            size += 13 + timeCategory.name.length() + timeCategory.label.length();
             for (TimeData.TimeCode timeCode : timeCategory.timeCodes) {
                 size += 7 + timeCode.name.length();
             }
@@ -80,12 +86,15 @@ public class TimeCategoriesMessage implements Packet {
         output.writeInt(size);
         output.writeInt(packetType.value());
         output.writeInt(requestID);
+        output.writeInt(type.ordinal());
         output.writeInt(timeCategories.size());
 
         for (TimeData.TimeCategory timeCategory : timeCategories) {
             output.writeInt(timeCategory.id);
             output.writeShort(timeCategory.name.length());
             output.write(timeCategory.name.getBytes());
+            output.writeShort(timeCategory.label.length());
+            output.write(timeCategory.label.getBytes());
             output.writeByte(0); // archived
             output.writeInt(timeCategory.timeCodes.size());
             for (TimeData.TimeCode timeCode : timeCategory.timeCodes) {

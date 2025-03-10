@@ -4,6 +4,7 @@ import data.TimeData;
 import packets.PacketType;
 import packets.RequestID;
 import packets.TimeCategoriesMessage;
+import packets.TimeCategoryModType;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
@@ -43,7 +44,10 @@ public class TimeCategories extends JDialog {
         for (TimeData.TimeCategory timeCategory : timeData.getTimeCategories()) {
             categoriesModel.addRow(new Object[] { timeCategory.name, "", "No", "0", "No" });
 
+            timeCodeModels.put(timeCategory.name, new DefaultTableModel(new Object[]{"Time Code", "In Use", "Task Count", "Archived"}, 0));
             DefaultTableModel timeCodeModel = timeCodeModels.get(timeCategory.name);
+
+            timeCategorySelection.addItem(timeCategory.name);
 
             for (TimeData.TimeCode timeCode : timeCategory.timeCodes) {
                 timeCodeModel.addRow(new Object[] { timeCode.name, "No", "0", "No" });
@@ -54,6 +58,7 @@ public class TimeCategories extends JDialog {
 
         save.addActionListener(e -> {
             TimeCategoriesMessage message = new TimeCategoriesMessage(PacketType.TIME_CATEGORIES_MODIFY);
+            message.type = TimeCategoryModType.ADD;
             message.requestID = RequestID.nextRequestID();
 
             List<TimeData.TimeCategory> timeCategories = message.getTimeCategories();
@@ -61,6 +66,7 @@ public class TimeCategories extends JDialog {
             for (int i = 0; i < categoriesModel.getRowCount(); i++) {
                 TimeData.TimeCategory timeCategory = new TimeData.TimeCategory();
                 timeCategory.name = (String) categoriesModel.getValueAt(i, 0);
+                timeCategory.label = (String) categoriesModel.getValueAt(i, 1);
                 timeCategories.add(timeCategory);
 
                 DefaultTableModel timeCodeModel = timeCodeModels.get(timeCategory.name);

@@ -32,9 +32,10 @@ TEST_CASE("Configuring Bugzilla Information", "[bugzilla][api]")
 
 		helper.api.process_packet(request, helper.output);
 
+		auto timeCategories = TimeCategoriesData({});
 		auto complete = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
 
-		helper.required_messages({ &configure, &complete });
+		helper.required_messages({ &configure, &timeCategories, &complete });
 	}
 }
 
@@ -284,7 +285,7 @@ TEST_CASE("Bugzilla Persistence", "[bugzilla][api]")
 		// now that we're setup, request the configuration and check the output
 		helper.api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, helper.output);
 
-		CHECK(helper.output.size() == 2);
+		CHECK(helper.output.size() == 3);
 
 		auto configure = BugzillaInfoMessage("bugzilla", "asfesdFEASfslj");
 		configure.username = "test";
@@ -294,8 +295,9 @@ TEST_CASE("Bugzilla Persistence", "[bugzilla][api]")
 		configure.labelToField["Priority"] = "priority";
 		configure.labelToField["Status"] = "status";
 
+		auto timeCategories = TimeCategoriesData({});
 		auto complete = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
 
-		helper.required_messages({ &configure, &complete });
+		helper.required_messages({ &configure, &timeCategories, &complete });
 	}
 }

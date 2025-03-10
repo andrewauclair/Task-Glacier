@@ -94,6 +94,7 @@ struct TimeCategory
 {
 	TimeCategoryID id; // the ID will be continuously incremented, even when deleting time categories that were just created
 	std::string name;
+	std::string label;
 	std::vector<TimeCode> codes;
 	bool inUse = false;
 	std::int32_t taskCount;
@@ -102,7 +103,7 @@ struct TimeCategory
 
 	friend std::ostream& operator<<(std::ostream& out, const TimeCategory& category)
 	{
-		out << "TimeCategory { name: " << category.name << ", archived: " << category.archived << '\n';
+		out << "TimeCategory { name: " << category.name << ", label: " << category.label << ", archived: " << category.archived << '\n';
 		
 		for (auto&& code : category.codes)
 		{

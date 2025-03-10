@@ -374,6 +374,23 @@ void API::handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<
 		bugzilla.labelToField = m_app.m_bugzillaLabelToField;
 
 		output.push_back(std::make_unique<BugzillaInfoMessage>(bugzilla));
+
+		TimeCategoriesData data({});
+
+		for (auto&& category : m_timeCategories)
+		{
+			TimeCategory packet = TimeCategory(category.id, category.name);
+
+			for (auto&& code : category.codes)
+			{
+				TimeCode codePacket = TimeCode(code.id, code.name);
+
+				packet.codes.push_back(codePacket);
+			}
+			data.timeCategories.push_back(packet);
+		}
+		output.push_back(std::make_unique<TimeCategoriesData>(data));
+
 		output.push_back(std::make_unique<BasicMessage>(PacketType::REQUEST_CONFIGURATION_COMPLETE));
 	}
 }

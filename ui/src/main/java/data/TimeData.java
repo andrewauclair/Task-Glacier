@@ -13,7 +13,8 @@ public class TimeData {
     }
     public static class TimeCategory {
         public int id;
-        public String name;
+        public String name = "";
+        public String label = "";
 
         public List<TimeCode> timeCodes = new ArrayList<>();
     }

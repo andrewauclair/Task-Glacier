@@ -147,6 +147,7 @@ std::vector<std::byte> TimeCategoriesData::pack() const
 	{
 		builder.add(timeCategory.id);
 		builder.add_string(timeCategory.name);
+		builder.add_string(timeCategory.label);
 		builder.add(timeCategory.inUse);
 		builder.add(timeCategory.taskCount);
 		builder.add(timeCategory.archived);
@@ -180,7 +181,9 @@ std::expected<TimeCategoriesData, UnpackError> TimeCategoriesData::unpack(std::s
 		{
 			auto id = parser.parse_next<TimeCategoryID>().value();
 			auto name = parser.parse_next<std::string>().value();
+			auto label = parser.parse_next<std::string>().value();
 			TimeCategory timeCategory(id, name);
+			timeCategory.label = label;
 			timeCategory.inUse = parser.parse_next<bool>().value();
 			timeCategory.taskCount = parser.parse_next<std::int32_t>().value();
 			timeCategory.archived = parser.parse_next<bool>().value();
@@ -222,6 +225,7 @@ std::vector<std::byte> TimeCategoriesModify::pack() const
 	{
 		builder.add(category.id);
 		builder.add_string(category.name);
+		builder.add_string(category.label);
 		builder.add(category.archived);
 
 		builder.add<std::int32_t>(category.codes.size());
@@ -256,6 +260,7 @@ std::expected<TimeCategoriesModify, UnpackError> TimeCategoriesModify::unpack(st
 			TimeCategory category(parser.parse_next<TimeCategoryID>().value());
 
 			category.name = parser.parse_next<std::string>().value();
+			category.label = parser.parse_next<std::string>().value();
 			category.archived = parser.parse_next<bool>().value();
 
 			const auto codeCount = parser.parse_next<std::int32_t>().value();
