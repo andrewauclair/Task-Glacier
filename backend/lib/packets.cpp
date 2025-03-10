@@ -169,11 +169,10 @@ std::expected<TimeCategoriesData, UnpackError> TimeCategoriesData::unpack(std::s
 	auto parser = PacketParser(data);
 
 	const auto packetType = parser.parse_next<PacketType>();
-	const auto modType = parser.parse_next<TimeCategoryModType>();
-
+	
 	try
 	{
-		TimeCategoriesData data(modType.value());
+		TimeCategoriesData data({});
 
 		const std::int32_t timeCategoryCount = parser.parse_next<std::int32_t>().value();
 
@@ -216,6 +215,7 @@ std::vector<std::byte> TimeCategoriesModify::pack() const
 
 	builder.add(static_cast<std::int32_t>(packetType()));
 	builder.add(requestID);
+	builder.add(type);
 	builder.add<std::int32_t>(timeCategories.size());
 
 	for (auto&& category : timeCategories)
@@ -243,6 +243,7 @@ std::expected<TimeCategoriesModify, UnpackError> TimeCategoriesModify::unpack(st
 
 	const auto packetType = parser.parse_next<PacketType>();
 	const auto requestID = parser.parse_next<RequestID>();
+	const auto modType = parser.parse_next<TimeCategoryModType>();
 
 	const auto categoryCount = parser.parse_next<std::int32_t>();
 
@@ -268,7 +269,7 @@ std::expected<TimeCategoriesModify, UnpackError> TimeCategoriesModify::unpack(st
 			}
 			categories.push_back(category);
 		}
-		return TimeCategoriesModify(requestID.value(), categories);
+		return TimeCategoriesModify(requestID.value(), modType.value(), categories);
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{

@@ -563,12 +563,12 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Success - Add Time Category")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), {});
+		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
 		auto& newCategory = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
 
 		helper.expect_success(modify);
 
-		auto data = TimeCategoriesData(TimeCategoryModType::UPDATE);
+		auto data = TimeCategoriesData({});
 		auto& verifyCategory = data.timeCategories.emplace_back(TimeCategoryID(1), "New");
 
 		helper.required_messages({ &data });
@@ -576,13 +576,13 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Success - Add Time Code")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), {});
+		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
 		auto& newCategory = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
 		newCategory.codes.emplace_back(TimeCodeID(0), "Code 1");
 
 		helper.expect_success(modify);
 
-		auto data = TimeCategoriesData(TimeCategoryModType::UPDATE);
+		auto data = TimeCategoriesData({});
 		auto& verifyCategory = data.timeCategories.emplace_back(TimeCategoryID(1), "New");
 		verifyCategory.codes.emplace_back(TimeCodeID(1), "Code 1");
 
@@ -591,13 +591,13 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Success - Add Multiple Time Categories")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), {});
+		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
 		modify.timeCategories.emplace_back(TimeCategoryID(0), "New 1");
 		modify.timeCategories.emplace_back(TimeCategoryID(0), "New 2");
 
 		helper.expect_success(modify);
 
-		auto data = TimeCategoriesData(TimeCategoryModType::UPDATE);
+		auto data = TimeCategoriesData({});
 		data.timeCategories.emplace_back(TimeCategoryID(1), "New 1");
 		data.timeCategories.emplace_back(TimeCategoryID(2), "New 2");
 
@@ -606,7 +606,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Success - Add Multiple Time Codes")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), {});
+		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
 		
 		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 1");
 		category1.codes.emplace_back(TimeCodeID(0), "Code 1");
@@ -618,7 +618,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 		helper.expect_success(modify);
 
-		auto data = TimeCategoriesData(TimeCategoryModType::UPDATE);
+		auto data = TimeCategoriesData({});
 
 		auto& verifyCategory1 = data.timeCategories.emplace_back(TimeCategoryID(1), "New 1");
 		verifyCategory1.codes.emplace_back(TimeCodeID(1), "Code 1");
@@ -631,39 +631,198 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 		helper.required_messages({ &data });
 	}
 
+	SECTION("Success - Update Time Category Name")
+	{
+		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+
+		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 1");
+		category1.codes.emplace_back(TimeCodeID(0), "Code 1");
+		category1.codes.emplace_back(TimeCodeID(0), "Code 2");
+
+		helper.expect_success(modify);
+		helper.clear_message_output();
+
+		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		modify.timeCategories.emplace_back(TimeCategoryID(1), "New Name");
+
+		helper.expect_success(modify);
+	}
+
+	SECTION("Success - Update Time Code Name")
+	{
+		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+
+		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 1");
+		category1.codes.emplace_back(TimeCodeID(0), "Code 1");
+		category1.codes.emplace_back(TimeCodeID(0), "Code 2");
+
+		helper.expect_success(modify);
+		helper.clear_message_output();
+
+		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		auto& cat1 = modify.timeCategories.emplace_back(TimeCategoryID(1), "New 1");
+		cat1.codes.emplace_back(TimeCodeID(1), "Code One");
+		cat1.codes.emplace_back(TimeCodeID(2), "Code One");
+
+		helper.expect_success(modify);
+	}
+
 	SECTION("Success - Delete Time Category")
 	{
+		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
 
+		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 1");
+		category1.codes.emplace_back(TimeCodeID(0), "Code 1");
+		category1.codes.emplace_back(TimeCodeID(0), "Code 2");
+
+		auto& category2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 2");
+		category2.codes.emplace_back(TimeCodeID(0), "Code 3");
+		category2.codes.emplace_back(TimeCodeID(0), "Code 4");
+
+		helper.expect_success(modify);
+
+		helper.clear_message_output();
+
+		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::REMOVE_CATEGORY, {});
+
+		modify.timeCategories.emplace_back(TimeCategoryID(2), "New 2");
+
+		helper.expect_success(modify);
+
+		auto data = TimeCategoriesData({});
+
+		auto& verifyCategory1 = data.timeCategories.emplace_back(TimeCategoryID(1), "New 1");
+		verifyCategory1.codes.emplace_back(TimeCodeID(1), "Code 1");
+		verifyCategory1.codes.emplace_back(TimeCodeID(2), "Code 2");
+
+		helper.required_messages({ &data });
 	}
 
 	SECTION("Success - Delete Time Code")
 	{
+		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
 
+		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 1");
+		category1.codes.emplace_back(TimeCodeID(0), "Code 1");
+		category1.codes.emplace_back(TimeCodeID(0), "Code 2");
+
+		auto& category2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 2");
+		category2.codes.emplace_back(TimeCodeID(0), "Code 3");
+		category2.codes.emplace_back(TimeCodeID(0), "Code 4");
+
+		helper.expect_success(modify);
+
+		helper.clear_message_output();
+
+		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::REMOVE_CODE, {});
+
+		auto& toRemove = modify.timeCategories.emplace_back(TimeCategoryID(2), "New 2");
+		toRemove.codes.emplace_back(TimeCodeID(4), "Code 4");
+
+		helper.expect_success(modify);
+
+		auto data = TimeCategoriesData({});
+
+		auto& verifyCategory1 = data.timeCategories.emplace_back(TimeCategoryID(1), "New 1");
+		verifyCategory1.codes.emplace_back(TimeCodeID(1), "Code 1");
+		verifyCategory1.codes.emplace_back(TimeCodeID(2), "Code 2");
+
+		auto& verifyCategory2 = data.timeCategories.emplace_back(TimeCategoryID(2), "New 2");
+		verifyCategory2.codes.emplace_back(TimeCodeID(3), "Code 3");
+
+		helper.required_messages({ &data });
 	}
 
-	SECTION("Success - Time Category IDs Are Not Reused")
+	SECTION("Success - Fine to Have Same Time Code in Multiple Time Categories")
 	{
+		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
 
-	}
+		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 1");
+		category1.codes.emplace_back(TimeCodeID(0), "Code 1");
+		category1.codes.emplace_back(TimeCodeID(0), "Code 2");
 
-	SECTION("Success - Time Code IDs Are Not Reused")
-	{
+		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		helper.expect_success(modify);
 
+		auto& category2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 2");
+		category2.codes.emplace_back(TimeCodeID(0), "Code 1");
+		category2.codes.emplace_back(TimeCodeID(0), "Code 2");
+
+		helper.expect_success(modify);
 	}
 
 	SECTION("Failure - Time Category Already Exists")
 	{
+		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
 
+		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
+
+		helper.expect_success(modify);
+		helper.clear_message_output();
+
+		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		
+		auto& category2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
+
+		helper.expect_failure(modify, "Time Category with name 'New' already exists");
 	}
 
 	SECTION("Failure - Time Category Does Not Exist")
 	{
-
+		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::UPDATE, {});
+		modify.timeCategories.emplace_back(TimeCategoryID(1), "Update");
+		
+		helper.expect_failure(modify, "Time Category with ID 1 does not exist");
 	}
 
 	SECTION("Failure - Time Code Already Exists")
 	{
+		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
 
+		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
+		category1.codes.emplace_back(TimeCodeID(0), "Code 1");
+
+		helper.expect_success(modify);
+		helper.clear_message_output();
+
+		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+
+		auto& category2 = modify.timeCategories.emplace_back(TimeCategoryID(1), "New");
+		category2.codes.emplace_back(TimeCodeID(0), "Code 1");
+
+		helper.expect_failure(modify, "Time Code with name 'Code 1' already exists on Time Category 'New'");
+	}
+
+	SECTION("Failure - Time Code Does Not Exist for Update")
+	{
+		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+
+		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
+
+		helper.expect_success(modify);
+		helper.clear_message_output();
+
+		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::UPDATE, {});
+		auto& cat1 = modify.timeCategories.emplace_back(TimeCategoryID(1), "New");
+		cat1.codes.emplace_back(TimeCodeID(1), "Code 1");
+
+		helper.expect_failure(modify, "Time Code with ID 1 does not exist");
+	}
+
+	SECTION("Failure - Time Code Does Not Exist for Remove Code")
+	{
+		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+
+		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
+
+		helper.expect_success(modify);
+		helper.clear_message_output();
+
+		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::REMOVE_CODE, {});
+		auto& cat1 = modify.timeCategories.emplace_back(TimeCategoryID(1), "New");
+		cat1.codes.emplace_back(TimeCodeID(1), "Code 1");
+
+		helper.expect_failure(modify, "Time Code with ID 1 does not exist");
 	}
 }
 
