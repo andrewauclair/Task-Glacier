@@ -62,7 +62,7 @@ std::expected<CreateTaskMessage, UnpackError> CreateTaskMessage::unpack(std::spa
 
 		for (int i = 0; i < count.value(); i++)
 		{
-			task.timeCodes.push_back(parser.parse_next<TimeCodeID>().value());
+			task.timeCodes.push_back(parser.parse_next_immediate<TimeCodeID>());
 		}
 
 		return task;
@@ -191,25 +191,25 @@ std::expected<TimeCategoriesData, UnpackError> TimeCategoriesData::unpack(std::s
 
 		for (int i = 0; i < timeCategoryCount; i++)
 		{
-			auto id = parser.parse_next<TimeCategoryID>().value();
-			auto name = parser.parse_next<std::string>().value();
-			auto label = parser.parse_next<std::string>().value();
+			auto id = parser.parse_next_immediate<TimeCategoryID>();
+			auto name = parser.parse_next_immediate<std::string>();
+			auto label = parser.parse_next_immediate<std::string>();
 			TimeCategory timeCategory(id, name);
 			timeCategory.label = label;
-			timeCategory.inUse = parser.parse_next<bool>().value();
-			timeCategory.taskCount = parser.parse_next<std::int32_t>().value();
-			timeCategory.archived = parser.parse_next<bool>().value();
+			timeCategory.inUse = parser.parse_next_immediate<bool>();
+			timeCategory.taskCount = parser.parse_next_immediate<std::int32_t>();
+			timeCategory.archived = parser.parse_next_immediate<bool>();
 
-			const std::int32_t timeCodeCount = parser.parse_next<std::int32_t>().value();
+			const std::int32_t timeCodeCount = parser.parse_next_immediate<std::int32_t>();
 
 			for (int j = 0; j < timeCodeCount; j++)
 			{
-				auto codeID = parser.parse_next<TimeCodeID>().value();
-				auto codeName = parser.parse_next<std::string>().value();
+				auto codeID = parser.parse_next_immediate<TimeCodeID>();
+				auto codeName = parser.parse_next_immediate<std::string>();
 				TimeCode timeCode(codeID, codeName);
-				timeCode.inUse = parser.parse_next<bool>().value();
-				timeCode.taskCount = parser.parse_next<std::int32_t>().value();
-				timeCode.archived = parser.parse_next<bool>().value();
+				timeCode.inUse = parser.parse_next_immediate<bool>();
+				timeCode.taskCount = parser.parse_next_immediate<std::int32_t>();
+				timeCode.archived = parser.parse_next_immediate<bool>();
 
 				timeCategory.codes.push_back(timeCode);
 			}
@@ -269,13 +269,13 @@ std::expected<TimeCategoriesModify, UnpackError> TimeCategoriesModify::unpack(st
 
 		for (int i = 0; i < categoryCount.value(); i++)
 		{
-			TimeCategory category(parser.parse_next<TimeCategoryID>().value());
+			TimeCategory category(parser.parse_next_immediate<TimeCategoryID>());
 
-			category.name = parser.parse_next<std::string>().value();
-			category.label = parser.parse_next<std::string>().value();
-			category.archived = parser.parse_next<bool>().value();
+			category.name = parser.parse_next_immediate<std::string>();
+			category.label = parser.parse_next_immediate<std::string>();
+			category.archived = parser.parse_next_immediate<bool>();
 
-			const auto codeCount = parser.parse_next<std::int32_t>().value();
+			const auto codeCount = parser.parse_next_immediate<std::int32_t>();
 			for (int j = 0; j < codeCount; j++)
 			{
 				const auto id = parser.parse_next<TimeCodeID>();
@@ -413,31 +413,31 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 		info.state = state.value();
 		info.newTask = newTask.value();
 
-		info.createTime = parser.parse_next<std::chrono::milliseconds>().value();
+		info.createTime = parser.parse_next_immediate<std::chrono::milliseconds>();
 
-		const auto startStopCount = parser.parse_next<std::int32_t>().value();
+		const auto startStopCount = parser.parse_next_immediate<std::int32_t>();
 
 		for (std::int32_t i = 0; i < startStopCount; i++)
 		{
 			TaskTimes times;
 
-			times.start = parser.parse_next<std::chrono::milliseconds>().value();
+			times.start = parser.parse_next_immediate<std::chrono::milliseconds>();
 
 			const bool stopPresent = parser.parse_next<bool>().value();
 
 			if (stopPresent)
 			{
-				times.stop = parser.parse_next<std::chrono::milliseconds>().value();
+				times.stop = parser.parse_next_immediate<std::chrono::milliseconds>();
 			}
 
 			info.times.push_back(times);
 		}
 
-		const bool finishTimePresent = parser.parse_next<bool>().value();
+		const bool finishTimePresent = parser.parse_next_immediate<bool>();
 		
 		if (finishTimePresent)
 		{
-			info.finishTime = parser.parse_next<std::chrono::milliseconds>().value();
+			info.finishTime = parser.parse_next_immediate<std::chrono::milliseconds>();
 		}
 
 		return info;
@@ -487,14 +487,14 @@ std::expected<BugzillaInfoMessage, UnpackError> BugzillaInfoMessage::unpack(std:
 		info.rootTaskID = rootTaskID.value();
 		info.groupTasksBy = groupTasksBy.value();
 
-		const std::int32_t count = parser.parse_next<std::int32_t>().value();
+		const std::int32_t count = parser.parse_next_immediate<std::int32_t>();
 
 		for (int i = 0; i < count; i++)
 		{
-			const auto label = parser.parse_next<std::string>();
-			const auto field = parser.parse_next<std::string>();
+			const auto label = parser.parse_next_immediate<std::string>();
+			const auto field = parser.parse_next_immediate<std::string>();
 
-			info.labelToField.emplace(label.value(), field.value());
+			info.labelToField.emplace(label, field);
 		}
 
 		return info;
@@ -592,16 +592,12 @@ std::expected<DailyReportMessage, UnpackError> DailyReportMessage::unpack(std::s
 			return DailyReportMessage(requestID.value());
 		}
 
-		const auto month = parser.parse_next<std::int8_t>();
-		const auto day = parser.parse_next<std::int8_t>();
-		const auto year = parser.parse_next<std::int16_t>();
-
 		auto report = DailyReportMessage(requestID.value());
 
 		report.reportFound = true;
-		report.report.month = month.value();
-		report.report.day = day.value();
-		report.report.year = year.value();
+		report.report.month = parser.parse_next_immediate<std::int8_t>();
+		report.report.day = parser.parse_next_immediate<std::int8_t>();
+		report.report.year = parser.parse_next_immediate<std::int16_t>();
 
 		return report;
 	}
