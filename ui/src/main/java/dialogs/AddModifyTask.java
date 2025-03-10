@@ -86,11 +86,7 @@ public class AddModifyTask extends JDialog {
         add(inheritTime, gbc);
         gbc.gridy++;
 
-        add(createFlow("Time A: ", time1), gbc);
-        gbc.gridy++;
-
-        add(createFlow("Time B: ", time2), gbc);
-        gbc.gridy++;
+        inheritTime.setSelected(true);
 
         add(add, gbc);
         gbc.gridy++;

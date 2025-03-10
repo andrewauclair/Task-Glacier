@@ -57,5 +57,7 @@ public class TaskInfoSubPanel extends JPanel {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy hh:mm:ss a");
 
         createTime.setText(task.createTime.atZone(ZoneId.systemDefault()).format(dateTimeFormatter));
+
+
     }
 }

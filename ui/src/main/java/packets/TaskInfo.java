@@ -6,6 +6,9 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class TaskInfo implements Packet {
     public int taskID = 0;
@@ -15,7 +18,15 @@ public class TaskInfo implements Packet {
     public String name = "";
 
     public Instant createTime;
-    public Instant finishTime;
+    public Optional<Instant> finishTime;
+
+    public static class TaskTime {
+        public Instant startTime;
+        public Optional<Instant> stopTime;
+    }
+    public List<TaskTime> times = new ArrayList<>();
+
+    public List<Integer> timeCodes = new ArrayList<>();
 
     public static TaskInfo parse(DataInputStream input) throws IOException {
         TaskInfo info = new TaskInfo();
@@ -26,13 +37,11 @@ public class TaskInfo implements Packet {
         info.state = TaskState.valueOf(input.readInt());
         info.newTask = input.readByte() != 0;
 
-        int chars = input.readShort(); // string length
-
-        byte[] bytes = input.readNBytes(chars);
-
-        info.name = new String(bytes);
+        info.name = Packet.parseString(input);
 
         info.createTime = Instant.ofEpochMilli(input.readLong()); // create time
+        boolean finishPresent = input.readByte() != 0;// finish present
+        info.finishTime = finishPresent ? Optional.ofNullable(Instant.ofEpochMilli(input.readLong())) : Optional.empty(); // finish time
 
         int timesCount = input.readInt();// number of times
 
@@ -43,8 +52,7 @@ public class TaskInfo implements Packet {
             input.readLong(); // stop time
         }
 
-        input.readByte(); // finish present
-        info.finishTime = Instant.ofEpochMilli(input.readLong()); // finish time
+
 
         return info;
     }
