@@ -10,6 +10,8 @@ public class Task {
     public TaskState state = TaskState.INACTIVE;
     public String name;
 
+    public List<String> labels = new ArrayList<>();
+
     public Instant createTime;
 
     public List<Task> children = new ArrayList<>();

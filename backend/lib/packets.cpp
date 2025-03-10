@@ -34,7 +34,7 @@ std::vector<std::byte> CreateTaskMessage::pack() const
 	builder.add(static_cast<std::int32_t>(PacketType::CREATE_TASK));
 	builder.add(requestID);
 	builder.add(parentID);
-	builder.add_string(name);
+	builder.add(name);
 	builder.add(static_cast<std::int32_t>(timeCodes.size()));
 
 	for (auto code : timeCodes)
@@ -81,8 +81,12 @@ std::vector<std::byte> UpdateTaskMessage::pack() const
 	builder.add(requestID);
 	builder.add(taskID);
 	builder.add(parentID);
-	builder.add_string(name);
-
+	builder.add(name);
+	builder.add(static_cast<std::int32_t>(labels.size()));
+	for (auto&& label : labels)
+	{
+		builder.add(label);
+	}
 	return builder.build();
 }
 
@@ -98,7 +102,15 @@ std::expected<UpdateTaskMessage, UnpackError> UpdateTaskMessage::unpack(std::spa
 
 	try
 	{
-		return UpdateTaskMessage(requestID.value(), taskID.value(), parentID.value(), name.value());
+		const auto labelCount = parser.parse_next_immediate<std::int32_t>();
+
+		auto update = UpdateTaskMessage(requestID.value(), taskID.value(), parentID.value(), name.value());
+
+		for (std::int32_t i = 0; i < labelCount; i++)
+		{
+			update.labels.push_back(parser.parse_next<std::string>().value());
+		}
+		return update;
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{
@@ -146,8 +158,8 @@ std::vector<std::byte> TimeCategoriesData::pack() const
 	for (auto&& timeCategory : timeCategories)
 	{
 		builder.add(timeCategory.id);
-		builder.add_string(timeCategory.name);
-		builder.add_string(timeCategory.label);
+		builder.add(timeCategory.name);
+		builder.add(timeCategory.label);
 		builder.add(timeCategory.inUse);
 		builder.add(timeCategory.taskCount);
 		builder.add(timeCategory.archived);
@@ -156,7 +168,7 @@ std::vector<std::byte> TimeCategoriesData::pack() const
 		for (auto&& timeCode : timeCategory.codes)
 		{
 			builder.add(timeCode.id);
-			builder.add_string(timeCode.name);
+			builder.add(timeCode.name);
 			builder.add(timeCode.inUse);
 			builder.add(timeCode.taskCount);
 			builder.add(timeCode.archived);
@@ -224,8 +236,8 @@ std::vector<std::byte> TimeCategoriesModify::pack() const
 	for (auto&& category : timeCategories)
 	{
 		builder.add(category.id);
-		builder.add_string(category.name);
-		builder.add_string(category.label);
+		builder.add(category.name);
+		builder.add(category.label);
 		builder.add(category.archived);
 
 		builder.add<std::int32_t>(category.codes.size());
@@ -233,7 +245,7 @@ std::vector<std::byte> TimeCategoriesModify::pack() const
 		for (auto&& code : category.codes)
 		{
 			builder.add(code.id);
-			builder.add_string(code.name);
+			builder.add(code.name);
 			builder.add(code.archived);
 		}
 	}
@@ -312,7 +324,7 @@ std::vector<std::byte> FailureResponse::pack() const
 
 	builder.add(PacketType::FAILURE_RESPONSE);
 	builder.add(requestID);
-	builder.add_string(message);
+	builder.add(message);
 
 	return builder.build();
 }
@@ -366,7 +378,7 @@ std::vector<std::byte> TaskInfoMessage::pack() const
 	builder.add(parentID);
 	builder.add(state);
 	builder.add(newTask);
-	builder.add_string(name);
+	builder.add(name);
 	builder.add(createTime);
 
 	builder.add(static_cast<std::int32_t>(times.size()));
@@ -441,18 +453,18 @@ std::vector<std::byte> BugzillaInfoMessage::pack() const
 	PacketBuilder builder;
 
 	builder.add(PacketType::BUGZILLA_INFO);
-	builder.add_string(URL);
-	builder.add_string(apiKey);
-	builder.add_string(username);
+	builder.add(URL);
+	builder.add(apiKey);
+	builder.add(username);
 	builder.add(rootTaskID);
-	builder.add_string(groupTasksBy);
+	builder.add(groupTasksBy);
 	
 	builder.add<std::int32_t>(labelToField.size());
 
 	for (auto&& value : labelToField)
 	{
-		builder.add_string(value.first);
-		builder.add_string(value.second);
+		builder.add(value.first);
+		builder.add(value.second);
 	}
 	return builder.build();
 }

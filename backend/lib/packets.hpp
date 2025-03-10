@@ -287,6 +287,7 @@ struct UpdateTaskMessage : RequestMessage
 	TaskID taskID;
 	TaskID parentID;
 	std::string name;
+	std::vector<std::string> labels;
 
 	UpdateTaskMessage(RequestID requestID, TaskID taskID, TaskID parentID, std::string name) : RequestMessage(PacketType::UPDATE_TASK, requestID), taskID(taskID), parentID(parentID), name(std::move(name)) {}
 
@@ -301,7 +302,7 @@ struct UpdateTaskMessage : RequestMessage
 
 	bool operator==(const UpdateTaskMessage& message) const
 	{
-		return requestID == message.requestID && taskID == message.taskID && parentID == message.parentID && name == message.name;
+		return requestID == message.requestID && taskID == message.taskID && parentID == message.parentID && name == message.name && labels == message.labels;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -311,7 +312,17 @@ struct UpdateTaskMessage : RequestMessage
 	{
 		out << "UpdateTaskMessage { ";
 		RequestMessage::print(out);
-		out << ", taskID: " << taskID._val << ", parentID: " << parentID._val << ", name: \"" << name << "\" }";
+		out << ", taskID: " << taskID._val << ", parentID: " << parentID._val << ", name: \"" << name << "\"";
+		if (!labels.empty())
+		{
+			out << ", labels { ";
+			for (auto&& label : labels)
+			{
+				out << '"' << label << '"' << ", ";
+			}
+			out << "}";
+		}
+		out << " }";
 		return out;
 	}
 
@@ -937,9 +948,7 @@ public:
 		add(static_cast<std::underlying_type_t<T>>(value));
 	}
 
-	template<typename T>
-		requires std::same_as<T, bool>
-	void add(T value)
+	void add(bool value)
 	{
 		add(static_cast<std::int8_t>(value));
 	}
@@ -951,14 +960,17 @@ public:
 		add(value._val);
 	}
 
-	template<typename T>
-		requires std::same_as<T, std::chrono::milliseconds>
-	void add(T value)
+	void add(std::chrono::milliseconds value)
 	{
 		add(static_cast<std::int64_t>(value.count()));
 	}
 
-	void add_string(std::string_view str)
+	void add(const std::string& str)
+	{
+		add(std::string_view(str));
+	}
+
+	void add(std::string_view str)
 	{
 		std::int16_t size = str.size();
 
@@ -1077,6 +1089,12 @@ public:
 			return std::chrono::milliseconds(result.value());
 		}
 		return std::unexpected(result.error());
+	}
+
+	template<typename T>
+	auto parse_next_immediate()
+	{
+		return parse_next<T>().value();
 	}
 };
 

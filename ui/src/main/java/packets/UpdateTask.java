@@ -1,13 +1,26 @@
 package packets;
 
+import data.Task;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UpdateTask implements Packet {
     private int requestID;
     private int taskID;
     private int parentID;
     private final String name;
+    private List<String> labels = new ArrayList<>();
+
+    public UpdateTask(int requestID, Task task) {
+        this.requestID = requestID;
+        taskID = task.id;
+        parentID = task.parentID;
+        name = task.name;
+        labels.addAll(task.labels);
+    }
 
     public UpdateTask(int requestID, int taskID, int parentID, String name) {
         this.requestID = requestID;
