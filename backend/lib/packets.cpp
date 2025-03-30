@@ -380,6 +380,8 @@ std::vector<std::byte> TaskInfoMessage::pack() const
 	builder.add(newTask);
 	builder.add(name);
 	builder.add(createTime);
+	builder.add(finishTime.has_value());
+	builder.add(finishTime.value_or(std::chrono::milliseconds(0)));
 
 	builder.add(static_cast<std::int32_t>(times.size()));
 
@@ -390,8 +392,19 @@ std::vector<std::byte> TaskInfoMessage::pack() const
 		builder.add(time.stop.value_or(std::chrono::milliseconds(0)));
 	}
 
-	builder.add(finishTime.has_value());
-	builder.add(finishTime.value_or(std::chrono::milliseconds(0)));
+	builder.add(static_cast<std::int32_t>(labels.size()));
+	
+	for (auto&& label : labels)
+	{
+		builder.add(label);
+	}
+
+	builder.add(static_cast<std::int32_t>(timeCodes.size()));
+
+	for (auto&& code : timeCodes)
+	{
+		builder.add(code);
+	}
 
 	return builder.build();
 }
@@ -415,6 +428,13 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 
 		info.createTime = parser.parse_next_immediate<std::chrono::milliseconds>();
 
+		const bool finishTimePresent = parser.parse_next_immediate<bool>();
+
+		if (finishTimePresent)
+		{
+			info.finishTime = parser.parse_next_immediate<std::chrono::milliseconds>();
+		}
+
 		const auto startStopCount = parser.parse_next_immediate<std::int32_t>();
 
 		for (std::int32_t i = 0; i < startStopCount; i++)
@@ -423,7 +443,7 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 
 			times.start = parser.parse_next_immediate<std::chrono::milliseconds>();
 
-			const bool stopPresent = parser.parse_next<bool>().value();
+			const bool stopPresent = parser.parse_next_immediate<bool>();
 
 			if (stopPresent)
 			{
@@ -433,13 +453,19 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 			info.times.push_back(times);
 		}
 
-		const bool finishTimePresent = parser.parse_next_immediate<bool>();
-		
-		if (finishTimePresent)
+		const auto labelCount = parser.parse_next_immediate<std::int32_t>();
+
+		for (std::int32_t i = 0; i < labelCount; i++)
 		{
-			info.finishTime = parser.parse_next_immediate<std::chrono::milliseconds>();
+			info.labels.push_back(parser.parse_next_immediate<std::string>());
 		}
 
+		const auto codeCount = parser.parse_next_immediate<std::int32_t>();
+
+		for (std::int32_t i = 0; i < codeCount; i++)
+		{
+			info.timeCodes.push_back(TimeCodeID(parser.parse_next_immediate<std::int32_t>()));
+		}
 		return info;
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)

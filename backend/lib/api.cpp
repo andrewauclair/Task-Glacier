@@ -405,6 +405,7 @@ void API::send_task_info(const Task& task, bool newTask, std::vector<std::unique
 	info->newTask = newTask;
 	info->times = task.m_times;
 	info->timeCodes = task.timeCodes;
+	info->labels = task.labels;
 
 	output.push_back(std::move(info));
 }

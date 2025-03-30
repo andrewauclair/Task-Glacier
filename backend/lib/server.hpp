@@ -32,6 +32,8 @@ public:
 	std::vector<TaskTimes> m_times;
 	std::optional<std::chrono::milliseconds> m_finishTime;
 
+	std::vector<std::string> labels;
+
 	Task(std::string name, TaskID id, TaskID parentID, std::chrono::milliseconds createTime);
 
 	bool operator==(const Task& task) const;
