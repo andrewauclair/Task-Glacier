@@ -17,6 +17,8 @@ public class MenuBar extends JMenuBar {
 
     private final JMenuItem connect = new JMenuItem("Connect...");
     private final JMenuItem disconnect = new JMenuItem("Disconnect");
+    private final JMenuItem requestDailyReport = new JMenuItem("Request Daily Report");
+
     private final JMenu bugzilla = new JMenu("Bugzilla");
 
     public MenuBar(MainFrame mainFrame) {
@@ -67,7 +69,7 @@ public class MenuBar extends JMenuBar {
         server.add(connect);
         server.add(disconnect);
 
-        JMenuItem requestDailyReport = new JMenuItem("Request Daily Report");
+
         server.add(requestDailyReport);
 
         requestDailyReport.addActionListener(e -> {
@@ -113,6 +115,7 @@ public class MenuBar extends JMenuBar {
         add.setEnabled(true);
         connect.setEnabled(false);
         disconnect.setEnabled(true);
+        requestDailyReport.setEnabled(true);
         bugzilla.setEnabled(true);
     }
 
@@ -120,6 +123,7 @@ public class MenuBar extends JMenuBar {
         add.setEnabled(false);
         connect.setEnabled(true);
         disconnect.setEnabled(false);
+        requestDailyReport.setEnabled(false);
         bugzilla.setEnabled(false);
     }
 }

@@ -41,11 +41,22 @@ public class SystemTrayDisplay extends JFrame {
                 timer.start();
             }
         }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+            System.out.println("Mouse entered");
+        }
     };
 
     public SystemTrayDisplay(TrayIcon trayIcon) {
         this.trayIcon = trayIcon;
 
+        Timer test = new Timer(0, e2 -> {
+            trayIcon.setToolTip("Multi\nline\ntool\ntip\n" + String.valueOf(System.currentTimeMillis()));
+        });
+        test.setDelay(1000);
+        test.setRepeats(true);
+        test.start();
         timer = new Timer(250, e1 -> {
             if (isVisible()) {
                 // hide

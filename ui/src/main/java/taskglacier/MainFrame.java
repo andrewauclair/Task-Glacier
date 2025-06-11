@@ -65,11 +65,6 @@ public class MainFrame extends JFrame {
     }
 
     public MainFrame() throws IOException {
-    }
-    @Override
-    public void setVisible(boolean visible) {
-        mainFrame = this;
-
         setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -157,12 +152,16 @@ public class MainFrame extends JFrame {
         }
 
         // if we're connected, we'll wait for the request config to complete before restoring
-        //if (!isConnected())
-        {
-            restoreLayout();
-        }
-        super.setVisible(visible);
+        restoreLayout();
     }
+//    @Override
+//    public void setVisible(boolean visible) {
+//        mainFrame = this;
+//
+//
+//
+//        super.setVisible(visible);
+//    }
 
     public static void restoreLayout() {
         try {
@@ -226,7 +225,8 @@ public class MainFrame extends JFrame {
         SwingUtilities.invokeLater(() -> {
             configureLookAndFeel();
             try {
-                new MainFrame().setVisible(true);
+               mainFrame = new MainFrame();
+               mainFrame.setVisible(true);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
