@@ -76,11 +76,11 @@ std::vector<MicroTask::FindTasksOnDay> MicroTask::find_tasks_on_day(int month, i
 		int index = 0;
 		for (auto&& times : task.second.m_times)
 		{
-			if (times.start >= range.start && times.start <= range.end)
+			if (times.start >= range.start && times.start < range.end)
 			{
 				tasks.emplace_back(&task.second, DailyReport::TimePair{ task.first, index });
 			}
-			else if (times.stop >= range.start && times.stop <= range.end)
+			else if (times.stop >= range.start && times.stop < range.end)
 			{
 				tasks.emplace_back(&task.second, DailyReport::TimePair{ task.first, index });
 			}

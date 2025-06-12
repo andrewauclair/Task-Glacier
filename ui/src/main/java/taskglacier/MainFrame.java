@@ -154,14 +154,6 @@ public class MainFrame extends JFrame {
         // if we're connected, we'll wait for the request config to complete before restoring
         restoreLayout();
     }
-//    @Override
-//    public void setVisible(boolean visible) {
-//        mainFrame = this;
-//
-//
-//
-//        super.setVisible(visible);
-//    }
 
     public static void restoreLayout() {
         try {
@@ -237,8 +229,6 @@ public class MainFrame extends JFrame {
         try {
             FlatLaf.registerCustomDefaultsSource( "docking" );
 
-//            System.setProperty("flatlaf.uiScale", String.valueOf(1));
-
             String lookAndFeel = "dark";
             switch (lookAndFeel) {
                 case "light":
@@ -246,12 +236,6 @@ public class MainFrame extends JFrame {
                     break;
                 case "dark":
                     UIManager.setLookAndFeel(new FlatDarkLaf());
-                    break;
-                case "github-dark":
-//                    UIManager.setLookAndFeel(new FlatGitHubDarkIJTheme());
-                    break;
-                case "solarized-dark":
-//                    UIManager.setLookAndFeel(new FlatSolarizedDarkIJTheme());
                     break;
                 default:
                     try {

@@ -11,6 +11,9 @@ import packets.RequestDailyReport;
 import packets.RequestID;
 
 import javax.swing.*;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 
 public class MenuBar extends JMenuBar {
     private final JMenuItem add;
@@ -73,11 +76,17 @@ public class MenuBar extends JMenuBar {
         server.add(requestDailyReport);
 
         requestDailyReport.addActionListener(e -> {
+            Date date = new Date();
+            LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            int year  = localDate.getYear();
+            int month = localDate.getMonthValue();
+            int day   = localDate.getDayOfMonth();
+
             RequestDailyReport request = new RequestDailyReport();
             request.requestID = RequestID.nextRequestID();
-            request.month = 3;
-            request.day = 4;
-            request.year = 2025;
+            request.month = month;
+            request.day = day;
+            request.year = year;
 
             mainFrame.getConnection().sendPacket(request);
         });

@@ -839,6 +839,7 @@ struct DailyReportMessage : Message
 	{
 		out << "DailyReportMessage { ";
 		Message::print(out);
+		out << ", requestID: " << requestID._val;
 		out << ", reportFound: " << reportFound;
 
 		if (reportFound)
