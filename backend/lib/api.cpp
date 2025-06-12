@@ -427,7 +427,7 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 				return;
 			}
 
-			TimeCategory newCategory{ m_nextTimeCategoryID, category.name };
+			TimeCategory newCategory{ m_nextTimeCategoryID, category.name, category.label };
 
 			m_nextTimeCategoryID++;
 
