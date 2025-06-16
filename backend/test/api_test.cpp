@@ -1217,7 +1217,7 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	// now that we're setup, request the configuration and check the output
 	api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, output);
 
-	REQUIRE(output.size() == 9);
+	REQUIRE(output.size() == 8);
 
 	auto task1 = TaskInfoMessage(TaskID(1), NO_PARENT, "task 1 - renamed");
 	auto task2 = TaskInfoMessage(TaskID(2), NO_PARENT, "task 2");
@@ -1258,9 +1258,8 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	verify_message(task4, *output[3]);
 	verify_message(task5, *output[4]);
 	verify_message(task6, *output[5]);
-	// 6 is bugzilla config
-	// TODO 7 is time categories & codes
-	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[8]);
+	// TODO 6 is time categories & codes
+	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[7]);
 }
 
 TEST_CASE("request configuration at startup", "[api]")
@@ -1300,7 +1299,7 @@ TEST_CASE("request configuration at startup", "[api]")
 	// now that we're setup, request the configuration and check the output
 	api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, output);
 
-	REQUIRE(output.size() == 9);
+	REQUIRE(output.size() == 8);
 	
 	verify_message(TaskInfoMessage(TaskID(1), NO_PARENT, "task 1", std::chrono::milliseconds(1737344039870)), *output[0]);
 	verify_message(TaskInfoMessage(TaskID(2), TaskID(1), "task 2", std::chrono::milliseconds(1737345839870)), *output[1]);
@@ -1308,7 +1307,6 @@ TEST_CASE("request configuration at startup", "[api]")
 	verify_message(TaskInfoMessage(TaskID(4), TaskID(2), "task 4", std::chrono::milliseconds(1737349439870)), *output[3]);
 	verify_message(TaskInfoMessage(TaskID(5), TaskID(3), "task 5", std::chrono::milliseconds(1737351239870)), *output[4]);
 	verify_message(TaskInfoMessage(TaskID(6), TaskID(4), "task 6", std::chrono::milliseconds(1737353039870)), *output[5]);
-	// 6 is bugzilla config
 
 	auto timeCategoriesData = TimeCategoriesData({});
 	auto& cat1 = timeCategories.timeCategories.emplace_back(TimeCategoryID(1), "Foo", "F");
@@ -1319,7 +1317,7 @@ TEST_CASE("request configuration at startup", "[api]")
 	cat2.codes.emplace_back(TimeCodeID(3), "Bing");
 	cat2.codes.emplace_back(TimeCodeID(4), "Bong");
 
-	verify_message(timeCategoriesData, *output[7]);
+	verify_message(timeCategoriesData, *output[6]);
 
-	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[8]);
+	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[7]);
 }

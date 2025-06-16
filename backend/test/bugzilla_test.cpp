@@ -39,6 +39,40 @@ TEST_CASE("Configuring Bugzilla Information", "[bugzilla][api]")
 	}
 }
 
+TEST_CASE("Configuring Multiple Bugzilla Instances", "bugzilla[api]")
+{
+	TestHelper helper;
+
+	// send bugzilla packet
+	auto configure = BugzillaInfoMessage("bugzilla", "asfesdFEASfslj");
+	configure.username = "test";
+	configure.rootTaskID = TaskID(5);
+	configure.groupTasksBy = "severity";
+
+	configure.labelToField["Priority"] = "priority";
+	configure.labelToField["Status"] = "status";
+
+	helper.api.process_packet(configure, helper.output);
+
+	auto configure2 = configure;
+	configure2.URL = "bugzilla2";
+
+
+	helper.api.process_packet(configure2, helper.output);
+
+	SECTION("Information is Set in Memory")
+	{
+		auto request = BasicMessage(PacketType::REQUEST_CONFIGURATION);
+
+		helper.api.process_packet(request, helper.output);
+
+		auto timeCategories = TimeCategoriesData({});
+		auto complete = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
+
+		helper.required_messages({ &configure, &configure2, &timeCategories, &complete });
+	}
+}
+
 TEST_CASE("Initial Bugzilla Refresh Pulls All Open Bugs", "[bugzilla][api]")
 {
 	TestHelper helper;

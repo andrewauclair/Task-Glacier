@@ -342,16 +342,18 @@ void MicroTask::load_from_file(std::istream& input)
 		{
 			auto values = split(line, ' ');
 
-			m_bugzillaURL = values[1];
-			m_bugzillaApiKey = values[2];
-			std::getline(input, m_bugzillaUsername);
+			Bugzilla& bugzilla = m_bugzilla[values[1]];
+
+			bugzilla.bugzillaURL = values[1];
+			bugzilla.bugzillaApiKey = values[2];
+			std::getline(input, bugzilla.bugzillaUsername);
 			
 			std::string temp;
 			std::getline(input, temp);
 			
-			m_bugzillaRootTaskID = TaskID(std::stoi(temp));
+			bugzilla.bugzillaRootTaskID = TaskID(std::stoi(temp));
 
-			std::getline(input, m_bugzillaGroupTasksBy);
+			std::getline(input, bugzilla.bugzillaGroupTasksBy);
 			std::getline(input, temp);
 
 			const int labelCount = std::stoi(temp);
@@ -363,7 +365,7 @@ void MicroTask::load_from_file(std::istream& input)
 				std::getline(input, label);
 				std::getline(input, field);
 
-				m_bugzillaLabelToField[label] = field;
+				bugzilla.bugzillaLabelToField[label] = field;
 			}
 		}
 		else if (line.starts_with("bugzilla-refresh"))
