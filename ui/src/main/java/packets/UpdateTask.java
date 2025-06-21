@@ -13,6 +13,7 @@ public class UpdateTask implements Packet {
     private int parentID;
     private final String name;
     private List<String> labels = new ArrayList<>();
+    public List<Integer> timeCodes = new ArrayList<>();
 
     public UpdateTask(int requestID, Task task) {
         this.requestID = requestID;
@@ -37,5 +38,17 @@ public class UpdateTask implements Packet {
         output.writeInt(parentID);
         output.writeShort((short) name.length());
         output.write(name.getBytes());
+
+        output.writeInt(labels.size());
+
+        for (String label : labels) {
+            Packet.writeString(output, label);
+        }
+
+        output.writeInt(timeCodes.size());
+
+        for (Integer timeCode : timeCodes) {
+            output.writeInt(timeCode);
+        }
     }
 }

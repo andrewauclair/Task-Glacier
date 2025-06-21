@@ -241,6 +241,7 @@ struct CreateTaskMessage : RequestMessage
 {
 	TaskID parentID;
 	std::string name;
+	std::vector<std::string> labels;
 	std::vector<TimeCodeID> timeCodes;
 
 	CreateTaskMessage(TaskID parentID, RequestID requestID, std::string name) : RequestMessage(PacketType::CREATE_TASK, requestID), parentID(parentID), name(std::move(name)) {}
@@ -256,7 +257,7 @@ struct CreateTaskMessage : RequestMessage
 	
 	bool operator==(const CreateTaskMessage& message) const
 	{
-		return parentID == message.parentID && requestID == message.requestID && name == message.name && timeCodes == message.timeCodes;
+		return parentID == message.parentID && requestID == message.requestID && name == message.name && labels == message.labels && timeCodes == message.timeCodes;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -266,7 +267,14 @@ struct CreateTaskMessage : RequestMessage
 	{
 		out << "CreateTaskMessage { ";
 		RequestMessage::print(out);
-		out << ", parentID: " << parentID._val << ", name: \"" << name << "\", timeCodes: [ ";
+		out << ", parentID: " << parentID._val << ", name: \"" << name << '"';
+		out << ", labels { ";
+		for (auto&& label : labels)
+		{
+			out << '"' << label << '"' << ", ";
+		}
+		out << "}";
+		out << ", timeCodes: [ ";
 		for (auto code : timeCodes)
 		{
 			out << code._val << ", ";
@@ -288,6 +296,7 @@ struct UpdateTaskMessage : RequestMessage
 	TaskID parentID;
 	std::string name;
 	std::vector<std::string> labels;
+	std::vector<TimeCodeID> timeCodes;
 
 	UpdateTaskMessage(RequestID requestID, TaskID taskID, TaskID parentID, std::string name) : RequestMessage(PacketType::UPDATE_TASK, requestID), taskID(taskID), parentID(parentID), name(std::move(name)) {}
 
@@ -302,7 +311,7 @@ struct UpdateTaskMessage : RequestMessage
 
 	bool operator==(const UpdateTaskMessage& message) const
 	{
-		return requestID == message.requestID && taskID == message.taskID && parentID == message.parentID && name == message.name && labels == message.labels;
+		return requestID == message.requestID && taskID == message.taskID && parentID == message.parentID && name == message.name && labels == message.labels && timeCodes == message.timeCodes;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -313,16 +322,18 @@ struct UpdateTaskMessage : RequestMessage
 		out << "UpdateTaskMessage { ";
 		RequestMessage::print(out);
 		out << ", taskID: " << taskID._val << ", parentID: " << parentID._val << ", name: \"" << name << "\"";
-		if (!labels.empty())
+		out << ", labels { ";
+		for (auto&& label : labels)
 		{
-			out << ", labels { ";
-			for (auto&& label : labels)
-			{
-				out << '"' << label << '"' << ", ";
-			}
-			out << "}";
+			out << '"' << label << '"' << ", ";
 		}
-		out << " }";
+		out << "}";
+		out << ", timeCodes: [ ";
+		for (auto code : timeCodes)
+		{
+			out << code._val << ", ";
+		}
+		out << "] }";
 		return out;
 	}
 

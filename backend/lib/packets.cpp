@@ -35,9 +35,14 @@ std::vector<std::byte> CreateTaskMessage::pack() const
 	builder.add(requestID);
 	builder.add(parentID);
 	builder.add(name);
+	builder.add(static_cast<std::int32_t>(labels.size()));
+	for (auto&& label : labels)
+	{
+		builder.add(label);
+	}
 	builder.add(static_cast<std::int32_t>(timeCodes.size()));
 
-	for (auto code : timeCodes)
+	for (auto&& code : timeCodes)
 	{
 		builder.add(code);
 	}
@@ -58,9 +63,16 @@ std::expected<CreateTaskMessage, UnpackError> CreateTaskMessage::unpack(std::spa
 	{
 		auto task = CreateTaskMessage(parentID.value(), requestID.value(), name.value());
 
-		const auto count = parser.parse_next<std::int32_t>();
+		const auto labelCount = parser.parse_next_immediate<std::int32_t>();
 
-		for (int i = 0; i < count.value(); i++)
+		for (std::int32_t i = 0; i < labelCount; i++)
+		{
+			task.labels.push_back(parser.parse_next<std::string>().value());
+		}
+
+		const auto timeCodeCount = parser.parse_next_immediate<std::int32_t>();
+
+		for (int i = 0; i < timeCodeCount; i++)
 		{
 			task.timeCodes.push_back(parser.parse_next_immediate<TimeCodeID>());
 		}
@@ -87,6 +99,11 @@ std::vector<std::byte> UpdateTaskMessage::pack() const
 	{
 		builder.add(label);
 	}
+	builder.add(static_cast<std::int32_t>(timeCodes.size()));
+	for (auto&& code : timeCodes)
+	{
+		builder.add(code);
+	}
 	return builder.build();
 }
 
@@ -110,6 +127,14 @@ std::expected<UpdateTaskMessage, UnpackError> UpdateTaskMessage::unpack(std::spa
 		{
 			update.labels.push_back(parser.parse_next<std::string>().value());
 		}
+
+		const auto timeCodeCount = parser.parse_next_immediate<std::int32_t>();
+
+		for (int i = 0; i < timeCodeCount; i++)
+		{
+			update.timeCodes.push_back(parser.parse_next_immediate<TimeCodeID>());
+		}
+
 		return update;
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)

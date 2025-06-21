@@ -10,6 +10,7 @@ public class CreateTask implements Packet {
 
     private final String name;
     private final int parentID;
+    private List<String> labels = new ArrayList<>();
     private List<Integer> timeCodes = new ArrayList<>();
 
     public CreateTask(String name, int parentID, int requestID) {
@@ -25,6 +26,12 @@ public class CreateTask implements Packet {
         output.writeInt(parentID);
         output.writeShort((short) name.length());
         output.write(name.getBytes());
+
+        output.writeInt(labels.size());
+
+        for (String label : labels) {
+            Packet.writeString(output, label);
+        }
 
         output.writeInt(timeCodes.size());
 

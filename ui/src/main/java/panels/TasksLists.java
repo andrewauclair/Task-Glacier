@@ -5,6 +5,7 @@ import data.TaskModel;
 import data.TaskState;
 import dialogs.AddModifyTask;
 import dialogs.EditLabels;
+import dialogs.EditTimes;
 import dialogs.RenameTask;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingProperty;
@@ -311,6 +312,22 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
             else {
                 Docking.display("task-list-" + task.id);
             }
+        });
+
+        editTime.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+
+            if (selectedRow == -1) {
+                return;
+            }
+
+            TreePath pathForRow = table.getPathForRow(selectedRow);
+            TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
+            Task task = (Task) node.getUserObject();
+
+            EditTimes dialog = new EditTimes(task);
+
+            dialog.setVisible(true);
         });
 
         table.addMouseListener(new MouseAdapter() {
