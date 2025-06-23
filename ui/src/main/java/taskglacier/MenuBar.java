@@ -3,6 +3,7 @@ package taskglacier;
 import dialogs.AddModifyTask;
 import dialogs.BugzillaConfiguration;
 import dialogs.ConnectToServer;
+import dialogs.RequestWeeklyReportDialog;
 import dialogs.TimeCategories;
 import io.github.andrewauclair.moderndocking.app.DockingState;
 import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
@@ -22,7 +23,7 @@ public class MenuBar extends JMenuBar {
     private final JMenuItem connect = new JMenuItem("Connect...");
     private final JMenuItem disconnect = new JMenuItem("Disconnect");
     private final JMenuItem requestDailyReport = new JMenuItem("Request Daily Report");
-    private final JMenuItem requestWeeklyReport = new JMenuItem("Request Weekly Report");
+    private final JMenuItem requestWeeklyReport = new JMenuItem("Request Weekly Report...");
 
     private final JMenu bugzilla = new JMenu("Bugzilla");
 
@@ -97,19 +98,8 @@ public class MenuBar extends JMenuBar {
 
         // TODO add date picker
         requestWeeklyReport.addActionListener(e -> {
-            Date date = new Date();
-            LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            int year  = localDate.getYear();
-            int month = localDate.getMonthValue();
-            int day   = localDate.getDayOfMonth();
-
-            RequestWeeklyReport request = new RequestWeeklyReport();
-            request.requestID = RequestID.nextRequestID();
-            request.month = month;
-            request.day = day;
-            request.year = year;
-
-            mainFrame.getConnection().sendPacket(request);
+            RequestWeeklyReportDialog dialog = new RequestWeeklyReportDialog(mainFrame);
+            dialog.setVisible(true);
         });
 
         add(server);
