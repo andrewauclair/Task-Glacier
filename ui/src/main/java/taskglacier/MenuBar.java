@@ -74,7 +74,7 @@ public class MenuBar extends JMenuBar {
 
         server.add(connect);
         server.add(disconnect);
-
+        server.addSeparator();
 
         server.add(requestDailyReport);
 
@@ -96,7 +96,6 @@ public class MenuBar extends JMenuBar {
 
         server.add(requestWeeklyReport);
 
-        // TODO add date picker
         requestWeeklyReport.addActionListener(e -> {
             RequestWeeklyReportDialog dialog = new RequestWeeklyReportDialog(mainFrame);
             dialog.setVisible(true);

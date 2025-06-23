@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +32,10 @@ public class DailyReportMessage implements Packet {
             public int index;
         }
         public List<TimePair> times = new ArrayList<>();
+
+        public LocalDate getDate() {
+            return LocalDate.of(year, month, day);
+        }
     }
 
     private int requestID;

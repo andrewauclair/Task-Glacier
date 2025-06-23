@@ -48,8 +48,6 @@ public class MainFrame extends JFrame {
 
     TimeData timeData = new TimeData();
 
-    private DailyReportPanel dailyReportPanel;
-
     private SystemTrayDisplay systemTrayDisplay = new SystemTrayDisplay(trayIcon);
 
     public boolean isConnected() {
@@ -104,12 +102,10 @@ public class MainFrame extends JFrame {
         setSize(600, 400);
         Docking.initialize(this);
 
-        Settings.setDefaultTabPreference(DockableTabPreference.TOP_ALWAYS);
+//        Settings.setDefaultTabPreference(DockableTabPreference.TOP_ALWAYS);
 
         DockingUI.initialize();
         Docking.registerDockingPanel(root, this);
-
-        dailyReportPanel = new DailyReportPanel();
 
         new TasksLists(this, "tasks", "Tasks");
 
@@ -133,12 +129,6 @@ public class MainFrame extends JFrame {
         else {
             preferences = Preferences.userNodeForPackage(MainFrame.class);
             layoutFile = new File(System.getenv("LOCALAPPDATA") + "/TaskGlacier/layout.xml");
-        }
-
-        try {
-            Files.createDirectories(Paths.get(layoutFile.toURI()).getParent());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
 
         AppState.setPersistFile(layoutFile);
@@ -267,8 +257,9 @@ public class MainFrame extends JFrame {
         if (!dailyReport.isReportFound()) {
             return;
         }
-        dailyReportPanel.update(dailyReport);
-        Docking.display("daily-report");
+        DailyReportPanel panel = new DailyReportPanel(dailyReport.getReport().getDate());
+        panel.update(dailyReport);
+        Docking.display(panel);
     }
 
     public TimeData getTimeData() {

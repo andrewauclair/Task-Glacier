@@ -1,6 +1,8 @@
 package panels;
 
 import io.github.andrewauclair.moderndocking.Dockable;
+import io.github.andrewauclair.moderndocking.DockingProperty;
+import io.github.andrewauclair.moderndocking.DynamicDockableParameters;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import packets.DailyReportMessage;
 
@@ -8,14 +10,47 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.time.LocalDate;
 
 public class DailyReportPanel extends JPanel implements Dockable {
+    @DockingProperty(name = "month", required = true)
+    private int month;
+    @DockingProperty(name = "month", required = true)
+    private int day;
+    @DockingProperty(name = "month", required = true)
+    private int year;
+
     private DailyReportMessage.DailyReport report = null;
 
-    public DailyReportPanel() {
+    private String persistentID;
+    private String titleText;
+    private String tabText;
+
+    public DailyReportPanel(LocalDate date) {
+        month = date.getMonthValue();
+        day = date.getDayOfMonth();
+        year = date.getYear();
+
+        persistentID = String.format("daily-report-%d-%d-%d", month, day, year);
+        titleText = String.format("Daily Report (%d/%d/%d)", month, day, year);
+        tabText = String.format("Daily Report (%d/%d/%d)", month, day, year);
+
         Docking.registerDockable(this);
 
         buildUI();
+    }
+
+    public DailyReportPanel(DynamicDockableParameters parameters) {
+        persistentID = parameters.getPersistentID();
+        titleText = parameters.getTitleText();
+        tabText = parameters.getTabText();
+
+        Docking.registerDockable(this);
+    }
+
+    @Override
+    public void updateProperties() {
+        // TODO request the daily report from the server
     }
 
     private void buildUI() {
@@ -66,11 +101,16 @@ public class DailyReportPanel extends JPanel implements Dockable {
 
     @Override
     public String getPersistentID() {
-        return "daily-report";
+        return persistentID;
+    }
+
+    @Override
+    public String getTitleText() {
+        return titleText;
     }
 
     @Override
     public String getTabText() {
-        return "Daily Report";
+        return tabText;
     }
 }
