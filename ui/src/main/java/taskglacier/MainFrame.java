@@ -205,6 +205,7 @@ public class MainFrame extends JFrame {
                 connection.run(this);
             }
             catch (Exception ignored) {
+                ignored.printStackTrace();
                 disconnect();
             }
         });

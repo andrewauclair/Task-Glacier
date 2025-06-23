@@ -635,9 +635,9 @@ std::vector<std::byte> DailyReportMessage::pack() const
 	
 	if (report.found)
 	{
-		builder.add<std::int32_t>(report.startTime.count());
-		builder.add<std::int32_t>(report.endTime.count());
-		builder.add<std::int32_t>(report.totalTime.count());
+		builder.add(report.startTime);
+		builder.add(report.endTime);
+		builder.add(report.totalTime);
 
 		builder.add<std::int32_t>(report.timePerTimeCode.size());
 
