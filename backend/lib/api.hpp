@@ -36,7 +36,8 @@ private:
 
 	void time_categories_modify(const TimeCategoriesModify& message, std::vector<std::unique_ptr<Message>>& output);
 
-	void create_daily_report(RequestID requestID, int month, int day, int year, std::vector<std::unique_ptr<Message>>& output);
+	DailyReportMessage create_daily_report(RequestID requestID, int month, int day, int year);
+	void create_weekly_report(RequestID requestID, int month, int day, int year, std::vector<std::unique_ptr<Message>>& output);
 
 	std::vector<TimeCategory> m_timeCategories;
 	TimeCategoryID m_nextTimeCategoryID = TimeCategoryID(1);

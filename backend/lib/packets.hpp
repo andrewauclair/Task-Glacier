@@ -764,8 +764,52 @@ struct RequestDailyReportMessage : RequestMessage
 	}
 };
 
+struct RequestWeeklyReportMessage : RequestMessage
+{
+	int month;
+	int day;
+	int year;
+
+	RequestWeeklyReportMessage(RequestID requestID, int month, int day, int year) : RequestMessage(PacketType::REQUEST_WEEKLY_REPORT, requestID), month(month), day(day), year(year)
+	{
+	}
+
+	bool operator==(const Message& message) const override
+	{
+		if (const auto* other = dynamic_cast<const RequestWeeklyReportMessage*>(&message))
+		{
+			return *this == *other;
+		}
+		return false;
+	}
+
+	bool operator==(const RequestWeeklyReportMessage& message) const
+	{
+		return packetType() == message.packetType() && requestID == message.requestID && month == message.month && day == message.day && year == message.year;
+	}
+
+	std::vector<std::byte> pack() const override;
+	static std::expected<RequestWeeklyReportMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	std::ostream& print(std::ostream& out) const override
+	{
+		out << "RequestWeeklyReportMessage { ";
+		RequestMessage::print(out);
+		out << ", month: " << month << ", day: " << day << ", year: " << year << " }";
+		return out;
+	}
+
+	friend std::ostream& operator<<(std::ostream& out, const RequestWeeklyReportMessage& message)
+	{
+		message.print(out);
+		return out;
+	}
+};
+
 struct DailyReport
 {
+	bool found = false;
+
 	int month = 0;
 	int day = 0;
 	int year = 0;
@@ -801,7 +845,12 @@ struct DailyReport
 
 	friend std::ostream& operator<<(std::ostream& out, const DailyReport& report)
 	{
-		out << "{ month: " << report.month << ", day: " << report.day << ", year: " << report.year << ", startTime: " << report.startTime << ", endTime: " << report.endTime;
+		if (!report.found)
+		{
+			out << "{ found: " << report.found << ", month: " << report.month << ", day: " << report.day << ", year: " << report.year << " }";
+			return out;
+		}
+		out << "{ found: " << report.found << ", month: " << report.month << ", day: " << report.day << ", year: " << report.year << ", startTime: " << report.startTime << ", endTime: " << report.endTime;
 		out << '\n';
 		out << "Time Pairs {";
 		for (auto&& time : report.times)
@@ -816,6 +865,7 @@ struct DailyReport
 		}
 		out << "\n}\n";
 		out << "Total Time: " << report.totalTime << '\n';
+		out << "}";
 		return out;
 	}
 };
@@ -824,7 +874,6 @@ struct DailyReportMessage : Message
 {
 	RequestID requestID;
 
-	bool reportFound = false;
 	DailyReport report;
 
 	DailyReportMessage(RequestID requestID) : Message(PacketType::DAILY_REPORT), requestID(requestID) {}
@@ -840,7 +889,7 @@ struct DailyReportMessage : Message
 
 	bool operator==(const DailyReportMessage& message) const
 	{
-		return requestID == message.requestID && reportFound == message.reportFound && report == message.report;
+		return requestID == message.requestID && report == message.report;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -851,16 +900,7 @@ struct DailyReportMessage : Message
 		out << "DailyReportMessage { ";
 		Message::print(out);
 		out << ", requestID: " << requestID._val;
-		out << ", reportFound: " << reportFound;
-
-		if (reportFound)
-		{
-			out << ", report: " << report;
-		}
-		else
-		{
-			out << ' ';
-		}
+		out << ", report: " << report;
 		out << "}";
 		return out;
 	}
@@ -874,10 +914,55 @@ struct DailyReportMessage : Message
 
 struct WeeklyReportMessage : Message
 {
+	RequestID requestID;
+
 	std::array<DailyReport, 7> dailyReports;
 
-	std::chrono::milliseconds totalTime;
-	std::map<std::string, std::chrono::milliseconds> timePerCategory;
+	std::chrono::milliseconds totalTime = std::chrono::milliseconds(0);
+	std::map<TimeCodeID, std::chrono::milliseconds> timePerTimeCode;
+
+	WeeklyReportMessage(RequestID requestID) : Message(PacketType::WEEKLY_REPORT), requestID(requestID) {}
+
+	bool operator==(const Message& message) const override
+	{
+		if (const auto* other = dynamic_cast<const WeeklyReportMessage*>(&message))
+		{
+			return *this == *other;
+		}
+		return false;
+	}
+
+	bool operator==(const WeeklyReportMessage& message) const
+	{
+		return requestID == message.requestID;
+	}
+
+	std::vector<std::byte> pack() const override;
+	static std::expected<WeeklyReportMessage, UnpackError> unpack(std::span<const std::byte> data);
+
+	std::ostream& print(std::ostream& out) const override
+	{
+		out << "WeeklyReportMessage { ";
+		Message::print(out);
+		out << ", requestID: " << requestID._val << ", totalTime: " << totalTime << ", ";
+		for (auto&& dailyReport : dailyReports)
+		{
+			out << dailyReport;
+		}
+		out << "Time Per Time Code {";
+		for (auto&& [timeCode, time] : timePerTimeCode)
+		{
+			out << "\ntimeCode: " << timeCode._val << ", time: " << time;
+		}
+		out << "}";
+		return out;
+	}
+
+	friend std::ostream& operator<<(std::ostream& out, const WeeklyReportMessage& message)
+	{
+		message.print(out);
+		return out;
+	}
 
 	// su, mo, tu, we, th, fr, sa
 	// time spent on each time category per day
@@ -1191,6 +1276,10 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 			break;
 		case DAILY_REPORT:
 			result.packet = std::make_unique<DailyReportMessage>(DailyReportMessage::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
+			break;
+		case REQUEST_WEEKLY_REPORT:
+			result.packet = std::make_unique<RequestWeeklyReportMessage>(RequestWeeklyReportMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 			break;
 		case TIME_CATEGORIES_DATA:

@@ -967,7 +967,7 @@ TEST_CASE("Daily Report", "[messages]")
 		CHECK(!(report == report2));
 
 		report2.requestID = report.requestID;
-		report2.reportFound = true;
+		report2.report.found = true;
 		CAPTURE(report2);
 
 		CHECK(!(report == report2));
@@ -992,7 +992,7 @@ TEST_CASE("Daily Report", "[messages]")
 
 		report.print(ss);
 
-		auto expected_text = "DailyReportMessage { packetType: 16, requestID: 10, reportFound: 0 }";
+		auto expected_text = "DailyReportMessage { packetType: 16, requestID: 10, report: { found: 0, month: 0, day: 0, year: 0 }}";
 
 		CHECK(ss.str() == expected_text);
 
@@ -1014,8 +1014,7 @@ TEST_CASE("Daily Report", "[messages]")
 	SECTION("Print - Report Found")
 	{
 		auto newReport = DailyReportMessage(RequestID(10));
-		newReport.reportFound = true;
-		newReport.report = { 2, 3, 2025 };
+		newReport.report = { true, 2, 3, 2025 };
 
 		CAPTURE(newReport);
 
@@ -1023,31 +1022,37 @@ TEST_CASE("Daily Report", "[messages]")
 
 		newReport.print(ss);
 
-		auto expected_text = "DailyReportMessage { packetType: 16, requestID: 10, reportFound: 1, report: { month: 2, day: 3, year: 2025, startTime: 0ms, endTime: 0ms\nTime Pairs {\n}\nTime Per Time Code {\n}\nTotal Time: 0ms\n}";
+		auto expected_text = "DailyReportMessage { packetType: 16, requestID: 10, report: { found: 1, month: 2, day: 3, year: 2025, startTime: 0ms, endTime: 0ms\nTime Pairs {\n}\nTime Per Time Code {\n}\nTotal Time: 0ms\n}}";
 
 		CHECK(ss.str() == expected_text);
 	}
 
 	SECTION("Pack - No Report Found")
 	{
-		auto verifier = PacketVerifier(report.pack(), 13);
+		auto newReport = DailyReportMessage(RequestID(10));
+		newReport.report = { false, 2, 3, 2025 };
+
+		auto verifier = PacketVerifier(newReport.pack(), 17);
 
 		verifier
-			.verify_value<std::uint32_t>(13, "packet length")
+			.verify_value<std::uint32_t>(17, "packet length")
 			.verify_value(static_cast<std::int32_t>(PacketType::DAILY_REPORT), "packet ID")
-			.verify_value<std::uint32_t>(10, "request ID");
+			.verify_value<std::uint32_t>(10, "request ID")
+			.verify_value<bool>(false, "report found")
+			.verify_value<std::int8_t>(2, "month")
+			.verify_value<std::int8_t>(3, "day")
+			.verify_value<std::int16_t>(2025, "year");
 	}
 
 	SECTION("Pack - Report Found")
 	{
 		auto newReport = DailyReportMessage(RequestID(10));
-		newReport.reportFound = true;
-		newReport.report = { 2, 3, 2025 };
+		newReport.report = { true, 2, 3, 2025 };
 
-		auto verifier = PacketVerifier(newReport.pack(), 49);
+		auto verifier = PacketVerifier(newReport.pack(), 25);
 
 		verifier
-			.verify_value<std::uint32_t>(49, "packet length")
+			.verify_value<std::uint32_t>(25, "packet length")
 			.verify_value(static_cast<std::int32_t>(PacketType::DAILY_REPORT), "packet ID")
 			.verify_value<std::uint32_t>(10, "request ID")
 			.verify_value<bool>(true, "report found")
@@ -1059,17 +1064,16 @@ TEST_CASE("Daily Report", "[messages]")
 	SECTION("Unpack - No Report Found")
 	{
 		PacketTestHelper helper;
-		helper.expect_packet<DailyReportMessage>(report, 13);
+		helper.expect_packet<DailyReportMessage>(report, 17);
 	}
 
 	SECTION("Unpack - Report Found")
 	{
 		auto newReport = DailyReportMessage(RequestID(10));
-		newReport.reportFound = true;
-		newReport.report = { 2, 3, 2025 };
+		newReport.report = { true, 2, 3, 2025 };
 
 		PacketTestHelper helper;
-		helper.expect_packet<DailyReportMessage>(newReport, 49);
+		helper.expect_packet<DailyReportMessage>(newReport, 25);
 	}
 }
 

@@ -837,6 +837,9 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		helper.api.process_packet(request, helper.output);
 
 		auto report = DailyReportMessage(helper.prev_request_id());
+		report.report.month = 2;
+		report.report.day = 3;
+		report.report.year = 2025;
 
 		helper.required_messages({ &report });
 	}
@@ -855,7 +858,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		helper.api.process_packet(request, helper.output);
 
 		auto report = DailyReportMessage(helper.prev_request_id());
-		report.reportFound = true;
+		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
 		report.report.year = 2025;
@@ -880,7 +883,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		helper.api.process_packet(request, helper.output);
 
 		auto report = DailyReportMessage(helper.prev_request_id());
-		report.reportFound = true;
+		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
 		report.report.year = 2025;
@@ -904,6 +907,9 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		helper.api.process_packet(request, helper.output);
 
 		auto report = DailyReportMessage(helper.prev_request_id());
+		report.report.month = 2;
+		report.report.day = 4;
+		report.report.year = 2025;
 
 		helper.required_messages({ &report });
 	}
@@ -922,7 +928,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		helper.api.process_packet(request, helper.output);
 
 		auto report = DailyReportMessage(helper.prev_request_id());
-		report.reportFound = true;
+		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
 		report.report.year = 2025;
@@ -949,7 +955,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		helper.api.process_packet(request, helper.output);
 
 		auto report = DailyReportMessage(helper.prev_request_id());
-		report.reportFound = true;
+		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
 		report.report.year = 2025;
@@ -978,7 +984,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		helper.api.process_packet(request, helper.output);
 
 		auto report = DailyReportMessage(helper.prev_request_id());
-		report.reportFound = true;
+		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
 		report.report.year = 2025;
@@ -1019,7 +1025,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		helper.api.process_packet(request, helper.output);
 
 		auto report = DailyReportMessage(helper.prev_request_id());
-		report.reportFound = true;
+		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
 		report.report.year = 2025;
@@ -1078,7 +1084,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		helper.api.process_packet(request, helper.output);
 
 		auto report = DailyReportMessage(helper.prev_request_id());
-		report.reportFound = true;
+		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
 		report.report.year = 2025;
@@ -1092,6 +1098,42 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.timePerTimeCode.emplace(TimeCodeID(3), std::chrono::hours(2));
 		report.report.timePerTimeCode.emplace(TimeCodeID(4), std::chrono::hours(2));
 		report.report.totalTime = std::chrono::hours(7);
+
+		helper.required_messages({ &report });
+	}
+}
+
+TEST_CASE("Request Weekly Report", "[api][task]")
+{
+	TestHelper helper;
+
+	SECTION("No Report Found")
+	{
+		auto request = RequestWeeklyReportMessage(helper.next_request_id(), 6, 29, 2025);
+
+		helper.api.process_packet(request, helper.output);
+
+		auto report = WeeklyReportMessage(helper.prev_request_id());
+		report.dailyReports[0].day = 29;
+		report.dailyReports[1].day = 30;
+		report.dailyReports[2].day = 1;
+		report.dailyReports[3].day = 2;
+		report.dailyReports[4].day = 3;
+		report.dailyReports[5].day = 4;
+		report.dailyReports[6].day = 5;
+
+		report.dailyReports[0].month = 6;
+		report.dailyReports[1].month = 6;
+		report.dailyReports[2].month = 7;
+		report.dailyReports[3].month = 7;
+		report.dailyReports[4].month = 7;
+		report.dailyReports[5].month = 7;
+		report.dailyReports[6].month = 7;
+
+		for (int i = 0; i < 7; i++)
+		{
+			report.dailyReports[i].year = 2025;
+		}
 
 		helper.required_messages({ &report });
 	}

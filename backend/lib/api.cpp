@@ -32,7 +32,17 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 	{
 		const auto& request = static_cast<const RequestDailyReportMessage&>(message);
 
-		create_daily_report(request.requestID, request.month, request.day, request.year, output);
+		auto report = create_daily_report(request.requestID, request.month, request.day, request.year);
+
+		output.push_back(std::make_unique<DailyReportMessage>(report));
+
+		break;
+	}
+	case PacketType::REQUEST_WEEKLY_REPORT:
+	{
+		const auto& request = static_cast<const RequestWeeklyReportMessage&>(message);
+
+		create_weekly_report(request.requestID, request.month, request.day, request.year, output);
 		break;
 	}
 	case PacketType::TIME_CATEGORIES_MODIFY:
@@ -556,53 +566,74 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 	output.push_back(std::make_unique<TimeCategoriesData>(data));
 }
 
-void API::create_daily_report(RequestID requestID, int month, int day, int year, std::vector<std::unique_ptr<Message>>& output)
+DailyReportMessage API::create_daily_report(RequestID requestID, int month, int day, int year)
 {
-	auto report = std::make_unique<DailyReportMessage>(requestID);
+	DailyReportMessage report(requestID);
 
 	// search for tasks on the given day
 
 	std::vector<MicroTask::FindTasksOnDay> tasks = m_app.find_tasks_on_day(month, day, year);
 
-	report->reportFound = !tasks.empty();
+	report.report = { !tasks.empty(), month, day, year };
 
-	if (report->reportFound)
+	if (report.report.found)
 	{
-		report->report = { month, day, year };
-
 		bool first = true;
+		
 		for (auto&& task : tasks)
 		{
-			report->report.times.emplace_back(task.task->taskID(), task.time.startStopIndex);
+			report.report.times.emplace_back(task.task->taskID(), task.time.startStopIndex);
 
 			if (first)
 			{
-				report->report.startTime = task.task->m_times[task.time.startStopIndex].start;
+				report.report.startTime = task.task->m_times[task.time.startStopIndex].start;
 			}
-			else if (report->report.startTime > task.task->m_times[task.time.startStopIndex].start)
+			else if (report.report.startTime > task.task->m_times[task.time.startStopIndex].start)
 			{
-				report->report.startTime = task.task->m_times[task.time.startStopIndex].start;
+				report.report.startTime = task.task->m_times[task.time.startStopIndex].start;
 			}
 
 			if (task.task->m_times[task.time.startStopIndex].stop.has_value())
 			{
 				const auto timeForTask = task.task->m_times[task.time.startStopIndex].stop.value() - task.task->m_times[task.time.startStopIndex].start;
 
-				report->report.totalTime += timeForTask;
+				report.report.totalTime += timeForTask;
 
 				for (auto&& timeCode : task.task->timeCodes)
 				{
-					report->report.timePerTimeCode[timeCode] += timeForTask;
+					report.report.timePerTimeCode[timeCode] += timeForTask;
 				}
 			}
 
-			if (task.task->m_times[task.time.startStopIndex].stop.has_value() && task.task->m_times[task.time.startStopIndex].stop.value() > report->report.endTime)
+			if (task.task->m_times[task.time.startStopIndex].stop.has_value() && task.task->m_times[task.time.startStopIndex].stop.value() > report.report.endTime)
 			{
-				report->report.endTime = task.task->m_times[task.time.startStopIndex].stop.value();
+				report.report.endTime = task.task->m_times[task.time.startStopIndex].stop.value();
 			}
 			first = false;
 		}
 	}
 
-	output.push_back(std::move(report));
+	return report;
+}
+
+void API::create_weekly_report(RequestID requestID, int month, int day, int year, std::vector<std::unique_ptr<Message>>& output)
+{
+	WeeklyReportMessage report(requestID);
+
+	report.dailyReports[0] = create_daily_report(requestID, month, day, year).report;
+
+	auto ymd = std::chrono::year_month_day(std::chrono::year(year), std::chrono::month(month), std::chrono::day(day));
+
+	auto days = static_cast<std::chrono::local_days>(ymd);
+
+	for (int i = 0; i < 6; i++)
+	{
+		days++;
+
+		auto f = std::chrono::year_month_day(days);
+
+		report.dailyReports[i] = create_daily_report(requestID, static_cast<unsigned int>(f.month()), static_cast<unsigned int>(f.day()), static_cast<int>(f.year())).report;
+	}
+
+	output.push_back(std::make_unique<WeeklyReportMessage>(report));
 }

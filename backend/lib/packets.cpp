@@ -589,24 +589,52 @@ std::expected<RequestDailyReportMessage, UnpackError> RequestDailyReportMessage:
 	}
 }
 
+std::vector<std::byte> RequestWeeklyReportMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(PacketType::REQUEST_WEEKLY_REPORT);
+	builder.add(requestID);
+	builder.add<std::int8_t>(month);
+	builder.add<std::int8_t>(day);
+	builder.add<std::int16_t>(year);
+
+	return builder.build();
+}
+
+std::expected<RequestWeeklyReportMessage, UnpackError> RequestWeeklyReportMessage::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto requestID = parser.parse_next<RequestID>();
+	const auto month = parser.parse_next<std::int8_t>();
+	const auto day = parser.parse_next<std::int8_t>();
+	const auto year = parser.parse_next<std::int16_t>();
+
+	try
+	{
+		return RequestWeeklyReportMessage(requestID.value(), month.value(), day.value(), year.value());
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
+}
+
 std::vector<std::byte> DailyReportMessage::pack() const
 {
 	PacketBuilder builder;
 
 	builder.add(PacketType::DAILY_REPORT);
 	builder.add(requestID);
-	builder.add(reportFound);
+	builder.add(report.found);
+	builder.add<std::int8_t>(report.month);
+	builder.add<std::int8_t>(report.day);
+	builder.add<std::int16_t>(report.year);
 	
-	if (reportFound)
+	if (report.found)
 	{
-		builder.add<std::int8_t>(report.month);
-		builder.add<std::int8_t>(report.day);
-		builder.add<std::int16_t>(report.year);
-
-		builder.add(report.startTime);
-		builder.add(report.endTime);
-		builder.add(report.totalTime);
-
 		builder.add<std::int32_t>(report.timePerTimeCode.size());
 
 		for (auto&& timeCode : report.timePerTimeCode)
@@ -645,12 +673,70 @@ std::expected<DailyReportMessage, UnpackError> DailyReportMessage::unpack(std::s
 
 		auto report = DailyReportMessage(requestID.value());
 
-		report.reportFound = true;
+		report.report.found = true;
 		report.report.month = parser.parse_next_immediate<std::int8_t>();
 		report.report.day = parser.parse_next_immediate<std::int8_t>();
 		report.report.year = parser.parse_next_immediate<std::int16_t>();
 
 		return report;
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
+}
+
+std::vector<std::byte> WeeklyReportMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(PacketType::DAILY_REPORT);
+	builder.add(requestID);
+
+	for (auto&& report : dailyReports)
+	{
+		builder.add(report.found);
+		builder.add<std::int8_t>(report.month);
+		builder.add<std::int8_t>(report.day);
+		builder.add<std::int16_t>(report.year);
+
+		if (report.found)
+		{
+			builder.add(report.startTime);
+			builder.add(report.endTime);
+			builder.add(report.totalTime);
+
+			builder.add<std::int32_t>(report.timePerTimeCode.size());
+
+			for (auto&& timeCode : report.timePerTimeCode)
+			{
+				builder.add(timeCode.first);
+				builder.add(timeCode.second);
+			}
+
+			builder.add<std::int32_t>(report.times.size());
+
+			for (auto&& pair : report.times)
+			{
+				builder.add(pair.taskID);
+				builder.add(pair.startStopIndex);
+			}
+		}
+	}
+
+	return builder.build();
+}
+
+std::expected<WeeklyReportMessage, UnpackError> WeeklyReportMessage::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto requestID = parser.parse_next<RequestID>();
+
+	try
+	{
+		return WeeklyReportMessage(requestID.value());
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{
