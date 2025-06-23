@@ -11,6 +11,8 @@ import java.util.Map;
 
 public class DailyReportMessage implements Packet {
     public static class DailyReport {
+        public boolean found;
+
         public int month;
         public int day;
         public int year;
@@ -32,14 +34,13 @@ public class DailyReportMessage implements Packet {
     }
 
     private int requestID;
-    private boolean reportFound;
 
     public DailyReport getReport() {
         return report;
     }
 
     public boolean isReportFound() {
-        return reportFound;
+        return report.found;
     }
 
     private DailyReport report = null;
@@ -49,15 +50,14 @@ public class DailyReportMessage implements Packet {
 
         input.readInt(); // packet type
         message.requestID = input.readInt();
-        message.reportFound = input.readBoolean();
 
-        if (message.reportFound) {
-            message.report = new DailyReport();
+        message.report = new DailyReport();
+        message.report.found = input.readBoolean();
+        message.report.month = input.readByte();
+        message.report.day = input.readByte();
+        message.report.year = input.readShort();
 
-            message.report.month = input.readByte();
-            message.report.day = input.readByte();
-            message.report.year = input.readShort();
-
+        if (message.report.found) {
             message.report.startTime = Instant.ofEpochMilli(input.readLong());
             message.report.endTime = Instant.ofEpochMilli(input.readLong());
             message.report.totalTime = Instant.ofEpochMilli(input.readLong());
