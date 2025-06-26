@@ -1049,10 +1049,10 @@ TEST_CASE("Daily Report", "[messages]")
 		auto newReport = DailyReportMessage(RequestID(10));
 		newReport.report = { true, 2, 3, 2025 };
 
-		auto verifier = PacketVerifier(newReport.pack(), 25);
+		auto verifier = PacketVerifier(newReport.pack(), 49);
 
 		verifier
-			.verify_value<std::uint32_t>(25, "packet length")
+			.verify_value<std::uint32_t>(49, "packet length")
 			.verify_value(static_cast<std::int32_t>(PacketType::DAILY_REPORT), "packet ID")
 			.verify_value<std::uint32_t>(10, "request ID")
 			.verify_value<bool>(true, "report found")
@@ -1073,7 +1073,7 @@ TEST_CASE("Daily Report", "[messages]")
 		newReport.report = { true, 2, 3, 2025 };
 
 		PacketTestHelper helper;
-		helper.expect_packet<DailyReportMessage>(newReport, 25);
+		helper.expect_packet<DailyReportMessage>(newReport, 49);
 	}
 }
 

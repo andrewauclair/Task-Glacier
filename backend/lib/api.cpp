@@ -473,6 +473,8 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 			return;
 		}
 
+		// TODO persist to file so we can reload next time
+
 		if (message.type == TimeCategoryModType::UPDATE)
 		{
 			// update names
@@ -492,10 +494,24 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 					return;
 				}
 			}
+
+			*m_output << "time-category update " << timeCategory->id._val << " (" << timeCategory->name << ") ";
+			*m_output << "(" << timeCategory->label << ") ";
+
+			for (auto&& code : timeCategory->codes)
+			{
+				*m_output << code.id._val << " (" << code.name << ") ";
+			}
+			*m_output << '\n';
 		}
 		else if (message.type == TimeCategoryModType::REMOVE_CATEGORY)
 		{
 			auto result = std::find_if(m_timeCategories.begin(), m_timeCategories.end(), [&](auto&& cat) { return cat.id == category.id; });
+
+			if (result != m_timeCategories.end())
+			{
+				*m_output << "time-category remove-category " << result->id._val << '\n';
+			}
 
 			m_timeCategories.erase(result);
 		}
@@ -515,6 +531,19 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 					return;
 				}
 			}
+
+			*m_output << "time-category remove-code " << category.id._val;
+
+			*m_output << " { ";
+
+			for (auto&& code : category.codes)
+			{
+				*m_output << code.id._val << ' ';
+			}
+
+			*m_output << "}";
+
+			*m_output << '\n';
 		}
 		else
 		{
@@ -544,6 +573,15 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 					}
 				}
 			}
+
+			*m_output << "time-category add " << category.id._val << " (" << category.name << ") ";
+			*m_output << "(" << category.label << ") ";
+
+			for (auto&& code : category.codes)
+			{
+				*m_output << code.id._val << " (" << code.name << ") ";
+			}
+			*m_output << '\n';
 		}
 		
 	}

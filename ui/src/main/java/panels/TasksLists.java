@@ -325,7 +325,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
             TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
             Task task = (Task) node.getUserObject();
 
-            EditTimes dialog = new EditTimes(task);
+            EditTimes dialog = new EditTimes(mainFrame, task);
 
             dialog.setVisible(true);
         });

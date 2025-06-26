@@ -374,6 +374,79 @@ void MicroTask::load_from_file(std::istream& input)
 
 			m_lastBugzillaRefresh = std::chrono::milliseconds(std::stoll(values[1]));
 		}
+		else if (line.starts_with("time-category"))
+		{
+			auto values = split(line, ' ');
+			auto idnum = std::stoi(values[2]);
+
+			if (line.starts_with("time-category add"))
+			{
+				
+				TimeCategoryID id = TimeCategoryID(idnum);
+				std::string name = values[3].substr(1, values[3].length() - 2);
+				std::string label = values[4].substr(1, values[4].length() - 2);
+
+				TimeCategory category{ id, name, label };
+
+				for (int i = 0; i < values.size(); i += 2)
+				{
+					TimeCodeID code = TimeCodeID(std::stoi(values[i]));
+					std::string codeName = values[i + 1].substr(1, values[i + 1].length() - 2);
+
+					category.codes.emplace_back(code, codeName);
+				}
+
+				m_timeCategories.push_back(category);
+			}
+			else if (line.starts_with("time-category update"))
+			{
+				TimeCategoryID id = TimeCategoryID(idnum);
+				std::string name = values[3].substr(1, values[3].length() - 2);
+				std::string label = values[4].substr(1, values[4].length() - 2);
+
+				auto result = std::find_if(m_timeCategories.begin(), m_timeCategories.end(), [&](auto&& it) { return it.id == id; });
+
+				if (result != m_timeCategories.end())
+				{
+					result->name = name;
+					result->label = label;
+
+					result->codes.clear();
+
+					for (int i = 0; i < values.size(); i += 2)
+					{
+						TimeCodeID code = TimeCodeID(std::stoi(values[i]));
+						std::string codeName = values[i + 1].substr(1, values[i + 1].length() - 2);
+
+						result->codes.emplace_back(code, codeName);
+					}
+				}
+			}
+			else if (line.starts_with("time-category remove-code"))
+			{
+				TimeCategoryID id = TimeCategoryID(idnum);
+
+				auto result = std::find_if(m_timeCategories.begin(), m_timeCategories.end(), [&](auto&& it) { return it.id == id; });
+
+				if (result != m_timeCategories.end())
+				{
+					for (int i = 4; i < values.size(); i++)
+					{
+						if (values[i] != "}")
+						{
+							TimeCodeID code = TimeCodeID(std::stoi(values[i]));
+							std::erase_if(result->codes, [&](auto&& it) { return it.id == code; });
+						}
+					}
+				}
+			}
+			else if (line.starts_with("time-category remove-category"))
+			{
+				TimeCategoryID id = TimeCategoryID(idnum);
+
+				std::erase_if(m_timeCategories, [&](auto&& it) { return it.id == id; });
+			}
+		}
 		else
 		{
 			throw std::runtime_error("Invalid command: " + line);
