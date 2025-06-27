@@ -381,14 +381,13 @@ void MicroTask::load_from_file(std::istream& input)
 
 			if (line.starts_with("time-category add"))
 			{
-				
 				TimeCategoryID id = TimeCategoryID(idnum);
 				std::string name = values[3].substr(1, values[3].length() - 2);
 				std::string label = values[4].substr(1, values[4].length() - 2);
 
 				TimeCategory category{ id, name, label };
 
-				for (int i = 0; i < values.size(); i += 2)
+				for (int i = 5; i < values.size(); i += 2)
 				{
 					TimeCodeID code = TimeCodeID(std::stoi(values[i]));
 					std::string codeName = values[i + 1].substr(1, values[i + 1].length() - 2);
@@ -413,7 +412,7 @@ void MicroTask::load_from_file(std::istream& input)
 
 					result->codes.clear();
 
-					for (int i = 0; i < values.size(); i += 2)
+					for (int i = 5; i < values.size(); i += 2)
 					{
 						TimeCodeID code = TimeCodeID(std::stoi(values[i]));
 						std::string codeName = values[i + 1].substr(1, values[i + 1].length() - 2);

@@ -39,11 +39,6 @@ private:
 	DailyReportMessage create_daily_report(RequestID requestID, int month, int day, int year);
 	void create_weekly_report(RequestID requestID, int month, int day, int year, std::vector<std::unique_ptr<Message>>& output);
 
-	std::vector<TimeCategory> m_timeCategories;
-	TimeCategoryID m_nextTimeCategoryID = TimeCategoryID(1);
-	TimeCodeID m_nextTimeCodeID = TimeCodeID(1);
-	
-
 	const Clock* m_clock;
 	cURL* m_curl = nullptr;
 	MicroTask m_app;

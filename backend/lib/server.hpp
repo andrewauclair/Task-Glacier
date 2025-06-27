@@ -112,7 +112,7 @@ public:
 
 	void load_from_file(std::istream& input);
 
-	const std::vector<TimeCategory> timeCategories() const { return m_timeCategories; }
+	std::vector<TimeCategory>& timeCategories() { return m_timeCategories; }
 	std::optional<std::string> add_time_category(std::string_view name)
 	{
 		// error if time category with name already exists
@@ -144,6 +144,10 @@ public:
 	std::map<std::string, Bugzilla> m_bugzilla;
 	std::optional<std::chrono::milliseconds> m_lastBugzillaRefresh;
 
+public:
+	TimeCategoryID m_nextTimeCategoryID = TimeCategoryID(1);
+	TimeCodeID m_nextTimeCodeID = TimeCodeID(1);
+
 private:
 	std::unordered_map<TaskID, Task> m_tasks;
 	Task* m_activeTask = nullptr;
@@ -151,7 +155,6 @@ private:
 	TaskID m_nextTaskID = TaskID(1);
 
 	std::vector<TimeCategory> m_timeCategories;
-	TimeCodeID m_nextTimeCodeID = TimeCodeID(1);
 
 	const Clock* m_clock;
 	std::ostream* m_output;

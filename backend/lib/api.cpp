@@ -394,9 +394,9 @@ void API::handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<
 
 		TimeCategoriesData data({});
 
-		for (auto&& category : m_timeCategories)
+		for (auto&& category : m_app.timeCategories())
 		{
-			TimeCategory packet = TimeCategory(category.id, category.name);
+			TimeCategory packet = TimeCategory(category.id, category.name, category.label);
 
 			for (auto&& code : category.codes)
 			{
@@ -436,27 +436,27 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 		if (category.id == TimeCategoryID(0) && message.type == TimeCategoryModType::ADD)
 		{
 			// creating new time category
-			auto result = std::find_if(m_timeCategories.begin(), m_timeCategories.end(), [&](auto&& cat) { return cat.name == category.name; });
+			auto result = std::find_if(m_app.timeCategories().begin(), m_app.timeCategories().end(), [&](auto&& cat) { return cat.name == category.name; });
 
-			if (result != m_timeCategories.end())
+			if (result != m_app.timeCategories().end())
 			{
 				output.push_back(std::make_unique<FailureResponse>(message.requestID, std::format("Time Category with name '{}' already exists", category.name)));
 				return;
 			}
 
-			TimeCategory newCategory{ m_nextTimeCategoryID, category.name, category.label };
+			TimeCategory newCategory{ m_app.m_nextTimeCategoryID, category.name, category.label };
 
-			m_nextTimeCategoryID++;
+			m_app.m_nextTimeCategoryID++;
 
-			m_timeCategories.push_back(newCategory);
+			m_app.timeCategories().push_back(newCategory);
 
-			timeCategory = &m_timeCategories.back();
+			timeCategory = &m_app.timeCategories().back();
 		}
 		else
 		{
-			auto result = std::find_if(m_timeCategories.begin(), m_timeCategories.end(), [&](auto&& cat) { return cat.id == category.id;});
+			auto result = std::find_if(m_app.timeCategories().begin(), m_app.timeCategories().end(), [&](auto&& cat) { return cat.id == category.id;});
 
-			if (result != m_timeCategories.end())
+			if (result != m_app.timeCategories().end())
 			{
 				timeCategory = &(*result);
 			}
@@ -479,6 +479,7 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 		{
 			// update names
 			timeCategory->name = category.name;
+			timeCategory->label = category.label;
 
 			for (auto&& code : category.codes)
 			{
@@ -506,14 +507,14 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 		}
 		else if (message.type == TimeCategoryModType::REMOVE_CATEGORY)
 		{
-			auto result = std::find_if(m_timeCategories.begin(), m_timeCategories.end(), [&](auto&& cat) { return cat.id == category.id; });
+			auto result = std::find_if(m_app.timeCategories().begin(), m_app.timeCategories().end(), [&](auto&& cat) { return cat.id == category.id; });
 
-			if (result != m_timeCategories.end())
+			if (result != m_app.timeCategories().end())
 			{
 				*m_output << "time-category remove-category " << result->id._val << '\n';
 			}
 
-			m_timeCategories.erase(result);
+			m_app.timeCategories().erase(result);
 		}
 		else if (message.type == TimeCategoryModType::REMOVE_CODE)
 		{
@@ -565,9 +566,9 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 					else
 					{
 						auto copyCode = code;
-						copyCode.id = m_nextTimeCodeID;
+						copyCode.id = m_app.m_nextTimeCodeID;
 
-						m_nextTimeCodeID++;
+						m_app.m_nextTimeCodeID++;
 
 						timeCategory->codes.push_back(copyCode);
 					}
@@ -589,7 +590,7 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 
 	TimeCategoriesData data({});
 
-	for (auto&& category : m_timeCategories)
+	for (auto&& category : m_app.timeCategories())
 	{
 		TimeCategory packet = TimeCategory(category.id, category.name);
 

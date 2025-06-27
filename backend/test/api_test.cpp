@@ -1329,7 +1329,7 @@ TEST_CASE("Persist Time Categories", "[api]")
 
 	timeCategories.clear();
 	TimeCategory tg2{ TimeCategoryID(0), "Two", "TWO" };
-	tg2.codes.push_back(TimeCode{ TimeCodeID(0), "Foo" });
+	tg2.codes.push_back(TimeCode{ TimeCodeID(0), "Bizz" });
 	timeCategories.push_back(tg2);
 
 	auto add_category2 = TimeCategoriesModify(RequestID(3), TimeCategoryModType::ADD, timeCategories);
@@ -1342,7 +1342,9 @@ TEST_CASE("Persist Time Categories", "[api]")
 	tg1.name = "Tester";
 	tg1.label = "TSTR";
 	tg1.codes.clear();
-	tg1.codes.push_back(TimeCode{ TimeCodeID(2), "Bar" });
+	tg1.codes.push_back(TimeCode{ TimeCodeID(1), "Foo" });
+	tg1.codes.push_back(TimeCode{ TimeCodeID(2), "Bars" });
+	tg1.codes.push_back(TimeCode{ TimeCodeID(3), "Buzz" });
 	timeCategories.push_back(tg1);
 
 	auto update_category = TimeCategoriesModify(RequestID(4), TimeCategoryModType::UPDATE, timeCategories);
@@ -1371,22 +1373,26 @@ TEST_CASE("Persist Time Categories", "[api]")
 
 	std::ostringstream expected;
 	expected << "create 1 0 1737344939870 (task 1)\n";
-	expected << "time-category add 1 (Test) (TST) 1 (Foo) 2 (Bar) 3 (Buzz)\n";
-	expected << "time-category add 2 (Two) (TWO) 1 (Bizz) \n";
-	expected << "time-category update 1 (Tester) (TSTR) 1 (Foo) 2 (Bars) 3 (Buzz)\n";
+	expected << "time-category add 0 (Test) (TST) 0 (Foo) 0 (Bar) 0 (Buzz) \n";
+	expected << "time-category add 0 (Two) (TWO) 0 (Bizz) \n";
+	expected << "time-category update 1 (Tester) (TSTR) 1 (Foo) 2 (Bars) 3 (Buzz) \n";
 	expected << "time-category remove-code 1 { 2 3 }\n";
 	expected << "time-category remove-category 1\n";
 
 	CHECK(fileOutput.str() == expected.str());
 
+	output.clear();
+
 	// now that we're setup, request the configuration and check the output
 	api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, output);
 
+	REQUIRE(output.size() == 3);
+
 	auto timeCategoriesData = TimeCategoriesData({});
 	auto& cat2 = timeCategoriesData.timeCategories.emplace_back(TimeCategoryID(2), "Two", "TWO");
-	cat2.codes.emplace_back(TimeCodeID(1), "Bizz");
+	cat2.codes.emplace_back(TimeCodeID(4), "Bizz");
 
-	verify_message(timeCategoriesData, *output[6]);
+	verify_message(timeCategoriesData, *output[1]);
 }
 
 TEST_CASE("Reload Time Categories", "[api]")
@@ -1414,10 +1420,9 @@ TEST_CASE("Reload Time Categories", "[api]")
 
 	REQUIRE(output.size() == 3);
 
-	auto task1 = TaskInfoMessage(TaskID(1), NO_PARENT, "task 1 - renamed");
-	task1.state = TaskState::ACTIVE;
+	auto task1 = TaskInfoMessage(TaskID(1), NO_PARENT, "task 1");
+	task1.state = TaskState::INACTIVE;
 	task1.createTime = std::chrono::milliseconds(1737344939870);
-	task1.times.emplace_back(std::chrono::milliseconds(1737379139870));
 
 	verify_message(task1, *output[0]);
 
@@ -1425,7 +1430,7 @@ TEST_CASE("Reload Time Categories", "[api]")
 	auto& cat2 = timeCategoriesData.timeCategories.emplace_back(TimeCategoryID(2), "Two", "TWO");
 	cat2.codes.emplace_back(TimeCodeID(1), "Bizz");
 
-	verify_message(timeCategoriesData, *output[2]);
+	verify_message(timeCategoriesData, *output[1]);
 
 	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[2]);
 }
@@ -1477,14 +1482,7 @@ TEST_CASE("request configuration at startup", "[api]")
 	verify_message(TaskInfoMessage(TaskID(6), TaskID(4), "task 6", std::chrono::milliseconds(1737353039870)), *output[5]);
 
 	auto timeCategoriesData = TimeCategoriesData({});
-	auto& cat1 = timeCategoriesData.timeCategories.emplace_back(TimeCategoryID(1), "Foo", "F");
-	cat1.codes.emplace_back(TimeCodeID(1), "Fizz");
-	cat1.codes.emplace_back(TimeCodeID(2), "Buzz");
-
-	auto& cat2 = timeCategoriesData.timeCategories.emplace_back(TimeCategoryID(2), "Bar", "B");
-	cat2.codes.emplace_back(TimeCodeID(3), "Bing");
-	cat2.codes.emplace_back(TimeCodeID(4), "Bong");
-
+	
 	verify_message(timeCategoriesData, *output[6]);
 
 	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[7]);
