@@ -6,6 +6,8 @@ import io.github.andrewauclair.moderndocking.DockingProperty;
 import io.github.andrewauclair.moderndocking.DynamicDockableParameters;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import packets.DailyReportMessage;
+import packets.RequestDailyReport;
+import packets.RequestID;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
@@ -22,9 +24,9 @@ public class DailyReportPanel extends JPanel implements Dockable {
     private MainFrame mainFrame;
     @DockingProperty(name = "month", required = true)
     private int month;
-    @DockingProperty(name = "month", required = true)
+    @DockingProperty(name = "day", required = true)
     private int day;
-    @DockingProperty(name = "month", required = true)
+    @DockingProperty(name = "year", required = true)
     private int year;
 
     private DailyReportMessage.DailyReport report = null;
@@ -50,6 +52,19 @@ public class DailyReportPanel extends JPanel implements Dockable {
         @Override
         public int getColumnCount() {
             return 3;
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            switch (column) {
+                case 0:
+                    return "Category";
+                case 1:
+                    return "Code";
+                case 2:
+                    return "Hours";
+            }
+            return null;
         }
 
         @Override
@@ -99,11 +114,21 @@ public class DailyReportPanel extends JPanel implements Dockable {
         tabText = parameters.getTabText();
 
         Docking.registerDockable(this);
+
+        buildUI();
     }
 
     @Override
     public void updateProperties() {
-        // TODO request the daily report from the server
+        mainFrame = MainFrame.mainFrame;
+
+        RequestDailyReport request = new RequestDailyReport();
+        request.requestID = RequestID.nextRequestID();
+        request.month = month;
+        request.day = day;
+        request.year = year;
+
+        mainFrame.getConnection().sendPacketWhenReady(request);
     }
 
     private void buildUI() {

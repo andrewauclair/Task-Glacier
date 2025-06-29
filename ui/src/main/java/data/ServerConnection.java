@@ -11,14 +11,26 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ServerConnection {
     private final DataInputStream input;
     private final DataOutputStream output;
+    List<Packet> toSend = new ArrayList<>();
 
     public ServerConnection(DataInputStream input, DataOutputStream output) {
         this.input = input;
         this.output = output;
+    }
+
+    public void sendPacketWhenReady(Packet packet) {
+        if (output != null) {
+            sendPacket(packet);
+        }
+        else {
+            toSend.add(packet);
+        }
     }
 
     // call this from a thread
@@ -57,11 +69,21 @@ public class ServerConnection {
                     SwingUtilities.invokeLater(MainFrame::restoreLayout);
 
                     SwingUtilities.invokeLater(() -> mainFrame.getTaskModel().configurationComplete());
+
+                    for (Packet packet : toSend) {
+                        sendPacket(packet);
+                    }
+                    toSend.clear();
                 }
                 else if (packetType == PacketType.DAILY_REPORT) {
                     DailyReportMessage dailyReport = DailyReportMessage.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
 
                     SwingUtilities.invokeLater(() -> mainFrame.receivedDailyReport(dailyReport));
+                }
+                else if (packetType == PacketType.WEEKLY_REPORT) {
+                    WeeklyReport report = WeeklyReport.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
+
+                    SwingUtilities.invokeLater(() -> mainFrame.receivedWeeklyReport(report));
                 }
                 else if (packetType == PacketType.TIME_CATEGORIES_DATA) {
                     TimeCategoriesMessage message = TimeCategoriesMessage.parse(new DataInputStream(new ByteArrayInputStream(bytes)));

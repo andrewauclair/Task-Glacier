@@ -7,7 +7,7 @@ import data.ServerConnection;
 import data.TaskModel;
 import data.TimeData;
 import dialogs.ConnectToServer;
-import io.github.andrewauclair.moderndocking.DockableTabPreference;
+import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.app.AppState;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import io.github.andrewauclair.moderndocking.app.RootDockingPanel;
@@ -15,25 +15,26 @@ import io.github.andrewauclair.moderndocking.app.WindowLayoutBuilder;
 import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
 import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
 import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
-import io.github.andrewauclair.moderndocking.settings.Settings;
 import packets.DailyReportMessage;
+import packets.Packet;
 import packets.RequestConfig;
+import packets.WeeklyReport;
 import panels.DailyReportPanel;
 import panels.StatusBar;
 import panels.SystemTrayDisplay;
 import panels.TasksLists;
+import panels.WeeklyReportPanel;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.prefs.Preferences;
 
@@ -63,6 +64,8 @@ public class MainFrame extends JFrame {
     }
 
     public MainFrame() throws IOException {
+        mainFrame = this;
+
         setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -185,11 +188,6 @@ public class MainFrame extends JFrame {
 
         connection = new ServerConnection(input, output);
 
-        ((MenuBar) getJMenuBar()).connected();
-
-        RequestConfig requestConfig = new RequestConfig();
-        connection.sendPacket(requestConfig);
-
         listen = new Thread(() -> {
             try {
                 connection.run(this);
@@ -200,6 +198,11 @@ public class MainFrame extends JFrame {
             }
         });
         listen.start();
+
+        ((MenuBar) getJMenuBar()).connected();
+
+        RequestConfig requestConfig = new RequestConfig();
+        connection.sendPacket(requestConfig);
     }
 
     public static MainFrame mainFrame = null;
@@ -208,7 +211,7 @@ public class MainFrame extends JFrame {
         SwingUtilities.invokeLater(() -> {
             configureLookAndFeel();
             try {
-               mainFrame = new MainFrame();
+               new MainFrame();
                mainFrame.setVisible(true);
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -257,8 +260,31 @@ public class MainFrame extends JFrame {
         if (!dailyReport.isReportFound()) {
             return;
         }
-        DailyReportPanel panel = new DailyReportPanel(this, dailyReport.getReport().getDate());
+        DailyReportPanel panel = null;
+
+        String persistentID = String.format("daily-report-%d-%d-%d", dailyReport.getReport().month, dailyReport.getReport().day, dailyReport.getReport().year);
+
+        if (Docking.isDockableRegistered(persistentID)) {
+            for (Dockable dockable : Docking.getDockables()) {
+                if (dockable.getPersistentID().equals(persistentID)){
+                    panel = (DailyReportPanel) dockable;
+                    break;
+                }
+            }
+            if (panel == null) {
+                return;
+            }
+        }
+        else {
+            panel = new DailyReportPanel(this, dailyReport.getReport().getDate());
+        }
         panel.update(dailyReport);
+        Docking.display(panel);
+    }
+
+    public void receivedWeeklyReport(WeeklyReport weeklyReport) {
+        WeeklyReportPanel panel = new WeeklyReportPanel(this, weeklyReport.reports[0].getDate());
+        panel.update(weeklyReport);
         Docking.display(panel);
     }
 
