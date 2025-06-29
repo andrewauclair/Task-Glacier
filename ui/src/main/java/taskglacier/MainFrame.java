@@ -283,7 +283,26 @@ public class MainFrame extends JFrame {
     }
 
     public void receivedWeeklyReport(WeeklyReport weeklyReport) {
-        WeeklyReportPanel panel = new WeeklyReportPanel(this, weeklyReport.reports[0].getDate());
+        WeeklyReportPanel panel = null;
+
+        DailyReportMessage.DailyReport dailyReport = weeklyReport.reports[0];
+
+        String persistentID = String.format("weekly-report-%d-%d-%d", dailyReport.month, dailyReport.day, dailyReport.year);
+
+        if (Docking.isDockableRegistered(persistentID)) {
+            for (Dockable dockable : Docking.getDockables()) {
+                if (dockable.getPersistentID().equals(persistentID)){
+                    panel = (WeeklyReportPanel) dockable;
+                    break;
+                }
+            }
+            if (panel == null) {
+                return;
+            }
+        }
+        else {
+            panel = new WeeklyReportPanel(this, dailyReport.getDate());
+        }
         panel.update(weeklyReport);
         Docking.display(panel);
     }

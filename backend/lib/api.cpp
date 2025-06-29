@@ -696,7 +696,7 @@ void API::create_weekly_report(RequestID requestID, int month, int day, int year
 
 	auto days = static_cast<std::chrono::local_days>(ymd);
 
-	for (int i = 0; i < 6; i++)
+	for (int i = 1; i < 7; i++)
 	{
 		days++;
 

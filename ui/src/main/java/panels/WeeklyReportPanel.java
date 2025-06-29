@@ -6,6 +6,9 @@ import io.github.andrewauclair.moderndocking.DockingProperty;
 import io.github.andrewauclair.moderndocking.DynamicDockableParameters;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import packets.DailyReportMessage;
+import packets.RequestDailyReport;
+import packets.RequestID;
+import packets.RequestWeeklyReport;
 import packets.WeeklyReport;
 import taskglacier.MainFrame;
 
@@ -93,16 +96,14 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
     TableModel model = new TableModel();
 
     public WeeklyReportPanel(MainFrame mainFrame, LocalDate date) {
-        Docking.registerDockable(this);
-
         this.mainFrame = mainFrame;
         month = date.getMonthValue();
         day = date.getDayOfMonth();
         year = date.getYear();
 
-        persistentID = String.format("daily-report-%d-%d-%d", month, day, year);
-        titleText = String.format("Daily Report (%d/%d/%d)", month, day, year);
-        tabText = String.format("Daily Report (%d/%d/%d)", month, day, year);
+        persistentID = String.format("weekly-report-%d-%d-%d", month, day, year);
+        titleText = String.format("Weekly Report (%d/%d/%d)", month, day, year);
+        tabText = String.format("Weekly Report (%d/%d/%d)", month, day, year);
 
         Docking.registerDockable(this);
 
@@ -117,6 +118,19 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
         Docking.registerDockable(this);
 
         buildUI();
+    }
+
+    @Override
+    public void updateProperties() {
+        mainFrame = MainFrame.mainFrame;
+
+        RequestWeeklyReport request = new RequestWeeklyReport();
+        request.requestID = RequestID.nextRequestID();
+        request.month = month;
+        request.day = day;
+        request.year = year;
+
+        mainFrame.getConnection().sendPacketWhenReady(request);
     }
 
     private void buildUI() {
@@ -184,11 +198,16 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
 
     @Override
     public String getPersistentID() {
-        return "weekly-report";
+        return persistentID;
+    }
+
+    @Override
+    public String getTitleText() {
+        return titleText;
     }
 
     @Override
     public String getTabText() {
-        return "Weekly Report";
+        return tabText;
     }
 }
