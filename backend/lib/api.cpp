@@ -616,7 +616,7 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 
 	for (auto&& category : m_app.timeCategories())
 	{
-		TimeCategory packet = TimeCategory(category.id, category.name);
+		TimeCategory packet = TimeCategory(category.id, category.name, category.label);
 
 		for (auto&& code : category.codes)
 		{

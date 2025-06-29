@@ -656,13 +656,13 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 	SECTION("Success - Add Time Category")
 	{
 		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
-		auto& newCategory = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
+		auto& newCategory = modify.timeCategories.emplace_back(TimeCategoryID(0), "New", "NEW");
 		newCategory.codes.emplace_back(TimeCodeID(0), "Code 1");
 
 		helper.expect_success(modify);
 
 		auto data = TimeCategoriesData({});
-		auto& verifyCategory = data.timeCategories.emplace_back(TimeCategoryID(1), "New");
+		auto& verifyCategory = data.timeCategories.emplace_back(TimeCategoryID(1), "New", "NEW");
 		verifyCategory.codes.emplace_back(TimeCodeID(1), "Code 1");
 
 		helper.required_messages({ &data });
