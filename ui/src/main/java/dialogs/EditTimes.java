@@ -92,14 +92,7 @@ public class EditTimes extends JDialog {
 
         JButton save = new JButton("Save");
 
-        save.addActionListener(e -> {
-            UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task);
-            update.timeCodes.clear();
 
-            mainFrame.getConnection().sendPacket(update);
-
-            EditTimes.this.dispose();
-        });
 
 
         add(save);
@@ -122,6 +115,19 @@ public class EditTimes extends JDialog {
 
             model.data.add(row);
             model.fireTableRowsInserted(model.data.size() - 1, model.data.size() - 1);
+        });
+
+        save.addActionListener(e -> {
+            UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task);
+            update.timeCodes.clear();
+
+            for (Row datum : model.data) {
+                update.timeCodes.add(datum.code.id);
+            }
+
+            mainFrame.getConnection().sendPacket(update);
+
+            EditTimes.this.dispose();
         });
 
         setSize(200, 200);

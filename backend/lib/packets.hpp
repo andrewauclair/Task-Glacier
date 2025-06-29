@@ -664,12 +664,25 @@ struct TaskInfoMessage : Message
 		{
 			out << "{ start: " << time.start.count() << ", stop: " << (time.stop.has_value() ? std::to_string(time.stop.value().count()) : "nullopt") << " }, ";
 		}
+		out << "]\n";
+		out << "labels: [ ";
+		for (auto&& label : labels)
+		{
+			out << label << ' ';
+		}
+		out << "]\n";
+		out << "time codes: [ ";
+		for (auto&& code : timeCodes)
+		{
+			out << code._val << ' ';
+		}
 		out << "]";
 		return out;
 	}
 
 	friend std::ostream& operator<<(std::ostream& out, const TaskInfoMessage& message)
 	{
+		message.print(out);
 		out << "TaskInfoMessage { taskID: " << message.taskID._val << ", parentID: " << message.parentID._val << ", state: " << static_cast<std::int32_t>(message.state) << ", newTask: " << message.newTask << ", name: \"" << message.name << "\", createTime: " << message.createTime.count() << ", finishTime: " << (message.finishTime.has_value() ? std::to_string(message.finishTime.value().count()) : "nullopt") << ", times: [";
 		for (auto&& time : message.times)
 		{
