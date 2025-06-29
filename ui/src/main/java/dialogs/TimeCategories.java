@@ -8,10 +8,12 @@ import packets.TimeCategoryModType;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,10 +21,139 @@ import java.util.Map;
 public class TimeCategories extends JDialog {
     private final TimeData timeData;
     JComboBox<String> timeCategorySelection = new JComboBox<>();
-    Map<String, DefaultTableModel> timeCodeModels = new HashMap<>();
-    DefaultTableModel currentTimeCodeModel = null;
-    private DefaultTableModel categoriesModel;
+    Map<String, CodeTableModel> timeCodeModels = new HashMap<>();
+    CodeTableModel currentTimeCodeModel = null;
+    private CategoriesTableModel categoriesModel = new CategoriesTableModel();
 
+    class Row {
+        TimeData.TimeCategory category;
+        TimeData.TimeCode code;
+    }
+
+    class CategoriesTableModel extends AbstractTableModel {
+        List<TimeData.TimeCategory> rows = new ArrayList<>();
+
+        @Override
+        public int getRowCount() {
+            return rows.size();
+        }
+
+        @Override
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return columnIndex == 0 || columnIndex == 1;
+        }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            if (columnIndex == 0 || columnIndex == 1) {
+                return String.class;
+            }
+            if (columnIndex == 3 || columnIndex == 5) {
+                return int.class;
+            }
+            return boolean.class;
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            switch (column) {
+                case 0:
+                    return "Time Category";
+                case 1:
+                    return "Label";
+                case 2:
+                    return "In Use";
+                case 3:
+                    return "Count";
+                case 4:
+                    return "Archived";
+                case 5:
+                    return "ID";
+            }
+            return null;
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 6;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            TimeData.TimeCategory row = rows.get(rowIndex);
+
+            switch (columnIndex) {
+                case 0:
+                    return row.name;
+                case 1:
+                    return row.label;
+                case 2:
+                    return false;
+                case 3:
+                    return 0;
+                case 4:
+                    return false;
+                case 5:
+                    return row.id;
+            }
+            return null;
+        }
+    }
+
+    class CodeTableModel extends AbstractTableModel {
+        List<TimeData.TimeCode> rows = new ArrayList<>();
+
+        @Override
+        public int getRowCount() {
+            return rows.size();
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            switch (column) {
+                case 0:
+                    return "Time Code";
+                case 1:
+                    return "In Use";
+                case 2:
+                    return "Task Count";
+                case 3:
+                    return "Archived";
+                case 4:
+                    return "ID";
+            }
+            return null;
+        }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            return super.getColumnClass(columnIndex);
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 5;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            TimeData.TimeCode row = rows.get(rowIndex);
+
+            switch (columnIndex) {
+                case 0:
+                    return row.name;
+                case 1:
+                    return false;
+                case 2:
+                    return 0;
+                case 3:
+                    return false;
+                case 4:
+                    return row.id;
+            }
+            return null;
+        }
+    }
     public TimeCategories(MainFrame mainFrame) {
         this.timeData = mainFrame.getTimeData();
         setModal(true);
@@ -42,44 +173,75 @@ public class TimeCategories extends JDialog {
         tabs.add("Codes", setupCodes());
 
         for (TimeData.TimeCategory timeCategory : timeData.getTimeCategories()) {
-            categoriesModel.addRow(new Object[] { timeCategory.name, "", "No", "0", "No" });
+//            categoriesModel.addRow(new Object[] { timeCategory.name, "", "No", "0", "No" });
 
-            timeCodeModels.put(timeCategory.name, new DefaultTableModel(new Object[]{"Time Code", "In Use", "Task Count", "Archived"}, 0));
-            DefaultTableModel timeCodeModel = timeCodeModels.get(timeCategory.name);
+            categoriesModel.rows.add(timeCategory);
+
+            timeCodeModels.put(timeCategory.name, new CodeTableModel());
+            CodeTableModel timeCodeModel = timeCodeModels.get(timeCategory.name);
 
             timeCategorySelection.addItem(timeCategory.name);
 
             for (TimeData.TimeCode timeCode : timeCategory.timeCodes) {
-                timeCodeModel.addRow(new Object[] { timeCode.name, "No", "0", "No" });
+//                timeCodeModel.addRow(new Object[] { timeCode.name, "No", "0", "No" });
+                timeCodeModel.rows.add(timeCode);
             }
         }
 
         JButton save = new JButton("Save");
 
         save.addActionListener(e -> {
-            TimeCategoriesMessage message = new TimeCategoriesMessage(PacketType.TIME_CATEGORIES_MODIFY);
-            message.type = TimeCategoryModType.ADD;
-            message.requestID = RequestID.nextRequestID();
+            TimeCategoriesMessage addMessage = new TimeCategoriesMessage(PacketType.TIME_CATEGORIES_MODIFY);
+            addMessage.type = TimeCategoryModType.ADD;
 
-            List<TimeData.TimeCategory> timeCategories = message.getTimeCategories();
+            TimeCategoriesMessage updateMessage = new TimeCategoriesMessage(PacketType.TIME_CATEGORIES_MODIFY);
+            updateMessage.type = TimeCategoryModType.UPDATE;
 
             for (int i = 0; i < categoriesModel.getRowCount(); i++) {
                 TimeData.TimeCategory timeCategory = new TimeData.TimeCategory();
+                timeCategory.id = (int) categoriesModel.getValueAt(i, 5);
                 timeCategory.name = (String) categoriesModel.getValueAt(i, 0);
                 timeCategory.label = (String) categoriesModel.getValueAt(i, 1);
-                timeCategories.add(timeCategory);
 
-                DefaultTableModel timeCodeModel = timeCodeModels.get(timeCategory.name);
+                CodeTableModel timeCodeModel = timeCodeModels.get(timeCategory.name);
+
+                boolean newTimeCodes = false;
 
                 for (int j = 0; j < timeCodeModel.getRowCount(); j++) {
                     TimeData.TimeCode timeCode = new TimeData.TimeCode();
+                    timeCode.id = (int) timeCodeModel.getValueAt(j, 4);
                     timeCode.name = (String) timeCodeModel.getValueAt(j, 0);
 
+                    if (timeCode.id == 0) {
+                        newTimeCodes = true;
+                    }
                     timeCategory.timeCodes.add(timeCode);
+                }
+
+                if (timeCategory.id == 0 || newTimeCodes) {
+                    addMessage.getTimeCategories().add(timeCategory);
+                }
+                else {
+                    TimeData.TimeCategory category = mainFrame.getTimeData().findTimeCategory(timeCategory.id);
+
+                    if (!category.name.equals(timeCategory.name) || !category.label.equals(timeCategory.label)) {
+                        updateMessage.getTimeCategories().add(timeCategory);
+//                        message.type = TimeCategoryModType.UPDATE;
+//                        message.requestID = RequestID.nextRequestID();
+//                        mainFrame.getConnection().sendPacket(message);
+                    }
                 }
             }
 
-            mainFrame.getConnection().sendPacket(message);
+            if (!addMessage.getTimeCategories().isEmpty()) {
+                addMessage.requestID = RequestID.nextRequestID();
+                mainFrame.getConnection().sendPacket(addMessage);
+            }
+
+            if (!updateMessage.getTimeCategories().isEmpty()) {
+                updateMessage.requestID = RequestID.nextRequestID();
+                mainFrame.getConnection().sendPacket(updateMessage);
+            }
 
             TimeCategories.this.dispose();
         });
@@ -109,7 +271,8 @@ public class TimeCategories extends JDialog {
     }
 
     private JScrollPane setupTimeCategoriesTable() {
-        categoriesModel = new DefaultTableModel(new Object[] { "Time Category", "Label", "In Use", "Count", "Archived" }, 0);
+//        categoriesModel = new DefaultTableModel(new Object[] { "Time Category", "Label", "In Use", "Count", "Archived" }, 0);
+
         JTable categories = new JTable(categoriesModel);
 
         JPopupMenu contextMenu = new JPopupMenu();
@@ -126,8 +289,14 @@ public class TimeCategories extends JDialog {
 
                 JButton add = new JButton("Add");
                 add.addActionListener(e -> {
-                    categoriesModel.addRow(new Object[] { category.getText(), label.getText(), "No", "0", "No" });
-                    timeCodeModels.put(category.getText(), new DefaultTableModel(new Object[] { "Time Code", "In Use", "Task Count", "Archived" }, 0));
+//                    categoriesModel.addRow(new Object[] { category.getText(), label.getText(), "No", "0", "No" });
+                    TimeData.TimeCategory timeCategory = new TimeData.TimeCategory();
+                    timeCategory.name = category.getText();
+                    timeCategory.label = label.getText();
+                    categoriesModel.rows.add(timeCategory);
+                    categoriesModel.fireTableRowsInserted(categoriesModel.rows.size() - 1, categoriesModel.rows.size() - 1);
+
+                    timeCodeModels.put(category.getText(), new CodeTableModel());
                     timeCategorySelection.addItem(category.getText());
                     CreateTimeCategory.this.dispose();
                 });
@@ -193,7 +362,11 @@ public class TimeCategories extends JDialog {
 
                 JButton add = new JButton("Add");
                 add.addActionListener(e -> {
-                    currentTimeCodeModel.addRow(new Object[] { code.getText(), "No", "0", "No" });
+//                    currentTimeCodeModel.addRow(new Object[] { code.getText(), "No", "0", "No" });
+                    TimeData.TimeCode timeCode = new TimeData.TimeCode();
+                    timeCode.name = code.getText();
+                    currentTimeCodeModel.rows.add(timeCode);
+                    currentTimeCodeModel.fireTableRowsInserted(currentTimeCodeModel.rows.size() - 1, currentTimeCodeModel.rows.size() - 1);
                     CreateTimeCode.this.dispose();
                 });
 

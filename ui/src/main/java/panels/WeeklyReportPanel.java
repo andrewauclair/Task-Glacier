@@ -191,7 +191,7 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
         }
 
         model.fireTableStructureChanged();
-        
+
         for (Row value : rows.values()) {
             model.rows.add(value);
             model.fireTableRowsInserted(model.rows.size() - 1, model.rows.size() - 1);

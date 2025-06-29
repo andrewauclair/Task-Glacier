@@ -35,6 +35,19 @@ public class EditTimes extends JDialog {
         }
 
         @Override
+        public String getColumnName(int column) {
+            if (column == 0) {
+                return "Category";
+            }
+            return "Code";
+        }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            return String.class;
+        }
+
+        @Override
         public int getColumnCount() {
             return 2;
         }
@@ -45,7 +58,7 @@ public class EditTimes extends JDialog {
             if (columnIndex == 0) {
                 return row.category.name;
             }
-            return row.code;
+            return row.code.name;
         }
     }
 

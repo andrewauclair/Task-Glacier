@@ -512,7 +512,7 @@ TEST_CASE("Time Categories Data", "[messages]")
 
 		data.print(ss);
 
-		auto expected_text = "TimeCategoriesData { packetType: 27, TimeCategory { name: one, label: one, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
+		auto expected_text = "TimeCategoriesData { packetType: 27, TimeCategory { id: 5, name: one, label: one, inUse: 0, taskCount: 0, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -602,7 +602,7 @@ TEST_CASE("Time Categories Modify", "[messages]")
 
 		modify.print(ss);
 
-		auto expected_text = "TimeCategoriesModify { packetType: 28, requestID: 10, type: 0, TimeCategory { name: one, label: one, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
+		auto expected_text = "TimeCategoriesModify { packetType: 28, requestID: 10, type: 0, TimeCategory { id: 5, name: one, label: one, inUse: 0, taskCount: 0, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
 
 		CHECK(ss.str() == expected_text);
 

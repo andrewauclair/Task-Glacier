@@ -72,6 +72,8 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 			*m_output << f.first << '\n' << f.second << '\n';
 		}
 
+		m_output->flush();
+
 		break;
 	}
 	case PacketType::BUGZILLA_REFRESH:
@@ -230,7 +232,7 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 
 				info.lastBugzillaRefresh = now;
 
-				*m_output << "bugzilla-refresh " << info.lastBugzillaRefresh->count() << '\n';
+				*m_output << "bugzilla-refresh " << info.lastBugzillaRefresh->count() << std::endl;
 			}
 			m_app.m_lastBugzillaRefresh = now;
 		}
@@ -357,7 +359,7 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 				*m_output << code._val << ' ';
 			}
 		}
-		*m_output << '\n';
+		*m_output << std::endl;
 	}
 	else
 	{
@@ -523,7 +525,7 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 			{
 				*m_output << code.id._val << " (" << code.name << ") ";
 			}
-			*m_output << '\n';
+			*m_output << std::endl;
 		}
 		else if (message.type == TimeCategoryModType::REMOVE_CATEGORY)
 		{
@@ -533,6 +535,8 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 			{
 				*m_output << "time-category remove-category " << result->id._val << '\n';
 			}
+
+			m_output->flush();
 
 			m_app.timeCategories().erase(result);
 		}
@@ -564,7 +568,7 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 
 			*m_output << "}";
 
-			*m_output << '\n';
+			*m_output << std::endl;
 		}
 		else
 		{
@@ -602,7 +606,7 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 			{
 				*m_output << code.id._val << " (" << code.name << ") ";
 			}
-			*m_output << '\n';
+			*m_output << std::endl;
 		}
 		
 	}

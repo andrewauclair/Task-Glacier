@@ -657,22 +657,35 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 	{
 		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
 		auto& newCategory = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
+		newCategory.codes.emplace_back(TimeCodeID(0), "Code 1");
 
 		helper.expect_success(modify);
 
 		auto data = TimeCategoriesData({});
 		auto& verifyCategory = data.timeCategories.emplace_back(TimeCategoryID(1), "New");
+		verifyCategory.codes.emplace_back(TimeCodeID(1), "Code 1");
 
 		helper.required_messages({ &data });
 	}
 
 	SECTION("Success - Add Time Code")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
-		auto& newCategory = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
-		newCategory.codes.emplace_back(TimeCodeID(0), "Code 1");
+		{
+			auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+			auto& newCategory = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
 
-		helper.expect_success(modify);
+			helper.expect_success(modify);
+		}
+
+		helper.clear_message_output();
+
+		{
+			auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+			auto& newCategory = modify.timeCategories.emplace_back(TimeCategoryID(1), "New");
+			newCategory.codes.emplace_back(TimeCodeID(0), "Code 1");
+
+			helper.expect_success(modify);
+		}
 
 		auto data = TimeCategoriesData({});
 		auto& verifyCategory = data.timeCategories.emplace_back(TimeCategoryID(1), "New");
@@ -1507,8 +1520,8 @@ TEST_CASE("Reload Time Categories", "[api]")
 	std::ostringstream fileOutput;
 
 	fileOutput << "create 1 0 1737344939870 (task 1)\n";
-	fileOutput << "time-category add 1 (Test) (TST) 1 (Foo) 2 (Bar) 3 (Buzz)\n";
-	fileOutput << "time-category add 2 (Two) (TWO) 1 (Bizz) \n";
+	fileOutput << "time-category add 0 (Test) (TST) 0 (Foo) 0 (Bar) 0 (Buzz)\n";
+	fileOutput << "time-category add 0 (Two) (TWO) 0 (Bizz) \n";
 	fileOutput << "time-category update 1 (Tester) (TSTR) 2 (Bars)\n";
 	fileOutput << "time-category remove-code 1 { 2 3 }\n";
 	fileOutput << "time-category remove-category 1\n";
@@ -1534,7 +1547,7 @@ TEST_CASE("Reload Time Categories", "[api]")
 
 	auto timeCategoriesData = TimeCategoriesData({});
 	auto& cat2 = timeCategoriesData.timeCategories.emplace_back(TimeCategoryID(2), "Two", "TWO");
-	cat2.codes.emplace_back(TimeCodeID(1), "Bizz");
+	cat2.codes.emplace_back(TimeCodeID(4), "Bizz");
 
 	verify_message(timeCategoriesData, *output[1]);
 

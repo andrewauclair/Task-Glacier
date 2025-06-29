@@ -55,7 +55,7 @@ std::optional<std::string> MicroTask::configure_task_time_codes(TaskID taskID, s
 				*m_output << code._val << ' ';
 			}
 		}
-		*m_output << '\n';
+		*m_output << std::endl;
 	}
 
 	return std::nullopt;
@@ -432,7 +432,9 @@ void MicroTask::load_from_file(std::istream& input)
 
 			if (line.starts_with("time-category add"))
 			{
-				TimeCategoryID id = TimeCategoryID(idnum);
+				TimeCategoryID id = m_nextTimeCategoryID;
+				m_nextTimeCategoryID++;
+
 				std::string name = values[3].substr(1, values[3].length() - 2);
 				std::string label = values[4].substr(1, values[4].length() - 2);
 
@@ -440,12 +442,14 @@ void MicroTask::load_from_file(std::istream& input)
 
 				for (int i = 5; i < values.size(); i += 2)
 				{
-					TimeCodeID code = TimeCodeID(std::stoi(values[i]));
+					TimeCodeID code = TimeCodeID(m_nextTimeCodeID);
+					m_nextTimeCodeID++;
+
 					std::string codeName = values[i + 1].substr(1, values[i + 1].length() - 2);
 
 					category.codes.emplace_back(code, codeName);
 				}
-
+				
 				m_timeCategories.push_back(category);
 			}
 			else if (line.starts_with("time-category update"))
@@ -466,6 +470,11 @@ void MicroTask::load_from_file(std::istream& input)
 					for (int i = 5; i < values.size(); i += 2)
 					{
 						TimeCodeID code = TimeCodeID(std::stoi(values[i]));
+						if (code._val == 0)
+						{
+							code = m_nextTimeCodeID;
+							m_nextTimeCodeID++;
+						}
 						std::string codeName = values[i + 1].substr(1, values[i + 1].length() - 2);
 
 						result->codes.emplace_back(code, codeName);

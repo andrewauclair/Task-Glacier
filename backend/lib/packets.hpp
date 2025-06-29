@@ -103,7 +103,7 @@ struct TimeCategory
 
 	friend std::ostream& operator<<(std::ostream& out, const TimeCategory& category)
 	{
-		out << "TimeCategory { name: " << category.name << ", label: " << category.label << ", archived: " << category.archived << '\n';
+		out << "TimeCategory { id: " << category.id._val << ", name: " << category.name << ", label: " << category.label << ", inUse: " << category.inUse << ", taskCount: " << category.taskCount << ", archived: " << category.archived << '\n';
 		
 		for (auto&& code : category.codes)
 		{
