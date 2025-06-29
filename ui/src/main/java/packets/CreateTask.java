@@ -20,7 +20,14 @@ public class CreateTask implements Packet {
     }
 
     public void writeToOutput(DataOutputStream output) throws IOException {
-        output.writeInt(22 + name.length());
+        int size = 16; // size, packet type, request ID, parent ID
+        size += 2 + name.length();
+        size += 4 + (labels.size() * 2); // labels size, label string lengths
+        for (String label : labels) {
+            size += label.length();
+        }
+        size += 4 + (timeCodes.size() * 4);
+        output.writeInt(size);
         output.writeInt(PacketType.CREATE_TASK.value());
         output.writeInt(requestID);
         output.writeInt(parentID);

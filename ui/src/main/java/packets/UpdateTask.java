@@ -31,13 +31,19 @@ public class UpdateTask implements Packet {
     }
 
     public void writeToOutput(DataOutputStream output) throws IOException {
-        output.writeInt(22 + name.length());
+        int size = 20; // size, packet type, request ID, task ID, parent ID
+        size += 2 + name.length();
+        size += 4 + (labels.size() * 2); // labels size, label string lengths
+        for (String label : labels) {
+            size += label.length();
+        }
+        size += 4 + (timeCodes.size() * 4);
+        output.writeInt(size);
         output.writeInt(PacketType.UPDATE_TASK.value());
         output.writeInt(requestID);
         output.writeInt(taskID);
         output.writeInt(parentID);
-        output.writeShort((short) name.length());
-        output.write(name.getBytes());
+        Packet.writeString(output, name);
 
         output.writeInt(labels.size());
 
