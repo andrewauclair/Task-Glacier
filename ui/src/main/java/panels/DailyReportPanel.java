@@ -1,18 +1,25 @@
 package panels;
 
+import data.TimeData;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingProperty;
 import io.github.andrewauclair.moderndocking.DynamicDockableParameters;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import packets.DailyReportMessage;
+import taskglacier.MainFrame;
 
 import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class DailyReportPanel extends JPanel implements Dockable {
+    private MainFrame mainFrame;
     @DockingProperty(name = "month", required = true)
     private int month;
     @DockingProperty(name = "month", required = true)
@@ -26,7 +33,53 @@ public class DailyReportPanel extends JPanel implements Dockable {
     private String titleText;
     private String tabText;
 
-    public DailyReportPanel(LocalDate date) {
+    class Row {
+        TimeData.TimeCategory category;
+        TimeData.TimeCode code;
+        double hours;
+    }
+
+    class TableModel extends AbstractTableModel {
+        List<Row> rows = new ArrayList<>();
+
+        @Override
+        public int getRowCount() {
+            return rows.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 3;
+        }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            if (columnIndex == 2) {
+                return double.class;
+            }
+            return String.class;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            Row row = rows.get(rowIndex);
+
+            if (columnIndex == 0) {
+                return row.category.name;
+            }
+            else if (columnIndex == 1) {
+                return row.code.name;
+            }
+            return row.hours;
+        }
+    }
+
+    JLabel date = new JLabel();
+
+    TableModel model = new TableModel();
+
+    public DailyReportPanel(MainFrame mainFrame, LocalDate date) {
+        this.mainFrame = mainFrame;
         month = date.getMonthValue();
         day = date.getDayOfMonth();
         year = date.getYear();
@@ -54,13 +107,6 @@ public class DailyReportPanel extends JPanel implements Dockable {
     }
 
     private void buildUI() {
-        if (report == null) {
-            return;
-        }
-
-        JLabel date = new JLabel();
-        date.setText(String.format("%d/%d/%d", report.month, report.day, report.year));
-
         setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -81,13 +127,9 @@ public class DailyReportPanel extends JPanel implements Dockable {
         add(total, gbc);
         gbc.gridy++;
 
-        JTree times = new JTree();
-
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode();
-        DefaultTreeModel model = new DefaultTreeModel(root);
-        times.setModel(model);
+        JTable table = new JTable(model);
         
-        add(times, gbc);
+        add(new JScrollPane(table), gbc);
         gbc.gridy++;
 
         revalidate();
@@ -96,7 +138,26 @@ public class DailyReportPanel extends JPanel implements Dockable {
 
     public void update(DailyReportMessage message) {
         report = message.getReport();
-        buildUI();
+
+        date.setText(String.format("%d/%d/%d", report.month, report.day, report.year));
+
+        model.rows.clear();
+        model.fireTableDataChanged();
+
+        if (report.found) {
+            report.timesPerCode.forEach((timeCode, time) -> {
+                long minutes = TimeUnit.MILLISECONDS.toMinutes(time.toEpochMilli());
+
+                minutes = Math.round(minutes / 15.0) * 15;
+
+                Row row = new Row();
+                row.category = mainFrame.getTimeData().timeCategoryForTimeCode(timeCode);
+                row.code = row.category.timeCodes.stream().filter(timeCode1 -> timeCode1.id == timeCode).findFirst().get();
+                row.hours = minutes / 60.0;
+                model.rows.add(row);
+                model.fireTableRowsInserted(model.rows.size() - 1, model.rows.size() - 1);
+            });
+        }
     }
 
     @Override

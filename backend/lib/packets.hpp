@@ -642,10 +642,36 @@ struct TaskInfoMessage : Message
 		{
 			return false;
 		}
-		
+
 		for (std::size_t i = 0; i < times.size(); i++)
 		{
 			if (times[i].start != message.times[i].start || times[i].stop != message.times[i].stop)
+			{
+				return false;
+			}
+		}
+
+		if (labels.size() != message.labels.size())
+		{
+			return false;
+		}
+
+		for (std::size_t i = 0; i < labels.size(); i++)
+		{
+			if (labels[i] != message.labels[i])
+			{
+				return false;
+			}
+		}
+
+		if (timeCodes.size() != message.timeCodes.size())
+		{
+			return false;
+		}
+
+		for (std::size_t i = 0; i < timeCodes.size(); i++)
+		{
+			if (timeCodes[i] != message.timeCodes[i])
 			{
 				return false;
 			}
@@ -662,19 +688,29 @@ struct TaskInfoMessage : Message
 		out << "TaskInfoMessage { taskID: " << taskID._val << ", parentID: " << parentID._val << ", state: " << static_cast<std::int32_t>(state) << ", newTask: " << newTask << ", name: \"" << name << "\", createTime: " << createTime.count() << ", finishTime: " << (finishTime.has_value() ? std::to_string(finishTime.value().count()) : "nullopt") << ", times: [";
 		for (auto&& time : times)
 		{
-			out << "{ start: " << time.start.count() << ", stop: " << (time.stop.has_value() ? std::to_string(time.stop.value().count()) : "nullopt") << " }, ";
+			out << "{ start: " << time.start.count() << ", stop: " << (time.stop.has_value() ? std::to_string(time.stop.value().count()) : "nullopt");
+			out << ", time codes: [ ";
+			for (auto&& code : time.timeCodes)
+			{
+				out << code._val;
+				out << ", ";
+			}
+			out << "]";
+			out << " }, ";
 		}
 		out << "]\n";
 		out << "labels: [ ";
 		for (auto&& label : labels)
 		{
-			out << label << ' ';
+			out << label;
+			out << ", ";
 		}
 		out << "]\n";
 		out << "time codes: [ ";
 		for (auto&& code : timeCodes)
 		{
-			out << code._val << ' ';
+			out << code._val;
+			out << ", ";
 		}
 		out << "]";
 		return out;
@@ -682,14 +718,7 @@ struct TaskInfoMessage : Message
 
 	friend std::ostream& operator<<(std::ostream& out, const TaskInfoMessage& message)
 	{
-		message.print(out);
-		out << "TaskInfoMessage { taskID: " << message.taskID._val << ", parentID: " << message.parentID._val << ", state: " << static_cast<std::int32_t>(message.state) << ", newTask: " << message.newTask << ", name: \"" << message.name << "\", createTime: " << message.createTime.count() << ", finishTime: " << (message.finishTime.has_value() ? std::to_string(message.finishTime.value().count()) : "nullopt") << ", times: [";
-		for (auto&& time : message.times)
-		{
-			out << "{ start: " << time.start.count() << ", stop: " << (time.stop.has_value() ? std::to_string(time.stop.value().count()) : "nullopt") << " }, ";
-		}
-		out << "]";
-		return out;
+		return message.print(out);
 	}
 };
 

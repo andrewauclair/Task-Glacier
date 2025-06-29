@@ -85,10 +85,13 @@ TEST_CASE("Create Task", "[api][task]")
 
 	SECTION("Persist")
 	{
-		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test"));
+		auto create = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test");
+		create.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+
+		helper.expect_success(create);
 
 		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
-		CHECK(helper.fileOutput.str() == "create 1 0 1737344939870 (this is a test)\n");
+		CHECK(helper.fileOutput.str() == "create 1 0 1737344939870 (this is a test)\ntask-time-codes 1 1 2 \n");
 	}
 }
 
@@ -183,16 +186,65 @@ TEST_CASE("Start Task", "[api][task]")
 		helper.required_messages({ &taskInfo });
 	}
 
-	SECTION("Persist")
+	SECTION("Persist - Without Time Codes")
 	{
-		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test"));
+		auto create = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1");
+		helper.expect_success(create);
 
 		helper.clear_file_output();
 
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 
 		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
-		CHECK(helper.fileOutput.str() == "start 1 1737346739870\n");
+		CHECK(helper.fileOutput.str() == "start 1 1737346739870 0 \n");
+	}
+
+	SECTION("Persist - With Time Codes")
+	{
+		auto create = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1");
+		create.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+
+		helper.expect_success(create);
+
+		helper.clear_file_output();
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
+		CHECK(helper.fileOutput.str() == "start 1 1737346739870 1 2 \n");
+	}
+}
+
+TEST_CASE("Start Task - Time Codes", "[api][task]")
+{
+	TestHelper helper;
+
+	SECTION("Success")
+	{
+		CreateTaskMessage create(NO_PARENT, helper.next_request_id(), "test 1");
+		create.timeCodes.push_back(TimeCodeID(1));
+		create.timeCodes.push_back(TimeCodeID(10));
+
+		helper.expect_success(create);
+		
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+
+		TaskTimes times;
+		times.start = std::chrono::milliseconds(1737345839870);
+		times.timeCodes.push_back(TimeCodeID(1));
+		times.timeCodes.push_back(TimeCodeID(10));
+
+		taskInfo.times.push_back(times);
+		taskInfo.state = TaskState::ACTIVE;
+		taskInfo.newTask = false;
+		taskInfo.timeCodes.push_back(TimeCodeID(1));
+		taskInfo.timeCodes.push_back(TimeCodeID(10));
+
+		helper.required_messages({ &taskInfo });
 	}
 }
 
@@ -538,6 +590,46 @@ TEST_CASE("Modify Task", "[api][task]")
 		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
 		CHECK(helper.fileOutput.str() == "reparent 1 2\n");
 	}
+
+	SECTION("Success - Change Task Time Codes")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+
+		helper.clear_file_output();
+
+		UpdateTaskMessage update(helper.next_request_id(), TaskID(1), NO_PARENT, "test");
+		update.timeCodes.push_back(TimeCodeID(1));
+		update.timeCodes.push_back(TimeCodeID(2));
+
+		// TODO validate that time codes are valid
+		helper.expect_success(update);
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.state = TaskState::INACTIVE;
+		taskInfo.newTask = false;
+		taskInfo.timeCodes.push_back(TimeCodeID(1));
+		taskInfo.timeCodes.push_back(TimeCodeID(2));
+
+		helper.required_messages({ &taskInfo });
+	}
+
+	SECTION("Persist - Change Task Time Codes")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+
+		helper.clear_file_output();
+
+		UpdateTaskMessage update(helper.next_request_id(), TaskID(1), NO_PARENT, "test");
+		update.timeCodes.push_back(TimeCodeID(1));
+		update.timeCodes.push_back(TimeCodeID(2));
+
+		// TODO validate that time codes are valid
+		helper.expect_success(update);
+
+		CHECK(helper.fileOutput.str() == "task-time-codes 1 1 2 \n");
+	}
 }
 
 TEST_CASE("Time Categories and Time Codes", "[api][task]")
@@ -864,6 +956,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.year = 2025;
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(30);
 		report.report.times.emplace_back(TaskID(1), 0);
+		report.report.totalTime = std::chrono::minutes(30);
 
 		helper.required_messages({ &report });
 	}
@@ -889,6 +982,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.year = 2025;
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(30);
 		report.report.times.emplace_back(TaskID(1), 0);
+		report.report.totalTime = std::chrono::milliseconds(88200000);
 
 		helper.required_messages({ &report });
 	}
@@ -934,6 +1028,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.year = 2025;
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(30);
 		report.report.times.emplace_back(TaskID(1), 0);
+		report.report.totalTime = std::chrono::minutes(30);
 
 		helper.required_messages({ &report });
 	}
@@ -1197,24 +1292,30 @@ TEST_CASE("Persist Tasks", "[api][task]")
 
 	std::ostringstream expected;
 	expected << "create 1 0 1737344939870 (task 1)\n";
+	expected << "task-time-codes 1 0 \n";
 	expected << "create 2 1 1737346739870 (task 2)\n";
-	expected << "start 2 1737348539870\n";
+	expected << "task-time-codes 2 0 \n";
+	expected << "start 2 1737348539870 0 \n";
 	expected << "create 3 2 1737350339870 (task 3)\n";
+	expected << "task-time-codes 3 0 \n";
 	expected << "stop 2 1737352139870\n";
-	expected << "start 3 1737353939870\n";
+	expected << "start 3 1737353939870 0 \n";
 	expected << "create 4 2 1737355739870 (task 4)\n";
+	expected << "task-time-codes 4 0 \n";
 	expected << "create 5 3 1737357539870 (task 5)\n";
+	expected << "task-time-codes 5 0 \n";
 	expected << "stop 3 1737359339870\n";
 	expected << "create 6 4 1737361139870 (task 6)\n";
-	expected << "start 2 1737362939870\n";
+	expected << "task-time-codes 6 0 \n";
+	expected << "start 2 1737362939870 0 \n";
 	expected << "stop 2 1737364739870\n";
-	expected << "start 4 1737366539870\n";
+	expected << "start 4 1737366539870 0 \n";
 	expected << "finish 4 1737368339870\n";
 	expected << "finish 3 1737370139870\n";
 	expected << "finish 2 1737371939870\n";
-	expected << "start 6 1737373739870\n";
-	expected << "start 5 1737376439870\n";
-	expected << "start 1 1737379139870\n";
+	expected << "start 6 1737373739870 0 \n";
+	expected << "start 5 1737376439870 0 \n";
+	expected << "start 1 1737379139870 0 \n";
 	expected << "rename 1 (task 1 - rename)\n";
 	expected << "reparent 2 0\n";
 
@@ -1227,24 +1328,25 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	std::ostringstream fileOutput;
 
 	fileOutput << "create 1 0 1737344939870 (task 1)\n";
+	fileOutput << "task-time-codes 1 1 2 \n";
 	fileOutput << "create 2 1 1737346739870 (task 2)\n";
-	fileOutput << "start 2 1737348539870\n";
+	fileOutput << "start 2 1737348539870 0\n";
 	fileOutput << "create 3 2 1737350339870 (task 3)\n";
 	fileOutput << "stop 2 1737352139870\n";
-	fileOutput << "start 3 1737353939870\n";
+	fileOutput << "start 3 1737353939870 0\n";
 	fileOutput << "create 4 2 1737355739870 (task 4)\n";
 	fileOutput << "create 5 3 1737357539870 (task 5)\n";
 	fileOutput << "stop 3 1737359339870\n";
 	fileOutput << "create 6 4 1737361139870 (task 6)\n";
-	fileOutput << "start 2 1737362939870\n";
+	fileOutput << "start 2 1737362939870 0\n";
 	fileOutput << "stop 2 1737364739870\n";
-	fileOutput << "start 4 1737366539870\n";
+	fileOutput << "start 4 1737366539870 0\n";
 	fileOutput << "finish 4 1737368339870\n";
 	fileOutput << "finish 3 1737370139870\n";
 	fileOutput << "finish 2 1737371939870\n";
-	fileOutput << "start 6 1737373739870\n";
-	fileOutput << "start 5 1737376439870\n";
-	fileOutput << "start 1 1737379139870\n";
+	fileOutput << "start 6 1737373739870 0\n";
+	fileOutput << "start 5 1737376439870 0\n";
+	fileOutput << "start 1 1737379139870 1 2\n";
 	fileOutput << "rename 1 (task 1 - renamed)\n";
 	fileOutput << "reparent 2 0\n";
 
@@ -1282,7 +1384,7 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	task5.createTime = std::chrono::milliseconds(1737357539870);
 	task6.createTime = std::chrono::milliseconds(1737361139870);
 
-	task1.times.emplace_back(std::chrono::milliseconds(1737379139870));
+	task1.times.emplace_back(std::chrono::milliseconds(1737379139870), std::nullopt, std::vector<TimeCodeID>{ TimeCodeID(1), TimeCodeID(2) });
 	task2.times.emplace_back(std::chrono::milliseconds(1737348539870), std::chrono::milliseconds(1737352139870));
 	task2.times.emplace_back(std::chrono::milliseconds(1737362939870), std::chrono::milliseconds(1737364739870));
 	task3.times.emplace_back(std::chrono::milliseconds(1737353939870), std::chrono::milliseconds(1737359339870));
@@ -1293,6 +1395,9 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	task2.finishTime = std::chrono::milliseconds(1737371939870);
 	task3.finishTime = std::chrono::milliseconds(1737370139870);
 	task4.finishTime = std::chrono::milliseconds(1737368339870);
+
+	task1.timeCodes.push_back(TimeCodeID(1));
+	task1.timeCodes.push_back(TimeCodeID(2));
 
 	verify_message(task1, *output[0]);
 	verify_message(task2, *output[1]);
@@ -1373,6 +1478,7 @@ TEST_CASE("Persist Time Categories", "[api]")
 
 	std::ostringstream expected;
 	expected << "create 1 0 1737344939870 (task 1)\n";
+	expected << "task-time-codes 1 0 \n";
 	expected << "time-category add 0 (Test) (TST) 0 (Foo) 0 (Bar) 0 (Buzz) \n";
 	expected << "time-category add 0 (Two) (TWO) 0 (Bizz) \n";
 	expected << "time-category update 1 (Tester) (TSTR) 1 (Foo) 2 (Bars) 3 (Buzz) \n";

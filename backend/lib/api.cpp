@@ -339,6 +339,26 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 	{
 		result = m_app.reparent_task(message.taskID, message.parentID);
 	}
+	else if (message.timeCodes.size() != task->timeCodes.size())
+	{
+		// TODO validation of time codes, make sure they exist
+		task->timeCodes = message.timeCodes;
+
+		*m_output << "task-time-codes " << task->taskID()._val << ' ';
+
+		if (task->timeCodes.empty())
+		{
+			*m_output << "0 ";
+		}
+		else
+		{
+			for (auto&& code : task->timeCodes)
+			{
+				*m_output << code._val << ' ';
+			}
+		}
+		*m_output << '\n';
+	}
 	else
 	{
 		// TODO failure
@@ -635,6 +655,17 @@ DailyReportMessage API::create_daily_report(RequestID requestID, int month, int 
 			if (task.task->m_times[task.time.startStopIndex].stop.has_value())
 			{
 				const auto timeForTask = task.task->m_times[task.time.startStopIndex].stop.value() - task.task->m_times[task.time.startStopIndex].start;
+
+				report.report.totalTime += timeForTask;
+
+				for (auto&& timeCode : task.task->timeCodes)
+				{
+					report.report.timePerTimeCode[timeCode] += timeForTask;
+				}
+			}
+			else // task is still active
+			{
+				const auto timeForTask = m_clock->now() - task.task->m_times[task.time.startStopIndex].start;
 
 				report.report.totalTime += timeForTask;
 

@@ -257,7 +257,7 @@ public class MainFrame extends JFrame {
         if (!dailyReport.isReportFound()) {
             return;
         }
-        DailyReportPanel panel = new DailyReportPanel(dailyReport.getReport().getDate());
+        DailyReportPanel panel = new DailyReportPanel(this, dailyReport.getReport().getDate());
         panel.update(dailyReport);
         Docking.display(panel);
     }

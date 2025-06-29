@@ -41,6 +41,21 @@ std::optional<std::string> MicroTask::configure_task_time_codes(TaskID taskID, s
 	if (task)
 	{
 		task->timeCodes = std::vector<TimeCodeID>(timeCodes.begin(), timeCodes.end());
+
+		*m_output << "task-time-codes " << task->m_taskID._val << ' ';
+		
+		if (task->timeCodes.empty())
+		{
+			*m_output << "0 ";
+		}
+		else
+		{
+			for (auto&& code : task->timeCodes)
+			{
+				*m_output << code._val << ' ';
+			}
+		}
+		*m_output << '\n';
 	}
 
 	return std::nullopt;
@@ -112,11 +127,25 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 			m_activeTask->m_times.back().stop = m_clock->now();
 		}
 		task->state = TaskState::ACTIVE;
-		task->m_times.emplace_back(m_clock->now());
+		TaskTimes& times = task->m_times.emplace_back(m_clock->now());
+		std::copy(task->timeCodes.begin(), task->timeCodes.end(), std::back_inserter(times.timeCodes));
 
 		m_activeTask = task;
 
-		*m_output << "start " << id._val << ' ' << m_clock->now().count() << std::endl;
+		*m_output << "start " << id._val << ' ' << m_clock->now().count() << ' ';
+
+		if (task->timeCodes.empty())
+		{
+			*m_output << "0 ";
+		}
+		else
+		{
+			for (auto&& code : task->timeCodes)
+			{
+				*m_output << code._val << ' ';
+			}
+		}
+		*m_output << std::endl;
 
 		return std::nullopt;
 	}
@@ -259,6 +288,23 @@ void MicroTask::load_from_file(std::istream& input)
 			// TODO test this
 			m_nextTaskID._val = id._val + 1;
 		}
+		else if (line.starts_with("task-time-codes"))
+		{
+			auto values = split(line, ' ');
+
+			TaskID id = TaskID(std::stoi(values[1]));
+
+			auto* task = find_task(id);
+
+			if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
+
+			task->timeCodes.clear();
+
+			for (int i = 2; i < values.size(); i++)
+			{
+				task->timeCodes.push_back(TimeCodeID(std::stoi(values[i])));
+			}
+		}
 		else if (line.starts_with("start"))
 		{
 			auto values = split(line, ' ');
@@ -277,7 +323,12 @@ void MicroTask::load_from_file(std::istream& input)
 			activeTask = task;
 
 			task->state = TaskState::ACTIVE;
-			task->m_times.emplace_back(startTime);
+			auto& times = task->m_times.emplace_back(startTime);
+
+			for (int i = 3; i < values.size(); i++)
+			{
+				times.timeCodes.push_back(TimeCodeID(std::stoi(values[i])));
+			}
 		}
 		else if (line.starts_with("stop"))
 		{
