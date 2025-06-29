@@ -175,6 +175,10 @@ public class DailyReportPanel extends JPanel implements Dockable {
 
                 minutes = Math.round(minutes / 15.0) * 15;
 
+                if (time.toEpochMilli() != 0 && minutes == 0) {
+                    minutes = 15;
+                }
+
                 Row row = new Row();
                 row.category = mainFrame.getTimeData().timeCategoryForTimeCode(timeCode);
                 row.code = row.category.timeCodes.stream().filter(timeCode1 -> timeCode1.id == timeCode).findFirst().get();
