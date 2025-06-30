@@ -1520,7 +1520,8 @@ TEST_CASE("Reload Time Categories", "[api]")
 	std::ostringstream fileOutput;
 
 	fileOutput << "create 1 0 1737344939870 (task 1)\n";
-	fileOutput << "time-category add 0 (Test) (TST) 0 (Foo) 0 (Bar) 0 (Buzz)\n";
+	fileOutput << "time-category add 0 (Test) (TST) 0 (Foo) 0 (Bar)\n";
+	fileOutput << "time-category add 1 (Test) (TST) 1 (Foo) 2 (Bar) 0 (Buzz)\n";
 	fileOutput << "time-category add 0 (Two) (TWO) 0 (Bizz) \n";
 	fileOutput << "time-category update 1 (Tester) (TSTR) 2 (Bars)\n";
 	fileOutput << "time-category remove-code 1 { 2 3 }\n";

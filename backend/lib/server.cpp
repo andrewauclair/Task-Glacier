@@ -432,25 +432,73 @@ void MicroTask::load_from_file(std::istream& input)
 
 			if (line.starts_with("time-category add"))
 			{
-				TimeCategoryID id = m_nextTimeCategoryID;
-				m_nextTimeCategoryID++;
+				TimeCategoryID id = TimeCategoryID(std::stoi(values[2]));
+				TimeCategory* timeCategory = nullptr;
 
 				std::string name = values[3].substr(1, values[3].length() - 2);
 				std::string label = values[4].substr(1, values[4].length() - 2);
 
-				TimeCategory category{ id, name, label };
+				if (id._val == 0)
+				{
+					id = m_nextTimeCategoryID;
+					m_nextTimeCategoryID++;
+
+					TimeCategory category{ id, name, label };
+
+					timeCategory = &m_timeCategories.emplace_back(id, name, label);
+				}
+				else if (id._val >= m_nextTimeCategoryID._val)
+				{
+					m_nextTimeCategoryID = id;
+					m_nextTimeCategoryID++;
+				}
+
+				if (!timeCategory)
+				{
+					for (auto&& it : m_timeCategories)
+					{
+						if (it.id == id)
+						{
+							timeCategory = &it;
+							break;
+						}
+					}
+				}
 
 				for (int i = 5; i < values.size(); i += 2)
 				{
-					TimeCodeID code = TimeCodeID(m_nextTimeCodeID);
-					m_nextTimeCodeID++;
+					TimeCodeID code = TimeCodeID(std::stoi(values[i]));
+					TimeCode* timeCode = nullptr;
 
 					std::string codeName = values[i + 1].substr(1, values[i + 1].length() - 2);
 
-					category.codes.emplace_back(code, codeName);
+					if (code._val == 0)
+					{
+						code = m_nextTimeCodeID;
+						m_nextTimeCodeID++;
+
+						timeCode = &timeCategory->codes.emplace_back(code, codeName);
+					}
+					else if (code._val >= m_nextTimeCodeID._val)
+					{
+						m_nextTimeCodeID = code;
+						m_nextTimeCodeID++;
+					}
+
+					if (!timeCode)
+					{
+						for (auto&& it : timeCategory->codes)
+						{
+							if (it.id == code)
+							{
+								timeCode = &it;
+								break;
+							}
+						}
+					}
+
+					timeCode->name = codeName;
 				}
-				
-				m_timeCategories.push_back(category);
 			}
 			else if (line.starts_with("time-category update"))
 			{
@@ -470,11 +518,6 @@ void MicroTask::load_from_file(std::istream& input)
 					for (int i = 5; i < values.size(); i += 2)
 					{
 						TimeCodeID code = TimeCodeID(std::stoi(values[i]));
-						if (code._val == 0)
-						{
-							code = m_nextTimeCodeID;
-							m_nextTimeCodeID++;
-						}
 						std::string codeName = values[i + 1].substr(1, values[i + 1].length() - 2);
 
 						result->codes.emplace_back(code, codeName);
