@@ -126,6 +126,11 @@ public class TimeCategories extends JDialog {
         }
 
         @Override
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return columnIndex == 0;
+        }
+
+        @Override
         public Class<?> getColumnClass(int columnIndex) {
             return super.getColumnClass(columnIndex);
         }
