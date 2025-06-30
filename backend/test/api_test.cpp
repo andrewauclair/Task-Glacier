@@ -91,7 +91,7 @@ TEST_CASE("Create Task", "[api][task]")
 		helper.expect_success(create);
 
 		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
-		CHECK(helper.fileOutput.str() == "create 1 0 1737344939870 (this is a test)\ntask-time-codes 1 1 2 \n");
+		CHECK(helper.fileOutput.str() == "create 1 0 1737344939870 (14 this is a test)\ntask-time-codes 1 1 2 \n");
 	}
 }
 
@@ -575,7 +575,7 @@ TEST_CASE("Modify Task", "[api][task]")
 		helper.expect_success(UpdateTaskMessage(helper.next_request_id(), TaskID(1), NO_PARENT, "something else"));
 
 		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
-		CHECK(helper.fileOutput.str() == "rename 1 (something else)\n");
+		CHECK(helper.fileOutput.str() == "rename 1 (14 something else)\n");
 	}
 
 	SECTION("Persist - Reparent Task")
@@ -1304,21 +1304,21 @@ TEST_CASE("Persist Tasks", "[api][task]")
 	api.process_packet(reparent, output);
 
 	std::ostringstream expected;
-	expected << "create 1 0 1737344939870 (task 1)\n";
+	expected << "create 1 0 1737344939870 (6 task 1)\n";
 	expected << "task-time-codes 1 0 \n";
-	expected << "create 2 1 1737346739870 (task 2)\n";
+	expected << "create 2 1 1737346739870 (6 task 2)\n";
 	expected << "task-time-codes 2 0 \n";
 	expected << "start 2 1737348539870 0 \n";
-	expected << "create 3 2 1737350339870 (task 3)\n";
+	expected << "create 3 2 1737350339870 (6 task 3)\n";
 	expected << "task-time-codes 3 0 \n";
 	expected << "stop 2 1737352139870\n";
 	expected << "start 3 1737353939870 0 \n";
-	expected << "create 4 2 1737355739870 (task 4)\n";
+	expected << "create 4 2 1737355739870 (6 task 4)\n";
 	expected << "task-time-codes 4 0 \n";
-	expected << "create 5 3 1737357539870 (task 5)\n";
+	expected << "create 5 3 1737357539870 (6 task 5)\n";
 	expected << "task-time-codes 5 0 \n";
 	expected << "stop 3 1737359339870\n";
-	expected << "create 6 4 1737361139870 (task 6)\n";
+	expected << "create 6 4 1737361139870 (6 task 6)\n";
 	expected << "task-time-codes 6 0 \n";
 	expected << "start 2 1737362939870 0 \n";
 	expected << "stop 2 1737364739870\n";
@@ -1329,7 +1329,7 @@ TEST_CASE("Persist Tasks", "[api][task]")
 	expected << "start 6 1737373739870 0 \n";
 	expected << "start 5 1737376439870 0 \n";
 	expected << "start 1 1737379139870 0 \n";
-	expected << "rename 1 (task 1 - rename)\n";
+	expected << "rename 1 (15 task 1 - rename)\n";
 	expected << "reparent 2 0\n";
 
 	CHECK(fileOutput.str() == expected.str());
@@ -1340,17 +1340,17 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	std::istringstream fileInput;
 	std::ostringstream fileOutput;
 
-	fileOutput << "create 1 0 1737344939870 (task 1)\n";
+	fileOutput << "create 1 0 1737344939870 (6 task 1)\n";
 	fileOutput << "task-time-codes 1 1 2 \n";
-	fileOutput << "create 2 1 1737346739870 (task 2)\n";
+	fileOutput << "create 2 1 1737346739870 (6 task 2)\n";
 	fileOutput << "start 2 1737348539870 0\n";
-	fileOutput << "create 3 2 1737350339870 (task 3)\n";
+	fileOutput << "create 3 2 1737350339870 (6 task 3)\n";
 	fileOutput << "stop 2 1737352139870\n";
 	fileOutput << "start 3 1737353939870 0\n";
-	fileOutput << "create 4 2 1737355739870 (task 4)\n";
-	fileOutput << "create 5 3 1737357539870 (task 5)\n";
+	fileOutput << "create 4 2 1737355739870 (6 task 4)\n";
+	fileOutput << "create 5 3 1737357539870 (6 task 5)\n";
 	fileOutput << "stop 3 1737359339870\n";
-	fileOutput << "create 6 4 1737361139870 (task 6)\n";
+	fileOutput << "create 6 4 1737361139870 (6 task 6)\n";
 	fileOutput << "start 2 1737362939870 0\n";
 	fileOutput << "stop 2 1737364739870\n";
 	fileOutput << "start 4 1737366539870 0\n";
@@ -1360,7 +1360,7 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	fileOutput << "start 6 1737373739870 0\n";
 	fileOutput << "start 5 1737376439870 0\n";
 	fileOutput << "start 1 1737379139870 1 2\n";
-	fileOutput << "rename 1 (task 1 - renamed)\n";
+	fileOutput << "rename 1 (16 task 1 - renamed)\n";
 	fileOutput << "reparent 2 0\n";
 
 	fileInput = std::istringstream(fileOutput.str());
@@ -1435,10 +1435,10 @@ TEST_CASE("Persist Time Categories", "[api]")
 	api.process_packet(create_task_1, output);
 
 	std::vector<TimeCategory> timeCategories;
-	TimeCategory tg1{ TimeCategoryID(0), "Test", "TST" };
-	tg1.codes.push_back(TimeCode{ TimeCodeID(0), "Foo" });
-	tg1.codes.push_back(TimeCode{ TimeCodeID(0), "Bar" });
-	tg1.codes.push_back(TimeCode{ TimeCodeID(0), "Buzz" });
+	TimeCategory tg1{ TimeCategoryID(0), "Te st", "TS T" };
+	tg1.codes.push_back(TimeCode{ TimeCodeID(0), "Fo o" });
+	tg1.codes.push_back(TimeCode{ TimeCodeID(0), "Ba r" });
+	tg1.codes.push_back(TimeCode{ TimeCodeID(0), "Buz z" });
 	timeCategories.push_back(tg1);
 
 	auto add_category1 = TimeCategoriesModify(RequestID(2), TimeCategoryModType::ADD, timeCategories);
@@ -1446,8 +1446,8 @@ TEST_CASE("Persist Time Categories", "[api]")
 	api.process_packet(add_category1, output);
 
 	timeCategories.clear();
-	TimeCategory tg2{ TimeCategoryID(0), "Two", "TWO" };
-	tg2.codes.push_back(TimeCode{ TimeCodeID(0), "Bizz" });
+	TimeCategory tg2{ TimeCategoryID(0), "Tw o", "TW O" };
+	tg2.codes.push_back(TimeCode{ TimeCodeID(0), "Biz z" });
 	timeCategories.push_back(tg2);
 
 	auto add_category2 = TimeCategoriesModify(RequestID(3), TimeCategoryModType::ADD, timeCategories);
@@ -1457,12 +1457,12 @@ TEST_CASE("Persist Time Categories", "[api]")
 	timeCategories.clear();
 
 	tg1.id = TimeCategoryID(1);
-	tg1.name = "Tester";
-	tg1.label = "TSTR";
+	tg1.name = "Test er";
+	tg1.label = "TST R";
 	tg1.codes.clear();
-	tg1.codes.push_back(TimeCode{ TimeCodeID(1), "Foo" });
-	tg1.codes.push_back(TimeCode{ TimeCodeID(2), "Bars" });
-	tg1.codes.push_back(TimeCode{ TimeCodeID(3), "Buzz" });
+	tg1.codes.push_back(TimeCode{ TimeCodeID(1), "Fo o" });
+	tg1.codes.push_back(TimeCode{ TimeCodeID(2), "Bar s" });
+	tg1.codes.push_back(TimeCode{ TimeCodeID(3), "Buz z" });
 	timeCategories.push_back(tg1);
 
 	auto update_category = TimeCategoriesModify(RequestID(4), TimeCategoryModType::UPDATE, timeCategories);
@@ -1470,11 +1470,11 @@ TEST_CASE("Persist Time Categories", "[api]")
 
 	timeCategories.clear();
 	tg1.id = TimeCategoryID(1);
-	tg1.name = "Tester";
-	tg1.label = "TSTR";
+	tg1.name = "Test er";
+	tg1.label = "TST R";
 	tg1.codes.clear();
-	tg1.codes.push_back(TimeCode{ TimeCodeID(2), "Bars" });
-	tg1.codes.push_back(TimeCode{ TimeCodeID(3), "Buzz" });
+	tg1.codes.push_back(TimeCode{ TimeCodeID(2), "Bar s" });
+	tg1.codes.push_back(TimeCode{ TimeCodeID(3), "Buz z" });
 	timeCategories.push_back(tg1);
 
 	auto remove_code = TimeCategoriesModify(RequestID(5), TimeCategoryModType::REMOVE_CODE, timeCategories);
@@ -1490,11 +1490,11 @@ TEST_CASE("Persist Time Categories", "[api]")
 	api.process_packet(remove_category, output);
 
 	std::ostringstream expected;
-	expected << "create 1 0 1737344939870 (task 1)\n";
+	expected << "create 1 0 1737344939870 (6 task 1)\n";
 	expected << "task-time-codes 1 0 \n";
-	expected << "time-category add 0 (Test) (TST) 0 (Foo) 0 (Bar) 0 (Buzz) \n";
-	expected << "time-category add 0 (Two) (TWO) 0 (Bizz) \n";
-	expected << "time-category update 1 (Tester) (TSTR) 1 (Foo) 2 (Bars) 3 (Buzz) \n";
+	expected << "time-category add 0 (5 Te st) (4 TS T) 3 0 (4 Fo o) 0 (4 Ba r) 0 (5 Buz z) \n";
+	expected << "time-category add 0 (4 Tw o) (4 TW O) 1 0 (5 Biz z) \n";
+	expected << "time-category update 1 (7 Test er) (5 TST R) 3 1 (4 Fo o) 2 (5 Bar s) 3 (5 Buz z) \n";
 	expected << "time-category remove-code 1 { 2 3 }\n";
 	expected << "time-category remove-category 1\n";
 
@@ -1508,8 +1508,8 @@ TEST_CASE("Persist Time Categories", "[api]")
 	REQUIRE(output.size() == 3);
 
 	auto timeCategoriesData = TimeCategoriesData({});
-	auto& cat2 = timeCategoriesData.timeCategories.emplace_back(TimeCategoryID(2), "Two", "TWO");
-	cat2.codes.emplace_back(TimeCodeID(4), "Bizz");
+	auto& cat2 = timeCategoriesData.timeCategories.emplace_back(TimeCategoryID(2), "Tw o", "TW O");
+	cat2.codes.emplace_back(TimeCodeID(4), "Biz z");
 
 	verify_message(timeCategoriesData, *output[1]);
 }
@@ -1519,11 +1519,11 @@ TEST_CASE("Reload Time Categories", "[api]")
 	std::istringstream fileInput;
 	std::ostringstream fileOutput;
 
-	fileOutput << "create 1 0 1737344939870 (task 1)\n";
-	fileOutput << "time-category add 0 (Test) (TST) 0 (Foo) 0 (Bar)\n";
-	fileOutput << "time-category add 1 (Test) (TST) 1 (Foo) 2 (Bar) 0 (Buzz)\n";
-	fileOutput << "time-category add 0 (Two) (TWO) 0 (Bizz) \n";
-	fileOutput << "time-category update 1 (Tester) (TSTR) 2 (Bars)\n";
+	fileOutput << "create 1 0 1737344939870 (6 task 1)\n";
+	fileOutput << "time-category add 0 (5 Te st) (4 TS T) 2 0 (4 Fo o) 0 (4 Ba r)\n";
+	fileOutput << "time-category add 1 (5 Te st) (4 TS T) 3 1 (4 Fo o) 2 (4 Ba r) 0 (5 Buz z)\n";
+	fileOutput << "time-category add 0 (4 Tw o) (4 TW O) 1 0 (5 Biz z) \n";
+	fileOutput << "time-category update 1 (7 Test er) (5 TST R) 1 2 (5 Bar s)\n";
 	fileOutput << "time-category remove-code 1 { 2 3 }\n";
 	fileOutput << "time-category remove-category 1\n";
 
@@ -1547,8 +1547,8 @@ TEST_CASE("Reload Time Categories", "[api]")
 	verify_message(task1, *output[0]);
 
 	auto timeCategoriesData = TimeCategoriesData({});
-	auto& cat2 = timeCategoriesData.timeCategories.emplace_back(TimeCategoryID(2), "Two", "TWO");
-	cat2.codes.emplace_back(TimeCodeID(4), "Bizz");
+	auto& cat2 = timeCategoriesData.timeCategories.emplace_back(TimeCategoryID(2), "Tw o", "TW O");
+	cat2.codes.emplace_back(TimeCodeID(4), "Biz z");
 
 	verify_message(timeCategoriesData, *output[1]);
 
