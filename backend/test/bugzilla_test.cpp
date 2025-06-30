@@ -305,12 +305,12 @@ TEST_CASE("Bugzilla Persistence", "[bugzilla][api]")
 		helper.clock.time += std::chrono::hours(2);
 		helper.expect_success(refresh);
 
-		CHECK(helper.fileOutput.str() == "bugzilla-config bugzilla asfesdFEASfslj\ntest\n5\nseverity\n2\nPriority\npriority\nStatus\nstatus\nbugzilla-refresh 1737344039870\nbugzilla-refresh 1737352139870\n");
+		CHECK(helper.fileOutput.str() == "bugzilla-config bugzilla asfesdFEASfslj\ntest\n5\nseverity\n2\nPriority\npriority\nStatus\nstatus\nbugzilla-refresh bugzilla 1737344039870\nbugzilla-refresh bugzilla 1737352139870\n");
 	}
 
 	SECTION("Load")
 	{
-		helper.fileOutput << "bugzilla-config bugzilla asfesdFEASfslj\ntest\n5\nseverity\n2\nPriority\npriority\nStatus\nstatus\nbugzilla-refresh 1737344039870\nbugzilla-refresh 1737352139870\n";
+		helper.fileOutput << "bugzilla-config bugzilla asfesdFEASfslj\ntest\n5\nseverity\n2\nPriority\npriority\nStatus\nstatus\nbugzilla-refresh bugzilla 1737344039870\nbugzilla-refresh bugzilla 1737352139870\n";
 		helper.fileInput = std::istringstream(helper.fileOutput.str());
 		helper.fileOutput.clear();
 

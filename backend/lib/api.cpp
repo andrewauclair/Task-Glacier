@@ -232,7 +232,7 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 
 				info.lastBugzillaRefresh = now;
 
-				*m_output << "bugzilla-refresh " << info.lastBugzillaRefresh->count() << std::endl;
+				*m_output << "bugzilla-refresh " << info.bugzillaURL << ' ' << info.lastBugzillaRefresh->count() << std::endl;
 			}
 			m_app.m_lastBugzillaRefresh = now;
 		}

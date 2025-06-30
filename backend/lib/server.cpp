@@ -423,7 +423,10 @@ void MicroTask::load_from_file(std::istream& input)
 		{
 			auto values = split(line, ' ');
 
-			m_lastBugzillaRefresh = std::chrono::milliseconds(std::stoll(values[1]));
+			Bugzilla& bugzilla = m_bugzilla[values[1]];
+
+			bugzilla.lastBugzillaRefresh = std::chrono::milliseconds(std::stoll(values[2]));
+			m_lastBugzillaRefresh = bugzilla.lastBugzillaRefresh;
 		}
 		else if (line.starts_with("time-category"))
 		{
