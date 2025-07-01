@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static taskglacier.MainFrame.mainFrame;
@@ -187,7 +188,22 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
 
                     Row row = rows.getOrDefault(timeCode, new Row());
                     row.category = mainFrame.getTimeData().timeCategoryForTimeCode(timeCode);
-                    row.code = row.category.timeCodes.stream().filter(timeCode1 -> timeCode1.id == timeCode).findFirst().get();
+                    if (row.category != null) {
+                        Optional<TimeData.TimeCode> first = row.category.timeCodes.stream().filter(timeCode1 -> timeCode1.id == timeCode).findFirst();
+                        if (first.isPresent()) {
+                            row.code = first.get();
+                        } else {
+                            row.code = new TimeData.TimeCode();
+                            row.code.id = 0;
+                        }
+                    }
+                    else {
+                        row.category = new TimeData.TimeCategory();
+                        row.category.name = "Unknown";
+                        row.code = new TimeData.TimeCode();
+                        row.code.id = 0;
+                        row.code.name = "Unknown";
+                    }
                     row.hours[index] = minutes / 60.0;
                     rows.put(timeCode, row);
                 });

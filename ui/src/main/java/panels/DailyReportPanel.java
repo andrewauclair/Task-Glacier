@@ -18,6 +18,7 @@ import java.awt.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public class DailyReportPanel extends JPanel implements Dockable {
@@ -181,7 +182,22 @@ public class DailyReportPanel extends JPanel implements Dockable {
 
                 Row row = new Row();
                 row.category = mainFrame.getTimeData().timeCategoryForTimeCode(timeCode);
-                row.code = row.category.timeCodes.stream().filter(timeCode1 -> timeCode1.id == timeCode).findFirst().get();
+                if (row.category != null) {
+                    Optional<TimeData.TimeCode> first = row.category.timeCodes.stream().filter(timeCode1 -> timeCode1.id == timeCode).findFirst();
+                    if (first.isPresent()) {
+                        row.code = first.get();
+                    } else {
+                        row.code = new TimeData.TimeCode();
+                        row.code.id = 0;
+                    }
+                }
+                else {
+                    row.category = new TimeData.TimeCategory();
+                    row.category.name = "Unknown";
+                    row.code = new TimeData.TimeCode();
+                    row.code.id = 0;
+                    row.code.name = "Unknown";
+                }
                 row.hours = minutes / 60.0;
                 model.rows.add(row);
                 model.fireTableRowsInserted(model.rows.size() - 1, model.rows.size() - 1);
