@@ -10,6 +10,7 @@ import dialogs.RenameTask;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingProperty;
 import io.github.andrewauclair.moderndocking.DockingRegion;
+import io.github.andrewauclair.moderndocking.DynamicDockableParameters;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import org.jdesktop.swingx.JXTreeTable;
 import packets.PacketType;
@@ -19,6 +20,8 @@ import packets.UpdateTask;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumnModel;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -29,26 +32,31 @@ import java.awt.event.MouseEvent;
 import java.util.Objects;
 
 public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
-    private final MainFrame mainFrame;
-    private final String persistentID;
-    private final String title;
+    @DockingProperty(name = "taskID", required = true)
+    private int taskID = 0;
+
+    @DockingProperty(name = "allTasks", required = true)
+    private boolean allTasks = false;
+
+    private String persistentID;
+    private String titleText;
+    private String tabText;
+
+    private MainFrame mainFrame;
     private final TasksTreeTableModel treeTableModel;
     private final JXTreeTable table;
 
-    @DockingProperty(name = "taskID")
-    private int taskID = 0;
-
-    private boolean allTasks = false;
-
     private TaskInfoSubPanel infoSubPanel = new TaskInfoSubPanel();
 
-    // TODO right now Modern Docking uses the persistentID as both parameters. That's not ideal.
-    public TasksLists(String persistentID, String title) {
+    public TasksLists(MainFrame mainFrame) {
         super(new BorderLayout());
 
-        this.persistentID = persistentID;
-        this.title = "Tasks";
-        mainFrame = MainFrame.mainFrame;
+        allTasks = true;
+
+        this.mainFrame = mainFrame;
+        this.persistentID = "tasks";
+        this.titleText = "Tasks";
+        this.tabText = "Tasks";
 
         Docking.registerDockable(this);
         mainFrame.getTaskModel().addListener(this);
@@ -69,15 +77,16 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         taskID = task.id;
         this.mainFrame = mainFrame;
         persistentID = "task-list-" + task.id;
-        title = "Tasks (" + task.name + ")";
+        titleText = "Tasks (" + task.name + ")";
+        tabText = "Tasks (" + task.name + ")";
 
         Docking.registerDockable(this);
         mainFrame.getTaskModel().addListener(this);
 
-        treeTableModel = new TasksTreeTableModel(new ParentTaskTreeTableNode());
+        treeTableModel = new TasksTreeTableModel(new ParentTaskTreeTableNode(task));
         table = new JXTreeTable(treeTableModel);
 
-        treeTableModel.addTask(task);
+        addTasks(task);
 
         table.setShowsRootHandles(true);
         table.setRootVisible(false);
@@ -87,14 +96,14 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         configure();
     }
 
-    public TasksLists(MainFrame mainFrame, String persistentID, String title) {
+    public TasksLists(DynamicDockableParameters parameters) {
         super(new BorderLayout());
 
-        allTasks = true;
+        this.persistentID = parameters.getPersistentID();
+        this.titleText = parameters.getTitleText();
+        this.tabText = parameters.getTabText();
 
-        this.mainFrame = mainFrame;
-        this.persistentID = persistentID;
-        this.title = title;
+        mainFrame = MainFrame.mainFrame;
 
         Docking.registerDockable(this);
         mainFrame.getTaskModel().addListener(this);
@@ -111,15 +120,17 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
 
     @Override
     public void updateProperties() {
-        if (taskID == 0) {
+        mainFrame = MainFrame.mainFrame;
+
+        if (allTasks) {
             table.expandAll();
         }
         else {
             Task task = mainFrame.getTaskModel().getTask(taskID);
 
             if (task != null) {
-                table.setRootVisible(true);
-                treeTableModel.setRoot(new TaskTreeTableNode(null, task));
+                table.setRootVisible(false);
+                treeTableModel.setRoot(new ParentTaskTreeTableNode(task));
                 addTasks(task);
             }
 
@@ -222,6 +233,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         table.setTreeCellRenderer(treeCellRenderer);
         table.setDragEnabled(true);
         table.setDropMode(DropMode.ON_OR_INSERT_ROWS);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
         table.setTransferHandler(new TaskTransferHandler());
 
@@ -432,8 +444,13 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
     }
 
     @Override
+    public String getTitleText() {
+        return titleText;
+    }
+
+    @Override
     public String getTabText() {
-        return title;
+        return tabText;
     }
 
     @Override
@@ -441,13 +458,32 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         return false;
     }
 
+    private void resizeColumnWidth() {
+        final TableColumnModel columnModel = table.getColumnModel();
+        for (int column = 0; column < table.getColumnCount(); column++) {
+            // Account for header size
+            double width = table.getTableHeader().getHeaderRect(column).getWidth();
+            for (int row = 0; row < table.getRowCount(); row++) {
+                TableCellRenderer renderer = table.getCellRenderer(row, column);
+                Component comp = table.prepareRenderer(renderer, row, column);
+                width = Math.max(comp.getPreferredSize().width + 1, width);
+            }
+
+            columnModel.getColumn(column).setPreferredWidth((int) width);
+        }
+    }
+
     @Override
     public void newTask(Task task) {
         treeTableModel.addTask(task);
+
+        resizeColumnWidth();
     }
 
     @Override
     public void updatedTask(Task task, boolean parentChanged) {
         treeTableModel.updateTask(task, parentChanged);
+
+        resizeColumnWidth();
     }
 }

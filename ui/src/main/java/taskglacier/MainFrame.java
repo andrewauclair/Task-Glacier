@@ -110,7 +110,7 @@ public class MainFrame extends JFrame {
         DockingUI.initialize();
         Docking.registerDockingPanel(root, this);
 
-        new TasksLists(this, "tasks", "Tasks");
+        new TasksLists(this);
 
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
