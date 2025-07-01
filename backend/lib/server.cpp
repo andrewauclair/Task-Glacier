@@ -293,8 +293,6 @@ void MicroTask::load_from_file(std::istream& input)
 	std::string line;
 	std::int32_t lineCount = 0;
 
-	Task* activeTask = nullptr;
-
 	try
 	{
 		while (std::getline(input, line))
@@ -344,12 +342,12 @@ void MicroTask::load_from_file(std::istream& input)
 
 				if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
 
-				if (activeTask)
+				if (m_activeTask)
 				{
-					activeTask->state = TaskState::INACTIVE;
-					activeTask->m_times.back().stop = startTime;
+					m_activeTask->state = TaskState::INACTIVE;
+					m_activeTask->m_times.back().stop = startTime;
 				}
-				activeTask = task;
+				m_activeTask = task;
 
 				task->state = TaskState::ACTIVE;
 				auto& times = task->m_times.emplace_back(startTime);
@@ -370,7 +368,7 @@ void MicroTask::load_from_file(std::istream& input)
 				if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
 				if (task->m_times.empty()) throw std::runtime_error("Cannot stop task, never been started: " + std::to_string(id._val));
 
-				activeTask = nullptr;
+				m_activeTask = nullptr;
 				task->state = TaskState::INACTIVE;
 				task->m_times.back().stop = stopTime;
 			}
@@ -387,7 +385,7 @@ void MicroTask::load_from_file(std::istream& input)
 				if (task->state == TaskState::ACTIVE)
 				{
 					task->m_times.back().stop = finishTime;
-					activeTask = nullptr;
+					m_activeTask = nullptr;
 				}
 
 				task->state = TaskState::FINISHED;
