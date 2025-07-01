@@ -67,6 +67,12 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
             node.setUserObject(task);
 
             TreeTableNode currentParent = node.getParent();
+
+            // this is the root task on a specific task list and we don't show the root, skip it
+            if (currentParent == null) {
+                // TODO maybe there's an issue here if we finish the task?
+                return;
+            }
             TreePath parentPath = new TreePath(getPathToRoot(currentParent));
             int index = currentParent.getIndex(node);
 

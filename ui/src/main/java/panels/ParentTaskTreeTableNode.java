@@ -8,5 +8,7 @@ public class ParentTaskTreeTableNode extends TaskTreeTableNode {
         super(null, null);
     }
 
-
+    public ParentTaskTreeTableNode(Task task) {
+        super(null, task);
+    }
 }
