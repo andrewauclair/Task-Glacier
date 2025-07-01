@@ -6,6 +6,8 @@ import data.TaskState;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static taskglacier.MainFrame.mainFrame;
 
@@ -25,6 +27,8 @@ public class StatusBar extends JPanel implements TaskModel.Listener {
 
     private void updateDisplay(TaskModel taskModel) {
         if (activeTask != null) {
+            List<String> parents = new ArrayList<>();
+
             StringBuilder text = new StringBuilder(activeTask.id + " - ");
 
             int parentID = activeTask.parentID;
@@ -35,10 +39,13 @@ public class StatusBar extends JPanel implements TaskModel.Listener {
                 if (task == null) {
                     break;
                 }
-                text.append(task.name);
-                text.append(" / ");
+                parents.add(0, task.name);
 
                 parentID = task.parentID;
+            }
+            for (String parent : parents) {
+                text.append(parent);
+                text.append(" / ");
             }
             text.append(activeTask.name);
             
