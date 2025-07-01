@@ -181,11 +181,15 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
 
                     minutes = Math.round(minutes / 15.0) * 15;
 
+                    if (time.toEpochMilli() != 0 && minutes == 0) {
+                        minutes = 15;
+                    }
+
                     Row row = rows.getOrDefault(timeCode, new Row());
                     row.category = mainFrame.getTimeData().timeCategoryForTimeCode(timeCode);
                     row.code = row.category.timeCodes.stream().filter(timeCode1 -> timeCode1.id == timeCode).findFirst().get();
                     row.hours[index] = minutes / 60.0;
-                    model.rows.add(row);
+                    rows.put(timeCode, row);
                 });
             }
         }

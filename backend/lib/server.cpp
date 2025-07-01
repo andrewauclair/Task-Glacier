@@ -305,9 +305,7 @@ void MicroTask::load_from_file(std::istream& input)
 				TaskID id = TaskID(std::stoi(values[1]));
 				TaskID parentID = TaskID(std::stoi(values[2]));
 				std::chrono::milliseconds createTime = std::chrono::milliseconds(std::stoll(values[3]));
-				//auto first = line.find_first_of('(') + 1;
-				//std::string name = line.substr(first, line.size() - first - 1);
-
+				
 				std::string_view view = line;
 				m_tasks.emplace(id, Task(string_parser(view), id, parentID, createTime));
 
@@ -469,9 +467,7 @@ void MicroTask::load_from_file(std::istream& input)
 					std::string_view view = line;
 					std::string name = string_parser(view);
 					std::string label = string_parser(view);
-					//std::string name = values[3].substr(1, values[3].length() - 2);
-					//std::string label = values[4].substr(1, values[4].length() - 2);
-
+					
 					if (id._val == 0)
 					{
 						id = m_nextTimeCategoryID;
@@ -513,8 +509,7 @@ void MicroTask::load_from_file(std::istream& input)
 						TimeCode* timeCode = nullptr;
 
 						std::string codeName = string_parser(view);
-						//std::string codeName = values[i + 1].substr(1, values[i + 1].length() - 2);
-
+						
 						if (code._val == 0)
 						{
 							code = m_nextTimeCodeID;
@@ -549,9 +544,7 @@ void MicroTask::load_from_file(std::istream& input)
 					std::string_view view = line;
 					std::string name = string_parser(view);
 					std::string label = string_parser(view);
-					//std::string name = values[3].substr(1, values[3].length() - 2);
-					//std::string label = values[4].substr(1, values[4].length() - 2);
-
+					
 					auto result = std::find_if(m_timeCategories.begin(), m_timeCategories.end(), [&](auto&& it) { return it.id == id; });
 
 					if (result != m_timeCategories.end())

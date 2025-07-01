@@ -84,6 +84,15 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 
 			const auto& refresh = static_cast<const RequestMessage&>(message);
 
+			for (auto&& [URL, info] : m_app.m_bugzilla)
+			{
+				if (m_app.find_task(info.bugzillaRootTaskID) == nullptr)
+				{
+					output.push_back(std::make_unique<FailureResponse>(refresh.requestID, std::format("Root task {} does not exist", info.bugzillaRootTaskID)));
+					return;
+				}
+			}
+
 			// TODO eventually we'll have to send back a failure if we weren't able to contact bugzilla
 			output.push_back(std::make_unique<SuccessResponse>(refresh.requestID));
 
@@ -666,6 +675,11 @@ DailyReportMessage API::create_daily_report(RequestID requestID, int month, int 
 
 				report.report.totalTime += timeForTask;
 
+				if (task.task->timeCodes.empty())
+				{
+					report.report.timePerTimeCode[TimeCodeID(0)] += timeForTask;
+				}
+
 				for (auto&& timeCode : task.task->timeCodes)
 				{
 					report.report.timePerTimeCode[timeCode] += timeForTask;
@@ -676,6 +690,11 @@ DailyReportMessage API::create_daily_report(RequestID requestID, int month, int 
 				const auto timeForTask = m_clock->now() - task.task->m_times[task.time.startStopIndex].start;
 
 				report.report.totalTime += timeForTask;
+
+				if (task.task->timeCodes.empty())
+				{
+					report.report.timePerTimeCode[TimeCodeID(0)] += timeForTask;
+				}
 
 				for (auto&& timeCode : task.task->timeCodes)
 				{

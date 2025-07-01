@@ -970,6 +970,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(30);
 		report.report.times.emplace_back(TaskID(1), 0);
 		report.report.totalTime = std::chrono::minutes(30);
+		report.report.timePerTimeCode.emplace(TimeCodeID(0), std::chrono::minutes(30));
 
 		helper.required_messages({ &report });
 	}
@@ -996,6 +997,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(30);
 		report.report.times.emplace_back(TaskID(1), 0);
 		report.report.totalTime = std::chrono::milliseconds(88200000);
+		report.report.timePerTimeCode.emplace(TimeCodeID(0), std::chrono::milliseconds(88200000));
 
 		helper.required_messages({ &report });
 	}
@@ -1042,6 +1044,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(30);
 		report.report.times.emplace_back(TaskID(1), 0);
 		report.report.totalTime = std::chrono::minutes(30);
+		report.report.timePerTimeCode.emplace(TimeCodeID(0), std::chrono::minutes(30));
 
 		helper.required_messages({ &report });
 	}
@@ -1071,6 +1074,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.endTime = date_to_ms(2, 3, 2025) + std::chrono::hours(7);
 		report.report.times.emplace_back(TaskID(1), 0);
 		report.report.totalTime = std::chrono::hours(2);
+		report.report.timePerTimeCode.emplace(TimeCodeID(0), std::chrono::hours(2));
 
 		helper.required_messages({ &report });
 	}
@@ -1100,6 +1104,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.endTime = date_to_ms(2, 3, 2025) + std::chrono::hours(7);
 		report.report.times.emplace_back(TaskID(1), 0);
 		report.report.totalTime = std::chrono::hours(2);
+		report.report.timePerTimeCode.emplace(TimeCodeID(0), std::chrono::hours(2));
 
 		helper.required_messages({ &report });
 	}
@@ -1141,6 +1146,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.endTime = date_to_ms(2, 3, 2025) + std::chrono::hours(7);
 		report.report.times.emplace_back(TaskID(1), 1);
 		report.report.totalTime = std::chrono::hours(2);
+		report.report.timePerTimeCode.emplace(TimeCodeID(0), std::chrono::hours(2));
 
 		helper.required_messages({ &report });
 	}
@@ -1153,6 +1159,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		auto create1 = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1");
 		auto create2 = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 2");
+		auto create3 = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 3");
 
 		create1.timeCodes.push_back(TimeCodeID(1));
 		create1.timeCodes.push_back(TimeCodeID(2));
@@ -1161,6 +1168,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.expect_success(create1);
 		helper.expect_success(create2);
+		helper.expect_success(create3);
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 		helper.clock.time += std::chrono::hours(2);
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(2)));
@@ -1176,6 +1184,10 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 		helper.clock.time += std::chrono::hours(2);
 		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(3)));
+		helper.clock.time += std::chrono::hours(2);
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(3)));
 
 		helper.clock.time = date_to_ms(2, 4, 2025) + std::chrono::hours(5);
 
@@ -1197,15 +1209,17 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.day = 3;
 		report.report.year = 2025;
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5);
-		report.report.endTime = date_to_ms(2, 3, 2025) + std::chrono::hours(12);
+		report.report.endTime = date_to_ms(2, 3, 2025) + std::chrono::hours(14);
 		report.report.times.emplace_back(TaskID(1), 1);
 		report.report.times.emplace_back(TaskID(1), 2);
 		report.report.times.emplace_back(TaskID(2), 1);
+		report.report.times.emplace_back(TaskID(3), 0);
+		report.report.timePerTimeCode.emplace(TimeCodeID(0), std::chrono::hours(2));
 		report.report.timePerTimeCode.emplace(TimeCodeID(1), std::chrono::hours(5));
 		report.report.timePerTimeCode.emplace(TimeCodeID(2), std::chrono::hours(5));
 		report.report.timePerTimeCode.emplace(TimeCodeID(3), std::chrono::hours(2));
 		report.report.timePerTimeCode.emplace(TimeCodeID(4), std::chrono::hours(2));
-		report.report.totalTime = std::chrono::hours(7);
+		report.report.totalTime = std::chrono::hours(9);
 
 		helper.required_messages({ &report });
 	}
