@@ -6,6 +6,12 @@
 #include "curl.hpp"
 
 #include <vector>
+#include <format>
+
+inline std::string persist_string(const std::string& str)
+{
+	return std::format("({} {})", str.size(), str);
+}
 
 class API
 {

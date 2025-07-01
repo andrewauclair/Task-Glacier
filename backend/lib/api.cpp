@@ -232,7 +232,7 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 
 				info.lastBugzillaRefresh = now;
 
-				*m_output << "bugzilla-refresh " << info.lastBugzillaRefresh->count() << std::endl;
+				*m_output << "bugzilla-refresh " << info.bugzillaURL << ' ' << info.lastBugzillaRefresh->count() << std::endl;
 			}
 			m_app.m_lastBugzillaRefresh = now;
 		}
@@ -518,12 +518,14 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 				}
 			}
 
-			*m_output << "time-category update " << timeCategory->id._val << " (" << timeCategory->name << ") ";
-			*m_output << "(" << timeCategory->label << ") ";
+			*m_output << "time-category update " << timeCategory->id._val << ' ' << persist_string(timeCategory->name) << ' ';
+			*m_output << persist_string(timeCategory->label) << ' ';
+
+			*m_output << category.codes.size() << ' ';
 
 			for (auto&& code : timeCategory->codes)
 			{
-				*m_output << code.id._val << " (" << code.name << ") ";
+				*m_output << code.id._val << ' ' << persist_string(code.name) << ' ';
 			}
 			*m_output << std::endl;
 		}
@@ -599,12 +601,14 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 				}
 			}
 
-			*m_output << "time-category add " << category.id._val << " (" << category.name << ") ";
-			*m_output << "(" << category.label << ") ";
+			*m_output << "time-category add " << category.id._val << ' ' << persist_string(category.name) << ' ';
+			*m_output << persist_string(category.label) << ' ';
+
+			*m_output << category.codes.size() << ' ';
 
 			for (auto&& code : category.codes)
 			{
-				*m_output << code.id._val << " (" << code.name << ") ";
+				*m_output << code.id._val << ' ' << persist_string(code.name) << ' ';
 			}
 			*m_output << std::endl;
 		}

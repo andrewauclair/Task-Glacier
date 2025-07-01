@@ -1,7 +1,9 @@
 #include "server.hpp"
 #include "clock.hpp"
+#include "api.hpp"
 
 #include <format>
+#include <iostream>
 
 Task::Task(std::string name, TaskID id, TaskID parentID, std::chrono::milliseconds createTime) : m_name(std::move(name)), m_taskID(id), m_parentID(parentID), m_createTime(createTime) {}
 
@@ -29,7 +31,7 @@ std::expected<TaskID, std::string> MicroTask::create_task(const std::string& nam
 
 	m_nextTaskID._val++;
 
-	*m_output << "create " << id._val << ' ' << parentID._val << ' ' << m_clock->now().count() << " (" << name << ")" << std::endl;
+	*m_output << "create " << id._val << ' ' << parentID._val << ' ' << m_clock->now().count() << ' ' << persist_string(name) << std::endl;
 
 	return std::expected<TaskID, std::string>(id);
 }
@@ -232,7 +234,7 @@ std::optional<std::string> MicroTask::rename_task(TaskID id, std::string_view na
 	{
 		task->m_name = name;
 
-		*m_output << "rename " << id._val << ' ' << '(' << name << ')' << std::endl;
+		*m_output << "rename " << id._val << ' ' << persist_string(task->m_name) << std::endl;
 
 		return std::nullopt;
 	}
@@ -267,291 +269,351 @@ namespace
 
 void MicroTask::load_from_file(std::istream& input)
 {
+	const auto string_parser = [](std::string_view& str) -> std::string
+		{
+			// (4 test)
+			// (7 foo bar)
+			
+			// first, chop off opening parenthese
+			str = str.substr(str.find_first_of('(') + 1);
+
+			auto values = split(std::string(str), ' ');
+
+			std::int32_t count = std::stoi(values[0]);
+
+			str = str.substr(values[0].size() + 1);
+
+			auto result = std::string(str.substr(0, count));
+
+			str = str.substr(result.size() + 1);
+
+			return result;
+		};
+
 	std::string line;
+	std::int32_t lineCount = 0;
 
 	Task* activeTask = nullptr;
 
-	while (std::getline(input, line))
+	try
 	{
-		if (line.starts_with("create"))
+		while (std::getline(input, line))
 		{
-			auto values = split(line, ' ');
-			TaskID id = TaskID(std::stoi(values[1]));
-			TaskID parentID = TaskID(std::stoi(values[2]));
-			std::chrono::milliseconds createTime = std::chrono::milliseconds(std::stoll(values[3]));
-			auto first = line.find_first_of('(') + 1;
-			std::string name = line.substr(first, line.size() - first - 1);
+			lineCount++;
 
-			m_tasks.emplace(id, Task(name, id, parentID, createTime));
-
-			// attempt to track the next task ID
-			// TODO test this
-			m_nextTaskID._val = id._val + 1;
-		}
-		else if (line.starts_with("task-time-codes"))
-		{
-			auto values = split(line, ' ');
-
-			TaskID id = TaskID(std::stoi(values[1]));
-
-			auto* task = find_task(id);
-
-			if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
-
-			task->timeCodes.clear();
-
-			for (int i = 2; i < values.size(); i++)
+			if (line.starts_with("create"))
 			{
-				task->timeCodes.push_back(TimeCodeID(std::stoi(values[i])));
+				auto values = split(line, ' ');
+				TaskID id = TaskID(std::stoi(values[1]));
+				TaskID parentID = TaskID(std::stoi(values[2]));
+				std::chrono::milliseconds createTime = std::chrono::milliseconds(std::stoll(values[3]));
+				//auto first = line.find_first_of('(') + 1;
+				//std::string name = line.substr(first, line.size() - first - 1);
+
+				std::string_view view = line;
+				m_tasks.emplace(id, Task(string_parser(view), id, parentID, createTime));
+
+				// attempt to track the next task ID
+				// TODO test this
+				m_nextTaskID._val = id._val + 1;
 			}
-		}
-		else if (line.starts_with("start"))
-		{
-			auto values = split(line, ' ');
-			TaskID id = TaskID(std::stoi(values[1]));
-			std::chrono::milliseconds startTime = std::chrono::milliseconds(std::stoll(values[2]));
-
-			auto* task = find_task(id);
-
-			if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
-
-			if (activeTask)
+			else if (line.starts_with("task-time-codes"))
 			{
-				activeTask->state = TaskState::INACTIVE;
-				activeTask->m_times.back().stop = startTime;
+				auto values = split(line, ' ');
+
+				TaskID id = TaskID(std::stoi(values[1]));
+
+				auto* task = find_task(id);
+
+				if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
+
+				task->timeCodes.clear();
+
+				for (int i = 2; i < values.size(); i++)
+				{
+					task->timeCodes.push_back(TimeCodeID(std::stoi(values[i])));
+				}
 			}
-			activeTask = task;
-
-			task->state = TaskState::ACTIVE;
-			auto& times = task->m_times.emplace_back(startTime);
-
-			for (int i = 3; i < values.size(); i++)
+			else if (line.starts_with("start"))
 			{
-				times.timeCodes.push_back(TimeCodeID(std::stoi(values[i])));
+				auto values = split(line, ' ');
+				TaskID id = TaskID(std::stoi(values[1]));
+				std::chrono::milliseconds startTime = std::chrono::milliseconds(std::stoll(values[2]));
+
+				auto* task = find_task(id);
+
+				if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
+
+				if (activeTask)
+				{
+					activeTask->state = TaskState::INACTIVE;
+					activeTask->m_times.back().stop = startTime;
+				}
+				activeTask = task;
+
+				task->state = TaskState::ACTIVE;
+				auto& times = task->m_times.emplace_back(startTime);
+
+				for (int i = 3; i < values.size(); i++)
+				{
+					times.timeCodes.push_back(TimeCodeID(std::stoi(values[i])));
+				}
 			}
-		}
-		else if (line.starts_with("stop"))
-		{
-			auto values = split(line, ' ');
-			TaskID id = TaskID(std::stoi(values[1]));
-			std::chrono::milliseconds stopTime = std::chrono::milliseconds(std::stoll(values[2]));
-
-			auto* task = find_task(id);
-
-			if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
-			if (task->m_times.empty()) throw std::runtime_error("Cannot stop task, never been started: " + std::to_string(id._val));
-
-			activeTask = nullptr;
-			task->state = TaskState::INACTIVE;
-			task->m_times.back().stop = stopTime;
-		}
-		else if (line.starts_with("finish"))
-		{
-			auto values = split(line, ' ');
-			TaskID id = TaskID(std::stoi(values[1]));
-			std::chrono::milliseconds finishTime = std::chrono::milliseconds(std::stoll(values[2]));
-
-			auto* task = find_task(id);
-
-			if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
-
-			if (task->state == TaskState::ACTIVE)
+			else if (line.starts_with("stop"))
 			{
-				task->m_times.back().stop = finishTime;
+				auto values = split(line, ' ');
+				TaskID id = TaskID(std::stoi(values[1]));
+				std::chrono::milliseconds stopTime = std::chrono::milliseconds(std::stoll(values[2]));
+
+				auto* task = find_task(id);
+
+				if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
+				if (task->m_times.empty()) throw std::runtime_error("Cannot stop task, never been started: " + std::to_string(id._val));
+
 				activeTask = nullptr;
+				task->state = TaskState::INACTIVE;
+				task->m_times.back().stop = stopTime;
 			}
-
-			task->state = TaskState::FINISHED;
-			task->m_finishTime = finishTime;
-		}
-		else if (line.starts_with("rename"))
-		{
-			auto values = split(line, ' ');
-			TaskID id = TaskID(std::stoi(values[1]));
-			auto first = line.find_first_of('(') + 1;
-			std::string name = line.substr(first, line.size() - first - 1);
-
-			auto* task = find_task(id);
-
-			if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
-
-			task->m_name = name;
-		}
-		else if (line.starts_with("reparent"))
-		{
-			auto values = split(line, ' ');
-			TaskID id = TaskID(std::stoi(values[1]));
-			TaskID parent_id = TaskID(std::stoi(values[2]));
-
-			auto* task = find_task(id);
-
-			if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
-
-			task->m_parentID = parent_id;
-		}
-		else if (line.starts_with("bugzilla-config"))
-		{
-			auto values = split(line, ' ');
-
-			Bugzilla& bugzilla = m_bugzilla[values[1]];
-
-			bugzilla.bugzillaURL = values[1];
-			bugzilla.bugzillaApiKey = values[2];
-			std::getline(input, bugzilla.bugzillaUsername);
-			
-			std::string temp;
-			std::getline(input, temp);
-			
-			bugzilla.bugzillaRootTaskID = TaskID(std::stoi(temp));
-
-			std::getline(input, bugzilla.bugzillaGroupTasksBy);
-			std::getline(input, temp);
-
-			const int labelCount = std::stoi(temp);
-
-			for (int i = 0; i < labelCount; i++)
+			else if (line.starts_with("finish"))
 			{
-				std::string label;
-				std::string field;
-				std::getline(input, label);
-				std::getline(input, field);
+				auto values = split(line, ' ');
+				TaskID id = TaskID(std::stoi(values[1]));
+				std::chrono::milliseconds finishTime = std::chrono::milliseconds(std::stoll(values[2]));
 
-				bugzilla.bugzillaLabelToField[label] = field;
+				auto* task = find_task(id);
+
+				if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
+
+				if (task->state == TaskState::ACTIVE)
+				{
+					task->m_times.back().stop = finishTime;
+					activeTask = nullptr;
+				}
+
+				task->state = TaskState::FINISHED;
+				task->m_finishTime = finishTime;
 			}
-		}
-		else if (line.starts_with("bugzilla-refresh"))
-		{
-			auto values = split(line, ' ');
-
-			m_lastBugzillaRefresh = std::chrono::milliseconds(std::stoll(values[1]));
-		}
-		else if (line.starts_with("time-category"))
-		{
-			auto values = split(line, ' ');
-			auto idnum = std::stoi(values[2]);
-
-			if (line.starts_with("time-category add"))
+			else if (line.starts_with("rename"))
 			{
-				TimeCategoryID id = TimeCategoryID(std::stoi(values[2]));
-				TimeCategory* timeCategory = nullptr;
+				auto values = split(line, ' ');
+				TaskID id = TaskID(std::stoi(values[1]));
+				auto first = line.find_first_of('(') + 1;
+				std::string_view view = line;
+				std::string name = string_parser(view);//line.substr(first, line.size() - first - 1);
 
-				std::string name = values[3].substr(1, values[3].length() - 2);
-				std::string label = values[4].substr(1, values[4].length() - 2);
+				auto* task = find_task(id);
 
-				if (id._val == 0)
+				if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
+
+				task->m_name = name;
+			}
+			else if (line.starts_with("reparent"))
+			{
+				auto values = split(line, ' ');
+				TaskID id = TaskID(std::stoi(values[1]));
+				TaskID parent_id = TaskID(std::stoi(values[2]));
+
+				auto* task = find_task(id);
+
+				if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
+
+				task->m_parentID = parent_id;
+			}
+			else if (line.starts_with("bugzilla-config"))
+			{
+				auto values = split(line, ' ');
+
+				Bugzilla& bugzilla = m_bugzilla[values[1]];
+
+				bugzilla.bugzillaURL = values[1];
+				bugzilla.bugzillaApiKey = values[2];
+				std::getline(input, bugzilla.bugzillaUsername);
+
+				std::string temp;
+				std::getline(input, temp);
+
+				bugzilla.bugzillaRootTaskID = TaskID(std::stoi(temp));
+
+				std::getline(input, bugzilla.bugzillaGroupTasksBy);
+				std::getline(input, temp);
+
+				const int labelCount = std::stoi(temp);
+
+				for (int i = 0; i < labelCount; i++)
 				{
-					id = m_nextTimeCategoryID;
-					m_nextTimeCategoryID++;
+					std::string label;
+					std::string field;
+					std::getline(input, label);
+					std::getline(input, field);
 
-					TimeCategory category{ id, name, label };
-
-					timeCategory = &m_timeCategories.emplace_back(id, name, label);
+					bugzilla.bugzillaLabelToField[label] = field;
 				}
-				else if (id._val >= m_nextTimeCategoryID._val)
-				{
-					m_nextTimeCategoryID = id;
-					m_nextTimeCategoryID++;
-				}
+			}
+			else if (line.starts_with("bugzilla-refresh"))
+			{
+				auto values = split(line, ' ');
 
-				if (!timeCategory)
+				Bugzilla& bugzilla = m_bugzilla[values[1]];
+
+				bugzilla.lastBugzillaRefresh = std::chrono::milliseconds(std::stoll(values[2]));
+				m_lastBugzillaRefresh = bugzilla.lastBugzillaRefresh;
+			}
+			else if (line.starts_with("time-category"))
+			{
+				auto values = split(line, ' ');
+				auto idnum = std::stoi(values[2]);
+
+				if (line.starts_with("time-category add"))
 				{
-					for (auto&& it : m_timeCategories)
+					TimeCategoryID id = TimeCategoryID(std::stoi(values[2]));
+					TimeCategory* timeCategory = nullptr;
+
+					std::string_view view = line;
+					std::string name = string_parser(view);
+					std::string label = string_parser(view);
+					//std::string name = values[3].substr(1, values[3].length() - 2);
+					//std::string label = values[4].substr(1, values[4].length() - 2);
+
+					if (id._val == 0)
 					{
-						if (it.id == id)
+						id = m_nextTimeCategoryID;
+						m_nextTimeCategoryID++;
+
+						TimeCategory category{ id, name, label };
+
+						timeCategory = &m_timeCategories.emplace_back(id, name, label);
+					}
+					else if (id._val >= m_nextTimeCategoryID._val)
+					{
+						m_nextTimeCategoryID = id;
+						m_nextTimeCategoryID++;
+					}
+
+					if (!timeCategory)
+					{
+						for (auto&& it : m_timeCategories)
 						{
-							timeCategory = &it;
-							break;
-						}
-					}
-				}
-
-				for (int i = 5; i < values.size(); i += 2)
-				{
-					TimeCodeID code = TimeCodeID(std::stoi(values[i]));
-					TimeCode* timeCode = nullptr;
-
-					std::string codeName = values[i + 1].substr(1, values[i + 1].length() - 2);
-
-					if (code._val == 0)
-					{
-						code = m_nextTimeCodeID;
-						m_nextTimeCodeID++;
-
-						timeCode = &timeCategory->codes.emplace_back(code, codeName);
-					}
-					else if (code._val >= m_nextTimeCodeID._val)
-					{
-						m_nextTimeCodeID = code;
-						m_nextTimeCodeID++;
-					}
-
-					if (!timeCode)
-					{
-						for (auto&& it : timeCategory->codes)
-						{
-							if (it.id == code)
+							if (it.id == id)
 							{
-								timeCode = &it;
+								timeCategory = &it;
 								break;
 							}
 						}
 					}
 
-					timeCode->name = codeName;
-				}
-			}
-			else if (line.starts_with("time-category update"))
-			{
-				TimeCategoryID id = TimeCategoryID(idnum);
-				std::string name = values[3].substr(1, values[3].length() - 2);
-				std::string label = values[4].substr(1, values[4].length() - 2);
+					values = split(std::string(view).substr(1), ' ');
 
-				auto result = std::find_if(m_timeCategories.begin(), m_timeCategories.end(), [&](auto&& it) { return it.id == id; });
+					int count = std::stoi(values[0]);
 
-				if (result != m_timeCategories.end())
-				{
-					result->name = name;
-					result->label = label;
+					view = view.substr(values[0].size() + 1);
 
-					result->codes.clear();
-
-					for (int i = 5; i < values.size(); i += 2)
+					for (int i = 0; i < count; i++)
 					{
-						TimeCodeID code = TimeCodeID(std::stoi(values[i]));
-						std::string codeName = values[i + 1].substr(1, values[i + 1].length() - 2);
+						values = split(std::string(view).substr(1), ' ');
 
-						result->codes.emplace_back(code, codeName);
+						TimeCodeID code = TimeCodeID(std::stoi(values[0]));
+						TimeCode* timeCode = nullptr;
+
+						std::string codeName = string_parser(view);
+						//std::string codeName = values[i + 1].substr(1, values[i + 1].length() - 2);
+
+						if (code._val == 0)
+						{
+							code = m_nextTimeCodeID;
+							m_nextTimeCodeID++;
+
+							timeCode = &timeCategory->codes.emplace_back(code, codeName);
+						}
+						else if (code._val >= m_nextTimeCodeID._val)
+						{
+							m_nextTimeCodeID = code;
+							m_nextTimeCodeID++;
+						}
+
+						if (!timeCode)
+						{
+							for (auto&& it : timeCategory->codes)
+							{
+								if (it.id == code)
+								{
+									timeCode = &it;
+									break;
+								}
+							}
+						}
+
+						timeCode->name = codeName;
 					}
 				}
-			}
-			else if (line.starts_with("time-category remove-code"))
-			{
-				TimeCategoryID id = TimeCategoryID(idnum);
-
-				auto result = std::find_if(m_timeCategories.begin(), m_timeCategories.end(), [&](auto&& it) { return it.id == id; });
-
-				if (result != m_timeCategories.end())
+				else if (line.starts_with("time-category update"))
 				{
-					for (int i = 4; i < values.size(); i++)
+					TimeCategoryID id = TimeCategoryID(idnum);
+					std::string_view view = line;
+					std::string name = string_parser(view);
+					std::string label = string_parser(view);
+					//std::string name = values[3].substr(1, values[3].length() - 2);
+					//std::string label = values[4].substr(1, values[4].length() - 2);
+
+					auto result = std::find_if(m_timeCategories.begin(), m_timeCategories.end(), [&](auto&& it) { return it.id == id; });
+
+					if (result != m_timeCategories.end())
 					{
-						if (values[i] != "}")
+						result->name = name;
+						result->label = label;
+
+						result->codes.clear();
+
+						values = split(std::string(view).substr(1), ' ');
+
+						int count = std::stoi(values[0]);
+						
+						view = view.substr(values[0].size() + 1);
+
+						for (int i = 0; i < count; i++)
 						{
-							TimeCodeID code = TimeCodeID(std::stoi(values[i]));
-							std::erase_if(result->codes, [&](auto&& it) { return it.id == code; });
+							values = split(std::string(view).substr(1), ' ');
+
+							TimeCodeID code = TimeCodeID(std::stoi(values[0]));
+							std::string codeName = string_parser(view);
+							//std::string codeName = values[i + 1].substr(1, values[i + 1].length() - 2);
+
+							result->codes.emplace_back(code, codeName);
 						}
 					}
 				}
-			}
-			else if (line.starts_with("time-category remove-category"))
-			{
-				TimeCategoryID id = TimeCategoryID(idnum);
+				else if (line.starts_with("time-category remove-code"))
+				{
+					TimeCategoryID id = TimeCategoryID(idnum);
 
-				std::erase_if(m_timeCategories, [&](auto&& it) { return it.id == id; });
+					auto result = std::find_if(m_timeCategories.begin(), m_timeCategories.end(), [&](auto&& it) { return it.id == id; });
+
+					if (result != m_timeCategories.end())
+					{
+						for (int i = 4; i < values.size(); i++)
+						{
+							if (values[i] != "}")
+							{
+								TimeCodeID code = TimeCodeID(std::stoi(values[i]));
+								std::erase_if(result->codes, [&](auto&& it) { return it.id == code; });
+							}
+						}
+					}
+				}
+				else if (line.starts_with("time-category remove-category"))
+				{
+					TimeCategoryID id = TimeCategoryID(idnum);
+
+					std::erase_if(m_timeCategories, [&](auto&& it) { return it.id == id; });
+				}
+			}
+			else
+			{
+				throw std::runtime_error("Invalid command: " + line);
 			}
 		}
-		else
-		{
-			throw std::runtime_error("Invalid command: " + line);
-		}
+	}
+	catch (const std::exception& e)
+	{
+		std::cout << "[IN] Failed to load file, line: " << lineCount << " : " << line << std::endl;
 	}
 }
