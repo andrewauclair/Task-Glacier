@@ -649,6 +649,19 @@ struct TaskInfoMessage : Message
 			{
 				return false;
 			}
+
+			if (times[i].timeCodes.size() != message.times[i].timeCodes.size())
+			{
+				return false;
+			}
+
+			for (std::size_t j = 0; j < times[i].timeCodes.size(); j++)
+			{
+				if (times[i].timeCodes[j] != message.times[i].timeCodes[j])
+				{
+					return false;
+				}
+			}
 		}
 
 		if (labels.size() != message.labels.size())

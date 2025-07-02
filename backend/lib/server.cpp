@@ -130,7 +130,25 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 		}
 		task->state = TaskState::ACTIVE;
 		TaskTimes& times = task->m_times.emplace_back(m_clock->now());
-		std::copy(task->timeCodes.begin(), task->timeCodes.end(), std::back_inserter(times.timeCodes));
+
+		if (task->timeCodes.empty())
+		{
+			auto* parent = find_task(task->parentID());
+
+			while (parent && parent->timeCodes.empty())
+			{
+				parent = find_task(parent->parentID());
+			}
+
+			if (parent)
+			{
+				std::copy(parent->timeCodes.begin(), parent->timeCodes.end(), std::back_inserter(times.timeCodes));
+			}
+		}
+		else
+		{
+			std::copy(task->timeCodes.begin(), task->timeCodes.end(), std::back_inserter(times.timeCodes));
+		}
 
 		m_activeTask = task;
 
@@ -327,7 +345,11 @@ void MicroTask::load_from_file(std::istream& input)
 
 				for (int i = 2; i < values.size(); i++)
 				{
-					task->timeCodes.push_back(TimeCodeID(std::stoi(values[i])));
+					auto code = TimeCodeID(std::stoi(values[i]));
+					if (code._val != 0)
+					{
+						task->timeCodes.push_back(code);
+					}
 				}
 			}
 			else if (line.starts_with("start"))
@@ -352,7 +374,11 @@ void MicroTask::load_from_file(std::istream& input)
 
 				for (int i = 3; i < values.size(); i++)
 				{
-					times.timeCodes.push_back(TimeCodeID(std::stoi(values[i])));
+					auto code = TimeCodeID(std::stoi(values[i]));
+					if (code._val != 0)
+					{
+						times.timeCodes.push_back(code);
+					}
 				}
 			}
 			else if (line.starts_with("stop"))
@@ -566,8 +592,7 @@ void MicroTask::load_from_file(std::istream& input)
 
 							TimeCodeID code = TimeCodeID(std::stoi(values[0]));
 							std::string codeName = string_parser(view);
-							//std::string codeName = values[i + 1].substr(1, values[i + 1].length() - 2);
-
+							
 							result->codes.emplace_back(code, codeName);
 						}
 					}

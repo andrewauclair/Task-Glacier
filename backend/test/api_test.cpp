@@ -246,6 +246,138 @@ TEST_CASE("Start Task - Time Codes", "[api][task]")
 
 		helper.required_messages({ &taskInfo });
 	}
+
+	SECTION("Time codes on task take priority over parent")
+	{
+		CreateTaskMessage create1(NO_PARENT, helper.next_request_id(), "test 1");
+		create1.timeCodes.push_back(TimeCodeID(1));
+		create1.timeCodes.push_back(TimeCodeID(10));
+
+		helper.expect_success(create1);
+
+		CreateTaskMessage create2(TaskID(1), helper.next_request_id(), "test 2");
+		create2.timeCodes.push_back(TimeCodeID(2));
+		create2.timeCodes.push_back(TimeCodeID(20));
+
+		helper.expect_success(create2);
+
+		helper.clear_message_output();
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(2)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
+		taskInfo.parentID = TaskID(1);
+		taskInfo.createTime = std::chrono::milliseconds(1737345839870);
+
+		TaskTimes times;
+		times.start = std::chrono::milliseconds(1737347639870);
+		times.timeCodes.push_back(TimeCodeID(2));
+		times.timeCodes.push_back(TimeCodeID(20));
+
+		taskInfo.times.push_back(times);
+		taskInfo.state = TaskState::ACTIVE;
+		taskInfo.newTask = false;
+		taskInfo.timeCodes.push_back(TimeCodeID(2));
+		taskInfo.timeCodes.push_back(TimeCodeID(20));
+
+		helper.required_messages({ &taskInfo });
+	}
+
+	SECTION("Inherit from parent if no time codes are found for task")
+	{
+		CreateTaskMessage create1(NO_PARENT, helper.next_request_id(), "test 1");
+		create1.timeCodes.push_back(TimeCodeID(1));
+		create1.timeCodes.push_back(TimeCodeID(10));
+
+		helper.expect_success(create1);
+
+		CreateTaskMessage create2(TaskID(1), helper.next_request_id(), "test 2");
+
+		helper.expect_success(create2);
+
+		helper.clear_message_output();
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(2)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
+		taskInfo.parentID = TaskID(1);
+		taskInfo.createTime = std::chrono::milliseconds(1737345839870);
+
+		TaskTimes times;
+		times.start = std::chrono::milliseconds(1737347639870);
+		times.timeCodes.push_back(TimeCodeID(1));
+		times.timeCodes.push_back(TimeCodeID(10));
+
+		taskInfo.times.push_back(times);
+		taskInfo.state = TaskState::ACTIVE;
+		taskInfo.newTask = false;
+		
+		helper.required_messages({ &taskInfo });
+	}
+
+	SECTION("Move to next parent if parent has no time codes")
+	{
+		CreateTaskMessage create1(NO_PARENT, helper.next_request_id(), "test 1");
+		create1.timeCodes.push_back(TimeCodeID(1));
+		create1.timeCodes.push_back(TimeCodeID(10));
+
+		helper.expect_success(create1);
+
+		CreateTaskMessage create2(TaskID(1), helper.next_request_id(), "test 2");
+		helper.expect_success(create2);
+
+		CreateTaskMessage create3(TaskID(2), helper.next_request_id(), "test 3");
+		helper.expect_success(create3);
+
+		helper.clear_message_output();
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(3)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(3), NO_PARENT, "test 3");
+		taskInfo.parentID = TaskID(2);
+		taskInfo.createTime = std::chrono::milliseconds(1737347639870);
+
+		TaskTimes times;
+		times.start = std::chrono::milliseconds(1737349439870);
+		times.timeCodes.push_back(TimeCodeID(1));
+		times.timeCodes.push_back(TimeCodeID(10));
+
+		taskInfo.times.push_back(times);
+		taskInfo.state = TaskState::ACTIVE;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
+	}
+
+	SECTION("Use no time codes if none of parents have time codes")
+	{
+		CreateTaskMessage create1(NO_PARENT, helper.next_request_id(), "test 1");
+
+		helper.expect_success(create1);
+
+		CreateTaskMessage create2(TaskID(1), helper.next_request_id(), "test 2");
+		helper.expect_success(create2);
+
+		CreateTaskMessage create3(TaskID(2), helper.next_request_id(), "test 3");
+		helper.expect_success(create3);
+
+		helper.clear_message_output();
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(3)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(3), NO_PARENT, "test 3");
+		taskInfo.parentID = TaskID(2);
+		taskInfo.createTime = std::chrono::milliseconds(1737347639870);
+
+		TaskTimes times;
+		times.start = std::chrono::milliseconds(1737349439870);
+
+		taskInfo.times.push_back(times);
+		taskInfo.state = TaskState::ACTIVE;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
+	}
 }
 
 TEST_CASE("Stop Task", "[api][task]")
@@ -1220,6 +1352,50 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.timePerTimeCode.emplace(TimeCodeID(3), std::chrono::hours(2));
 		report.report.timePerTimeCode.emplace(TimeCodeID(4), std::chrono::hours(2));
 		report.report.totalTime = std::chrono::hours(9);
+
+		helper.required_messages({ &report });
+	}
+
+	SECTION("Inherited Time Codes")
+	{
+		// two tasks that happen on the same day twice, but also happen on other days
+		helper.clock.auto_increment_test_time = false;
+		helper.clock.time = date_to_ms(2, 2, 2025) + std::chrono::hours(5);
+
+		auto create1 = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1");
+		auto create2 = CreateTaskMessage(TaskID(1), helper.next_request_id(), "test 2");
+		auto create3 = CreateTaskMessage(TaskID(2), helper.next_request_id(), "test 3");
+
+		create1.timeCodes.push_back(TimeCodeID(1));
+		create1.timeCodes.push_back(TimeCodeID(2));
+
+		helper.expect_success(create1);
+		helper.expect_success(create2);
+		helper.expect_success(create3);
+
+		helper.clock.time = date_to_ms(2, 3, 2025) + std::chrono::hours(5);
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(3)));
+		helper.clock.time += std::chrono::hours(3);
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(3)));
+
+		helper.clear_message_output();
+
+		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
+
+		helper.api.process_packet(request, helper.output);
+
+		auto report = DailyReportMessage(helper.prev_request_id());
+		report.report.found = true;
+		report.report.month = 2;
+		report.report.day = 3;
+		report.report.year = 2025;
+		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5);
+		report.report.endTime = date_to_ms(2, 3, 2025) + std::chrono::hours(8);
+		report.report.times.emplace_back(TaskID(3), 0);
+		report.report.timePerTimeCode.emplace(TimeCodeID(1), std::chrono::hours(3));
+		report.report.timePerTimeCode.emplace(TimeCodeID(2), std::chrono::hours(3));
+		report.report.totalTime = std::chrono::hours(3);
 
 		helper.required_messages({ &report });
 	}

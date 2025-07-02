@@ -660,51 +660,53 @@ DailyReportMessage API::create_daily_report(RequestID requestID, int month, int 
 		{
 			report.report.times.emplace_back(task.task->taskID(), task.time.startStopIndex);
 
+			TaskTimes& times = task.task->m_times[task.time.startStopIndex];
+
 			if (first)
 			{
-				report.report.startTime = task.task->m_times[task.time.startStopIndex].start;
+				report.report.startTime = times.start;
 			}
-			else if (report.report.startTime > task.task->m_times[task.time.startStopIndex].start)
+			else if (report.report.startTime > times.start)
 			{
-				report.report.startTime = task.task->m_times[task.time.startStopIndex].start;
+				report.report.startTime = times.start;
 			}
 
-			if (task.task->m_times[task.time.startStopIndex].stop.has_value())
+			if (times.stop.has_value())
 			{
-				const auto timeForTask = task.task->m_times[task.time.startStopIndex].stop.value() - task.task->m_times[task.time.startStopIndex].start;
+				const auto timeForTask = times.stop.value() - times.start;
 
 				report.report.totalTime += timeForTask;
 
-				if (task.task->timeCodes.empty())
+				if (times.timeCodes.empty())
 				{
 					report.report.timePerTimeCode[TimeCodeID(0)] += timeForTask;
 				}
 
-				for (auto&& timeCode : task.task->timeCodes)
+				for (auto&& timeCode : times.timeCodes)
 				{
 					report.report.timePerTimeCode[timeCode] += timeForTask;
 				}
 			}
 			else // task is still active
 			{
-				const auto timeForTask = m_clock->now() - task.task->m_times[task.time.startStopIndex].start;
+				const auto timeForTask = m_clock->now() - times.start;
 
 				report.report.totalTime += timeForTask;
 
-				if (task.task->timeCodes.empty())
+				if (times.timeCodes.empty())
 				{
 					report.report.timePerTimeCode[TimeCodeID(0)] += timeForTask;
 				}
 
-				for (auto&& timeCode : task.task->timeCodes)
+				for (auto&& timeCode : times.timeCodes)
 				{
 					report.report.timePerTimeCode[timeCode] += timeForTask;
 				}
 			}
 
-			if (task.task->m_times[task.time.startStopIndex].stop.has_value() && task.task->m_times[task.time.startStopIndex].stop.value() > report.report.endTime)
+			if (times.stop.has_value() && times.stop.value() > report.report.endTime)
 			{
-				report.report.endTime = task.task->m_times[task.time.startStopIndex].stop.value();
+				report.report.endTime = times.stop.value();
 			}
 			first = false;
 		}
