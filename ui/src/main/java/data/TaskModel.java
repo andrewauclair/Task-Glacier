@@ -67,36 +67,86 @@ public class TaskModel {
     }
 
     public void receiveInfo(TaskInfo info) {
-        if (hasTask(info.taskID)) {
-            Optional<Task> first = tasks.stream().filter(task -> task.id == info.taskID)
-                    .findFirst();
+        Task task;
+        boolean newTask = false;
 
-            if (first.isPresent()) {
-                first.get().name = info.name;
-                first.get().state = info.state;
+        Optional<Task> first = tasks.stream().filter(existingTask -> existingTask.id == info.taskID)
+                .findFirst();
 
-                boolean parentChanged = first.get().parentID != info.parentID;
-                first.get().parentID = info.parentID;
-
-                listeners.forEach(listener -> listener.updatedTask(first.get(), parentChanged));
-            }
+        if (first.isPresent()) {
+            task = first.get();
         }
         else {
-            Task task = new Task(info.taskID, info.parentID, info.name);
-            task.state = info.state;
-            task.createTime = info.createTime;
+            task = new Task(info.taskID, info.parentID, info.name);
+            newTask = true;
+        }
+
+        task.state = info.state;
+        task.createTime = info.createTime;
+        task.times = new ArrayList<>(info.times);
+        task.labels = new ArrayList<>(info.labels);
+        task.timeCodes = new ArrayList<>(info.timeCodes);
+
+        if (newTask) {
             tasks.add(task);
 
-            Optional<Task> first = tasks.stream().filter(parent -> parent.id == info.parentID)
-                    .findFirst();
+            Optional<Task> optionalParent = tasks.stream().filter(parent -> parent.id == info.parentID)
+                            .findFirst();
 
-            if (first.isPresent()) {
-                first.get().children.add(task);
-                listeners.forEach(listener -> listener.updatedTask(first.get(), false));
+            if (optionalParent.isPresent()) {
+                optionalParent.get().children.add(task);
             }
-
             listeners.forEach(listener -> listener.newTask(task));
         }
+        else {
+            boolean parentChanged = first.get().parentID != info.parentID;
+
+            Optional<Task> optionalOldParent = tasks.stream().filter(parent -> parent.id == task.parentID)
+                    .findFirst();
+
+            Optional<Task> optionalNewParent = tasks.stream().filter(parent -> parent.id == info.parentID)
+                    .findFirst();
+
+            if (optionalOldParent.isPresent()) {
+                optionalOldParent.get().children.remove(task);
+            }
+
+            if (optionalNewParent.isPresent()) {
+                optionalNewParent.get().children.add(task);
+            }
+
+            task.parentID = info.parentID;
+
+            listeners.forEach(listener -> listener.updatedTask(first.get(), parentChanged));
+        }
+//
+//        if (hasTask(info.taskID)) {
+//
+//                first.get().name = info.name;
+//                first.get().state = info.state;
+//
+//                boolean parentChanged = first.get().parentID != info.parentID;
+//                first.get().parentID = info.parentID;
+//
+//                listeners.forEach(listener -> listener.updatedTask(first.get(), parentChanged));
+//            }
+//        }
+//        else {
+//            Task task = new Task(info.taskID, info.parentID, info.name);
+//            task.state = info.state;
+//            task.createTime = info.createTime;
+//            tasks.add(task);
+//
+//            Optional<Task> first = tasks.stream().filter(parent -> parent.id == info.parentID)
+//                    .findFirst();
+//
+//            if (first.isPresent()) {
+//                first.get().children.add(task);
+//                listeners.forEach(listener -> listener.updatedTask(first.get(), false));
+//            }
+//
+//            listeners.forEach(listener -> listener.newTask(task));
+//        }
     }
 
     // it's possible that we receive data out-of-order the first time. for updates for everything

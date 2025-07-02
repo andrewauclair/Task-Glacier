@@ -113,6 +113,19 @@ public class EditTimes extends JDialog {
         TableModel model = new TableModel();
         JTable table = new JTable(model);
 
+        for (TimeData.TimeCode code : task.timeCodes) {
+            TimeData.TimeCategory category = timeData.timeCategoryForTimeCode(code.id);
+
+            Row row = new Row();
+            row.category = category;
+            row.code = category.timeCodes.stream()
+                    .filter(timeCode1 -> timeCode1.id == code.id)
+                    .findFirst().get();
+
+            model.data.add(row);
+            model.fireTableRowsInserted(model.data.size() - 1, model.data.size() - 1);
+        }
+
         add(new JScrollPane(table));
 
         add.addActionListener(e -> {

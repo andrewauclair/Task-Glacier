@@ -419,14 +419,14 @@ std::vector<std::byte> TaskInfoMessage::pack() const
 
 	builder.add(static_cast<std::int32_t>(labels.size()));
 	
-	for (auto&& label : labels)
+	for (const std::string& label : labels)
 	{
 		builder.add(label);
 	}
 
 	builder.add(static_cast<std::int32_t>(timeCodes.size()));
 
-	for (auto&& code : timeCodes)
+	for (const TimeCodeID& code : timeCodes)
 	{
 		builder.add(code);
 	}

@@ -1,6 +1,7 @@
 package packets;
 
 import data.TaskState;
+import data.TimeData;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -26,7 +27,9 @@ public class TaskInfo implements Packet {
     }
     public List<TaskTime> times = new ArrayList<>();
 
-    public List<Integer> timeCodes = new ArrayList<>();
+    public List<String> labels = new ArrayList<>();
+
+    public List<TimeData.TimeCode> timeCodes = new ArrayList<>();
 
     public static TaskInfo parse(DataInputStream input) throws IOException {
         TaskInfo info = new TaskInfo();
@@ -41,18 +44,47 @@ public class TaskInfo implements Packet {
 
         info.createTime = Instant.ofEpochMilli(input.readLong()); // create time
         boolean finishPresent = input.readByte() != 0;// finish present
-        info.finishTime = finishPresent ? Optional.ofNullable(Instant.ofEpochMilli(input.readLong())) : Optional.empty(); // finish time
+
+        if (finishPresent) {
+            info.finishTime = Optional.of(Instant.ofEpochMilli(input.readLong()));
+        }
+        else {
+            input.readLong();
+            info.finishTime = Optional.empty();
+        }
 
         int timesCount = input.readInt();// number of times
 
         for (int i = 0; i < timesCount; i++) {
-            input.readLong(); // start time
+            TaskTime time = new TaskTime();
+
+            time.startTime = Instant.ofEpochMilli(input.readLong()); // start time
             boolean stopPresent = input.readByte() != 0;// stop present
 
-            input.readLong(); // stop time
+            Instant stopTime = Instant.ofEpochMilli(input.readLong()); // stop time
+
+            if (stopPresent) {
+                time.stopTime = Optional.ofNullable(stopTime);
+            }
+            else {
+                time.stopTime = Optional.empty();
+            }
+            info.times.add(time);
         }
 
+        int labelCount = input.readInt();
 
+        for (int i = 0; i < labelCount; i++) {
+            info.labels.add(Packet.parseString(input));
+        }
+
+        int timeCodeCount = input.readInt();
+
+        for (int i = 0; i < timeCodeCount; i++) {
+            TimeData.TimeCode e = new TimeData.TimeCode();
+            e.id = input.readInt();
+            info.timeCodes.add(e);
+        }
 
         return info;
     }
