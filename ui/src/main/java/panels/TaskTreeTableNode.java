@@ -96,4 +96,12 @@ public class TaskTreeTableNode extends AbstractMutableTreeTableNode {
         }
         return task.id;
     }
+
+    @Override
+    public String toString() {
+        if (task == null) {
+            return "";
+        }
+        return task.name;
+    }
 }
