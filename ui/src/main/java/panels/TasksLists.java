@@ -7,6 +7,7 @@ import dialogs.AddModifyTask;
 import dialogs.EditLabels;
 import dialogs.EditTimes;
 import dialogs.RenameTask;
+import dialogs.TaskConfig;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingProperty;
 import io.github.andrewauclair.moderndocking.DockingRegion;
@@ -248,6 +249,22 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         JMenuItem stop = new JMenuItem("Stop");
         JMenuItem finish = new JMenuItem("Finish");
         JMenuItem openInNewWindow = new JMenuItem("Open in New List");
+        JMenuItem config = new JMenuItem("Configure...");
+
+        config.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+
+            if (selectedRow == -1) {
+                return;
+            }
+
+            TreePath pathForRow = table.getPathForRow(selectedRow);
+            TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
+            Task task = (Task) node.getUserObject();
+
+            TaskConfig dialog = new TaskConfig(mainFrame, task);
+            dialog.setVisible(true);
+        });
 
         start.addActionListener(e -> changeTaskState(PacketType.START_TASK));
         startStopActive.addActionListener(e -> changeTaskState(PacketType.START_TASK));
@@ -356,6 +373,8 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
                         return;
                     }
 
+                    contextMenu.add(config);
+
                     if (mainFrame.getTaskModel().getActiveTaskID().isPresent() && !mainFrame.getTaskModel().taskHasNonFinishedChildren(mainFrame.getTaskModel().getActiveTaskID().get())) {
                         contextMenu.add(startStopActive);
                         contextMenu.add(startFinishActive);
@@ -391,7 +410,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
                     contextMenu.show(table, e.getX(), e.getY());
                 }
                 else if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
-                    start.doClick();
+                    config.doClick();
                 }
             }
         });
