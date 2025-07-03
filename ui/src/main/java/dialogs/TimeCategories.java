@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// TODO rename this feature to "Time Entry"
 public class TimeCategories extends JDialog {
     private final TimeData timeData;
     JComboBox<String> timeCategorySelection = new JComboBox<>();
