@@ -312,7 +312,7 @@ TEST_CASE("Update Task", "[message]")
 
 		update_task.print(ss);
 
-		auto expected_text = "UpdateTaskMessage { packetType: 15, requestID: 10, taskID: 5, parentID: 1, name: \"this is a test\", labels { \"one\", \"two\", }, timeCodes: [ [ 1 2 ], [ 2 3 ], ] }";
+		auto expected_text = "UpdateTaskMessage { packetType: 15, requestID: 10, taskID: 5, parentID: 1, serverControlled: 0, locked: 0, name: \"this is a test\", labels { \"one\", \"two\", }, timeCodes: [ [ 1 2 ], [ 2 3 ], ] }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -333,14 +333,16 @@ TEST_CASE("Update Task", "[message]")
 
 	SECTION("Pack")
 	{
-		auto verifier = PacketVerifier(update_task.pack(), 70);
+		auto verifier = PacketVerifier(update_task.pack(), 72);
 
 		verifier
-			.verify_value<std::uint32_t>(70, "packet length")
+			.verify_value<std::uint32_t>(72, "packet length")
 			.verify_value<std::uint32_t>(15, "packet ID")
 			.verify_value<std::uint32_t>(10, "request ID")
 			.verify_value<std::uint32_t>(5, "task ID")
 			.verify_value<std::uint32_t>(1, "parent ID")
+			.verify_value<bool>(false, "server controlled")
+			.verify_value<bool>(false, "locked")
 			.verify_string("this is a test", "task name")
 			.verify_value<std::int32_t>(2, "label count")
 			.verify_string("one", "first label")
@@ -350,7 +352,7 @@ TEST_CASE("Update Task", "[message]")
 	SECTION("Unpack")
 	{
 		PacketTestHelper helper;
-		helper.expect_packet<UpdateTaskMessage>(update_task, 70);
+		helper.expect_packet<UpdateTaskMessage>(update_task, 72);
 	}
 }
 
