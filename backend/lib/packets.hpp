@@ -334,7 +334,7 @@ struct UpdateTaskMessage : RequestMessage
 	{
 		out << "UpdateTaskMessage { ";
 		RequestMessage::print(out);
-		out << ", taskID: " << taskID._val << ", parentID: " << parentID._val << ", name: \"" << name << "\"";
+		out << ", taskID: " << taskID._val << ", parentID: " << parentID._val << ", serverControlled: " << serverControlled << ", locked: " << locked << ", name: \"" << name << "\"";
 		out << ", labels { ";
 		for (auto&& label : labels)
 		{
@@ -721,7 +721,7 @@ struct TaskInfoMessage : Message
 
 	std::ostream& print(std::ostream& out) const override
 	{
-		out << "TaskInfoMessage { taskID: " << taskID._val << ", parentID: " << parentID._val << ", state: " << static_cast<std::int32_t>(state) << ", newTask: " << newTask << ", name: \"" << name << "\", createTime: " << createTime.count() << ", finishTime: " << (finishTime.has_value() ? std::to_string(finishTime.value().count()) : "nullopt") << ", times: [";
+		out << "TaskInfoMessage { taskID: " << taskID._val << ", parentID: " << parentID._val << ", state: " << static_cast<std::int32_t>(state) << ", newTask: " << newTask << ", serverControlled: " << serverControlled << ", locked: " << locked << ", name: \"" << name << "\", createTime: " << createTime.count() << ", finishTime: " << (finishTime.has_value() ? std::to_string(finishTime.value().count()) : "nullopt") << ", times: [";
 		for (auto&& time : times)
 		{
 			out << "{ start: " << time.start.count() << ", stop: " << (time.stop.has_value() ? std::to_string(time.stop.value().count()) : "nullopt");

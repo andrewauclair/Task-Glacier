@@ -86,6 +86,7 @@ public class TaskConfig extends JDialog {
             if (hasChanges(task)) {
                 // send packet
                 UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task.id, Integer.parseInt(parent.getText()), name.getText());
+                update.locked = locked.isSelected();
                 connection.sendPacket(update);
             }
         }
