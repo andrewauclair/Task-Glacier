@@ -1,9 +1,12 @@
 package dialogs;
 
+import data.ServerConnection;
 import data.Task;
 import data.TimeData;
 import org.jdesktop.swingx.painter.AbstractLayoutPainter;
+import packets.RequestID;
 import packets.TaskInfo;
+import packets.UpdateTask;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
@@ -28,6 +31,11 @@ public class TaskConfig extends JDialog {
 
     // general (id, name, status, parent, bugzilla)
     class General extends JPanel {
+        JTextField name = new JTextField(20);
+        JTextField parent = new JTextField(3);
+        JCheckBox serverControlled = new JCheckBox("Server Controlled");
+        JCheckBox locked = new JCheckBox("Locked");
+
         General(Task task) {
             setLayout(new GridBagLayout());
 
@@ -38,8 +46,6 @@ public class TaskConfig extends JDialog {
             add(new JLabel("ID " + task.id), gbc);
 
             gbc.gridy++;
-
-            JTextField name = new JTextField(20);
             add(new LabeledComponent(new JLabel("name"), name), gbc);
 
             name.setText(task.name);
@@ -52,11 +58,36 @@ public class TaskConfig extends JDialog {
             gbc.gridy++;
             add(status, gbc);
 
-            JTextField parent = new JTextField(3);
             parent.setText(String.valueOf(task.parentID));
 
             gbc.gridy++;
             add(parent, gbc);
+
+
+            serverControlled.setEnabled(false);
+            serverControlled.setSelected(task.serverControlled);
+
+            gbc.gridy++;
+            add(serverControlled, gbc);
+
+            locked.setSelected(task.locked);
+
+            gbc.gridy++;
+            add(locked, gbc);
+        }
+
+        private boolean hasChanges(Task task) {
+            return !task.name.equals(name.getText()) ||
+                    task.parentID != Integer.parseInt(parent.getText()) ||
+                    task.locked != locked.isSelected();
+        }
+
+        public void save(Task task, ServerConnection connection) {
+            if (hasChanges(task)) {
+                // send packet
+                UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task.id, Integer.parseInt(parent.getText()), name.getToolTipText());
+                connection.sendPacket(update);
+            }
         }
     }
 
@@ -91,7 +122,7 @@ public class TaskConfig extends JDialog {
         }
 
         class TableModel extends AbstractTableModel {
-            List<Row> data = new ArrayList<>();
+            public List<Row> data = new ArrayList<>();
 
             @Override
             public int getRowCount() {
@@ -196,7 +227,7 @@ public class TaskConfig extends JDialog {
             }
         }
 
-        TimeEntry(MainFrame mainFrame) {
+        TimeEntry(MainFrame mainFrame, Task task) {
             setLayout(new GridBagLayout());
 
             this.timeData = mainFrame.getTimeData();
@@ -222,6 +253,49 @@ public class TaskConfig extends JDialog {
                 dialog.setVisible(true);
                 dialog.setLocationRelativeTo(mainFrame);
             });
+
+            for (TimeData.TimeEntry entry : task.timeEntry) {
+                Optional<TimeData.TimeCategory> timeCategory2 = timeData.getTimeCategories().stream()
+                        .filter(timeCategory1 -> timeCategory1.id == entry.category)
+                        .findFirst();
+
+                Row row = new Row();
+                row.category = timeCategory2.get();
+                row.code = timeCategory2.get().timeCodes.stream()
+                        .filter(timeCode1 -> timeCode1.id == entry.code)
+                        .findFirst().get();
+
+                model.data.add(row);
+                model.fireTableRowsInserted(model.data.size() - 1, model.data.size() - 1);
+            }
+        }
+
+        private boolean hasChanges(Task task) {
+            if (task.timeEntry.size() != model.getRowCount()) {
+                return true;
+            }
+            for (int i = 0; i < task.timeEntry.size(); i++) {
+                if (task.timeEntry.get(i).category != model.data.get(i).category.id ||
+                    task.timeEntry.get(i).code != model.data.get(i).code.id) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void save(Task task, ServerConnection connection) {
+            if (hasChanges(task)) {
+                UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task);
+                update.timeEntry.clear();
+
+                for (Row row : model.data) {
+                    TimeData.TimeEntry entry = new TimeData.TimeEntry();
+                    entry.category = row.category.id;
+                    entry.code = row.code.id;
+                    update.timeEntry.add(entry);
+                }
+                connection.sendPacket(update);
+            }
         }
     }
 
@@ -249,10 +323,12 @@ public class TaskConfig extends JDialog {
         JPanel stack = new JPanel(layout);
 
         stack.add(new JPanel(), "");
-        stack.add(new General(task), "General");
+        General general = new General(task);
+        stack.add(general, "General");
         stack.add(new Labels(task), "Labels");
         stack.add(new Sessions(task), "Sessions");
-        stack.add(new TimeEntry(mainFrame), "Time Entry");
+        TimeEntry timeEntry = new TimeEntry(mainFrame, task);
+        stack.add(timeEntry, "Time Entry");
         split.setRightComponent(stack);
 
         SwingUtilities.invokeLater(() -> {
@@ -290,7 +366,8 @@ public class TaskConfig extends JDialog {
 
         save.addActionListener(e -> {
             // send any packets that are necessary
-
+            general.save(task, mainFrame.getConnection());
+            timeEntry.save(task, mainFrame.getConnection());
             dispose();
         });
 

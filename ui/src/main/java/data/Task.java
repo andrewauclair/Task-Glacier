@@ -12,6 +12,9 @@ public class Task {
     public TaskState state = TaskState.INACTIVE;
     public String name;
 
+    public boolean serverControlled = false;
+    public boolean locked = false;
+
     public Instant createTime;
 
     public List<Task> children = new ArrayList<>();
@@ -19,7 +22,7 @@ public class Task {
     public List<TaskInfo.Session> sessions = new ArrayList<>();
 
     public List<String> labels = new ArrayList<>();
-    public List<TimeData.TimeCode> timeCodes = new ArrayList<>();
+    public List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
 
     public Task(int id, int parentID, String name) {
         this.id = id;

@@ -30,7 +30,7 @@ public class TaskInfo implements Packet {
 
     public List<String> labels = new ArrayList<>();
 
-    public List<TimeData.TimeCode> timeCodes = new ArrayList<>();
+    public List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
 
     public static TaskInfo parse(DataInputStream input) throws IOException {
         TaskInfo info = new TaskInfo();
@@ -91,12 +91,13 @@ public class TaskInfo implements Packet {
             info.labels.add(Packet.parseString(input));
         }
 
-        int timeCodeCount = input.readInt();
+        int timeEntryCount = input.readInt();
 
-        for (int i = 0; i < timeCodeCount; i++) {
-            TimeData.TimeCode e = new TimeData.TimeCode();
-            e.id = input.readInt();
-            info.timeCodes.add(e);
+        for (int i = 0; i < timeEntryCount; i++) {
+            TimeData.TimeEntry e = new TimeData.TimeEntry();
+            e.category = input.readInt();
+            e.code = input.readInt();
+            info.timeEntry.add(e);
         }
 
         return info;

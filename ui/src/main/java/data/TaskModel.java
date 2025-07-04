@@ -85,7 +85,7 @@ public class TaskModel {
         task.createTime = info.createTime;
         task.sessions = new ArrayList<>(info.sessions);
         task.labels = new ArrayList<>(info.labels);
-        task.timeCodes = new ArrayList<>(info.timeCodes);
+        task.timeEntry = new ArrayList<>(info.timeEntry);
 
         if (newTask) {
             tasks.add(task);

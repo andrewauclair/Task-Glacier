@@ -38,7 +38,7 @@ public class UpdateTask implements Packet {
         for (String label : labels) {
             size += label.length();
         }
-        size += 4 + (timeEntry.size() * 4);
+        size += 4 + (timeEntry.size() * 8);
         output.writeInt(size);
         output.writeInt(PacketType.UPDATE_TASK.value());
         output.writeInt(requestID);
