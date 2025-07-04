@@ -365,7 +365,7 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 		{
 			for (auto&& code : task->timeEntry)
 			{
-				//*m_output << code._val << ' ';
+				*m_output << code.categoryID._val << ' ' << code.codeID._val << ' ';
 			}
 		}
 		*m_output << std::endl;
@@ -684,7 +684,7 @@ DailyReportMessage API::create_daily_report(RequestID requestID, int month, int 
 
 				for (auto&& timeCode : times.timeEntry)
 				{
-					//report.report.timePerTimeCode[timeCode] += timeForTask;
+					report.report.timePerTimeCode[timeCode.codeID] += timeForTask;
 				}
 			}
 			else // task is still active
@@ -700,7 +700,7 @@ DailyReportMessage API::create_daily_report(RequestID requestID, int month, int 
 
 				for (auto&& timeCode : times.timeEntry)
 				{
-					//report.report.timePerTimeCode[timeCode] += timeForTask;
+					report.report.timePerTimeCode[timeCode.codeID] += timeForTask;
 				}
 			}
 

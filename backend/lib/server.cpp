@@ -48,7 +48,7 @@ std::optional<std::string> MicroTask::configure_task_time_entry(TaskID taskID, s
 		
 		if (task->timeEntry.empty())
 		{
-			*m_output << "0 ";
+			*m_output << "0 0 ";
 		}
 		else
 		{
@@ -343,12 +343,14 @@ void MicroTask::load_from_file(std::istream& input)
 
 				task->timeEntry.clear();
 
-				for (int i = 2; i < values.size(); i++)
+				for (int i = 2; i < values.size() - 1; i += 2)
 				{
-					auto code = TimeCodeID(std::stoi(values[i]));
-					if (code._val != 0)
+					auto category = TimeCategoryID(std::stoi(values[i]));
+					auto code = TimeCodeID(std::stoi(values[i + 1]));
+
+					if (category._val != 0 && code._val != 0)
 					{
-						//task->timeEntry.push_back(code);
+						task->timeEntry.push_back(TimeEntry{ category, code });
 					}
 				}
 			}
@@ -372,12 +374,14 @@ void MicroTask::load_from_file(std::istream& input)
 				task->state = TaskState::ACTIVE;
 				auto& times = task->m_times.emplace_back(startTime);
 
-				for (int i = 3; i < values.size(); i++)
+				for (int i = 3; i < values.size() - 1; i += 2)
 				{
-					auto code = TimeCodeID(std::stoi(values[i]));
-					if (code._val != 0)
+					auto category = TimeCategoryID(std::stoi(values[i]));
+					auto code = TimeCodeID(std::stoi(values[i + 1]));
+
+					if (category._val != 0 && code._val != 0)
 					{
-						//times.timeCodes.push_back(code);
+						times.timeEntry.push_back(TimeEntry{ category, code });
 					}
 				}
 			}

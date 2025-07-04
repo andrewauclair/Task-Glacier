@@ -175,7 +175,7 @@ TEST_CASE("Create Task", "[message]")
 		CHECK(!(create_task == create_task2));
 
 		create_task2.name = create_task.name;
-		create_task2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		create_task2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(3), TimeCodeID(3)} };
 		CAPTURE(create_task2);
 
 		CHECK(!(create_task == create_task2));
@@ -187,7 +187,7 @@ TEST_CASE("Create Task", "[message]")
 
 		create_task.print(ss);
 
-		auto expected_text = "CreateTaskMessage { packetType: 3, requestID: 10, parentID: 5, name: \"this is a test\", labels { \"one\", \"two\", }, timeCodes: [ 1, 2, ] }";
+		auto expected_text = "CreateTaskMessage { packetType: 3, requestID: 10, parentID: 5, name: \"this is a test\", labels { \"one\", \"two\", }, timeCodes: [ [ 1 2 ], [ 2 3 ], ] }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -208,10 +208,10 @@ TEST_CASE("Create Task", "[message]")
 
 	SECTION("Pack")
 	{
-		auto verifier = PacketVerifier(create_task.pack(), 58);
+		auto verifier = PacketVerifier(create_task.pack(), 66);
 
 		verifier
-			.verify_value<std::uint32_t>(58, "packet length")
+			.verify_value<std::uint32_t>(66, "packet length")
 			.verify_value<std::uint32_t>(3, "packet ID")
 			.verify_value<std::uint32_t>(10, "request ID")
 			.verify_value<std::uint32_t>(5, "parent ID")
@@ -227,7 +227,7 @@ TEST_CASE("Create Task", "[message]")
 	SECTION("Unpack")
 	{
 		PacketTestHelper helper;
-		helper.expect_packet<CreateTaskMessage>(create_task, 58);
+		helper.expect_packet<CreateTaskMessage>(create_task, 66);
 	}
 }
 
@@ -312,7 +312,7 @@ TEST_CASE("Update Task", "[message]")
 
 		update_task.print(ss);
 
-		auto expected_text = "UpdateTaskMessage { packetType: 15, requestID: 10, taskID: 5, parentID: 1, name: \"this is a test\", labels { \"one\", \"two\", }, timeCodes: [ 1, 2, ] }";
+		auto expected_text = "UpdateTaskMessage { packetType: 15, requestID: 10, taskID: 5, parentID: 1, name: \"this is a test\", labels { \"one\", \"two\", }, timeCodes: [ [ 1 2 ], [ 2 3 ], ] }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -333,10 +333,10 @@ TEST_CASE("Update Task", "[message]")
 
 	SECTION("Pack")
 	{
-		auto verifier = PacketVerifier(update_task.pack(), 62);
+		auto verifier = PacketVerifier(update_task.pack(), 70);
 
 		verifier
-			.verify_value<std::uint32_t>(62, "packet length")
+			.verify_value<std::uint32_t>(70, "packet length")
 			.verify_value<std::uint32_t>(15, "packet ID")
 			.verify_value<std::uint32_t>(10, "request ID")
 			.verify_value<std::uint32_t>(5, "task ID")
@@ -350,7 +350,7 @@ TEST_CASE("Update Task", "[message]")
 	SECTION("Unpack")
 	{
 		PacketTestHelper helper;
-		helper.expect_packet<UpdateTaskMessage>(update_task, 62);
+		helper.expect_packet<UpdateTaskMessage>(update_task, 70);
 	}
 }
 
@@ -512,7 +512,7 @@ TEST_CASE("Time Categories Data", "[messages]")
 
 		data.print(ss);
 
-		auto expected_text = "TimeCategoriesData { packetType: 27, TimeCategory { id: 5, name: one, label: one, inUse: 0, taskCount: 0, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
+		auto expected_text = "TimeEntryDataPacket { packetType: 27, TimeCategory { id: 5, name: one, label: one, inUse: 0, taskCount: 0, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -602,7 +602,7 @@ TEST_CASE("Time Categories Modify", "[messages]")
 
 		modify.print(ss);
 
-		auto expected_text = "TimeCategoriesModify { packetType: 28, requestID: 10, type: 0, TimeCategory { id: 5, name: one, label: one, inUse: 0, taskCount: 0, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
+		auto expected_text = "TimeEntryModifyPacket { packetType: 28, requestID: 10, type: 0, TimeCategory { id: 5, name: one, label: one, inUse: 0, taskCount: 0, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
 
 		CHECK(ss.str() == expected_text);
 

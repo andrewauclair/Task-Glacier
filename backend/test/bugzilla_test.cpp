@@ -308,7 +308,7 @@ TEST_CASE("Bugzilla Persistence", "[bugzilla][api]")
 		helper.clock.time += std::chrono::hours(2);
 		helper.expect_success(refresh);
 
-		CHECK(helper.fileOutput.str() == "create 1 0 1737344939870 (6 test 1)\ntask-time-codes 1 0 \nbugzilla-config bugzilla asfesdFEASfslj\ntest\n1\nseverity\n2\nPriority\npriority\nStatus\nstatus\nbugzilla-refresh bugzilla 1737345839870\nbugzilla-refresh bugzilla 1737353939870\n");
+		CHECK(helper.fileOutput.str() == "create 1 0 1737344939870 (6 test 1)\ntask-time-codes 1 0 0 \nbugzilla-config bugzilla asfesdFEASfslj\ntest\n1\nseverity\n2\nPriority\npriority\nStatus\nstatus\nbugzilla-refresh bugzilla 1737345839870\nbugzilla-refresh bugzilla 1737353939870\n");
 	}
 
 	SECTION("Load")
