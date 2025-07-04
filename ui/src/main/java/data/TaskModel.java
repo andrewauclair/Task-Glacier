@@ -83,7 +83,7 @@ public class TaskModel {
 
         task.state = info.state;
         task.createTime = info.createTime;
-        task.times = new ArrayList<>(info.times);
+        task.sessions = new ArrayList<>(info.sessions);
         task.labels = new ArrayList<>(info.labels);
         task.timeCodes = new ArrayList<>(info.timeCodes);
 

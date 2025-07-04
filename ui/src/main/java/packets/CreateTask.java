@@ -1,5 +1,7 @@
 package packets;
 
+import data.TimeData;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,7 +13,7 @@ public class CreateTask implements Packet {
     private final String name;
     private final int parentID;
     private List<String> labels = new ArrayList<>();
-    private List<Integer> timeCodes = new ArrayList<>();
+    private List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
 
     public CreateTask(String name, int parentID, int requestID) {
         this.name = name;
@@ -26,7 +28,7 @@ public class CreateTask implements Packet {
         for (String label : labels) {
             size += label.length();
         }
-        size += 4 + (timeCodes.size() * 4);
+        size += 4 + (timeEntry.size() * 4);
         output.writeInt(size);
         output.writeInt(PacketType.CREATE_TASK.value());
         output.writeInt(requestID);
@@ -40,10 +42,11 @@ public class CreateTask implements Packet {
             Packet.writeString(output, label);
         }
 
-        output.writeInt(timeCodes.size());
+        output.writeInt(timeEntry.size());
 
-        for (Integer timeCode : timeCodes) {
-            output.writeInt(timeCode);
+        for (TimeData.TimeEntry entry : timeEntry) {
+            output.writeInt(entry.category);
+            output.writeInt(entry.code);
         }
     }
 }

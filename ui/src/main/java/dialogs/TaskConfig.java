@@ -70,7 +70,7 @@ public class TaskConfig extends JDialog {
         Sessions(Task task) {
             add(new JLabel(getClass().toGenericString()));
 
-            for (TaskInfo.TaskTime time : task.times) {
+            for (TaskInfo.Session session : task.sessions) {
 
             }
         }

@@ -1,6 +1,7 @@
 package packets;
 
 import data.Task;
+import data.TimeData;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -13,7 +14,7 @@ public class UpdateTask implements Packet {
     private int parentID;
     private final String name;
     private List<String> labels = new ArrayList<>();
-    public List<Integer> timeCodes = new ArrayList<>();
+    public List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
 
     public UpdateTask(int requestID, Task task) {
         this.requestID = requestID;
@@ -37,7 +38,7 @@ public class UpdateTask implements Packet {
         for (String label : labels) {
             size += label.length();
         }
-        size += 4 + (timeCodes.size() * 4);
+        size += 4 + (timeEntry.size() * 4);
         output.writeInt(size);
         output.writeInt(PacketType.UPDATE_TASK.value());
         output.writeInt(requestID);
@@ -51,10 +52,11 @@ public class UpdateTask implements Packet {
             Packet.writeString(output, label);
         }
 
-        output.writeInt(timeCodes.size());
+        output.writeInt(timeEntry.size());
 
-        for (Integer timeCode : timeCodes) {
-            output.writeInt(timeCode);
+        for (TimeData.TimeEntry entry : timeEntry) {
+            output.writeInt(entry.category);
+            output.writeInt(entry.code);
         }
     }
 }

@@ -16,7 +16,7 @@ public class Task {
 
     public List<Task> children = new ArrayList<>();
 
-    public List<TaskInfo.TaskTime> times = new ArrayList<>();
+    public List<TaskInfo.Session> sessions = new ArrayList<>();
 
     public List<String> labels = new ArrayList<>();
     public List<TimeData.TimeCode> timeCodes = new ArrayList<>();

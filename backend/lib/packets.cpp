@@ -411,6 +411,8 @@ std::vector<std::byte> TaskInfoMessage::pack() const
 	builder.add(parentID);
 	builder.add(state);
 	builder.add(newTask);
+	builder.add(serverControlled);
+	builder.add(locked);
 	builder.add(name);
 	builder.add(createTime);
 	builder.add(finishTime.has_value());
@@ -423,6 +425,14 @@ std::vector<std::byte> TaskInfoMessage::pack() const
 		builder.add(time.start);
 		builder.add(time.stop.has_value());
 		builder.add(time.stop.value_or(std::chrono::milliseconds(0)));
+
+		builder.add(static_cast<std::int32_t>(time.timeEntry.size()));
+
+		for (auto&& entry : time.timeEntry)
+		{
+			builder.add(entry.categoryID);
+			builder.add(entry.codeID);
+		}
 	}
 
 	builder.add(static_cast<std::int32_t>(labels.size()));
@@ -452,6 +462,8 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 	const auto parentID = parser.parse_next<TaskID>();
 	const auto state = parser.parse_next<TaskState>();
 	const auto newTask = parser.parse_next<bool>();
+	const auto serverControlled = parser.parse_next<bool>();
+	const auto locked = parser.parse_next<bool>();
 	const auto name = parser.parse_next<std::string>();
 
 	try
@@ -459,6 +471,8 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 		auto info = TaskInfoMessage(taskID.value(), parentID.value(), name.value());
 		info.state = state.value();
 		info.newTask = newTask.value();
+		info.serverControlled = serverControlled.value();
+		info.locked = locked.value();
 
 		info.createTime = parser.parse_next_immediate<std::chrono::milliseconds>();
 
@@ -484,6 +498,15 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 				times.stop = parser.parse_next_immediate<std::chrono::milliseconds>();
 			}
 
+			const auto entryCount = parser.parse_next_immediate<std::int32_t>();
+
+			for (std::int32_t j = 0; j < entryCount; j++)
+			{
+				auto category = parser.parse_next_immediate<TimeCategoryID>();
+				auto code = parser.parse_next_immediate<TimeCodeID>();
+
+				times.timeEntry.emplace_back(category, code);
+			}
 			info.times.push_back(times);
 		}
 

@@ -21,11 +21,12 @@ public class TaskInfo implements Packet {
     public Instant createTime;
     public Optional<Instant> finishTime;
 
-    public static class TaskTime {
+    public static class Session {
         public Instant startTime;
         public Optional<Instant> stopTime;
+        public List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
     }
-    public List<TaskTime> times = new ArrayList<>();
+    public List<Session> sessions = new ArrayList<>();
 
     public List<String> labels = new ArrayList<>();
 
@@ -39,6 +40,8 @@ public class TaskInfo implements Packet {
         info.parentID = input.readInt();
         info.state = TaskState.valueOf(input.readInt());
         info.newTask = input.readByte() != 0;
+        input.readByte();
+        input.readByte();
 
         info.name = Packet.parseString(input);
 
@@ -56,7 +59,7 @@ public class TaskInfo implements Packet {
         int timesCount = input.readInt();// number of times
 
         for (int i = 0; i < timesCount; i++) {
-            TaskTime time = new TaskTime();
+            Session time = new Session();
 
             time.startTime = Instant.ofEpochMilli(input.readLong()); // start time
             boolean stopPresent = input.readByte() != 0;// stop present
@@ -69,7 +72,17 @@ public class TaskInfo implements Packet {
             else {
                 time.stopTime = Optional.empty();
             }
-            info.times.add(time);
+
+            int timeEntryCount = input.readInt();
+
+            for (int j = 0; j < timeEntryCount; j++) {
+                TimeData.TimeEntry entry = new TimeData.TimeEntry();
+                entry.category = input.readInt();
+                entry.code = input.readInt();
+
+                time.timeEntry.add(entry);
+            }
+            info.sessions.add(time);
         }
 
         int labelCount = input.readInt();

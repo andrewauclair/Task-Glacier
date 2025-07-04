@@ -19,6 +19,11 @@ public class TimeData {
         public List<TimeCode> timeCodes = new ArrayList<>();
     }
 
+    public static class TimeEntry {
+        public int category;
+        public int code;
+    }
+
     List<TimeCategory> timeCategories = new ArrayList<>();
 
     public void processPacket(TimeCategoriesMessage data) {
