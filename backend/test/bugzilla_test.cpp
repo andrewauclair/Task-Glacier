@@ -32,7 +32,7 @@ TEST_CASE("Configuring Bugzilla Information", "[bugzilla][api]")
 
 		helper.api.process_packet(request, helper.output);
 
-		auto timeCategories = TimeCategoriesData({});
+		auto timeCategories = TimeEntryDataPacket({});
 		auto complete = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
 
 		helper.required_messages({ &configure, &timeCategories, &complete });
@@ -66,7 +66,7 @@ TEST_CASE("Configuring Multiple Bugzilla Instances", "bugzilla[api]")
 
 		helper.api.process_packet(request, helper.output);
 
-		auto timeCategories = TimeCategoriesData({});
+		auto timeCategories = TimeEntryDataPacket({});
 		auto complete = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
 
 		helper.required_messages({ &configure, &configure2, &timeCategories, &complete });
@@ -332,7 +332,7 @@ TEST_CASE("Bugzilla Persistence", "[bugzilla][api]")
 		configure.labelToField["Priority"] = "priority";
 		configure.labelToField["Status"] = "status";
 
-		auto timeCategories = TimeCategoriesData({});
+		auto timeCategories = TimeEntryDataPacket({});
 		auto complete = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
 
 		helper.required_messages({ &configure, &timeCategories, &complete });

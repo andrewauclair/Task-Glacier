@@ -36,25 +36,25 @@ std::expected<TaskID, std::string> MicroTask::create_task(const std::string& nam
 	return std::expected<TaskID, std::string>(id);
 }
 
-std::optional<std::string> MicroTask::configure_task_time_codes(TaskID taskID, std::span<const TimeCodeID> timeCodes)
+std::optional<std::string> MicroTask::configure_task_time_entry(TaskID taskID, std::span<const TimeEntry> timeEntry)
 {
 	auto* task = find_task(taskID);
 
 	if (task)
 	{
-		task->timeCodes = std::vector<TimeCodeID>(timeCodes.begin(), timeCodes.end());
+		task->timeEntry = std::vector<TimeEntry>(timeEntry.begin(), timeEntry.end());
 
 		*m_output << "task-time-codes " << task->m_taskID._val << ' ';
 		
-		if (task->timeCodes.empty())
+		if (task->timeEntry.empty())
 		{
 			*m_output << "0 ";
 		}
 		else
 		{
-			for (auto&& code : task->timeCodes)
+			for (auto&& time : task->timeEntry)
 			{
-				*m_output << code._val << ' ';
+				*m_output << time.categoryID._val << ' ' << time.codeID._val << ' ';
 			}
 		}
 		*m_output << std::endl;
@@ -131,38 +131,38 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 		task->state = TaskState::ACTIVE;
 		TaskTimes& times = task->m_times.emplace_back(m_clock->now());
 
-		if (task->timeCodes.empty())
+		if (task->timeEntry.empty())
 		{
 			auto* parent = find_task(task->parentID());
 
-			while (parent && parent->timeCodes.empty())
+			while (parent && parent->timeEntry.empty())
 			{
 				parent = find_task(parent->parentID());
 			}
 
 			if (parent)
 			{
-				std::copy(parent->timeCodes.begin(), parent->timeCodes.end(), std::back_inserter(times.timeCodes));
+				std::copy(parent->timeEntry.begin(), parent->timeEntry.end(), std::back_inserter(times.timeEntry));
 			}
 		}
 		else
 		{
-			std::copy(task->timeCodes.begin(), task->timeCodes.end(), std::back_inserter(times.timeCodes));
+			std::copy(task->timeEntry.begin(), task->timeEntry.end(), std::back_inserter(times.timeEntry));
 		}
 
 		m_activeTask = task;
 
 		*m_output << "start " << id._val << ' ' << m_clock->now().count() << ' ';
 
-		if (task->timeCodes.empty())
+		if (task->timeEntry.empty())
 		{
 			*m_output << "0 ";
 		}
 		else
 		{
-			for (auto&& code : task->timeCodes)
+			for (auto&& code : task->timeEntry)
 			{
-				*m_output << code._val << ' ';
+				*m_output << code.categoryID._val << ' ' << code.codeID._val << ' ';
 			}
 		}
 		*m_output << std::endl;
@@ -341,14 +341,14 @@ void MicroTask::load_from_file(std::istream& input)
 
 				if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
 
-				task->timeCodes.clear();
+				task->timeEntry.clear();
 
 				for (int i = 2; i < values.size(); i++)
 				{
 					auto code = TimeCodeID(std::stoi(values[i]));
 					if (code._val != 0)
 					{
-						task->timeCodes.push_back(code);
+						//task->timeEntry.push_back(code);
 					}
 				}
 			}
@@ -377,7 +377,7 @@ void MicroTask::load_from_file(std::istream& input)
 					auto code = TimeCodeID(std::stoi(values[i]));
 					if (code._val != 0)
 					{
-						times.timeCodes.push_back(code);
+						//times.timeCodes.push_back(code);
 					}
 				}
 			}

@@ -40,7 +40,7 @@ private:
 
 	void send_task_info(const Task& task, bool newTask, std::vector<std::unique_ptr<Message>>& output);
 
-	void time_categories_modify(const TimeCategoriesModify& message, std::vector<std::unique_ptr<Message>>& output);
+	void time_entry_modify(const TimeEntryModifyPacket& message, std::vector<std::unique_ptr<Message>>& output);
 
 	DailyReportMessage create_daily_report(RequestID requestID, int month, int day, int year);
 	void create_weekly_report(RequestID requestID, int month, int day, int year, std::vector<std::unique_ptr<Message>>& output);

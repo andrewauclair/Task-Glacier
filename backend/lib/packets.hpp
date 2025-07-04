@@ -65,11 +65,19 @@ struct std::formatter<TimeCategoryID> : std::formatter<std::int32_t> {
 	}
 };
 
+struct TimeEntry
+{
+	TimeCategoryID categoryID;
+	TimeCodeID codeID;
+
+	constexpr auto operator<=>(const TimeEntry&) const = default;
+};
+
 struct TaskTimes
 {
 	std::chrono::milliseconds start = std::chrono::milliseconds(0);
 	std::optional<std::chrono::milliseconds> stop;
-	std::vector<TimeCodeID> timeCodes;
+	std::vector<TimeEntry> timeEntry;
 };
 
 struct TimeCode
@@ -168,9 +176,12 @@ enum class PacketType : std::int32_t
 	// backup has failed. error message and last successful backup time are provided
 	BACKUP_FAILED = 25,
 
-	TIME_CATEGORIES_REQUEST = 26,
-	TIME_CATEGORIES_DATA = 27,
-	TIME_CATEGORIES_MODIFY = 28,
+	TIME_ENTRY_REQUEST = 26,
+	TIME_ENTRY_DATA = 27,
+	TIME_ENTRY_MODIFY = 28,
+
+	START_UNKNOWN_TASK = 29,
+	ASSIGN_UNKNOWN_TASK = 30,
 };
 
 struct Message
@@ -242,7 +253,7 @@ struct CreateTaskMessage : RequestMessage
 	TaskID parentID;
 	std::string name;
 	std::vector<std::string> labels;
-	std::vector<TimeCodeID> timeCodes;
+	std::vector<TimeEntry> timeEntry;
 
 	CreateTaskMessage(TaskID parentID, RequestID requestID, std::string name) : RequestMessage(PacketType::CREATE_TASK, requestID), parentID(parentID), name(std::move(name)) {}
 
@@ -257,7 +268,7 @@ struct CreateTaskMessage : RequestMessage
 	
 	bool operator==(const CreateTaskMessage& message) const
 	{
-		return parentID == message.parentID && requestID == message.requestID && name == message.name && labels == message.labels && timeCodes == message.timeCodes;
+		return parentID == message.parentID && requestID == message.requestID && name == message.name && labels == message.labels && timeEntry == message.timeEntry;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -275,9 +286,9 @@ struct CreateTaskMessage : RequestMessage
 		}
 		out << "}";
 		out << ", timeCodes: [ ";
-		for (auto code : timeCodes)
+		for (auto time : timeEntry)
 		{
-			out << code._val << ", ";
+			out << std::format("[ {} {} ]", time.categoryID._val, time.codeID._val) << ", ";
 		}
 		out << "] }";
 
@@ -296,7 +307,7 @@ struct UpdateTaskMessage : RequestMessage
 	TaskID parentID;
 	std::string name;
 	std::vector<std::string> labels;
-	std::vector<TimeCodeID> timeCodes;
+	std::vector<TimeEntry> timeEntry;
 
 	UpdateTaskMessage(RequestID requestID, TaskID taskID, TaskID parentID, std::string name) : RequestMessage(PacketType::UPDATE_TASK, requestID), taskID(taskID), parentID(parentID), name(std::move(name)) {}
 
@@ -311,7 +322,7 @@ struct UpdateTaskMessage : RequestMessage
 
 	bool operator==(const UpdateTaskMessage& message) const
 	{
-		return requestID == message.requestID && taskID == message.taskID && parentID == message.parentID && name == message.name && labels == message.labels && timeCodes == message.timeCodes;
+		return requestID == message.requestID && taskID == message.taskID && parentID == message.parentID && name == message.name && labels == message.labels && timeEntry == message.timeEntry;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -329,9 +340,9 @@ struct UpdateTaskMessage : RequestMessage
 		}
 		out << "}";
 		out << ", timeCodes: [ ";
-		for (auto code : timeCodes)
+		for (auto time : timeEntry)
 		{
-			out << code._val << ", ";
+			out << std::format("[ {} {} ]", time.categoryID, time.codeID) << ", ";
 		}
 		out << "] }";
 		return out;
@@ -392,34 +403,34 @@ enum class TimeCategoryModType
 	REMOVE_CODE = 3
 };
 
-struct TimeCategoriesData : Message
+struct TimeEntryDataPacket : Message
 {
 	std::vector<TimeCategory> timeCategories;
 
-	TimeCategoriesData(std::vector<TimeCategory> timeCategories) : Message(PacketType::TIME_CATEGORIES_DATA), timeCategories(std::move(timeCategories))
+	TimeEntryDataPacket(std::vector<TimeCategory> timeCategories) : Message(PacketType::TIME_ENTRY_DATA), timeCategories(std::move(timeCategories))
 	{
 	}
 
 	bool operator==(const Message& message) const override
 	{
-		if (const auto* other = dynamic_cast<const TimeCategoriesData*>(&message))
+		if (const auto* other = dynamic_cast<const TimeEntryDataPacket*>(&message))
 		{
 			return *this == *other;
 		}
 		return false;
 	}
 
-	bool operator==(const TimeCategoriesData& message) const
+	bool operator==(const TimeEntryDataPacket& message) const
 	{
 		return packetType() == message.packetType() && timeCategories == message.timeCategories;
 	}
 
 	std::vector<std::byte> pack() const override;
-	static std::expected<TimeCategoriesData, UnpackError> unpack(std::span<const std::byte> data);
+	static std::expected<TimeEntryDataPacket, UnpackError> unpack(std::span<const std::byte> data);
 
 	std::ostream& print(std::ostream& out) const override
 	{
-		out << "TimeCategoriesData { ";
+		out << "TimeEntryDataPacket { ";
 		Message::print(out);
 
 		if (!timeCategories.empty())
@@ -435,43 +446,42 @@ struct TimeCategoriesData : Message
 		return out;
 	}
 
-	friend std::ostream& operator<<(std::ostream& out, const TimeCategoriesData& message)
+	friend std::ostream& operator<<(std::ostream& out, const TimeEntryDataPacket& message)
 	{
 		message.print(out);
 		return out;
 	}
 };
 
-struct TimeCategoriesModify : RequestMessage
+struct TimeEntryModifyPacket : RequestMessage
 {
 	TimeCategoryModType type;
 	std::vector<TimeCategory> timeCategories;
 
-	TimeCategoriesModify(RequestID requestID, TimeCategoryModType type, std::vector<TimeCategory> timeCategories) : RequestMessage(PacketType::TIME_CATEGORIES_MODIFY, requestID), type(type), timeCategories(std::move(timeCategories))
+	TimeEntryModifyPacket(RequestID requestID, TimeCategoryModType type, std::vector<TimeCategory> timeCategories) : RequestMessage(PacketType::TIME_ENTRY_MODIFY, requestID), type(type), timeCategories(std::move(timeCategories))
 	{
-
 	}
 
 	bool operator==(const Message& message) const override
 	{
-		if (const auto* other = dynamic_cast<const TimeCategoriesModify*>(&message))
+		if (const auto* other = dynamic_cast<const TimeEntryModifyPacket*>(&message))
 		{
 			return *this == *other;
 		}
 		return false;
 	}
 
-	bool operator==(const TimeCategoriesModify& message) const
+	bool operator==(const TimeEntryModifyPacket& message) const
 	{
 		return packetType() == message.packetType() && requestID == message.requestID && type == message.type && timeCategories == message.timeCategories;
 	}
 
 	std::vector<std::byte> pack() const override;
-	static std::expected<TimeCategoriesModify, UnpackError> unpack(std::span<const std::byte> data);
+	static std::expected<TimeEntryModifyPacket, UnpackError> unpack(std::span<const std::byte> data);
 
 	std::ostream& print(std::ostream& out) const override
 	{
-		out << "TimeCategoriesModify { ";
+		out << "TimeEntryModifyPacket { ";
 		RequestMessage::print(out);
 		
 		out << ", type: " << static_cast<int>(type);
@@ -489,7 +499,7 @@ struct TimeCategoriesModify : RequestMessage
 		return out;
 	}
 
-	friend std::ostream& operator<<(std::ostream& out, const TimeCategoriesModify& message)
+	friend std::ostream& operator<<(std::ostream& out, const TimeEntryModifyPacket& message)
 	{
 		message.print(out);
 		return out;
@@ -615,6 +625,8 @@ struct TaskInfoMessage : Message
 	TaskID parentID;
 	TaskState state = TaskState::INACTIVE;
 	bool newTask = false;
+	bool serverControlled = false;
+	bool locked = false;
 
 	std::string name;
 
@@ -623,7 +635,7 @@ struct TaskInfoMessage : Message
 	std::vector<TaskTimes> times;
 	
 	std::vector<std::string> labels;
-	std::vector<TimeCodeID> timeCodes;
+	std::vector<TimeEntry> timeEntry;
 
 	TaskInfoMessage(TaskID taskID, TaskID parentID, std::string name, std::chrono::milliseconds createTime = std::chrono::milliseconds(0)) : Message(PacketType::TASK_INFO), taskID(taskID), parentID(parentID), name(std::move(name)), createTime(createTime) {}
 	
@@ -650,14 +662,14 @@ struct TaskInfoMessage : Message
 				return false;
 			}
 
-			if (times[i].timeCodes.size() != message.times[i].timeCodes.size())
+			if (times[i].timeEntry.size() != message.times[i].timeEntry.size())
 			{
 				return false;
 			}
 
-			for (std::size_t j = 0; j < times[i].timeCodes.size(); j++)
+			for (std::size_t j = 0; j < times[i].timeEntry.size(); j++)
 			{
-				if (times[i].timeCodes[j] != message.times[i].timeCodes[j])
+				if (times[i].timeEntry[j] != message.times[i].timeEntry[j])
 				{
 					return false;
 				}
@@ -677,20 +689,29 @@ struct TaskInfoMessage : Message
 			}
 		}
 
-		if (timeCodes.size() != message.timeCodes.size())
+		if (timeEntry.size() != message.timeEntry.size())
 		{
 			return false;
 		}
 
-		for (std::size_t i = 0; i < timeCodes.size(); i++)
+		for (std::size_t i = 0; i < timeEntry.size(); i++)
 		{
-			if (timeCodes[i] != message.timeCodes[i])
+			if (timeEntry[i].categoryID != message.timeEntry[i].categoryID ||
+				timeEntry[i].codeID != message.timeEntry[i].codeID)
 			{
 				return false;
 			}
 		}
 
-		return taskID == message.taskID && parentID == message.parentID && state == message.state && newTask == message.newTask && name == message.name && createTime == message.createTime && finishTime == message.finishTime;
+		return taskID == message.taskID && 
+			parentID == message.parentID && 
+			state == message.state && 
+			newTask == message.newTask && 
+			serverControlled == message.serverControlled &&
+			locked == message.locked &&
+			name == message.name && 
+			createTime == message.createTime && 
+			finishTime == message.finishTime;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -703,9 +724,9 @@ struct TaskInfoMessage : Message
 		{
 			out << "{ start: " << time.start.count() << ", stop: " << (time.stop.has_value() ? std::to_string(time.stop.value().count()) : "nullopt");
 			out << ", time codes: [ ";
-			for (auto&& code : time.timeCodes)
+			for (auto&& code : time.timeEntry)
 			{
-				out << code._val;
+				out << std::format("[ {} {} ]", code.categoryID._val, code.codeID._val);
 				out << ", ";
 			}
 			out << "]";
@@ -720,9 +741,9 @@ struct TaskInfoMessage : Message
 		}
 		out << "]\n";
 		out << "time codes: [ ";
-		for (auto&& code : timeCodes)
+		for (auto&& code : timeEntry)
 		{
-			out << code._val;
+			out << std::format("[ {} {} ]", code.categoryID, code.codeID);
 			out << ", ";
 		}
 		out << "]";
@@ -1337,12 +1358,12 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 			result.packet = std::make_unique<RequestWeeklyReportMessage>(RequestWeeklyReportMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 			break;
-		case TIME_CATEGORIES_DATA:
-			result.packet = std::make_unique<TimeCategoriesData>(TimeCategoriesData::unpack(bytes.subspan(4)).value());
+		case TIME_ENTRY_DATA:
+			result.packet = std::make_unique<TimeEntryDataPacket>(TimeEntryDataPacket::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 			break;
-		case TIME_CATEGORIES_MODIFY:
-			result.packet = std::make_unique<TimeCategoriesModify>(TimeCategoriesModify::unpack(bytes.subspan(4)).value());
+		case TIME_ENTRY_MODIFY:
+			result.packet = std::make_unique<TimeEntryModifyPacket>(TimeEntryModifyPacket::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 			break;
 		default:

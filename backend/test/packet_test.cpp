@@ -114,7 +114,7 @@ TEST_CASE("Create Task", "[message]")
 {
 	auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
 	create_task.labels = { "one", "two" };
-	create_task.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+	create_task.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 	CAPTURE(create_task);
 
@@ -134,7 +134,7 @@ TEST_CASE("Create Task", "[message]")
 		{
 			auto create_task2 = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
 			create_task2.labels = { "one", "two" };
-			create_task2.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+			create_task2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 			CAPTURE(create_task2);
 
 			const Message* message = &create_task2;
@@ -147,7 +147,7 @@ TEST_CASE("Create Task", "[message]")
 	{
 		auto create_task2 = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
 		create_task2.labels = { "one", "two" };
-		create_task2.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+		create_task2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 		CAPTURE(create_task2);
 
 		CHECK(create_task == create_task2);
@@ -157,7 +157,7 @@ TEST_CASE("Create Task", "[message]")
 	{
 		auto create_task2 = CreateTaskMessage(TaskID(15), RequestID(10), "this is a test");
 		create_task2.labels = { "one", "two" };
-		create_task2.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+		create_task2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 		CAPTURE(create_task2);
 
 		CHECK(!(create_task == create_task2));
@@ -175,7 +175,7 @@ TEST_CASE("Create Task", "[message]")
 		CHECK(!(create_task == create_task2));
 
 		create_task2.name = create_task.name;
-		create_task2.timeCodes.push_back(TimeCodeID(1));
+		create_task2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 		CAPTURE(create_task2);
 
 		CHECK(!(create_task == create_task2));
@@ -235,7 +235,7 @@ TEST_CASE("Update Task", "[message]")
 {
 	auto update_task = UpdateTaskMessage(RequestID(10), TaskID(5), TaskID(1), "this is a test");
 	update_task.labels = { "one", "two" };
-	update_task.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+	update_task.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 	CAPTURE(update_task);
 
@@ -255,7 +255,7 @@ TEST_CASE("Update Task", "[message]")
 		{
 			auto update_task2 = UpdateTaskMessage(RequestID(10), TaskID(5), TaskID(1), "this is a test");
 			update_task2.labels = { "one", "two" };
-			update_task2.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+			update_task2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 			CAPTURE(update_task2);
 
 			const Message* message = &update_task2;
@@ -268,7 +268,7 @@ TEST_CASE("Update Task", "[message]")
 	{
 		auto update_task2 = UpdateTaskMessage(RequestID(10), TaskID(5), TaskID(1), "this is a test");
 		update_task2.labels = { "one", "two" };
-		update_task2.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+		update_task2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 		CAPTURE(update_task2);
 
 		CHECK(update_task == update_task2);
@@ -278,7 +278,7 @@ TEST_CASE("Update Task", "[message]")
 	{
 		auto update_task2 = UpdateTaskMessage(RequestID(10), TaskID(15), TaskID(1), "this is a test");
 		update_task2.labels = { "one", "two" };
-		update_task2.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+		update_task2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 		CAPTURE(update_task2);
 
 		CHECK(!(update_task == update_task2));
@@ -462,7 +462,7 @@ TEST_CASE("Time Categories Data", "[messages]")
 	std::vector<TimeCategory> timeCategories;
 	timeCategories.emplace_back(TimeCategory{ TimeCategoryID(5), "one", "one", std::vector{TimeCode{TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}}});
 
-	const auto data = TimeCategoriesData(timeCategories);
+	const auto data = TimeEntryDataPacket(timeCategories);
 	CAPTURE(data);
 
 	SECTION("Compare - Through Message")
@@ -479,7 +479,7 @@ TEST_CASE("Time Categories Data", "[messages]")
 
 		SECTION("Match")
 		{
-			auto data2 = TimeCategoriesData(timeCategories);
+			auto data2 = TimeEntryDataPacket(timeCategories);
 			CAPTURE(data2);
 
 			const Message* message = &data2;
@@ -490,7 +490,7 @@ TEST_CASE("Time Categories Data", "[messages]")
 
 	SECTION("Compare - Directly")
 	{
-		auto data2 = TimeCategoriesData(timeCategories);
+		auto data2 = TimeEntryDataPacket(timeCategories);
 		CAPTURE(data2);
 
 		CHECK(data == data2);
@@ -500,7 +500,7 @@ TEST_CASE("Time Categories Data", "[messages]")
 	{
 		std::vector<TimeCategory> timeCategories2;
 		timeCategories2.emplace_back(TimeCategory{ TimeCategoryID(5), "two", "two", std::vector{TimeCode{TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}}});
-		auto data2 = TimeCategoriesData(timeCategories2);
+		auto data2 = TimeEntryDataPacket(timeCategories2);
 		CAPTURE(data2);
 
 		CHECK(!(data == data2));
@@ -537,13 +537,13 @@ TEST_CASE("Time Categories Data", "[messages]")
 
 		verifier
 			.verify_value<std::uint32_t>(62, "packet length")
-			.verify_value(static_cast<std::int32_t>(PacketType::TIME_CATEGORIES_DATA), "packet ID");
+			.verify_value(static_cast<std::int32_t>(PacketType::TIME_ENTRY_DATA), "packet ID");
 	}
 
 	SECTION("Unpack")
 	{
 		PacketTestHelper helper;
-		helper.expect_packet<TimeCategoriesData>(data, 62);
+		helper.expect_packet<TimeEntryDataPacket>(data, 62);
 	}
 }
 
@@ -552,7 +552,7 @@ TEST_CASE("Time Categories Modify", "[messages]")
 	std::vector<TimeCategory> timeCategories;
 	timeCategories.emplace_back(TimeCategory{ TimeCategoryID(5), "one", "one", std::vector{TimeCode{TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}}});
 
-	const auto modify = TimeCategoriesModify(RequestID(10), TimeCategoryModType::ADD, timeCategories);
+	const auto modify = TimeEntryModifyPacket(RequestID(10), TimeCategoryModType::ADD, timeCategories);
 	CAPTURE(modify);
 
 	SECTION("Compare - Through Message")
@@ -569,7 +569,7 @@ TEST_CASE("Time Categories Modify", "[messages]")
 
 		SECTION("Match")
 		{
-			auto modify2 = TimeCategoriesModify(RequestID(10), TimeCategoryModType::ADD, timeCategories);
+			auto modify2 = TimeEntryModifyPacket(RequestID(10), TimeCategoryModType::ADD, timeCategories);
 			CAPTURE(modify2);
 
 			const Message* message = &modify2;
@@ -580,7 +580,7 @@ TEST_CASE("Time Categories Modify", "[messages]")
 
 	SECTION("Compare - Directly")
 	{
-		auto modify2 = TimeCategoriesModify(RequestID(10), TimeCategoryModType::ADD, timeCategories);
+		auto modify2 = TimeEntryModifyPacket(RequestID(10), TimeCategoryModType::ADD, timeCategories);
 		CAPTURE(modify2);
 
 		CHECK(modify == modify2);
@@ -590,7 +590,7 @@ TEST_CASE("Time Categories Modify", "[messages]")
 	{
 		std::vector<TimeCategory> timeCategories2;
 		timeCategories2.emplace_back(TimeCategory{ TimeCategoryID(5), "two", "two", std::vector{TimeCode{TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}}});
-		auto modify2 = TimeCategoriesModify(RequestID(15), TimeCategoryModType::ADD, timeCategories2);
+		auto modify2 = TimeEntryModifyPacket(RequestID(15), TimeCategoryModType::ADD, timeCategories2);
 		CAPTURE(modify2);
 
 		CHECK(!(modify == modify2));
@@ -627,14 +627,14 @@ TEST_CASE("Time Categories Modify", "[messages]")
 
 		verifier
 			.verify_value<std::uint32_t>(55, "packet length")
-			.verify_value(static_cast<std::int32_t>(PacketType::TIME_CATEGORIES_MODIFY), "packet ID")
+			.verify_value(static_cast<std::int32_t>(PacketType::TIME_ENTRY_MODIFY), "packet ID")
 			.verify_value<std::uint32_t>(10, "request ID");
 	}
 
 	SECTION("Unpack")
 	{
 		PacketTestHelper helper;
-		helper.expect_packet<TimeCategoriesModify>(modify, 55);
+		helper.expect_packet<TimeEntryModifyPacket>(modify, 55);
 	}
 }
 

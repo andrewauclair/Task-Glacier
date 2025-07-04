@@ -28,7 +28,7 @@ private:
 	std::chrono::milliseconds m_createTime;
 
 public:
-	std::vector<TimeCodeID> timeCodes;
+	std::vector<TimeEntry> timeEntry;
 	std::vector<TaskTimes> m_times;
 	std::optional<std::chrono::milliseconds> m_finishTime;
 
@@ -68,7 +68,7 @@ public:
 
 	std::expected<TaskID, std::string> create_task(const std::string& name, TaskID parentID = NO_PARENT);
 
-	std::optional<std::string> configure_task_time_codes(TaskID taskID, std::span<const TimeCodeID> timeCodes);
+	std::optional<std::string> configure_task_time_entry(TaskID taskID, std::span<const TimeEntry> timeEntry);
 
 	Task* active_task() const { return m_activeTask; }
 	Task* find_task(TaskID id);

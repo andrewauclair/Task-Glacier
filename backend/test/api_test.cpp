@@ -47,10 +47,10 @@ TEST_CASE("Create Task", "[api][task]")
 		helper.required_messages({ &taskInfo });
 	}
 
-	SECTION("Success - Create Task Time Codes")
+	SECTION("Success - Create Task Time Entry")
 	{
 		auto create = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1");
-		create.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+		create.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		helper.expect_success(create);
 
@@ -60,7 +60,7 @@ TEST_CASE("Create Task", "[api][task]")
 		taskInfo.state = TaskState::INACTIVE;
 		taskInfo.newTask = true;
 
-		taskInfo.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+		taskInfo.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 		
 		helper.required_messages({ &taskInfo });
 	}
@@ -86,7 +86,7 @@ TEST_CASE("Create Task", "[api][task]")
 	SECTION("Persist")
 	{
 		auto create = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test");
-		create.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+		create.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		helper.expect_success(create);
 
@@ -186,7 +186,7 @@ TEST_CASE("Start Task", "[api][task]")
 		helper.required_messages({ &taskInfo });
 	}
 
-	SECTION("Persist - Without Time Codes")
+	SECTION("Persist - Without Time Entry")
 	{
 		auto create = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1");
 		helper.expect_success(create);
@@ -199,10 +199,10 @@ TEST_CASE("Start Task", "[api][task]")
 		CHECK(helper.fileOutput.str() == "start 1 1737346739870 0 \n");
 	}
 
-	SECTION("Persist - With Time Codes")
+	SECTION("Persist - With Time Entry")
 	{
 		auto create = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1");
-		create.timeCodes = std::vector{ TimeCodeID(1), TimeCodeID(2) };
+		create.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		helper.expect_success(create);
 
@@ -215,15 +215,14 @@ TEST_CASE("Start Task", "[api][task]")
 	}
 }
 
-TEST_CASE("Start Task - Time Codes", "[api][task]")
+TEST_CASE("Start Task - Time Entry", "[api][task]")
 {
 	TestHelper helper;
 
 	SECTION("Success")
 	{
 		CreateTaskMessage create(NO_PARENT, helper.next_request_id(), "test 1");
-		create.timeCodes.push_back(TimeCodeID(1));
-		create.timeCodes.push_back(TimeCodeID(10));
+		create.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		helper.expect_success(create);
 		
@@ -235,14 +234,12 @@ TEST_CASE("Start Task - Time Codes", "[api][task]")
 
 		TaskTimes times;
 		times.start = std::chrono::milliseconds(1737345839870);
-		times.timeCodes.push_back(TimeCodeID(1));
-		times.timeCodes.push_back(TimeCodeID(10));
+		times.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		taskInfo.times.push_back(times);
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
-		taskInfo.timeCodes.push_back(TimeCodeID(1));
-		taskInfo.timeCodes.push_back(TimeCodeID(10));
+		taskInfo.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		helper.required_messages({ &taskInfo });
 	}
@@ -250,14 +247,12 @@ TEST_CASE("Start Task - Time Codes", "[api][task]")
 	SECTION("Time codes on task take priority over parent")
 	{
 		CreateTaskMessage create1(NO_PARENT, helper.next_request_id(), "test 1");
-		create1.timeCodes.push_back(TimeCodeID(1));
-		create1.timeCodes.push_back(TimeCodeID(10));
+		create1.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		helper.expect_success(create1);
 
 		CreateTaskMessage create2(TaskID(1), helper.next_request_id(), "test 2");
-		create2.timeCodes.push_back(TimeCodeID(2));
-		create2.timeCodes.push_back(TimeCodeID(20));
+		create2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		helper.expect_success(create2);
 
@@ -271,14 +266,12 @@ TEST_CASE("Start Task - Time Codes", "[api][task]")
 
 		TaskTimes times;
 		times.start = std::chrono::milliseconds(1737347639870);
-		times.timeCodes.push_back(TimeCodeID(2));
-		times.timeCodes.push_back(TimeCodeID(20));
+		times.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		taskInfo.times.push_back(times);
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
-		taskInfo.timeCodes.push_back(TimeCodeID(2));
-		taskInfo.timeCodes.push_back(TimeCodeID(20));
+		taskInfo.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		helper.required_messages({ &taskInfo });
 	}
@@ -286,8 +279,7 @@ TEST_CASE("Start Task - Time Codes", "[api][task]")
 	SECTION("Inherit from parent if no time codes are found for task")
 	{
 		CreateTaskMessage create1(NO_PARENT, helper.next_request_id(), "test 1");
-		create1.timeCodes.push_back(TimeCodeID(1));
-		create1.timeCodes.push_back(TimeCodeID(10));
+		create1.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		helper.expect_success(create1);
 
@@ -305,8 +297,7 @@ TEST_CASE("Start Task - Time Codes", "[api][task]")
 
 		TaskTimes times;
 		times.start = std::chrono::milliseconds(1737347639870);
-		times.timeCodes.push_back(TimeCodeID(1));
-		times.timeCodes.push_back(TimeCodeID(10));
+		times.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		taskInfo.times.push_back(times);
 		taskInfo.state = TaskState::ACTIVE;
@@ -318,8 +309,7 @@ TEST_CASE("Start Task - Time Codes", "[api][task]")
 	SECTION("Move to next parent if parent has no time codes")
 	{
 		CreateTaskMessage create1(NO_PARENT, helper.next_request_id(), "test 1");
-		create1.timeCodes.push_back(TimeCodeID(1));
-		create1.timeCodes.push_back(TimeCodeID(10));
+		create1.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		helper.expect_success(create1);
 
@@ -339,8 +329,7 @@ TEST_CASE("Start Task - Time Codes", "[api][task]")
 
 		TaskTimes times;
 		times.start = std::chrono::milliseconds(1737349439870);
-		times.timeCodes.push_back(TimeCodeID(1));
-		times.timeCodes.push_back(TimeCodeID(10));
+		times.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		taskInfo.times.push_back(times);
 		taskInfo.state = TaskState::ACTIVE;
@@ -730,8 +719,7 @@ TEST_CASE("Modify Task", "[api][task]")
 		helper.clear_file_output();
 
 		UpdateTaskMessage update(helper.next_request_id(), TaskID(1), NO_PARENT, "test");
-		update.timeCodes.push_back(TimeCodeID(1));
-		update.timeCodes.push_back(TimeCodeID(2));
+		update.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		// TODO validate that time codes are valid
 		helper.expect_success(update);
@@ -741,8 +729,7 @@ TEST_CASE("Modify Task", "[api][task]")
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.state = TaskState::INACTIVE;
 		taskInfo.newTask = false;
-		taskInfo.timeCodes.push_back(TimeCodeID(1));
-		taskInfo.timeCodes.push_back(TimeCodeID(2));
+		taskInfo.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		helper.required_messages({ &taskInfo });
 	}
@@ -754,8 +741,7 @@ TEST_CASE("Modify Task", "[api][task]")
 		helper.clear_file_output();
 
 		UpdateTaskMessage update(helper.next_request_id(), TaskID(1), NO_PARENT, "test");
-		update.timeCodes.push_back(TimeCodeID(1));
-		update.timeCodes.push_back(TimeCodeID(2));
+		update.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		// TODO validate that time codes are valid
 		helper.expect_success(update);
@@ -787,13 +773,13 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Success - Add Time Category")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 		auto& newCategory = modify.timeCategories.emplace_back(TimeCategoryID(0), "New", "NEW");
 		newCategory.codes.emplace_back(TimeCodeID(0), "Code 1");
 
 		helper.expect_success(modify);
 
-		auto data = TimeCategoriesData({});
+		auto data = TimeEntryDataPacket({});
 		auto& verifyCategory = data.timeCategories.emplace_back(TimeCategoryID(1), "New", "NEW");
 		verifyCategory.codes.emplace_back(TimeCodeID(1), "Code 1");
 
@@ -803,7 +789,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 	SECTION("Success - Add Time Code")
 	{
 		{
-			auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+			auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 			auto& newCategory = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
 
 			helper.expect_success(modify);
@@ -812,14 +798,14 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 		helper.clear_message_output();
 
 		{
-			auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+			auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 			auto& newCategory = modify.timeCategories.emplace_back(TimeCategoryID(1), "New");
 			newCategory.codes.emplace_back(TimeCodeID(0), "Code 1");
 
 			helper.expect_success(modify);
 		}
 
-		auto data = TimeCategoriesData({});
+		auto data = TimeEntryDataPacket({});
 		auto& verifyCategory = data.timeCategories.emplace_back(TimeCategoryID(1), "New");
 		verifyCategory.codes.emplace_back(TimeCodeID(1), "Code 1");
 
@@ -828,13 +814,13 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Success - Add Multiple Time Categories")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 		modify.timeCategories.emplace_back(TimeCategoryID(0), "New 1");
 		modify.timeCategories.emplace_back(TimeCategoryID(0), "New 2");
 
 		helper.expect_success(modify);
 
-		auto data = TimeCategoriesData({});
+		auto data = TimeEntryDataPacket({});
 		data.timeCategories.emplace_back(TimeCategoryID(1), "New 1");
 		data.timeCategories.emplace_back(TimeCategoryID(2), "New 2");
 
@@ -843,7 +829,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Success - Add Multiple Time Codes")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 		
 		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 1");
 		category1.codes.emplace_back(TimeCodeID(0), "Code 1");
@@ -855,7 +841,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 		helper.expect_success(modify);
 
-		auto data = TimeCategoriesData({});
+		auto data = TimeEntryDataPacket({});
 
 		auto& verifyCategory1 = data.timeCategories.emplace_back(TimeCategoryID(1), "New 1");
 		verifyCategory1.codes.emplace_back(TimeCodeID(1), "Code 1");
@@ -870,7 +856,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Success - Update Time Category Name")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 
 		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 1");
 		category1.codes.emplace_back(TimeCodeID(0), "Code 1");
@@ -879,7 +865,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 		helper.expect_success(modify);
 		helper.clear_message_output();
 
-		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 		modify.timeCategories.emplace_back(TimeCategoryID(1), "New Name");
 
 		helper.expect_success(modify);
@@ -887,7 +873,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Success - Update Time Code Name")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 
 		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 1");
 		category1.codes.emplace_back(TimeCodeID(0), "Code 1");
@@ -896,7 +882,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 		helper.expect_success(modify);
 		helper.clear_message_output();
 
-		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 		auto& cat1 = modify.timeCategories.emplace_back(TimeCategoryID(1), "New 1");
 		cat1.codes.emplace_back(TimeCodeID(1), "Code One");
 		cat1.codes.emplace_back(TimeCodeID(2), "Code One");
@@ -906,7 +892,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Success - Delete Time Category")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 
 		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 1");
 		category1.codes.emplace_back(TimeCodeID(0), "Code 1");
@@ -920,13 +906,13 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 		helper.clear_message_output();
 
-		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::REMOVE_CATEGORY, {});
+		modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::REMOVE_CATEGORY, {});
 
 		modify.timeCategories.emplace_back(TimeCategoryID(2), "New 2");
 
 		helper.expect_success(modify);
 
-		auto data = TimeCategoriesData({});
+		auto data = TimeEntryDataPacket({});
 
 		auto& verifyCategory1 = data.timeCategories.emplace_back(TimeCategoryID(1), "New 1");
 		verifyCategory1.codes.emplace_back(TimeCodeID(1), "Code 1");
@@ -937,7 +923,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Success - Delete Time Code")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 
 		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 1");
 		category1.codes.emplace_back(TimeCodeID(0), "Code 1");
@@ -951,14 +937,14 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 		helper.clear_message_output();
 
-		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::REMOVE_CODE, {});
+		modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::REMOVE_CODE, {});
 
 		auto& toRemove = modify.timeCategories.emplace_back(TimeCategoryID(2), "New 2");
 		toRemove.codes.emplace_back(TimeCodeID(4), "Code 4");
 
 		helper.expect_success(modify);
 
-		auto data = TimeCategoriesData({});
+		auto data = TimeEntryDataPacket({});
 
 		auto& verifyCategory1 = data.timeCategories.emplace_back(TimeCategoryID(1), "New 1");
 		verifyCategory1.codes.emplace_back(TimeCodeID(1), "Code 1");
@@ -972,13 +958,13 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Success - Fine to Have Same Time Code in Multiple Time Categories")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 
 		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 1");
 		category1.codes.emplace_back(TimeCodeID(0), "Code 1");
 		category1.codes.emplace_back(TimeCodeID(0), "Code 2");
 
-		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 		helper.expect_success(modify);
 
 		auto& category2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New 2");
@@ -990,14 +976,14 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Failure - Time Category Already Exists")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 
 		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
 
 		helper.expect_success(modify);
 		helper.clear_message_output();
 
-		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 		
 		auto& category2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
 
@@ -1006,7 +992,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Failure - Time Category Does Not Exist")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::UPDATE, {});
+		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::UPDATE, {});
 		modify.timeCategories.emplace_back(TimeCategoryID(1), "Update");
 		
 		helper.expect_failure(modify, "Time Category with ID 1 does not exist");
@@ -1014,7 +1000,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Failure - Time Code Already Exists")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 
 		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
 		category1.codes.emplace_back(TimeCodeID(0), "Code 1");
@@ -1022,7 +1008,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 		helper.expect_success(modify);
 		helper.clear_message_output();
 
-		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 
 		auto& category2 = modify.timeCategories.emplace_back(TimeCategoryID(1), "New");
 		category2.codes.emplace_back(TimeCodeID(0), "Code 1");
@@ -1032,14 +1018,14 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Failure - Time Code Does Not Exist for Update")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 
 		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
 
 		helper.expect_success(modify);
 		helper.clear_message_output();
 
-		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::UPDATE, {});
+		modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::UPDATE, {});
 		auto& cat1 = modify.timeCategories.emplace_back(TimeCategoryID(1), "New");
 		cat1.codes.emplace_back(TimeCodeID(1), "Code 1");
 
@@ -1048,14 +1034,14 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 	SECTION("Failure - Time Code Does Not Exist for Remove Code")
 	{
-		auto modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 
 		auto& category1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
 
 		helper.expect_success(modify);
 		helper.clear_message_output();
 
-		modify = TimeCategoriesModify(helper.next_request_id(), TimeCategoryModType::REMOVE_CODE, {});
+		modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::REMOVE_CODE, {});
 		auto& cat1 = modify.timeCategories.emplace_back(TimeCategoryID(1), "New");
 		cat1.codes.emplace_back(TimeCodeID(1), "Code 1");
 
@@ -1293,10 +1279,8 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		auto create2 = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 2");
 		auto create3 = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 3");
 
-		create1.timeCodes.push_back(TimeCodeID(1));
-		create1.timeCodes.push_back(TimeCodeID(2));
-		create2.timeCodes.push_back(TimeCodeID(3));
-		create2.timeCodes.push_back(TimeCodeID(4));
+		create1.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		create2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(3), TimeCodeID(4)}, TimeEntry{TimeCategoryID(4), TimeCodeID(5)} };
 
 		helper.expect_success(create1);
 		helper.expect_success(create2);
@@ -1366,8 +1350,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		auto create2 = CreateTaskMessage(TaskID(1), helper.next_request_id(), "test 2");
 		auto create3 = CreateTaskMessage(TaskID(2), helper.next_request_id(), "test 3");
 
-		create1.timeCodes.push_back(TimeCodeID(1));
-		create1.timeCodes.push_back(TimeCodeID(2));
+		create1.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 		helper.expect_success(create1);
 		helper.expect_success(create2);
@@ -1587,7 +1570,7 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	task5.createTime = std::chrono::milliseconds(1737357539870);
 	task6.createTime = std::chrono::milliseconds(1737361139870);
 
-	task1.times.emplace_back(std::chrono::milliseconds(1737379139870), std::nullopt, std::vector<TimeCodeID>{ TimeCodeID(1), TimeCodeID(2) });
+	task1.times.emplace_back(std::chrono::milliseconds(1737379139870), std::nullopt, std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} });
 	task2.times.emplace_back(std::chrono::milliseconds(1737348539870), std::chrono::milliseconds(1737352139870));
 	task2.times.emplace_back(std::chrono::milliseconds(1737362939870), std::chrono::milliseconds(1737364739870));
 	task3.times.emplace_back(std::chrono::milliseconds(1737353939870), std::chrono::milliseconds(1737359339870));
@@ -1599,8 +1582,7 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	task3.finishTime = std::chrono::milliseconds(1737370139870);
 	task4.finishTime = std::chrono::milliseconds(1737368339870);
 
-	task1.timeCodes.push_back(TimeCodeID(1));
-	task1.timeCodes.push_back(TimeCodeID(2));
+	task1.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 	verify_message(task1, *output[0]);
 	verify_message(task2, *output[1]);
@@ -1631,7 +1613,7 @@ TEST_CASE("Persist Time Categories", "[api]")
 	tg1.codes.push_back(TimeCode{ TimeCodeID(0), "Buz z" });
 	timeCategories.push_back(tg1);
 
-	auto add_category1 = TimeCategoriesModify(RequestID(2), TimeCategoryModType::ADD, timeCategories);
+	auto add_category1 = TimeEntryModifyPacket(RequestID(2), TimeCategoryModType::ADD, timeCategories);
 
 	api.process_packet(add_category1, output);
 
@@ -1640,7 +1622,7 @@ TEST_CASE("Persist Time Categories", "[api]")
 	tg2.codes.push_back(TimeCode{ TimeCodeID(0), "Biz z" });
 	timeCategories.push_back(tg2);
 
-	auto add_category2 = TimeCategoriesModify(RequestID(3), TimeCategoryModType::ADD, timeCategories);
+	auto add_category2 = TimeEntryModifyPacket(RequestID(3), TimeCategoryModType::ADD, timeCategories);
 
 	api.process_packet(add_category2, output);
 
@@ -1655,7 +1637,7 @@ TEST_CASE("Persist Time Categories", "[api]")
 	tg1.codes.push_back(TimeCode{ TimeCodeID(3), "Buz z" });
 	timeCategories.push_back(tg1);
 
-	auto update_category = TimeCategoriesModify(RequestID(4), TimeCategoryModType::UPDATE, timeCategories);
+	auto update_category = TimeEntryModifyPacket(RequestID(4), TimeCategoryModType::UPDATE, timeCategories);
 	api.process_packet(update_category, output);
 
 	timeCategories.clear();
@@ -1667,7 +1649,7 @@ TEST_CASE("Persist Time Categories", "[api]")
 	tg1.codes.push_back(TimeCode{ TimeCodeID(3), "Buz z" });
 	timeCategories.push_back(tg1);
 
-	auto remove_code = TimeCategoriesModify(RequestID(5), TimeCategoryModType::REMOVE_CODE, timeCategories);
+	auto remove_code = TimeEntryModifyPacket(RequestID(5), TimeCategoryModType::REMOVE_CODE, timeCategories);
 	api.process_packet(remove_code, output);
 	
 	timeCategories.clear();
@@ -1676,7 +1658,7 @@ TEST_CASE("Persist Time Categories", "[api]")
 	tg1.label = "TSTR";
 	timeCategories.push_back(tg1);
 
-	auto remove_category = TimeCategoriesModify(RequestID(5), TimeCategoryModType::REMOVE_CATEGORY, timeCategories);
+	auto remove_category = TimeEntryModifyPacket(RequestID(5), TimeCategoryModType::REMOVE_CATEGORY, timeCategories);
 	api.process_packet(remove_category, output);
 
 	std::ostringstream expected;
@@ -1697,7 +1679,7 @@ TEST_CASE("Persist Time Categories", "[api]")
 
 	REQUIRE(output.size() == 3);
 
-	auto timeCategoriesData = TimeCategoriesData({});
+	auto timeCategoriesData = TimeEntryDataPacket({});
 	auto& cat2 = timeCategoriesData.timeCategories.emplace_back(TimeCategoryID(2), "Tw o", "TW O");
 	cat2.codes.emplace_back(TimeCodeID(4), "Biz z");
 
@@ -1736,7 +1718,7 @@ TEST_CASE("Reload Time Categories", "[api]")
 
 	verify_message(task1, *output[0]);
 
-	auto timeCategoriesData = TimeCategoriesData({});
+	auto timeCategoriesData = TimeEntryDataPacket({});
 	auto& cat2 = timeCategoriesData.timeCategories.emplace_back(TimeCategoryID(2), "Tw o", "TW O");
 	cat2.codes.emplace_back(TimeCodeID(4), "Biz z");
 
@@ -1768,7 +1750,7 @@ TEST_CASE("request configuration at startup", "[api]")
 	api.process_packet(create_task_5, output);
 	api.process_packet(create_task_6, output);
 
-	auto timeCategories = TimeCategoriesModify(RequestID(1), TimeCategoryModType::ADD, {});
+	auto timeCategories = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
 	auto& category1 = timeCategories.timeCategories.emplace_back(TimeCategoryID(0), "Foo", "F");
 	category1.codes.emplace_back(TimeCodeID(0), "Fizz");
 	category1.codes.emplace_back(TimeCodeID(0), "Buzz");
@@ -1791,7 +1773,7 @@ TEST_CASE("request configuration at startup", "[api]")
 	verify_message(TaskInfoMessage(TaskID(5), TaskID(3), "task 5", std::chrono::milliseconds(1737351239870)), *output[4]);
 	verify_message(TaskInfoMessage(TaskID(6), TaskID(4), "task 6", std::chrono::milliseconds(1737353039870)), *output[5]);
 
-	auto timeCategoriesData = TimeCategoriesData({});
+	auto timeCategoriesData = TimeEntryDataPacket({});
 	
 	verify_message(timeCategoriesData, *output[6]);
 

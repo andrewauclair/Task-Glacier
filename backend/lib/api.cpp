@@ -45,10 +45,10 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 		create_weekly_report(request.requestID, request.month, request.day, request.year, output);
 		break;
 	}
-	case PacketType::TIME_CATEGORIES_MODIFY:
-		time_categories_modify(static_cast<const TimeCategoriesModify&>(message), output);
+	case PacketType::TIME_ENTRY_MODIFY:
+		time_entry_modify(static_cast<const TimeEntryModifyPacket&>(message), output);
 		break;
-	case PacketType::TIME_CATEGORIES_REQUEST:
+	case PacketType::TIME_ENTRY_REQUEST:
 		break;
 	case PacketType::BUGZILLA_INFO:
 	{
@@ -258,7 +258,7 @@ void API::create_task(const CreateTaskMessage& message, std::vector<std::unique_
 	{
 		auto* task = m_app.find_task(result.value());
 
-		m_app.configure_task_time_codes(task->taskID(), message.timeCodes);
+		m_app.configure_task_time_entry(task->taskID(), message.timeEntry);
 
 		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
 
@@ -350,22 +350,22 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 	{
 		result = m_app.reparent_task(message.taskID, message.parentID);
 	}
-	else if (message.timeCodes.size() != task->timeCodes.size())
+	else if (message.timeEntry.size() != task->timeEntry.size())
 	{
 		// TODO validation of time codes, make sure they exist
-		task->timeCodes = message.timeCodes;
+		task->timeEntry = message.timeEntry;
 
 		*m_output << "task-time-codes " << task->taskID()._val << ' ';
 
-		if (task->timeCodes.empty())
+		if (task->timeEntry.empty())
 		{
 			*m_output << "0 ";
 		}
 		else
 		{
-			for (auto&& code : task->timeCodes)
+			for (auto&& code : task->timeEntry)
 			{
-				*m_output << code._val << ' ';
+				//*m_output << code._val << ' ';
 			}
 		}
 		*m_output << std::endl;
@@ -423,7 +423,7 @@ void API::handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<
 			output.push_back(std::make_unique<BugzillaInfoMessage>(bugzilla));
 		}
 
-		TimeCategoriesData data({});
+		TimeEntryDataPacket data({});
 
 		for (auto&& category : m_app.timeCategories())
 		{
@@ -437,7 +437,7 @@ void API::handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<
 			}
 			data.timeCategories.push_back(packet);
 		}
-		output.push_back(std::make_unique<TimeCategoriesData>(data));
+		output.push_back(std::make_unique<TimeEntryDataPacket>(data));
 
 		output.push_back(std::make_unique<BasicMessage>(PacketType::REQUEST_CONFIGURATION_COMPLETE));
 	}
@@ -452,13 +452,13 @@ void API::send_task_info(const Task& task, bool newTask, std::vector<std::unique
 	info->finishTime = task.m_finishTime;
 	info->newTask = newTask;
 	info->times = task.m_times;
-	info->timeCodes = task.timeCodes;
+	info->timeEntry = task.timeEntry;
 	info->labels = task.labels;
 
 	output.push_back(std::move(info));
 }
 
-void API::time_categories_modify(const TimeCategoriesModify& message, std::vector<std::unique_ptr<Message>>& output)
+void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<std::unique_ptr<Message>>& output)
 {
 	for (auto&& category : message.timeCategories)
 	{
@@ -625,7 +625,7 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 	}
 	output.push_back(std::make_unique<SuccessResponse>(message.requestID));
 
-	TimeCategoriesData data({});
+	TimeEntryDataPacket data({});
 
 	for (auto&& category : m_app.timeCategories())
 	{
@@ -639,7 +639,7 @@ void API::time_categories_modify(const TimeCategoriesModify& message, std::vecto
 		}
 		data.timeCategories.push_back(packet);
 	}
-	output.push_back(std::make_unique<TimeCategoriesData>(data));
+	output.push_back(std::make_unique<TimeEntryDataPacket>(data));
 }
 
 DailyReportMessage API::create_daily_report(RequestID requestID, int month, int day, int year)
@@ -677,14 +677,14 @@ DailyReportMessage API::create_daily_report(RequestID requestID, int month, int 
 
 				report.report.totalTime += timeForTask;
 
-				if (times.timeCodes.empty())
+				if (times.timeEntry.empty())
 				{
 					report.report.timePerTimeCode[TimeCodeID(0)] += timeForTask;
 				}
 
-				for (auto&& timeCode : times.timeCodes)
+				for (auto&& timeCode : times.timeEntry)
 				{
-					report.report.timePerTimeCode[timeCode] += timeForTask;
+					//report.report.timePerTimeCode[timeCode] += timeForTask;
 				}
 			}
 			else // task is still active
@@ -693,14 +693,14 @@ DailyReportMessage API::create_daily_report(RequestID requestID, int month, int 
 
 				report.report.totalTime += timeForTask;
 
-				if (times.timeCodes.empty())
+				if (times.timeEntry.empty())
 				{
 					report.report.timePerTimeCode[TimeCodeID(0)] += timeForTask;
 				}
 
-				for (auto&& timeCode : times.timeCodes)
+				for (auto&& timeCode : times.timeEntry)
 				{
-					report.report.timePerTimeCode[timeCode] += timeForTask;
+					//report.report.timePerTimeCode[timeCode] += timeForTask;
 				}
 			}
 
