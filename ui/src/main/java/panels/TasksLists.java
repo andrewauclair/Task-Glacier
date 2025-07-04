@@ -323,7 +323,9 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
 
                     contextMenu.add(config);
 
-                    if (mainFrame.getTaskModel().getActiveTaskID().isPresent() && !mainFrame.getTaskModel().taskHasNonFinishedChildren(mainFrame.getTaskModel().getActiveTaskID().get())) {
+                    if (mainFrame.getTaskModel().getActiveTaskID().isPresent() &&
+                            !mainFrame.getTaskModel().taskHasNonFinishedChildren(mainFrame.getTaskModel().getActiveTaskID().get()) &&
+                            !mainFrame.getTaskModel().getTask(mainFrame.getTaskModel().getActiveTaskID().get()).locked) {
                         contextMenu.add(startStopActive);
                         contextMenu.add(startFinishActive);
                     }
@@ -335,7 +337,6 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
                     contextMenu.add(finish);
                     contextMenu.addSeparator();
                     contextMenu.add(addSubTask);
-                    contextMenu.addSeparator();
 
                     TreePath pathForRow = table.getPathForRow(selectedRow);
                     TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
@@ -344,7 +345,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
                     startStopActive.setEnabled(task.state == TaskState.INACTIVE);
                     startFinishActive.setEnabled(task.state == TaskState.INACTIVE);
                     stop.setEnabled(task.state == TaskState.ACTIVE);
-                    finish.setEnabled(task.state != TaskState.FINISHED);
+                    finish.setEnabled(task.state != TaskState.FINISHED && !mainFrame.getTaskModel().taskHasNonFinishedChildren(task.id) && !task.locked);
 
                     // task has subtasks, allow an option to open it in a new panel
                     if (!node.isLeaf()) {

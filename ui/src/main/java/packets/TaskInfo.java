@@ -16,6 +16,9 @@ public class TaskInfo implements Packet {
     public int parentID = 0;
     public TaskState state = TaskState.INACTIVE;
     public boolean newTask = false;
+    public boolean serverControlled = false;
+    public boolean locked = false;
+
     public String name = "";
 
     public Instant createTime;
@@ -40,8 +43,8 @@ public class TaskInfo implements Packet {
         info.parentID = input.readInt();
         info.state = TaskState.valueOf(input.readInt());
         info.newTask = input.readByte() != 0;
-        input.readByte();
-        input.readByte();
+        info.serverControlled = input.readByte() != 0;
+        info.locked = input.readByte() != 0;
 
         info.name = Packet.parseString(input);
 

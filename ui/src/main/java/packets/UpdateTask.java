@@ -12,6 +12,8 @@ public class UpdateTask implements Packet {
     private int requestID;
     private int taskID;
     private int parentID;
+    public boolean serverControlled = false;
+    public boolean locked = false;
     private final String name;
     private List<String> labels = new ArrayList<>();
     public List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
@@ -32,7 +34,7 @@ public class UpdateTask implements Packet {
     }
 
     public void writeToOutput(DataOutputStream output) throws IOException {
-        int size = 20; // size, packet type, request ID, task ID, parent ID
+        int size = 22; // size, packet type, request ID, task ID, parent ID, server controlled, locked
         size += 2 + name.length();
         size += 4 + (labels.size() * 2); // labels size, label string lengths
         for (String label : labels) {
@@ -44,6 +46,8 @@ public class UpdateTask implements Packet {
         output.writeInt(requestID);
         output.writeInt(taskID);
         output.writeInt(parentID);
+        output.writeByte(serverControlled ? 1 : 0);
+        output.writeByte(locked ? 1 : 0);
         Packet.writeString(output, name);
 
         output.writeInt(labels.size());

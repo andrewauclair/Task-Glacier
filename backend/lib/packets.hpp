@@ -305,6 +305,8 @@ struct UpdateTaskMessage : RequestMessage
 {
 	TaskID taskID;
 	TaskID parentID;
+	bool serverControlled = false;
+	bool locked = false;
 	std::string name;
 	std::vector<std::string> labels;
 	std::vector<TimeEntry> timeEntry;

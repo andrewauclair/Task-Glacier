@@ -28,6 +28,9 @@ private:
 	std::chrono::milliseconds m_createTime;
 
 public:
+	bool serverControlled = false;
+	bool locked = false;
+
 	std::vector<TimeEntry> timeEntry;
 	std::vector<TaskTimes> m_times;
 	std::optional<std::chrono::milliseconds> m_finishTime;

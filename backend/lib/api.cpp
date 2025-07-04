@@ -341,6 +341,9 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 		return;
 	}
 
+	// TODO test and persist
+	task->locked = message.locked;
+
 	std::optional<std::string> result;
 	if (message.name != task->m_name)
 	{
@@ -451,6 +454,8 @@ void API::send_task_info(const Task& task, bool newTask, std::vector<std::unique
 	info->createTime = task.createTime();
 	info->finishTime = task.m_finishTime;
 	info->newTask = newTask;
+	info->serverControlled = task.serverControlled;
+	info->locked = task.locked;
 	info->times = task.m_times;
 	info->timeEntry = task.timeEntry;
 	info->labels = task.labels;

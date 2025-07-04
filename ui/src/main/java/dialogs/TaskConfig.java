@@ -85,7 +85,7 @@ public class TaskConfig extends JDialog {
         public void save(Task task, ServerConnection connection) {
             if (hasChanges(task)) {
                 // send packet
-                UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task.id, Integer.parseInt(parent.getText()), name.getToolTipText());
+                UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task.id, Integer.parseInt(parent.getText()), name.getText());
                 connection.sendPacket(update);
             }
         }

@@ -81,6 +81,9 @@ public class TaskModel {
             newTask = true;
         }
 
+        task.serverControlled = info.serverControlled;
+        task.locked = info.locked;
+        
         task.state = info.state;
         task.createTime = info.createTime;
         task.sessions = new ArrayList<>(info.sessions);

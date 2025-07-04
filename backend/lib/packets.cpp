@@ -97,6 +97,8 @@ std::vector<std::byte> UpdateTaskMessage::pack() const
 	builder.add(requestID);
 	builder.add(taskID);
 	builder.add(parentID);
+	builder.add(serverControlled);
+	builder.add(locked);
 	builder.add(name);
 	builder.add(static_cast<std::int32_t>(labels.size()));
 	for (auto&& label : labels)
@@ -120,6 +122,8 @@ std::expected<UpdateTaskMessage, UnpackError> UpdateTaskMessage::unpack(std::spa
 	const auto requestID = parser.parse_next<RequestID>();
 	const auto taskID = parser.parse_next<TaskID>();
 	const auto parentID = parser.parse_next<TaskID>();
+	const auto serverControlled = parser.parse_next<bool>();
+	const auto locked = parser.parse_next<bool>();
 	const auto name = parser.parse_next<std::string>();
 
 	try
@@ -127,6 +131,8 @@ std::expected<UpdateTaskMessage, UnpackError> UpdateTaskMessage::unpack(std::spa
 		const auto labelCount = parser.parse_next_immediate<std::int32_t>();
 
 		auto update = UpdateTaskMessage(requestID.value(), taskID.value(), parentID.value(), name.value());
+		update.serverControlled = serverControlled.value();
+		update.locked = locked.value();
 
 		for (std::int32_t i = 0; i < labelCount; i++)
 		{
