@@ -1,5 +1,7 @@
 package packets;
 
+import data.TimeData;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -25,7 +27,7 @@ public class DailyReportMessage implements Packet {
         public Instant endTime;
         public Instant totalTime;
 
-        public Map<Integer, Instant> timesPerCode = new HashMap<>();
+        public Map<TimeData.TimeEntry, Instant> timesPerTimeEntry = new HashMap<>();
 
         public static class TimePair {
             public int taskID;
@@ -70,10 +72,15 @@ public class DailyReportMessage implements Packet {
             int count = input.readInt();
 
             for (int i = 0; i < count; i++) {
+                int timeCategoryID = input.readInt();
                 int timeCodeID = input.readInt();
                 Instant time = Instant.ofEpochMilli(input.readLong());
 
-                message.report.timesPerCode.put(timeCodeID, time);
+                TimeData.TimeEntry entry = new TimeData.TimeEntry();
+                entry.category = timeCategoryID;
+                entry.code = timeCodeID;
+
+                message.report.timesPerTimeEntry.put(entry, time);
             }
 
             count = input.readInt();

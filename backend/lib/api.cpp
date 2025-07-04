@@ -684,12 +684,12 @@ DailyReportMessage API::create_daily_report(RequestID requestID, int month, int 
 
 				if (times.timeEntry.empty())
 				{
-					report.report.timePerTimeCode[TimeCodeID(0)] += timeForTask;
+					//report.report.timePerTimeEntry[TimeCodeID(0)] += timeForTask;
 				}
 
 				for (auto&& timeCode : times.timeEntry)
 				{
-					report.report.timePerTimeCode[timeCode.codeID] += timeForTask;
+					report.report.timePerTimeEntry[timeCode] += timeForTask;
 				}
 			}
 			else // task is still active
@@ -700,12 +700,12 @@ DailyReportMessage API::create_daily_report(RequestID requestID, int month, int 
 
 				if (times.timeEntry.empty())
 				{
-					report.report.timePerTimeCode[TimeCodeID(0)] += timeForTask;
+					//report.report.timePerTimeEntry[TimeCodeID(0)] += timeForTask;
 				}
 
 				for (auto&& timeCode : times.timeEntry)
 				{
-					report.report.timePerTimeCode[timeCode.codeID] += timeForTask;
+					report.report.timePerTimeEntry[timeCode] += timeForTask;
 				}
 			}
 

@@ -167,7 +167,7 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
         model.rows.clear();
         model.fireTableDataChanged();
 
-        Map<Integer, Row> rows = new HashMap<>();
+        Map<TimeData.TimeEntry, Row> rows = new HashMap<>();
 
         for (int i = 0; i < 7; i++) {
             DailyReportMessage.DailyReport report = this.report.reports[i];
@@ -177,7 +177,7 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
             if (report.found) {
                 final int index = i;
 
-                report.timesPerCode.forEach((timeCode, time) -> {
+                report.timesPerTimeEntry.forEach((timeEntry, time) -> {
                     long minutes = TimeUnit.MILLISECONDS.toMinutes(time.toEpochMilli());
 
                     minutes = Math.round(minutes / 15.0) * 15;
@@ -186,26 +186,17 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
                         minutes = 15;
                     }
 
-                    Row row = rows.getOrDefault(timeCode, new Row());
-                    row.category = mainFrame.getTimeData().timeCategoryForTimeCode(timeCode);
-                    if (row.category != null) {
-                        Optional<TimeData.TimeCode> first = row.category.timeCodes.stream().filter(timeCode1 -> timeCode1.id == timeCode).findFirst();
-                        if (first.isPresent()) {
-                            row.code = first.get();
-                        } else {
-                            row.code = new TimeData.TimeCode();
-                            row.code.id = 0;
-                        }
-                    }
-                    else {
-                        row.category = new TimeData.TimeCategory();
-                        row.category.name = "Unknown";
+                    Row row = rows.getOrDefault(timeEntry, new Row());
+                    row.category = mainFrame.getTimeData().findTimeCategory(timeEntry.category);
+                    row.code = mainFrame.getTimeData().findTimeCode(timeEntry.code);
+
+                    if (row.code == null) {
                         row.code = new TimeData.TimeCode();
                         row.code.id = 0;
                         row.code.name = "Unknown";
                     }
                     row.hours[index] = minutes / 60.0;
-                    rows.put(timeCode, row);
+                    rows.put(timeEntry, row);
                 });
             }
         }

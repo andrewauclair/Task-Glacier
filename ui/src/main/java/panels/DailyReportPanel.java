@@ -171,7 +171,7 @@ public class DailyReportPanel extends JPanel implements Dockable {
         model.fireTableDataChanged();
 
         if (report.found) {
-            report.timesPerCode.forEach((timeCode, time) -> {
+            report.timesPerTimeEntry.forEach((timeEntry, time) -> {
                 long minutes = TimeUnit.MILLISECONDS.toMinutes(time.toEpochMilli());
 
                 minutes = Math.round(minutes / 15.0) * 15;
@@ -181,19 +181,10 @@ public class DailyReportPanel extends JPanel implements Dockable {
                 }
 
                 Row row = new Row();
-                row.category = mainFrame.getTimeData().timeCategoryForTimeCode(timeCode);
-                if (row.category != null) {
-                    Optional<TimeData.TimeCode> first = row.category.timeCodes.stream().filter(timeCode1 -> timeCode1.id == timeCode).findFirst();
-                    if (first.isPresent()) {
-                        row.code = first.get();
-                    } else {
-                        row.code = new TimeData.TimeCode();
-                        row.code.id = 0;
-                    }
-                }
-                else {
-                    row.category = new TimeData.TimeCategory();
-                    row.category.name = "Unknown";
+                row.category = mainFrame.getTimeData().findTimeCategory(timeEntry.category);
+                row.code = mainFrame.getTimeData().findTimeCode(timeEntry.code);
+
+                if (row.code == null) {
                     row.code = new TimeData.TimeCode();
                     row.code.id = 0;
                     row.code.name = "Unknown";

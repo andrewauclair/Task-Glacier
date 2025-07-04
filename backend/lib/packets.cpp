@@ -680,12 +680,13 @@ std::vector<std::byte> DailyReportMessage::pack() const
 		builder.add(report.endTime);
 		builder.add(report.totalTime);
 
-		builder.add<std::int32_t>(report.timePerTimeCode.size());
+		builder.add<std::int32_t>(report.timePerTimeEntry.size());
 
-		for (auto&& timeCode : report.timePerTimeCode)
+		for (auto&& timeEntry : report.timePerTimeEntry)
 		{
-			builder.add(timeCode.first);
-			builder.add(timeCode.second);
+			builder.add(timeEntry.first.categoryID);
+			builder.add(timeEntry.first.codeID);
+			builder.add(timeEntry.second);
 		}
 
 		builder.add<std::int32_t>(report.times.size());
@@ -751,12 +752,13 @@ std::vector<std::byte> WeeklyReportMessage::pack() const
 			builder.add(report.endTime);
 			builder.add(report.totalTime);
 
-			builder.add<std::int32_t>(report.timePerTimeCode.size());
+			builder.add<std::int32_t>(report.timePerTimeEntry.size());
 
-			for (auto&& timeCode : report.timePerTimeCode)
+			for (auto&& timeEntry : report.timePerTimeEntry)
 			{
-				builder.add(timeCode.first);
-				builder.add(timeCode.second);
+				builder.add(timeEntry.first.categoryID);
+				builder.add(timeEntry.first.codeID);
+				builder.add(timeEntry.second);
 			}
 
 			builder.add<std::int32_t>(report.times.size());

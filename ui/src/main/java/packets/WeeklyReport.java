@@ -1,5 +1,7 @@
 package packets;
 
+import data.TimeData;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -34,10 +36,15 @@ public class WeeklyReport implements Packet {
                 int count = input.readInt();
 
                 for (int j = 0; j < count; j++) {
+                    int timeCategoryID = input.readInt();
                     int timeCodeID = input.readInt();
                     Instant time = Instant.ofEpochMilli(input.readLong());
 
-                    dailyReport.timesPerCode.put(timeCodeID, time);
+                    TimeData.TimeEntry entry = new TimeData.TimeEntry();
+                    entry.category = timeCategoryID;
+                    entry.code = timeCodeID;
+
+                    dailyReport.timesPerTimeEntry.put(entry, time);
                 }
 
                 count = input.readInt();

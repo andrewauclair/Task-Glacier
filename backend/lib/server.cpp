@@ -128,26 +128,58 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 			m_activeTask->state = TaskState::INACTIVE;
 			m_activeTask->m_times.back().stop = m_clock->now();
 		}
+
 		task->state = TaskState::ACTIVE;
 		TaskTimes& times = task->m_times.emplace_back(m_clock->now());
 
-		if (task->timeEntry.empty())
+		for (const TimeCategory& category : m_timeCategories)
 		{
-			auto* parent = find_task(task->parentID());
+			const auto findCategory = [category](const Task* task)
+				{
+					auto result = std::find_if(task->timeEntry.begin(), task->timeEntry.end(), [&](const TimeEntry& entry) { return entry.categoryID == category.id; });
 
-			while (parent && parent->timeEntry.empty())
-			{
-				parent = find_task(parent->parentID());
-			}
+					return result;
+				};
 
-			if (parent)
+			auto taskResult = findCategory(task);
+
+			// check if the task has this category, if it does not, move onto the parent
+			// if not found in the parent, fill with unknown
+			if (taskResult != task->timeEntry.end())
 			{
-				std::copy(parent->timeEntry.begin(), parent->timeEntry.end(), std::back_inserter(times.timeEntry));
+				times.timeEntry.push_back(*taskResult);
 			}
-		}
-		else
-		{
-			std::copy(task->timeEntry.begin(), task->timeEntry.end(), std::back_inserter(times.timeEntry));
+			else
+			{
+				// didn't find the category in the task, check the parents
+				auto* parent = find_task(task->parentID());
+
+				while (parent && findCategory(parent) == parent->timeEntry.end())
+				{
+					parent = find_task(parent->parentID());
+				}
+
+				if (parent)
+				{
+					auto result = findCategory(parent);
+
+					// if we found a parent with the category, use its time code
+					if (result != parent->timeEntry.end())
+					{
+						times.timeEntry.push_back(*result);
+					}
+					else
+					{
+						// if we didn't find a parent with the category, use unknown
+						times.timeEntry.emplace_back(category.id, TimeCodeID(0));
+					}
+				}
+				else
+				{
+					// if we didn't find a parent with the category, use unknown
+					times.timeEntry.emplace_back(category.id, TimeCodeID(0));
+				}
+			}
 		}
 
 		m_activeTask = task;

@@ -38,7 +38,7 @@ enum class TaskState : std::int32_t
 
 inline constexpr TaskID NO_PARENT = TaskID(0);
 
-using RequestID = strong::type<std::int32_t, struct request_id_, strong::equality, strong::incrementable, strong::ordered>;
+using RequestID = strong::type<std::int32_t, struct request_id_, strong::equality, strong::incrementable, strong::ordered, strong::partially_ordered>;
 
 template <>
 struct std::formatter<RequestID> : std::formatter<std::int32_t> {
@@ -47,7 +47,7 @@ struct std::formatter<RequestID> : std::formatter<std::int32_t> {
 	}
 };
 
-using TimeCodeID = strong::type<std::int32_t, struct time_code_id_, strong::equality, strong::incrementable, strong::ordered>;
+using TimeCodeID = strong::type<std::int32_t, struct time_code_id_, strong::equality, strong::incrementable, strong::ordered, strong::partially_ordered>;
 
 template <>
 struct std::formatter<TimeCodeID> : std::formatter<std::int32_t> {
@@ -56,7 +56,7 @@ struct std::formatter<TimeCodeID> : std::formatter<std::int32_t> {
 	}
 };
 
-using TimeCategoryID = strong::type<std::int32_t, struct time_category_id_, strong::equality, strong::incrementable, strong::ordered>;
+using TimeCategoryID = strong::type<std::int32_t, struct time_category_id_, strong::equality, strong::incrementable, strong::ordered, strong::partially_ordered>;
 
 template <>
 struct std::formatter<TimeCategoryID> : std::formatter<std::int32_t> {
@@ -917,7 +917,7 @@ struct DailyReport
 	std::chrono::milliseconds totalTime = std::chrono::milliseconds(0);
 
 	// total time per time category for the day
-	std::map<TimeCodeID, std::chrono::milliseconds> timePerTimeCode;
+	std::map<TimeEntry, std::chrono::milliseconds> timePerTimeEntry;
 
 	constexpr auto operator<=>(const DailyReport&) const = default;
 
@@ -937,9 +937,9 @@ struct DailyReport
 		}
 		out << "\n}\n";
 		out << "Time Per Time Code {";
-		for (auto&& [timeCode, time] : report.timePerTimeCode)
+		for (auto&& [timeEntry, time] : report.timePerTimeEntry)
 		{
-			out << "\ntimeCode: " << timeCode._val << ", time: " << time;
+			out << "\ntimeEntry: " << std::format("[ {} {} ]", timeEntry.categoryID, timeEntry.codeID) << ", time: " << time;
 		}
 		out << "\n}\n";
 		out << "Total Time: " << report.totalTime << '\n';
