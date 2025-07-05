@@ -22,6 +22,8 @@ import taskglacier.MainFrame;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -29,6 +31,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
@@ -236,6 +240,13 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
         table.setTransferHandler(new TaskTransferHandler());
+
+//        TableRowSorter<TableModel> sorter = new TableRowSorter<>(table.getModel());
+//        table.setRowSorter(sorter);
+//
+//        List<RowSorter.SortKey> sortKeys = new ArrayList<>(25);
+//        sortKeys.add(new RowSorter.SortKey(1, SortOrder.ASCENDING));
+//        sorter.setSortKeys(sortKeys);
 
         JMenuItem add = new JMenuItem("Add Task...");
         JMenuItem addSubTask = new JMenuItem("Add Sub-Task...");

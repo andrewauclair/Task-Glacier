@@ -9,7 +9,6 @@ import taskglacier.MainFrame;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -19,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 // TODO rename this feature to "Time Entry"
-public class TimeCategories extends JDialog {
+public class TimeEntryConfiguration extends JDialog {
     private final TimeData timeData;
     JComboBox<String> timeCategorySelection = new JComboBox<>();
     Map<String, CodeTableModel> timeCodeModels = new HashMap<>();
@@ -160,9 +159,10 @@ public class TimeCategories extends JDialog {
             return null;
         }
     }
-    public TimeCategories(MainFrame mainFrame) {
+    public TimeEntryConfiguration(MainFrame mainFrame) {
         this.timeData = mainFrame.getTimeData();
         setModal(true);
+        setTitle("Time Entry Configuration");
 
         // Time Category - Label - In Use - Count - Archived
         // Project Server - PS - Yes - 10 - No
@@ -249,7 +249,7 @@ public class TimeCategories extends JDialog {
                 mainFrame.getConnection().sendPacket(updateMessage);
             }
 
-            TimeCategories.this.dispose();
+            TimeEntryConfiguration.this.dispose();
         });
 
         setLayout(new GridBagLayout());
@@ -317,7 +317,7 @@ public class TimeCategories extends JDialog {
 
                 pack();
 
-                setLocationRelativeTo(TimeCategories.this);
+                setLocationRelativeTo(TimeEntryConfiguration.this);
             }
         }
         add.addActionListener(e -> new CreateTimeCategory().setVisible(true));
@@ -384,7 +384,7 @@ public class TimeCategories extends JDialog {
 
                 pack();
 
-                setLocationRelativeTo(TimeCategories.this);
+                setLocationRelativeTo(TimeEntryConfiguration.this);
             }
         }
         add.addActionListener(e -> new CreateTimeCode().setVisible(true));

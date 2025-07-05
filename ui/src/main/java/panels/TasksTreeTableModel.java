@@ -81,6 +81,7 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
                 modelSupport.fireChildRemoved(parentPath, index, node);
             }
             else {
+                // TODO exception here when updating task to a parent that's finished (i.e. hidden)?
                 modelSupport.fireChildChanged(parentPath, index, node);
             }
 

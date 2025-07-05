@@ -5,18 +5,13 @@ import dialogs.BugzillaConfiguration;
 import dialogs.ConnectToServer;
 import dialogs.RequestDailyReportDialog;
 import dialogs.RequestWeeklyReportDialog;
-import dialogs.TimeCategories;
+import dialogs.TimeEntryConfiguration;
 import io.github.andrewauclair.moderndocking.app.DockingState;
 import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
 import packets.BugzillaRefresh;
-import packets.RequestDailyReport;
 import packets.RequestID;
-import packets.RequestWeeklyReport;
 
 import javax.swing.*;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
 
 public class MenuBar extends JMenuBar {
     private final JMenuItem add;
@@ -52,10 +47,10 @@ public class MenuBar extends JMenuBar {
         add.addActionListener(e -> new AddModifyTask(mainFrame, 0, false).setVisible(true));
         task.add(add);
 
-        JMenuItem timeCategories = new JMenuItem("Time Categories...");
-        task.add(timeCategories);
+        JMenuItem timeEntry = new JMenuItem("Time Entry Configuration...");
+        task.add(timeEntry);
 
-        timeCategories.addActionListener(e -> new TimeCategories(mainFrame).setVisible(true));
+        timeEntry.addActionListener(e -> new TimeEntryConfiguration(mainFrame).setVisible(true));
 
         add(task);
 

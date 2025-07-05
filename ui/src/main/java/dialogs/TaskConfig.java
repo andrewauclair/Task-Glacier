@@ -19,7 +19,7 @@ import java.util.Optional;
 public class TaskConfig extends JDialog {
     class LabeledComponent extends JPanel {
         LabeledComponent(JLabel label, JComponent component) {
-            super(new FlowLayout());
+            super(new FlowLayout(FlowLayout.CENTER, 0, 0));
 
             add(label);
             add(component);
@@ -28,7 +28,7 @@ public class TaskConfig extends JDialog {
 
     // general (id, name, status, parent, bugzilla)
     class General extends JPanel {
-        JTextField name = new JTextField(20);
+        JTextField name = new JTextField(15);
         JTextField parent = new JTextField(3);
         JCheckBox serverControlled = new JCheckBox("Server Controlled");
         JCheckBox locked = new JCheckBox("Locked");
@@ -37,13 +37,17 @@ public class TaskConfig extends JDialog {
             setLayout(new GridBagLayout());
 
             GridBagConstraints gbc = new GridBagConstraints();
+            gbc.anchor = GridBagConstraints.NORTHWEST;
+            gbc.insets = new Insets(5, 5, 5, 5);
             gbc.gridx = 0;
             gbc.gridy = 0;
+            gbc.weightx = 1;
+            gbc.weighty = 0;
 
             add(new JLabel("ID " + task.id), gbc);
 
             gbc.gridy++;
-            add(new LabeledComponent(new JLabel("name"), name), gbc);
+            add(new LabeledComponent(new JLabel("Name"), name), gbc);
 
             name.setText(task.name);
 
@@ -53,12 +57,12 @@ public class TaskConfig extends JDialog {
             status.addItem("Finished");
 
             gbc.gridy++;
-            add(status, gbc);
+            add(new LabeledComponent(new JLabel("Status"), status), gbc);
 
             parent.setText(String.valueOf(task.parentID));
 
             gbc.gridy++;
-            add(parent, gbc);
+            add(new LabeledComponent(new JLabel("Parent"), parent), gbc);
 
 
             serverControlled.setEnabled(false);
@@ -297,9 +301,7 @@ public class TaskConfig extends JDialog {
                     }
                 });
 
-                timeCode.addActionListener(e -> {
-                    save.setEnabled(true);
-                });
+                timeCode.addActionListener(e -> save.setEnabled(true));
                 for (TimeData.TimeCategory category : timeData.getTimeCategories()) {
                     timeCategory.addItem(category.name);
                 }
