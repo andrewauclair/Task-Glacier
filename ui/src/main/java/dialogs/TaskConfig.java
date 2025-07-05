@@ -21,10 +21,18 @@ import java.util.Optional;
 public class TaskConfig extends JDialog {
     class LabeledComponent extends JPanel {
         LabeledComponent(JLabel label, JComponent component) {
-            super(new FlowLayout(FlowLayout.CENTER, 0, 0));
+            super(new GridBagLayout());
 
-            add(label);
-            add(component);
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.anchor = GridBagConstraints.CENTER;
+            gbc.insets = new Insets(0, 0, 0, 0);
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+
+            add(label, gbc);
+            gbc.gridx++;
+            gbc.insets = new Insets(0, 5, 0, 0);
+            add(component, gbc);
         }
     }
 
@@ -288,8 +296,8 @@ public class TaskConfig extends JDialog {
 
                 setLayout(new GridBagLayout());
 
-                JButton save = new JButton("Add");
-                save.setEnabled(false);
+                JButton add = new JButton("Add");
+                add.setEnabled(false);
 
                 JComboBox<String> timeCategory = new JComboBox<>();
                 JComboBox<String> timeCode = new JComboBox<>();
@@ -300,7 +308,7 @@ public class TaskConfig extends JDialog {
                             .findFirst();
 
                     timeCode.removeAllItems();
-                    save.setEnabled(false);
+                    add.setEnabled(false);
 
                     if (timeCategory2.isPresent()) {
                         for (TimeData.TimeCode code : timeCategory2.get().timeCodes) {
@@ -310,7 +318,7 @@ public class TaskConfig extends JDialog {
                     }
                 });
 
-                timeCode.addActionListener(e -> save.setEnabled(true));
+                timeCode.addActionListener(e -> add.setEnabled(true));
                 for (TimeData.TimeCategory category : timeData.getTimeCategories()) {
                     timeCategory.addItem(category.name);
                 }
@@ -318,6 +326,8 @@ public class TaskConfig extends JDialog {
                 timeCategory.setSelectedItem(null);
 
                 GridBagConstraints gbc = new GridBagConstraints();
+                gbc.anchor = GridBagConstraints.NORTHWEST;
+                gbc.insets = new Insets(5, 5, 5, 5);
                 gbc.gridx = 0;
                 gbc.gridy = 0;
 
@@ -325,9 +335,10 @@ public class TaskConfig extends JDialog {
                 gbc.gridy++;
                 add(new LabeledComponent(new JLabel("Time Code"), timeCode), gbc);
                 gbc.gridy++;
-                add(save, gbc);
+                gbc.anchor = GridBagConstraints.CENTER;
+                add(add, gbc);
 
-                save.addActionListener(e -> {
+                add.addActionListener(e -> {
                     Optional<TimeData.TimeCategory> timeCategory2 = timeData.getTimeCategories().stream()
                             .filter(timeCategory1 -> timeCategory1.name.equals(timeCategory.getSelectedItem()))
                             .findFirst();
@@ -380,24 +391,7 @@ public class TaskConfig extends JDialog {
 
             table.getColumnModel().removeColumn(table.getColumnModel().getColumn(2));
 
-            DefaultTableCellRenderer defaultRenderer = new DefaultTableCellRenderer();
-
-            TableCellRenderer renderer = new TableCellRenderer() {
-                @Override
-                public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                    Component component = defaultRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-                    boolean inherited = (boolean) model.getValueAt(row, 2);
-
-                    if (inherited) {
-                        Font font = component.getFont();
-                        font = font.deriveFont(Font.ITALIC);
-
-                        component.setFont(font);
-                    }
-                    return component;
-                }
-            };
+            TableCellRenderer renderer = createRenderer();
 
             table.setDefaultRenderer(String.class, renderer);
             table.setDefaultRenderer(boolean.class, renderer);
@@ -445,6 +439,25 @@ public class TaskConfig extends JDialog {
                 model.data.add(row);
                 model.fireTableRowsInserted(model.data.size() - 1, model.data.size() - 1);
             }
+        }
+
+        private TableCellRenderer createRenderer() {
+            DefaultTableCellRenderer defaultRenderer = new DefaultTableCellRenderer();
+
+            TableCellRenderer renderer = (table, value, isSelected, hasFocus, row, column) -> {
+                Component component = defaultRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+                boolean inherited = (boolean) model.getValueAt(row, 2);
+
+                if (inherited) {
+                    Font font = component.getFont();
+                    font = font.deriveFont(Font.ITALIC);
+
+                    component.setFont(font);
+                }
+                return component;
+            };
+            return renderer;
         }
 
         private boolean hasChanges(Task task) {
