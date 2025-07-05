@@ -233,7 +233,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         table.setTreeCellRenderer(treeCellRenderer);
         table.setDragEnabled(true);
         table.setDropMode(DropMode.ON_OR_INSERT_ROWS);
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
         table.setTransferHandler(new TaskTransferHandler());
 
@@ -371,12 +371,12 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
             infoSubPanel.displayForTask((Task) lastPathComponent.getUserObject());
         });
 
-        JSplitPane split = new JSplitPane();
-
-        split.setLeftComponent(new JScrollPane(table));
-        split.setRightComponent(infoSubPanel);
-
-        add(split);
+//        JSplitPane split = new JSplitPane();
+//
+//        split.setLeftComponent(new JScrollPane(table));
+//        split.setRightComponent(infoSubPanel);
+//
+        add(new JScrollPane(table));
     }
 
     private void finishActiveTask() {
