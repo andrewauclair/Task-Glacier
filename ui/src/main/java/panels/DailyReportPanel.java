@@ -154,6 +154,7 @@ public class DailyReportPanel extends JPanel implements Dockable {
         gbc.gridy++;
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         
         add(new JScrollPane(table), gbc);
         gbc.gridy++;
