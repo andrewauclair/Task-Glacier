@@ -10,7 +10,9 @@ import taskglacier.MainFrame;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -235,6 +237,7 @@ public class TaskConfig extends JDialog {
         class Row {
             TimeData.TimeCategory category;
             TimeData.TimeCode code;
+            boolean inherited;
         }
 
         class TableModel extends AbstractTableModel {
@@ -250,7 +253,10 @@ public class TaskConfig extends JDialog {
                 if (column == 0) {
                     return "Category";
                 }
-                return "Code";
+                else if (column == 1) {
+                    return "Code";
+                }
+                return "Inherited";
             }
 
             @Override
@@ -260,7 +266,7 @@ public class TaskConfig extends JDialog {
 
             @Override
             public int getColumnCount() {
-                return 2;
+                return 3;
             }
 
             @Override
@@ -269,7 +275,10 @@ public class TaskConfig extends JDialog {
                 if (columnIndex == 0) {
                     return row.category.name;
                 }
-                return row.code.name;
+                if (columnIndex == 1) {
+                    return row.code.name;
+                }
+                return row.inherited;
             }
         }
 
@@ -360,6 +369,7 @@ public class TaskConfig extends JDialog {
             gbc.weightx = 1;
             gbc.weighty = 1;
             gbc.fill = GridBagConstraints.BOTH;
+
             add(new JScrollPane(table), gbc);
 
             add.addActionListener(e -> {
@@ -368,16 +378,69 @@ public class TaskConfig extends JDialog {
                 dialog.setLocationRelativeTo(mainFrame);
             });
 
-            for (TimeData.TimeEntry entry : task.timeEntry) {
-                Optional<TimeData.TimeCategory> timeCategory2 = timeData.getTimeCategories().stream()
-                        .filter(timeCategory1 -> timeCategory1.id == entry.category)
+            table.getColumnModel().removeColumn(table.getColumnModel().getColumn(2));
+
+            DefaultTableCellRenderer defaultRenderer = new DefaultTableCellRenderer();
+
+            TableCellRenderer renderer = new TableCellRenderer() {
+                @Override
+                public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                    Component component = defaultRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+                    boolean inherited = (boolean) model.getValueAt(row, 2);
+
+                    if (inherited) {
+                        Font font = component.getFont();
+                        font = font.deriveFont(Font.ITALIC);
+
+                        component.setFont(font);
+                    }
+                    return component;
+                }
+            };
+
+            table.setDefaultRenderer(String.class, renderer);
+            table.setDefaultRenderer(boolean.class, renderer);
+
+            for (TimeData.TimeCategory category : timeData.getTimeCategories()) {
+                Row row = new Row();
+                row.category = category;
+
+                Optional<TimeData.TimeEntry> first = task.timeEntry.stream()
+                        .filter(timeEntry -> timeEntry.category == category.id)
                         .findFirst();
 
-                Row row = new Row();
-                row.category = timeCategory2.get();
-                row.code = timeCategory2.get().timeCodes.stream()
-                        .filter(timeCode1 -> timeCode1.id == entry.code)
-                        .findFirst().get();
+                if (first.isPresent()) {
+                    row.code = timeData.findTimeCode(first.get().code);
+                }
+                else {
+                    // try to find a code for the category in a parent
+                    Task parent = mainFrame.getTaskModel().getTask(task.parentID);
+
+                    while (parent != null) {
+                        Optional<TimeData.TimeEntry> parentEntry = parent.timeEntry.stream()
+                                .filter(timeEntry -> timeEntry.category == category.id)
+                                .findFirst();
+
+                        if (parentEntry.isPresent()) {
+                            row.code = timeData.findTimeCode(parentEntry.get().code);
+                            row.inherited = true;
+
+                            break;
+                        }
+                        else {
+                            parent = mainFrame.getTaskModel().getTask(parent.parentID);
+                        }
+                    }
+
+                    // if we didn't find a code, show unknown
+                    if (parent == null) {
+                        row.code = new TimeData.TimeCode();
+                        row.code.name = "Unknown";
+                        row.code.id = 0;
+                        row.inherited = true;
+                    }
+                }
 
                 model.data.add(row);
                 model.fireTableRowsInserted(model.data.size() - 1, model.data.size() - 1);
