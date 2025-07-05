@@ -40,6 +40,9 @@ public:
 
 	void refresh(const RequestMessage& request, MicroTask& app, API& api, std::ostream& file, std::vector<std::unique_ptr<Message>>& output);
 
+	void load_config(const std::string& line, std::istream& input);
+	void load_refresh(const std::string& line);
+
 private:
 	const Clock* m_clock;
 	cURL* m_curl;

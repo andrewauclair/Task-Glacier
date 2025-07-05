@@ -305,21 +305,6 @@ std::expected<TaskState, std::string> MicroTask::task_state(TaskID id)
 	return std::unexpected("");
 }
 
-namespace
-{
-	std::vector<std::string> split(const std::string& s, char delim) {
-		std::vector<std::string> result;
-		std::stringstream ss(s);
-		std::string item;
-
-		while (getline(ss, item, delim)) {
-			result.push_back(item);
-		}
-
-		return result;
-	}
-}
-
 void MicroTask::load_from_file(std::istream& input)
 {
 	const auto string_parser = [](std::string_view& str) -> std::string
@@ -482,42 +467,11 @@ void MicroTask::load_from_file(std::istream& input)
 			}
 			else if (line.starts_with("bugzilla-config"))
 			{
-				auto values = split(line, ' ');
-
-				/*Bugzilla& bugzilla = m_bugzilla[values[1]];
-
-				bugzilla.bugzillaURL = values[1];
-				bugzilla.bugzillaApiKey = values[2];
-				std::getline(input, bugzilla.bugzillaUsername);
-
-				std::string temp;
-				std::getline(input, temp);
-
-				bugzilla.bugzillaRootTaskID = TaskID(std::stoi(temp));
-
-				std::getline(input, bugzilla.bugzillaGroupTasksBy);
-				std::getline(input, temp);
-
-				const int labelCount = std::stoi(temp);
-
-				for (int i = 0; i < labelCount; i++)
-				{
-					std::string label;
-					std::string field;
-					std::getline(input, label);
-					std::getline(input, field);
-
-					bugzilla.bugzillaLabelToField[label] = field;
-				}*/
+				m_api->m_bugzilla.load_config(line, input);
 			}
 			else if (line.starts_with("bugzilla-refresh"))
 			{
-				auto values = split(line, ' ');
-
-				/*Bugzilla& bugzilla = m_bugzilla[values[1]];
-
-				bugzilla.lastBugzillaRefresh = std::chrono::milliseconds(std::stoll(values[2]));
-				m_lastBugzillaRefresh = bugzilla.lastBugzillaRefresh;*/
+				m_api->m_bugzilla.load_refresh(line);
 			}
 			else if (line.starts_with("time-category"))
 			{

@@ -5,6 +5,8 @@
 
 #include "server.hpp"
 #include "packets.hpp"
+#include "api.hpp"
+#include "utils.h"
 
 #include <source_location>
 
@@ -88,8 +90,11 @@ public:
 struct PacketTestHelper
 {
 	TestClock clock;
+	curlTest curl;
+	std::istringstream input;
 	std::ostringstream output;
-	MicroTask app = MicroTask(clock, output);
+	API api = API(clock, curl, input, output);
+	MicroTask app = MicroTask(api, clock, output);
 
 	template<typename T>
 	void expect_packet(const Message& message, std::size_t size, std::source_location location = std::source_location::current())
@@ -1095,8 +1100,11 @@ TEST_CASE("pack the empty packet", "[message][pack]")
 TEST_CASE("unpack the empty packet", "[message][unpack]")
 {
 	TestClock clock;
+	curlTest curl;
+	std::istringstream input;
 	std::ostringstream output;
-	MicroTask app(clock, output);
+	API api = API(clock, curl, input, output);
+	MicroTask app = MicroTask(api, clock, output);
 
 	const auto message = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
 
@@ -1114,8 +1122,11 @@ TEST_CASE("Bugzilla Info Packet", "[message]")
 {
 	PacketBuilder builder;
 	TestClock clock;
+	curlTest curl;
+	std::istringstream input;
 	std::ostringstream output;
-	MicroTask app(clock, output);
+	API api = API(clock, curl, input, output);
+	MicroTask app = MicroTask(api, clock, output);
 
 	const auto message = BugzillaInfoMessage("bugzilla", "aBSEFASDfOJOEFfjlsojFEF");
 

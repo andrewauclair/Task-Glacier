@@ -5,6 +5,7 @@
 
 #include <format>
 #include <memory>
+#include <string>
 
 void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, std::ostream& file)
 {
@@ -210,4 +211,45 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 		}
 		m_lastBugzillaRefresh = now;
 	}
+}
+
+void Bugzilla::load_config(const std::string& line, std::istream& input)
+{
+	auto values = split(line, ' ');
+
+	BugzillaInstance& bugzilla = m_bugzilla[values[1]];
+
+	bugzilla.bugzillaURL = values[1];
+	bugzilla.bugzillaApiKey = values[2];
+	std::getline(input, bugzilla.bugzillaUsername);
+
+	std::string temp;
+	std::getline(input, temp);
+
+	bugzilla.bugzillaRootTaskID = TaskID(std::stoi(temp));
+
+	std::getline(input, bugzilla.bugzillaGroupTasksBy);
+	std::getline(input, temp);
+
+	const int labelCount = std::stoi(temp);
+
+	for (int i = 0; i < labelCount; i++)
+	{
+		std::string label;
+		std::string field;
+		std::getline(input, label);
+		std::getline(input, field);
+
+		bugzilla.bugzillaLabelToField[label] = field;
+	}
+}
+
+void Bugzilla::load_refresh(const std::string& line)
+{
+	auto values = split(line, ' ');
+
+	BugzillaInstance& bugzilla = m_bugzilla[values[1]];
+
+	bugzilla.lastBugzillaRefresh = std::chrono::milliseconds(std::stoll(values[2]));
+	m_lastBugzillaRefresh = bugzilla.lastBugzillaRefresh;
 }

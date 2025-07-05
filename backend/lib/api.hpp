@@ -14,12 +14,24 @@ inline std::string persist_string(const std::string& str)
 	return std::format("({} {})", str.size(), str);
 }
 
+inline std::vector<std::string> split(const std::string& s, char delim) {
+	std::vector<std::string> result;
+	std::stringstream ss(s);
+	std::string item;
+
+	while (getline(ss, item, delim)) {
+		result.push_back(item);
+	}
+
+	return result;
+}
+
 class API
 {
 public:
 	API(const Clock& clock, cURL& curl, std::istream& input, std::ostream& output) 
 		: m_clock(&clock), 
-		m_app(clock, output), 
+		m_app(*this, clock, output),
 		m_bugzilla(clock, curl),
 		m_output(&output)
 	{
@@ -49,7 +61,9 @@ private:
 
 	const Clock* m_clock;
 	MicroTask m_app;
+public:
 	Bugzilla m_bugzilla;
+private:
 	std::ostream* m_output;
 };
 

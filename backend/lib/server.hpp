@@ -17,6 +17,8 @@
 
 #include <strong_type/strong_type.hpp>
 
+class API;
+
 class Task
 {
 	friend class MicroTask;
@@ -53,7 +55,7 @@ public:
 class MicroTask
 {
 public:
-	MicroTask(const Clock& clock, std::ostream& output) : m_clock(&clock), m_output(&output) {}
+	MicroTask(API& api, const Clock& clock, std::ostream& output) : m_api(&api), m_clock(&clock), m_output(&output) {}
 
 	std::expected<TaskID, std::string> create_task(const std::string& name, TaskID parentID = NO_PARENT, bool serverControlled = false);
 
@@ -145,7 +147,7 @@ private:
 	const Clock* m_clock;
 	std::ostream* m_output;
 
-	
+	API* m_api;
 };
 
 #endif
