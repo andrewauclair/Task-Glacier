@@ -29,7 +29,7 @@ public class StatusBar extends JPanel implements TaskModel.Listener {
         if (activeTask != null) {
             List<String> parents = new ArrayList<>();
 
-            StringBuilder text = new StringBuilder(activeTask.id + " - ");
+            StringBuilder text = new StringBuilder();
 
             int parentID = activeTask.parentID;
 

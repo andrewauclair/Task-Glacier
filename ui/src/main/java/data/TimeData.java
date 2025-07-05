@@ -4,6 +4,7 @@ import packets.TimeCategoriesMessage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class TimeData {
@@ -22,6 +23,18 @@ public class TimeData {
     public static class TimeEntry {
         public int category;
         public int code;
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || getClass() != o.getClass()) return false;
+            TimeEntry timeEntry = (TimeEntry) o;
+            return category == timeEntry.category && code == timeEntry.code;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(category, code);
+        }
     }
 
     List<TimeCategory> timeCategories = new ArrayList<>();

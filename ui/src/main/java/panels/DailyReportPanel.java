@@ -1,5 +1,7 @@
 package panels;
 
+import data.Task;
+import data.TaskModel;
 import data.TimeData;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingProperty;
@@ -8,17 +10,18 @@ import io.github.andrewauclair.moderndocking.app.Docking;
 import packets.DailyReportMessage;
 import packets.RequestDailyReport;
 import packets.RequestID;
+import packets.TaskInfo;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class DailyReportPanel extends JPanel implements Dockable {
@@ -90,9 +93,82 @@ public class DailyReportPanel extends JPanel implements Dockable {
         }
     }
 
+    class TaskRow {
+        Task task;
+        double hours;
+    }
+
+    class TaskTableModel extends AbstractTableModel {
+        List<TaskRow> rows = new ArrayList<>();
+
+        @Override
+        public int getRowCount() {
+            return rows.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 2;
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            switch (column) {
+                case 0:
+                    return "Task";
+                case 1:
+                    return "Hours";
+            }
+            return null;
+        }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            if (columnIndex == 2) {
+                return double.class;
+            }
+            return String.class;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            TaskRow row = rows.get(rowIndex);
+
+            if (columnIndex == 0) {
+                TaskModel taskModel = mainFrame.getTaskModel();
+
+                List<String> parents = new ArrayList<>();
+
+                StringBuilder text = new StringBuilder();
+
+                int parentID = row.task.parentID;
+
+                while (parentID != 0) {
+                    Task task = taskModel.getTask(parentID);
+
+                    if (task == null) {
+                        break;
+                    }
+                    parents.add(0, task.name);
+
+                    parentID = task.parentID;
+                }
+                for (String parent : parents) {
+                    text.append(parent);
+                    text.append(" / ");
+                }
+                text.append(row.task.name);
+
+                return text.toString();
+            }
+            return row.hours;
+        }
+    }
+
     JLabel date = new JLabel();
 
     TableModel model = new TableModel();
+    TaskTableModel taskModel = new TaskTableModel();
 
     public DailyReportPanel(MainFrame mainFrame, LocalDate date) {
         this.mainFrame = mainFrame;
@@ -139,9 +215,6 @@ public class DailyReportPanel extends JPanel implements Dockable {
         gbc.gridx = 0;
         gbc.gridy = 0;
 
-        add(date, gbc);
-        gbc.gridy++;
-
         JLabel start = new JLabel();
         JLabel end = new JLabel();
         JLabel total = new JLabel();
@@ -155,8 +228,65 @@ public class DailyReportPanel extends JPanel implements Dockable {
 
         JTable table = new JTable(model);
         table.setAutoCreateRowSorter(true);
-        
-        add(new JScrollPane(table), gbc);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        JTable taskTable = new JTable(taskModel);
+        taskTable.setAutoCreateRowSorter(true);
+        taskTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        table.getSelectionModel().addListSelectionListener(e -> {
+            taskModel.rows.clear();
+            taskModel.fireTableDataChanged();
+
+            if (table.getSelectedRow() != -1) {
+                Row row = model.rows.get(table.getSelectedRow());
+
+                Map<Task, Double> taskRows = new HashMap<>();
+
+                for (DailyReportMessage.DailyReport.TimePair time : report.times) {
+                    Task task = mainFrame.getTaskModel().getTask(time.taskID);
+                    TaskInfo.Session session = task.sessions.get(time.index);
+
+                    for (TimeData.TimeEntry timeEntry : session.timeEntry) {
+                        if (timeEntry.category == row.category.id && timeEntry.code == row.code.id) {
+                            double hours = taskRows.getOrDefault(task, 0.0);
+
+                            Instant instant = report.timesPerTimeEntry.get(timeEntry);
+
+                            long minutes = TimeUnit.MILLISECONDS.toMinutes(instant.toEpochMilli());
+
+                            minutes = Math.round(minutes / 15.0) * 15;
+
+                            if (instant.toEpochMilli() != 0 && minutes == 0) {
+                                minutes = 15;
+                            }
+
+                            hours += minutes / 60.0;
+
+                            taskRows.put(task, hours);
+                        }
+                    }
+                }
+
+                taskRows.forEach((task, aDouble) -> {
+                    TaskRow taskRow = new TaskRow();
+                    taskRow.task = task;
+                    taskRow.hours = aDouble;
+                    taskModel.rows.add(taskRow);
+                    taskModel.fireTableRowsInserted(taskModel.rows.size() - 1, taskModel.rows.size() - 1);
+                });
+            }
+        });
+
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+
+        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        split.setTopComponent(new JScrollPane(table));
+        split.setBottomComponent(new JScrollPane(taskTable));
+
+        add(split, gbc);
         gbc.gridy++;
 
         revalidate();
