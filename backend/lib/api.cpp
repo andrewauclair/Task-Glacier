@@ -148,7 +148,7 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 						}
 						else
 						{
-							parentID = m_app.create_task(groupBy, info.bugzillaRootTaskID).value();
+							parentID = m_app.create_task(groupBy, info.bugzillaRootTaskID, true).value();
 							info.bugzillaGroupBy.emplace(groupBy, parentID);
 
 							auto* task = m_app.find_task(parentID);
@@ -158,7 +158,7 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 
 						auto id = bug["id"];
 						std::int64_t i = id.get_int64();
-						const auto result = m_app.create_task(std::format("{} - {}", i, std::string_view(bug["summary"])), parentID);
+						const auto result = m_app.create_task(std::format("{} - {}", i, std::string_view(bug["summary"])), parentID, true);
 
 						auto* task = m_app.find_task(result.value());
 
@@ -192,7 +192,7 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 						}
 						else
 						{
-							parentID = m_app.create_task(groupBy, info.bugzillaRootTaskID).value();
+							parentID = m_app.create_task(groupBy, info.bugzillaRootTaskID, true).value();
 							info.bugzillaGroupBy.emplace(groupBy, parentID);
 
 							auto* task = m_app.find_task(parentID);

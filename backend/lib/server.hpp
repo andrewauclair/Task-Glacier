@@ -69,7 +69,7 @@ class MicroTask
 public:
 	MicroTask(const Clock& clock, std::ostream& output) : m_clock(&clock), m_output(&output) {}
 
-	std::expected<TaskID, std::string> create_task(const std::string& name, TaskID parentID = NO_PARENT);
+	std::expected<TaskID, std::string> create_task(const std::string& name, TaskID parentID = NO_PARENT, bool serverControlled = false);
 
 	std::optional<std::string> configure_task_time_entry(TaskID taskID, std::span<const TimeEntry> timeEntry);
 

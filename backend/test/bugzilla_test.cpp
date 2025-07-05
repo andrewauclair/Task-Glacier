@@ -119,6 +119,15 @@ TEST_CASE("Initial Bugzilla Refresh Pulls All Open Bugs", "[bugzilla][api]")
 	taskInfo8.newTask = true;
 	nitpick.newTask = true;
 	taskInfo10.newTask = true;
+	minor.serverControlled = true;
+	taskInfo3.serverControlled = true;
+	taskInfo4.serverControlled = true;
+	critical.serverControlled = true;
+	taskInfo6.serverControlled = true;
+	blocker.serverControlled = true;
+	taskInfo8.serverControlled = true;
+	nitpick.serverControlled = true;
+	taskInfo10.serverControlled = true;
 
 	SECTION("Group By Task As String")
 	{
@@ -217,6 +226,7 @@ TEST_CASE("Subsequent Bugzilla Refresh Requests Updates Since Last Refresh", "[b
 
 		auto taskInfo3 = TaskInfoMessage(TaskID(3), TaskID(2), "50 - bug 1 name change");
 		taskInfo3.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo3.serverControlled = true;
 
 		helper.required_messages({ &taskInfo3 });
 	}
@@ -229,6 +239,7 @@ TEST_CASE("Subsequent Bugzilla Refresh Requests Updates Since Last Refresh", "[b
 
 		auto taskInfo3 = TaskInfoMessage(TaskID(3), TaskID(4), "50 - bug 1");
 		taskInfo3.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo3.serverControlled = true;
 
 		helper.required_messages({ &taskInfo3 });
 	}
@@ -241,11 +252,13 @@ TEST_CASE("Subsequent Bugzilla Refresh Requests Updates Since Last Refresh", "[b
 
 		auto taskInfo3 = TaskInfoMessage(TaskID(5), TaskID(6), "55 - bug 2");
 		taskInfo3.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo3.serverControlled = true;
 
 		auto major = TaskInfoMessage(TaskID(4), TaskID(1), "Major");
 		major.createTime = std::chrono::milliseconds(1737344039870);
 		major.state = TaskState::FINISHED;
 		major.finishTime = std::chrono::milliseconds(1737351239870);
+		major.serverControlled = true;
 
 		helper.required_messages({ &taskInfo3, &major });
 
@@ -257,6 +270,7 @@ TEST_CASE("Subsequent Bugzilla Refresh Requests Updates Since Last Refresh", "[b
 
 			taskInfo3 = TaskInfoMessage(TaskID(5), TaskID(4), "55 - bug 2");
 			taskInfo3.createTime = std::chrono::milliseconds(1737344039870);
+			taskInfo3.serverControlled = true;
 
 			major.state = TaskState::INACTIVE;
 			
@@ -273,9 +287,11 @@ TEST_CASE("Subsequent Bugzilla Refresh Requests Updates Since Last Refresh", "[b
 		auto newTask = TaskInfoMessage(TaskID(13), TaskID(1), "New");
 		newTask.createTime = std::chrono::milliseconds(1737351239870);
 		newTask.newTask = true;
+		newTask.serverControlled = true;
 
 		auto taskInfo3 = TaskInfoMessage(TaskID(3), TaskID(13), "50 - bug 1 name change");
 		taskInfo3.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo3.serverControlled = true;
 
 		helper.required_messages({ &newTask, &taskInfo3 });
 	}

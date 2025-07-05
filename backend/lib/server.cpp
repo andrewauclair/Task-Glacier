@@ -12,7 +12,7 @@ bool Task::operator==(const Task& task) const
 	return m_taskID == task.m_taskID;
 }
 
-std::expected<TaskID, std::string> MicroTask::create_task(const std::string& name, TaskID parentID)
+std::expected<TaskID, std::string> MicroTask::create_task(const std::string& name, TaskID parentID, bool serverControlled)
 {
 	auto* parent_task = find_task(parentID);
 
@@ -27,8 +27,11 @@ std::expected<TaskID, std::string> MicroTask::create_task(const std::string& nam
 
 	auto id = m_nextTaskID;
 
-	m_tasks.emplace(id, Task(name, id, parentID, m_clock->now()));
+	Task task = Task(name, id, parentID, m_clock->now());
+	task.serverControlled = serverControlled;
 
+	m_tasks.emplace(id, task);
+	
 	m_nextTaskID._val++;
 
 	*m_output << "create " << id._val << ' ' << parentID._val << ' ' << m_clock->now().count() << ' ' << persist_string(name) << std::endl;
