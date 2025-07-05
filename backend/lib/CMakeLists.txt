@@ -4,6 +4,7 @@
 	packets.hpp packets.cpp
 	persist.hpp persist.cpp
 	server.cpp  server.hpp
+	bugzilla.cpp bugzilla.hpp
 )
 
 target_include_directories(task-glacier-server-lib PUBLIC .)

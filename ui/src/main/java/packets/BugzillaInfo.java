@@ -10,7 +10,7 @@ public class BugzillaInfo implements Packet {
     private final String url;
     private final String apiKey;
     private final String username;
-    private String groupTasksBy;
+    private String groupTasksBy = "";
     private int rootTaskID;
     private Map<String, String> labelToField = new HashMap<>();
 

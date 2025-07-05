@@ -4,6 +4,7 @@
 #include "server.hpp"
 #include "packets.hpp"
 #include "curl.hpp"
+#include "bugzilla.hpp"
 
 #include <vector>
 #include <format>
@@ -16,17 +17,18 @@ inline std::string persist_string(const std::string& str)
 class API
 {
 public:
-	API(const Clock& clock, std::istream& input, std::ostream& output) : m_clock(&clock), m_app(clock, output), m_output(&output)
-	{
-		m_app.load_from_file(input);
-	}
-
-	API(const Clock& clock, cURL& curl, std::istream& input, std::ostream& output) : m_clock(&clock), m_curl(&curl), m_app(clock, output), m_output(&output)
+	API(const Clock& clock, cURL& curl, std::istream& input, std::ostream& output) 
+		: m_clock(&clock), 
+		m_app(clock, output), 
+		m_bugzilla(clock, curl),
+		m_output(&output)
 	{
 		m_app.load_from_file(input);
 	}
 
 	void process_packet(const Message& message, std::vector<std::unique_ptr<Message>>& output);
+
+	void send_task_info(const Task& task, bool newTask, std::vector<std::unique_ptr<Message>>& output);
 
 private:
 	void create_task(const CreateTaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
@@ -38,7 +40,7 @@ private:
 
 	void handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<Message>>& output);
 
-	void send_task_info(const Task& task, bool newTask, std::vector<std::unique_ptr<Message>>& output);
+	
 
 	void time_entry_modify(const TimeEntryModifyPacket& message, std::vector<std::unique_ptr<Message>>& output);
 
@@ -46,8 +48,8 @@ private:
 	void create_weekly_report(RequestID requestID, int month, int day, int year, std::vector<std::unique_ptr<Message>>& output);
 
 	const Clock* m_clock;
-	cURL* m_curl = nullptr;
 	MicroTask m_app;
+	Bugzilla m_bugzilla;
 	std::ostream* m_output;
 };
 

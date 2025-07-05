@@ -50,20 +50,6 @@ public:
 	TaskState state = TaskState::INACTIVE;
 };
 
-struct Bugzilla
-{
-	std::string bugzillaURL;
-	std::string bugzillaApiKey;
-	std::string bugzillaUsername;
-	TaskID bugzillaRootTaskID = NO_PARENT;
-	std::string bugzillaGroupTasksBy;
-	std::map<std::string, std::string> bugzillaLabelToField;
-	std::optional<std::chrono::milliseconds> lastBugzillaRefresh;
-
-	std::map<int, TaskID> bugzillaTasks;
-	std::map<std::string, TaskID> bugzillaGroupBy;
-};
-
 class MicroTask
 {
 public:
@@ -144,9 +130,6 @@ public:
 		return std::nullopt;
 	}
 	
-	std::map<std::string, Bugzilla> m_bugzilla;
-	std::optional<std::chrono::milliseconds> m_lastBugzillaRefresh;
-
 public:
 	TimeCategoryID m_nextTimeCategoryID = TimeCategoryID(1);
 	TimeCodeID m_nextTimeCodeID = TimeCodeID(1);

@@ -12,10 +12,26 @@ import java.util.Map;
 import java.util.prefs.Preferences;
 
 public class BugzillaConfiguration extends JDialog {
-    public BugzillaConfiguration(MainFrame mainFrame) {
-        setLayout(new GridBagLayout());
-        setTitle("Bugzilla Configuration");
-        setModal(true);
+    private DefaultTableModel instanceModel = new DefaultTableModel(0, 1);
+    private JTable instanceTable = new JTable(instanceModel);
+
+    private JButton add = new JButton("+");
+    private JButton remove = new JButton("-");
+
+    private JButton save = new JButton("Save");
+
+    class BugzillaInstance {
+        String name;
+        JTextField URL = new JTextField();
+        JTextField apiKey = new JTextField();
+        JTextField username = new JTextField();
+        JTextField rootTask = new JTextField();
+    }
+    private Map<String, BugzillaInstance> instances = new HashMap<>();
+
+    private JPanel buildInstances() {
+
+        instanceTable.setTableHeader(null);
 
         GridBagConstraints gbc = new GridBagConstraints();
 
@@ -23,26 +39,68 @@ public class BugzillaConfiguration extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = 0;
 
-        JTextField URL = new JTextField();
-        add(createLabeledComponent("URL", URL), gbc);
+        gbc.gridwidth = 1;
+
+        JPanel panel = new JPanel(new GridBagLayout());
+
+        panel.add(add, gbc);
+        gbc.gridx++;
+        panel.add(remove, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 2;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+
+        instanceTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        panel.add(instanceTable, gbc);
+
+        return panel;
+    }
+
+    private JPanel createInstance(String name, BugzillaInstance instance) {
+        JPanel panel = new JPanel(new GridBagLayout());
+
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
+        JPanel general = new JPanel(new GridBagLayout());
+        JPanel groupBy = new JPanel(new GridBagLayout());
+        JPanel labels = new JPanel(new GridBagLayout());
+
+
+        general.add(new LabeledComponent("URL", instance.URL), gbc);
         gbc.gridy++;
 
-        JTextField apiKey = new JTextField();
-        add(createLabeledComponent("API Key", apiKey), gbc);
+
+        general.add(new LabeledComponent("API Key", instance.apiKey), gbc);
         gbc.gridy++;
 
         // TODO currently we'll do all searching by 'assigned_to' in the bugzilla search. In the future we should support searching by other fields as well, such as component.
-        JTextField username = new JTextField();
-        add(createLabeledComponent("Username", username), gbc);
+
+        general.add(new LabeledComponent("Username", instance.username), gbc);
         gbc.gridy++;
 
-        JTextField rootTask = new JTextField();
-        add(createLabeledComponent("Root Task", rootTask), gbc);
+
+        general.add(new LabeledComponent("Root Task", instance.rootTask), gbc);
         gbc.gridy++;
+
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+
+        general.add(new JLabel(), gbc);
 
         // option to split tasks by a specific bugzilla field
         JTextField groupTasksBy = new JTextField();
-        add(createLabeledComponent("Group Tasks By", groupTasksBy), gbc);
+        groupBy.add(new LabeledComponent("Group Tasks By", groupTasksBy), gbc);
         gbc.gridy++;
 
         // configure search parameters and task arrangement
@@ -57,56 +115,105 @@ public class BugzillaConfiguration extends JDialog {
         tableModel.addRow(new Object[] { "Target", "target_milestone" });
         tableModel.addRow(new Object[] { "Component", "component" });
 
-        add(new JScrollPane(table), gbc);
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
+        labels.add(new JScrollPane(table), gbc);
+
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.add("General", general);
+        tabs.add("Group By", groupBy);
+        tabs.add("Labels", labels);
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+
+        panel.add(tabs, gbc);
+
+        return panel;
+    }
+
+    public BugzillaConfiguration(MainFrame mainFrame) {
+        setLayout(new GridBagLayout());
+        setTitle("Bugzilla Configuration");
+        setModal(true);
+
+        JSplitPane split = new JSplitPane();
+        split.setLeftComponent(buildInstances());
+
+        CardLayout layout = new CardLayout();
+        JPanel stack = new JPanel(layout);
+
+        stack.add(new JPanel(), "");
+
+        split.setRightComponent(stack);
+
+        add.addActionListener(e -> {
+            String name = JOptionPane.showInputDialog(this, "New Bugzilla Instance Name");
+
+            BugzillaInstance instance = new BugzillaInstance();
+            instances.put(name, instance);
+
+            JPanel instancePanel = createInstance(name, instance);
+
+            stack.add(instancePanel, name);
+
+            instanceModel.addRow(new String[] { name });
+            instanceModel.fireTableRowsInserted(instanceModel.getRowCount() - 1, instanceModel.getRowCount() - 1);
+
+            instanceTable.getSelectionModel().setSelectionInterval(instanceModel.getRowCount() - 1, instanceModel.getRowCount() - 1);
+        });
+
+        instanceTable.getSelectionModel().addListSelectionListener(e -> {
+            String name = e.getFirstIndex() != -1 ? (String) instanceModel.getValueAt(instanceTable.getSelectedRow(), 0) : "";
+
+            layout.show(stack, name);
+        });
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+
+        add(split, gbc);
+
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.SOUTHEAST;
         gbc.gridy++;
 
-        JButton save = new JButton("Save");
         add(save, gbc);
 
-        Preferences preferences;
-
-        if (System.getenv("TASK_GLACIER_DEV_INSTANCE") != null) {
-            preferences = Preferences.userNodeForPackage(BugzillaConfiguration.class);
-        }
-        else {
-            preferences = Preferences.userNodeForPackage(MainFrame.class);
-        }
-
-        URL.setText(preferences.get("Bugzilla-URL", "bugzilla"));
-        apiKey.setText(preferences.get("Bugzilla-API-Key", ""));
-        username.setText(preferences.get("Bugzilla-Username", ""));
-        rootTask.setText(preferences.get("Bugzilla-Root-Task", ""));
-        groupTasksBy.setText(preferences.get("Bugzilla-GroupTasksBy", ""));
-
         save.addActionListener(e -> {
-            BugzillaInfo info = new BugzillaInfo(URL.getText(), apiKey.getText(), username.getText());
-            info.setGroupTasksBy(groupTasksBy.getText());
-            info.setRootTaskID(Integer.parseInt(rootTask.getText()));
-            Map<String, String> labelToField = new HashMap<>();
-            for (int i = 0; i < tableModel.getRowCount(); i++) {
-                labelToField.put((String) tableModel.getValueAt(i, 0), (String) tableModel.getValueAt(i, 1));
+            for (BugzillaInstance instance : instances.values()) {
+                BugzillaInfo info = new BugzillaInfo(instance.URL.getText(), instance.apiKey.getText(), instance.username.getText());
+//                info.setGroupTasksBy(instance.groupTasksBy.getText());
+                info.setRootTaskID(Integer.parseInt(instance.rootTask.getText()));
+                Map<String, String> labelToField = new HashMap<>();
+//                for (int i = 0; i < tableModel.getRowCount(); i++) {
+//                    labelToField.put((String) tableModel.getValueAt(i, 0), (String) tableModel.getValueAt(i, 1));
+//                }
+                info.setLabelToField(labelToField);
+                mainFrame.getConnection().sendPacket(info);
             }
-            info.setLabelToField(labelToField);
-            mainFrame.getConnection().sendPacket(info);
-
-            preferences.put("Bugzilla-URL", URL.getText());
-            preferences.put("Bugzilla-API-Key", apiKey.getText());
-            preferences.put("Bugzilla-Username", username.getText());
-            preferences.put("Bugzilla-Root-Task", rootTask.getText());
-            preferences.put("Bugzilla-GroupTasksBy", groupTasksBy.getText());
 
             BugzillaConfiguration.this.dispose();
         });
         pack();
 
+        setSize(400, 300);
+
         // center on the main frame
         setLocationRelativeTo(mainFrame);
-    }
-
-    JPanel createLabeledComponent(String name, JComponent component) {
-        JPanel panel = new JPanel(new FlowLayout());
-        panel.add(new JLabel(name + " "));
-        panel.add(component);
-        return panel;
     }
 }

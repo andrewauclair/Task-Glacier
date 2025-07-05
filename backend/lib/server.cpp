@@ -484,7 +484,7 @@ void MicroTask::load_from_file(std::istream& input)
 			{
 				auto values = split(line, ' ');
 
-				Bugzilla& bugzilla = m_bugzilla[values[1]];
+				/*Bugzilla& bugzilla = m_bugzilla[values[1]];
 
 				bugzilla.bugzillaURL = values[1];
 				bugzilla.bugzillaApiKey = values[2];
@@ -508,16 +508,16 @@ void MicroTask::load_from_file(std::istream& input)
 					std::getline(input, field);
 
 					bugzilla.bugzillaLabelToField[label] = field;
-				}
+				}*/
 			}
 			else if (line.starts_with("bugzilla-refresh"))
 			{
 				auto values = split(line, ' ');
 
-				Bugzilla& bugzilla = m_bugzilla[values[1]];
+				/*Bugzilla& bugzilla = m_bugzilla[values[1]];
 
 				bugzilla.lastBugzillaRefresh = std::chrono::milliseconds(std::stoll(values[2]));
-				m_lastBugzillaRefresh = bugzilla.lastBugzillaRefresh;
+				m_lastBugzillaRefresh = bugzilla.lastBugzillaRefresh;*/
 			}
 			else if (line.starts_with("time-category"))
 			{

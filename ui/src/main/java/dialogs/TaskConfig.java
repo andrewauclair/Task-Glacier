@@ -19,23 +19,6 @@ import java.util.List;
 import java.util.Optional;
 
 public class TaskConfig extends JDialog {
-    class LabeledComponent extends JPanel {
-        LabeledComponent(JLabel label, JComponent component) {
-            super(new GridBagLayout());
-
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.anchor = GridBagConstraints.CENTER;
-            gbc.insets = new Insets(0, 0, 0, 0);
-            gbc.gridx = 0;
-            gbc.gridy = 0;
-
-            add(label, gbc);
-            gbc.gridx++;
-            gbc.insets = new Insets(0, 5, 0, 0);
-            add(component, gbc);
-        }
-    }
-
     // general (id, name, status, parent, bugzilla)
     class General extends JPanel {
         JTextField name = new JTextField(15);
@@ -57,7 +40,7 @@ public class TaskConfig extends JDialog {
             add(new JLabel("ID " + task.id), gbc);
 
             gbc.gridy++;
-            add(new LabeledComponent(new JLabel("Name"), name), gbc);
+            add(new LabeledComponent("Name", name), gbc);
 
             name.setText(task.name);
 
@@ -67,12 +50,12 @@ public class TaskConfig extends JDialog {
             status.addItem("Finished");
 
             gbc.gridy++;
-            add(new LabeledComponent(new JLabel("Status"), status), gbc);
+            add(new LabeledComponent("Status", status), gbc);
 
             parent.setText(String.valueOf(task.parentID));
 
             gbc.gridy++;
-            add(new LabeledComponent(new JLabel("Parent"), parent), gbc);
+            add(new LabeledComponent("Parent", parent), gbc);
 
 
             serverControlled.setEnabled(false);
@@ -336,9 +319,9 @@ public class TaskConfig extends JDialog {
                 gbc.gridx = 0;
                 gbc.gridy = 0;
 
-                add(new LabeledComponent(new JLabel("Time Category"), timeCategory), gbc);
+                add(new LabeledComponent("Time Category", timeCategory), gbc);
                 gbc.gridy++;
-                add(new LabeledComponent(new JLabel("Time Code"), timeCode), gbc);
+                add(new LabeledComponent("Time Code", timeCode), gbc);
                 gbc.gridy++;
                 gbc.anchor = GridBagConstraints.CENTER;
                 add(add, gbc);
@@ -620,14 +603,18 @@ public class TaskConfig extends JDialog {
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(5, 5, 5, 5);
 
         add(foo, gbc);
 
         gbc.gridy++;
         gbc.weighty = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weighty = 0;
+        gbc.anchor = GridBagConstraints.SOUTHEAST;
+        gbc.fill = GridBagConstraints.NONE;
 
         JButton save = new JButton("Save");
+
         add(save, gbc);
 
         save.addActionListener(e -> {
