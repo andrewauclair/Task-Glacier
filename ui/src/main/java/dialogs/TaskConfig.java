@@ -85,6 +85,11 @@ public class TaskConfig extends JDialog {
 
             gbc.gridy++;
             add(locked, gbc);
+
+            // add filler
+            gbc.weighty = 1;
+            gbc.fill = GridBagConstraints.BOTH;
+            add(new JLabel(), gbc);
         }
 
         private boolean hasChanges(Task task) {
@@ -349,6 +354,14 @@ public class TaskConfig extends JDialog {
                             .filter(timeCode1 -> timeCode1.name.equals(timeCode.getSelectedItem()))
                             .findFirst().get();
 
+                    // if we already have a code from this category, remove it
+                    for (int i = 0; i < model.data.size(); i++) {
+                        if (model.data.get(i).category == row.category) {
+                            model.data.remove(i);
+                            model.fireTableRowsDeleted(i, i);
+                            break;
+                        }
+                    }
                     model.data.add(row);
                     model.fireTableRowsInserted(model.data.size() - 1, model.data.size() - 1);
 
@@ -366,6 +379,48 @@ public class TaskConfig extends JDialog {
 
             this.timeData = mainFrame.getTimeData();
 
+            remove.setEnabled(false);
+
+            remove.addActionListener(e -> {
+                Row existingRow = model.data.get(table.getSelectedRow());
+
+                model.data.remove(table.getSelectedRow());
+                model.fireTableRowsDeleted(table.getSelectedRow(), table.getSelectedRow());
+
+                Row row = new Row();
+                row.category = existingRow.category;
+
+                // try to find a code for the category in a parent
+                Task parent = mainFrame.getTaskModel().getTask(task.parentID);
+
+                while (parent != null) {
+                    Optional<TimeData.TimeEntry> parentEntry = parent.timeEntry.stream()
+                            .filter(timeEntry -> timeEntry.category == existingRow.category.id)
+                            .findFirst();
+
+                    if (parentEntry.isPresent()) {
+                        row.code = timeData.findTimeCode(parentEntry.get().code);
+                        row.inherited = true;
+
+                        break;
+                    }
+                    else {
+                        parent = mainFrame.getTaskModel().getTask(parent.parentID);
+                    }
+                }
+
+                // if we didn't find a code, show unknown
+                if (parent == null) {
+                    row.code = new TimeData.TimeCode();
+                    row.code.name = "Unknown";
+                    row.code.id = 0;
+                    row.inherited = true;
+                }
+
+                model.data.add(row);
+                model.fireTableRowsInserted(model.data.size() - 1, model.data.size() - 1);
+            });
+
             JPanel buttons = new JPanel(new FlowLayout());
             buttons.add(add);
             buttons.add(remove);
@@ -382,6 +437,12 @@ public class TaskConfig extends JDialog {
             gbc.fill = GridBagConstraints.BOTH;
 
             add(new JScrollPane(table), gbc);
+
+            table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+            table.getSelectionModel().addListSelectionListener(e -> {
+                remove.setEnabled(table.getSelectedRow() != -1);
+            });
 
             add.addActionListener(e -> {
                 TimeEntryDialog dialog = new TimeEntryDialog();
@@ -406,6 +467,13 @@ public class TaskConfig extends JDialog {
 
                 if (first.isPresent()) {
                     row.code = timeData.findTimeCode(first.get().code);
+
+                    if (row.code == null) {
+                        row.code = new TimeData.TimeCode();
+                        row.code.name = "Unknown";
+                        row.code.id = 0;
+                        row.inherited = true;
+                    }
                 }
                 else {
                     // try to find a code for the category in a parent
@@ -461,12 +529,16 @@ public class TaskConfig extends JDialog {
         }
 
         private boolean hasChanges(Task task) {
-            if (task.timeEntry.size() != model.getRowCount()) {
+            List<Row> data = model.data.stream()
+                    .filter(row -> !row.inherited)
+                    .toList();
+
+            if (task.timeEntry.size() != data.size()) {
                 return true;
             }
             for (int i = 0; i < task.timeEntry.size(); i++) {
-                if (task.timeEntry.get(i).category != model.data.get(i).category.id ||
-                    task.timeEntry.get(i).code != model.data.get(i).code.id) {
+                if (task.timeEntry.get(i).category != data.get(i).category.id ||
+                    task.timeEntry.get(i).code != data.get(i).code.id) {
                     return true;
                 }
             }
@@ -478,7 +550,11 @@ public class TaskConfig extends JDialog {
                 UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task);
                 update.timeEntry.clear();
 
-                for (Row row : model.data) {
+                List<Row> data = model.data.stream()
+                        .filter(row -> !row.inherited)
+                        .toList();
+
+                for (Row row : data) {
                     TimeData.TimeEntry entry = new TimeData.TimeEntry();
                     entry.category = row.category.id;
                     entry.code = row.code.id;
