@@ -54,9 +54,12 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 
 			std::vector<std::string> values;
 
-			for (auto value : field["values"])
+			if (field.at_key("values").error() != simdjson::error_code::NO_SUCH_FIELD)
 			{
-				values.emplace_back(std::string_view(value["name"]));
+				for (auto value : field["values"])
+				{
+					values.emplace_back(std::string_view(value["name"]));
+				}
 			}
 
 			m_bugzilla[info.name].fields[name] = values;
