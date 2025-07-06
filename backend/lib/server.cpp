@@ -73,6 +73,18 @@ Task* MicroTask::find_task(TaskID taskID)
 	return result != m_tasks.end() ? &result->second : nullptr;
 }
 
+Task* MicroTask::find_task_with_parent_and_name(const std::string& name, TaskID parentID)
+{
+	for (auto&& [taskID, task] : m_tasks)
+	{
+		if (task.parentID() == parentID && task.m_name == name)
+		{
+			return &task;
+		}
+	}
+	return nullptr;
+}
+
 bool MicroTask::task_has_children(TaskID id) const
 {
 	for (auto&& [taskID, task] : m_tasks)

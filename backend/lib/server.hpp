@@ -63,6 +63,7 @@ public:
 
 	Task* active_task() const { return m_activeTask; }
 	Task* find_task(TaskID id);
+	Task* find_task_with_parent_and_name(const std::string& name, TaskID parentID);
 
 	bool task_has_children(TaskID id) const;
 

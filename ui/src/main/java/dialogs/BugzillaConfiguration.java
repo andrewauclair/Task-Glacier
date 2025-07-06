@@ -239,7 +239,11 @@ public class BugzillaConfiguration extends JDialog {
         save.addActionListener(e -> {
             for (BugzillaInstance instance : instances.values()) {
                 BugzillaInfo info = new BugzillaInfo(instance.name, instance.URL.getText(), instance.apiKey.getText(), instance.username.getText());
-                info.groupTasksBy = (String) instance.groupByModel.getValueAt(0, 0);
+
+                for (int i = 0; i < instance.groupByModel.getRowCount(); i++) {
+                    info.groupTasksBy.add((String) instance.groupByModel.getValueAt(0, 0));
+                }
+
                 info.setRootTaskID(Integer.parseInt(instance.rootTask.getText()));
                 Map<String, String> labelToField = new HashMap<>();
                 for (int i = 0; i < instance.labelModel.getRowCount(); i++) {

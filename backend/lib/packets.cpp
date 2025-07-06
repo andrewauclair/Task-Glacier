@@ -550,7 +550,13 @@ std::vector<std::byte> BugzillaInfoMessage::pack() const
 	builder.add(apiKey);
 	builder.add(username);
 	builder.add(rootTaskID);
-	builder.add(groupTasksBy);
+
+	builder.add<std::int32_t>(groupTasksBy.size());
+
+	for (auto&& value : groupTasksBy)
+	{
+		builder.add(value);
+	}
 	
 	builder.add<std::int32_t>(labelToField.size());
 
@@ -572,14 +578,19 @@ std::expected<BugzillaInfoMessage, UnpackError> BugzillaInfoMessage::unpack(std:
 	const auto apiKey = parser.parse_next<std::string>();
 	const auto username = parser.parse_next<std::string>();
 	const auto rootTaskID = parser.parse_next<TaskID>();
-	const auto groupTasksBy = parser.parse_next<std::string>();
 
 	try
 	{
 		auto info = BugzillaInfoMessage(name.value(), URL.value(), apiKey.value());
 		info.username = username.value();
 		info.rootTaskID = rootTaskID.value();
-		info.groupTasksBy = groupTasksBy.value();
+
+		const std::int32_t groupByCount = parser.parse_next_immediate<std::int32_t>();
+
+		for (int i = 0; i < groupByCount; i++)
+		{
+			info.groupTasksBy.push_back(parser.parse_next_immediate<std::string>());
+		}
 
 		const std::int32_t count = parser.parse_next_immediate<std::int32_t>();
 

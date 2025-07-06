@@ -1,13 +1,11 @@
 #include "bugzilla.hpp"
 #include "api.hpp"
 
-#include <simdjson.h>
-
 #include <format>
 #include <memory>
 #include <string>
 
-void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, std::ostream& file)
+void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, std::ostream& file)
 {
 	m_bugzilla[info.name].bugzillaName = info.name;
 	m_bugzilla[info.name].bugzillaURL = info.URL;
@@ -20,7 +18,14 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, std
 	file << "bugzilla-config " << m_bugzilla[info.name].bugzillaName << ' ' << m_bugzilla[info.name].bugzillaURL << ' ' << m_bugzilla[info.name].bugzillaApiKey << '\n';
 	file << m_bugzilla[info.name].bugzillaUsername << '\n';
 	file << m_bugzilla[info.name].bugzillaRootTaskID._val << '\n';
-	file << m_bugzilla[info.name].bugzillaGroupTasksBy << '\n';
+
+	file << m_bugzilla[info.name].bugzillaGroupTasksBy.size() << '\n';
+
+	for (auto&& f : info.groupTasksBy)
+	{
+		file << f << '\n';
+	}
+
 	file << m_bugzilla[info.name].bugzillaLabelToField.size() << '\n';
 
 	for (auto&& f : info.labelToField)
@@ -29,6 +34,89 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, std
 	}
 
 	file.flush();
+
+	// get the field values from bugzilla
+	if (m_curl)
+	{
+		m_bugzilla[info.name].fields.clear();
+
+		std::string request = info.URL + "/rest/field/bug";
+
+		auto result = m_curl->execute_request(request);
+
+		simdjson::dom::parser parser;
+		auto json = simdjson::padded_string(result);
+		simdjson::dom::element doc = parser.parse(json);
+
+		for (auto field : doc["fields"])
+		{
+			auto name = std::string(std::string_view(field["name"]));
+
+			std::vector<std::string> values;
+
+			for (auto value : field["values"])
+			{
+				values.emplace_back(std::string_view(value["name"]));
+			}
+
+			m_bugzilla[info.name].fields[name] = values;
+		}
+
+		// now go through all the group by tasks and construct our helper tasks
+		build_group_by_task(m_bugzilla[info.name], app, api, output, m_bugzilla[info.name].bugzillaRootTaskID, m_bugzilla[info.name].bugzillaGroupTasksBy);
+	}
+}
+
+void Bugzilla::build_group_by_task(BugzillaInstance& instance, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, TaskID parent, std::span<const std::string> groupTaskBy)
+{
+	auto field = groupTaskBy[0];
+	groupTaskBy = groupTaskBy.subspan(1);
+
+	for (auto&& value : instance.fields[field])
+	{
+		Task* task = app.find_task_with_parent_and_name(value, parent);
+
+		if (!task)
+		{
+			const auto result = app.create_task(value, parent, true);
+
+			task = app.find_task(result.value());
+
+			api.send_task_info(*task, true, output);
+		}
+
+		if (!groupTaskBy.empty())
+		{
+			build_group_by_task(instance, app, api, output, task->taskID(), groupTaskBy);
+		}
+	}
+}
+
+Task* Bugzilla::parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, const simdjson::dom::element& bug, TaskID currentParent, std::span<const std::string> groupTaskBy)
+{
+	auto field = groupTaskBy[0];
+	groupTaskBy = groupTaskBy.subspan(1);
+
+	simdjson::dom::element temp = bug[field];
+
+	std::string groupBy;
+
+	if (temp.is_array() && temp.get_array().size() > 0)
+	{
+		groupBy = temp.get_array().at(0);
+	}
+	else if (!temp.is_array())
+	{
+		groupBy = std::string(std::string_view(temp));
+	}
+	
+	Task* task = app.find_task_with_parent_and_name(groupBy, currentParent);
+
+	if (groupTaskBy.empty())
+	{
+		return task;
+	}
+	return parent_task_for_bug(instance, app, bug, task->taskID(), groupTaskBy);
 }
 
 void Bugzilla::send_info(std::vector<std::unique_ptr<Message>>& output)
@@ -90,13 +178,29 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 			auto json = simdjson::padded_string(result);
 			simdjson::dom::element doc = parser.parse(json);
 
+			for (auto bug : doc["bugs"])
+			{
+				// check if we already have a task ID for this bug
+
+				// find the parent for this task
+				Task* parent = parent_task_for_bug(m_bugzilla[name], app, bug, m_bugzilla[name].bugzillaRootTaskID, m_bugzilla[name].bugzillaGroupTasksBy);
+
+				// TODO what if parent is null? can it be?
+
+				const auto result = app.create_task(std::format("{} - {}", id, std::string_view(bug["summary"])), parent->taskID(), true);
+
+				task = app.find_task(result.value());
+
+				api.send_task_info(*task, true, output);
+			}
+
 			if (initial_refresh)
 			{
 				// just adding a bunch of new tasks
 				for (auto bug : doc["bugs"])
 				{
 					TaskID parentID = NO_PARENT;
-					simdjson::dom::element temp = bug[info.bugzillaGroupTasksBy];
+					/*simdjson::dom::element temp = bug[info.bugzillaGroupTasksBy];
 
 					std::string groupBy;
 
@@ -107,9 +211,9 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 					else if (!temp.is_array())
 					{
 						groupBy = std::string(std::string_view(temp));
-					}
+					}*/
 
-					if (info.bugzillaGroupBy.contains(groupBy))
+					/*if (info.bugzillaGroupBy.contains(groupBy))
 					{
 						parentID = info.bugzillaGroupBy.at(groupBy);
 					}
@@ -131,7 +235,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 
 					api.send_task_info(*task, true, output);
 
-					info.bugzillaTasks.emplace(static_cast<std::int32_t>(i), result.value());
+					info.bugzillaTasks.emplace(static_cast<std::int32_t>(i), result.value());*/
 				}
 			}
 			else
@@ -140,7 +244,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 				for (auto bug : doc["bugs"])
 				{
 					TaskID parentID = NO_PARENT;
-					simdjson::dom::element temp = bug[info.bugzillaGroupTasksBy];
+					/*simdjson::dom::element temp = bug[info.bugzillaGroupTasksBy];
 
 					std::string groupBy;
 
@@ -151,9 +255,9 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 					else if (!temp.is_array())
 					{
 						groupBy = std::string(std::string_view(temp));
-					}
+					}*/
 
-					if (info.bugzillaGroupBy.contains(groupBy))
+					/*if (info.bugzillaGroupBy.contains(groupBy))
 					{
 						parentID = info.bugzillaGroupBy.at(groupBy);
 					}
@@ -192,10 +296,10 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 						api.send_task_info(*task, true, output);
 
 						info.bugzillaTasks.emplace(static_cast<std::int32_t>(i), result.value());
-					}
+					}*/
 				}
 
-				for (auto&& parent : info.bugzillaGroupBy)
+				/*for (auto&& parent : info.bugzillaGroupBy)
 				{
 					auto* task = app.find_task(parent.second);
 
@@ -213,7 +317,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 					}
 
 					api.send_task_info(*task, false, output);
-				}
+				}*/
 			}
 
 			info.lastBugzillaRefresh = now;
@@ -242,7 +346,18 @@ void Bugzilla::load_config(const std::string& line, std::istream& input)
 
 	bugzilla.bugzillaRootTaskID = TaskID(std::stoi(temp));
 
-	std::getline(input, bugzilla.bugzillaGroupTasksBy);
+	std::getline(input, temp);
+
+	const int groupByCount = std::stoi(temp);
+
+	for (int i = 0; i < groupByCount; i++)
+	{
+		std::string groupBy;
+		std::getline(input, groupBy);
+
+		bugzilla.bugzillaGroupTasksBy.push_back(groupBy);
+	}
+
 	std::getline(input, temp);
 
 	const int labelCount = std::stoi(temp);

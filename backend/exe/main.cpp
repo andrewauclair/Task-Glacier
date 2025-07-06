@@ -40,7 +40,7 @@ private:
 struct curlpp_ : cURL
 {
 	// TODO probably return a JSON object
-	std::string execute_request(const std::string& url) const override
+	std::string execute_request(const std::string& url) override
 	{
 		try {
 			curlpp::Cleanup cleaner;

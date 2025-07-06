@@ -1128,18 +1128,34 @@ TEST_CASE("Bugzilla Info Packet", "[message]")
 	API api = API(clock, curl, input, output);
 	MicroTask app = MicroTask(api, clock, output);
 
-	const auto message = BugzillaInfoMessage("bugzilla", "0.0.0.0", "aBSEFASDfOJOEFfjlsojFEF");
+	auto message = BugzillaInfoMessage("bugzilla", "0.0.0.0", "aBSEFASDfOJOEFfjlsojFEF");
+	message.username = "admin";
+	message.rootTaskID = TaskID(3);
+	message.groupTasksBy.push_back("product");
+	message.groupTasksBy.push_back("severity");
+	message.labelToField["Priority"] = "priority";
+	message.labelToField["Status"] = "status";
 
 	SECTION("Pack")
 	{
-		auto verifier = PacketVerifier(message.pack(), 64);
+		auto verifier = PacketVerifier(message.pack(), 126);
 
 		verifier
-			.verify_value<std::uint32_t>(64, "packet length")
+			.verify_value<std::uint32_t>(126, "packet length")
 			.verify_value<std::uint32_t>(13, "packet ID")
 			.verify_string("bugzilla", "name")
 			.verify_string("0.0.0.0", "URL")
-			.verify_string("aBSEFASDfOJOEFfjlsojFEF", "API Key");
+			.verify_string("aBSEFASDfOJOEFfjlsojFEF", "API Key")
+			.verify_string("admin", "username")
+			.verify_value<std::int32_t>(3, "root task ID")
+			.verify_value<std::int32_t>(2, "group task by count")
+			.verify_string("product", " group task by 1")
+			.verify_string("severity", "group task by 2")
+			.verify_value<std::int32_t>(2, "label to field count")
+			.verify_string("Priority", "label 1")
+			.verify_string("priority", "field 1")
+			.verify_string("Status", "label 2")
+			.verify_string("status", "field 2");
 	}
 
 	SECTION("Unpack")
@@ -1151,6 +1167,6 @@ TEST_CASE("Bugzilla Info Packet", "[message]")
 		const auto packet = dynamic_cast<BugzillaInfoMessage&>(*result.packet.get());
 
 		CHECK(packet == message);
-		CHECK(result.bytes_read == 64);
+		CHECK(result.bytes_read == 126);
 	}
 }

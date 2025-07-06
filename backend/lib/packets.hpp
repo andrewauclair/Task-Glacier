@@ -765,7 +765,7 @@ struct BugzillaInfoMessage : Message
 	std::string apiKey;
 	std::string username;
 	TaskID rootTaskID = NO_PARENT;
-	std::string groupTasksBy;
+	std::vector<std::string> groupTasksBy;
 	std::map<std::string, std::string> labelToField;
 
 	BugzillaInfoMessage(std::string name, std::string URL, std::string apiKey) : Message(PacketType::BUGZILLA_INFO), name(std::move(name)), URL(std::move(URL)), apiKey(std::move(apiKey)) {}
@@ -793,8 +793,12 @@ struct BugzillaInfoMessage : Message
 		out << "BugzillaInfoMessage { name: " << name << ", URL: \"" << URL << "\", apiKey: \"" << apiKey << "\", username: " << username << ", rootTaskID: " << rootTaskID._val << " }";
 
 		out << '\n';
-		out << "groupBy: " << groupTasksBy;
-		out << '\n';
+		out << "groupBy {\n";
+		for (auto&& groupBy : groupTasksBy)
+		{
+			out << groupBy << '\n';
+		}
+		out << "}\n";
 		out << "labelToField: {\n";
 		for (auto&& [label, field] : labelToField)
 		{

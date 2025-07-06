@@ -3,7 +3,9 @@ package packets;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -12,7 +14,7 @@ public class BugzillaInfo implements Packet {
     public final String url;
     public final String apiKey;
     public final String username;
-    public String groupTasksBy = "";
+    public List<String> groupTasksBy = new ArrayList<>();
     public int rootTaskID;
     public Map<String, String> labelToField = new HashMap<>();
 
@@ -33,7 +35,12 @@ public class BugzillaInfo implements Packet {
         BugzillaInfo message = new BugzillaInfo(name, url, apiKey, username);
 
         message.rootTaskID = input.readInt();
-        message.groupTasksBy = Packet.parseString(input);
+
+        int groupTasksByCount = input.readInt();
+
+        for (int i = 0; i < groupTasksByCount; i++) {
+            message.groupTasksBy.add(Packet.parseString(input));
+        }
 
         int labelToFieldCount = input.readInt();
 
@@ -49,8 +56,11 @@ public class BugzillaInfo implements Packet {
 
     @Override
     public void writeToOutput(DataOutputStream output) throws IOException {
-        AtomicInteger size = new AtomicInteger(26 + name.length() + url.length() + apiKey.length() + username.length());
-        size.addAndGet(groupTasksBy.length());
+        AtomicInteger size = new AtomicInteger(30 + name.length() + url.length() + apiKey.length() + username.length());
+        groupTasksBy.forEach(s -> {
+            size.addAndGet(2);
+            size.addAndGet(s.length());
+        });
         labelToField.forEach((s, s2) -> {
             size.addAndGet(4);
             size.addAndGet(s.length());
@@ -63,7 +73,12 @@ public class BugzillaInfo implements Packet {
         Packet.writeString(output, apiKey);
         Packet.writeString(output, username);
         output.writeInt(rootTaskID);
-        Packet.writeString(output, groupTasksBy);
+
+        output.writeInt(groupTasksBy.size());
+
+        for (String groupBy : groupTasksBy) {
+            Packet.writeString(output, groupBy);
+        }
 
         output.writeInt(labelToField.keySet().size());
 
@@ -75,14 +90,6 @@ public class BugzillaInfo implements Packet {
             output.writeShort(field.length());
             output.write(field.getBytes());
         }
-    }
-
-    public String getGroupTasksBy() {
-        return groupTasksBy;
-    }
-
-    public void setGroupTasksBy(String groupTasksBy) {
-        this.groupTasksBy = groupTasksBy;
     }
 
     public int getRootTaskID() {

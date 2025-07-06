@@ -54,7 +54,7 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 	{
 		const auto& info = static_cast<const BugzillaInfoMessage&>(message);
 
-		m_bugzilla.receive_info(info, m_app, *m_output);
+		m_bugzilla.receive_info(info, m_app, *this, output, *m_output);
 
 		break;
 	}

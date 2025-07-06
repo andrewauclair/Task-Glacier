@@ -4,6 +4,8 @@
 #include "packets.hpp"
 #include "curl.hpp"
 
+#include <simdjson.h>
+
 #include <chrono>
 #include <string>
 #include <map>
@@ -19,12 +21,13 @@ struct BugzillaInstance
 	std::string bugzillaApiKey;
 	std::string bugzillaUsername;
 	TaskID bugzillaRootTaskID = NO_PARENT;
-	std::string bugzillaGroupTasksBy;
+	std::vector<std::string> bugzillaGroupTasksBy;
 	std::map<std::string, std::string> bugzillaLabelToField;
 	std::optional<std::chrono::milliseconds> lastBugzillaRefresh;
 
-	std::map<int, TaskID> bugzillaTasks;
-	std::map<std::string, TaskID> bugzillaGroupBy;
+	std::map<int, TaskID> bugToTaskID;
+
+	std::map<std::string, std::vector<std::string>> fields;
 };
 
 class Bugzilla
@@ -36,7 +39,7 @@ public:
 	{
 	}
 
-	void receive_info(const BugzillaInfoMessage& info, MicroTask& app, std::ostream& file);
+	void receive_info(const BugzillaInfoMessage& info, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, std::ostream& file);
 	void send_info(std::vector<std::unique_ptr<Message>>& output);
 
 	void refresh(const RequestMessage& request, MicroTask& app, API& api, std::ostream& file, std::vector<std::unique_ptr<Message>>& output);
@@ -45,6 +48,10 @@ public:
 	void load_refresh(const std::string& line);
 
 private:
+	void build_group_by_task(BugzillaInstance& instance, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, TaskID parent, std::span<const std::string> groupTaskBy);
+
+	class Task* parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, const simdjson::dom::element& bug, TaskID currentParent, std::span<const std::string> groupTaskBy);
+
 	const Clock* m_clock;
 	cURL* m_curl;
 

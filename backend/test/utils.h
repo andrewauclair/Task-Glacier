@@ -20,14 +20,30 @@ void verify_message(const T& expected, const Message& actual, std::source_locati
 	}
 }
 
+struct curlRequestResponse
+{
+	std::string result;
+	std::string request;
+};
+
 struct curlTest : cURL
 {
-	mutable std::string request;
-	std::string result;
+	std::vector<curlRequestResponse> requestResponse;
+	std::size_t current = 0;
 
-	std::string execute_request(const std::string& request) const override
+	std::string execute_request(const std::string& request) override
 	{
-		this->request = request;
+		if (current >= requestResponse.size())
+		{
+			FAIL("More cURL requests than expected");
+		}
+
+		requestResponse[current].request = request;
+		
+		auto result = requestResponse[current].result;
+		
+		++current;
+
 		return result;
 	}
 };
@@ -134,8 +150,17 @@ struct TestHelper
 
 		bool match = output.size() == messages.size();
 
+		if (!match)
+		{
+			UNSCOPED_INFO("Expected " << messages.size() << " messages, but found " << output.size());
+		}
+
 		for (std::size_t i = 0; i < output.size() && match; i++)
 		{
+			if (*output[i] != *messages[i])
+			{
+				UNSCOPED_INFO("Message " << (i + 1) << ". did not match expected message");
+			}
 			match &= *output[i] == *messages[i];
 		}
 
