@@ -193,7 +193,16 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 
 				if (iter != info.bugToTaskID.end())
 				{
+					auto name = std::format("{} - {}", i, std::string_view(bug["summary"]));
 
+					Task* task = app.find_task(iter->second);
+
+					if (task && name != task->m_name)
+					{
+						app.rename_task(iter->second, name);
+
+						api.send_task_info(*task, false, output);
+					}
 				}
 				else
 				{
