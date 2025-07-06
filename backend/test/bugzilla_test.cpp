@@ -415,6 +415,59 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 		auto taskInfo25 = TaskInfoMessage(TaskID(25), TaskID(16), "65 - bug 4");
 		auto taskInfo26 = TaskInfoMessage(TaskID(26), TaskID(18), "70 - bug 5");
 
+		setup_task(taskInfo22, 1737382739870ms);
+		setup_task(taskInfo23, 1737384539870ms);
+		setup_task(taskInfo24, 1737386339870ms);
+		setup_task(taskInfo25, 1737388139870ms);
+		setup_task(taskInfo26, 1737389939870ms);
+
+		helper.required_messages(
+			{
+				&taskInfo22, &taskInfo23, &taskInfo24, &taskInfo25, &taskInfo26
+			});
+
+		SECTION("Refreshing Again Does Not Add New Tasks")
+		{
+			helper.clear_message_output();
+			helper.curl.current = 0;
+
+			helper.expect_success(refresh);
+
+			CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&resolution=---&api_key=asfesdFEASfslj&last_change_time=2025-01-20T16:48:59Z");
+
+			helper.required_messages({});
+		}
+	}
+
+	SECTION("Group By Task as Array")
+	{
+		helper.curl.requestResponse.clear();
+		helper.curl.current = 0;
+
+		const auto refresh = RequestMessage(PacketType::BUGZILLA_REFRESH, helper.next_request_id());
+
+		helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": [ \"Minor\" ] },"
+						"{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": [ \"Minor\" ] },"
+						"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": [ \"Critical\" ] },"
+						"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": [ \"Blocker\" ] },"
+						"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": [ \"Nitpick\" ] } ] }");
+			
+		helper.expect_success(refresh);
+
+		CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&resolution=---&api_key=asfesdFEASfslj");
+
+		auto taskInfo22 = TaskInfoMessage(TaskID(22), TaskID(9), "50 - bug 1");
+		auto taskInfo23 = TaskInfoMessage(TaskID(23), TaskID(9), "55 - bug 2");
+		auto taskInfo24 = TaskInfoMessage(TaskID(24), TaskID(5), "60 - bug 3");
+		auto taskInfo25 = TaskInfoMessage(TaskID(25), TaskID(16), "65 - bug 4");
+		auto taskInfo26 = TaskInfoMessage(TaskID(26), TaskID(18), "70 - bug 5");
+
+		setup_task(taskInfo22, 1737382739870ms);
+		setup_task(taskInfo23, 1737384539870ms);
+		setup_task(taskInfo24, 1737386339870ms);
+		setup_task(taskInfo25, 1737388139870ms);
+		setup_task(taskInfo26, 1737389939870ms);
+
 		helper.required_messages(
 			{
 				&taskInfo22, &taskInfo23, &taskInfo24, &taskInfo25, &taskInfo26

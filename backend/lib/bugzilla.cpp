@@ -186,12 +186,26 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 				Task* parent = parent_task_for_bug(m_bugzilla[name], app, bug, m_bugzilla[name].bugzillaRootTaskID, m_bugzilla[name].bugzillaGroupTasksBy);
 
 				// TODO what if parent is null? can it be?
+				auto id = bug["id"];
+				int i = id.get_int64();
 
-				const auto result = app.create_task(std::format("{} - {}", id, std::string_view(bug["summary"])), parent->taskID(), true);
+				auto iter  = info.bugToTaskID.find(i);
 
-				task = app.find_task(result.value());
+				if (iter != info.bugToTaskID.end())
+				{
 
-				api.send_task_info(*task, true, output);
+				}
+				else
+				{
+					const auto result = app.create_task(std::format("{} - {}", i, std::string_view(bug["summary"])), parent->taskID(), true);
+
+					auto* task = app.find_task(result.value());
+
+					api.send_task_info(*task, true, output);
+
+					//info.bugToTaskID[i] = task->taskID();
+					info.bugToTaskID.emplace(i, task->taskID());
+				}
 			}
 
 			if (initial_refresh)
