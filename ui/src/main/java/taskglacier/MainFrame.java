@@ -15,6 +15,7 @@ import io.github.andrewauclair.moderndocking.app.WindowLayoutBuilder;
 import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
 import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
 import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
+import packets.BugzillaInfo;
 import packets.DailyReportMessage;
 import packets.Packet;
 import packets.RequestConfig;
@@ -34,7 +35,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.prefs.Preferences;
 
@@ -48,6 +51,8 @@ public class MainFrame extends JFrame {
     TrayIcon trayIcon = new TrayIcon(appIcon16.getImage(), "");
 
     TimeData timeData = new TimeData();
+
+    public static Map<String, BugzillaInfo> bugzillaInfo = new HashMap<>();
 
     private SystemTrayDisplay systemTrayDisplay = new SystemTrayDisplay(trayIcon);
 

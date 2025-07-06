@@ -75,6 +75,11 @@ public class ServerConnection {
                     }
                     toSend.clear();
                 }
+                else if (packetType == PacketType.BUGZILLA_INFO) {
+                    BugzillaInfo info = BugzillaInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
+
+                    MainFrame.bugzillaInfo.put(info.name, info);
+                }
                 else if (packetType == PacketType.DAILY_REPORT) {
                     DailyReportMessage dailyReport = DailyReportMessage.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
 

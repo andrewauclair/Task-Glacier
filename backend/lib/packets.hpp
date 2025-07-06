@@ -760,6 +760,7 @@ struct TaskInfoMessage : Message
 
 struct BugzillaInfoMessage : Message
 {
+	std::string name;
 	std::string URL;
 	std::string apiKey;
 	std::string username;
@@ -767,7 +768,7 @@ struct BugzillaInfoMessage : Message
 	std::string groupTasksBy;
 	std::map<std::string, std::string> labelToField;
 
-	BugzillaInfoMessage(std::string URL, std::string apiKey) : Message(PacketType::BUGZILLA_INFO), URL(std::move(URL)), apiKey(std::move(apiKey)) {}
+	BugzillaInfoMessage(std::string name, std::string URL, std::string apiKey) : Message(PacketType::BUGZILLA_INFO), name(std::move(name)), URL(std::move(URL)), apiKey(std::move(apiKey)) {}
 
 	bool operator==(const Message& message) const override
 	{
@@ -780,7 +781,7 @@ struct BugzillaInfoMessage : Message
 
 	bool operator==(const BugzillaInfoMessage& message) const
 	{
-		return URL == message.URL && apiKey == message.apiKey && username == message.username && rootTaskID == message.rootTaskID &&
+		return name == message.name && URL == message.URL && apiKey == message.apiKey && username == message.username && rootTaskID == message.rootTaskID &&
 			groupTasksBy == message.groupTasksBy && labelToField == message.labelToField;
 	}
 
@@ -789,14 +790,23 @@ struct BugzillaInfoMessage : Message
 
 	std::ostream& print(std::ostream& out) const override
 	{
-		out << "BugzillaInfoMessage { URL: \"" << URL << "\", apiKey: \"" << apiKey << "\" }";
+		out << "BugzillaInfoMessage { name: " << name << ", URL: \"" << URL << "\", apiKey: \"" << apiKey << "\", username: " << username << ", rootTaskID: " << rootTaskID._val << " }";
+
+		out << '\n';
+		out << "groupBy: " << groupTasksBy;
+		out << '\n';
+		out << "labelToField: {\n";
+		for (auto&& [label, field] : labelToField)
+		{
+			out << label << ' ' << field << '\n';
+		}
+		out << "}\n";
 		return out;
 	}
 
 	friend std::ostream& operator<<(std::ostream& out, const BugzillaInfoMessage& message)
 	{
-		out << "BugzillaInfoMessage { URL: \"" << message.URL << "\", apiKey: \"" << message.apiKey << "\" }";
-		return out;
+		return message.print(out);
 	}
 };
 

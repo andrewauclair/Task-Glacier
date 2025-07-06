@@ -545,6 +545,7 @@ std::vector<std::byte> BugzillaInfoMessage::pack() const
 	PacketBuilder builder;
 
 	builder.add(PacketType::BUGZILLA_INFO);
+	builder.add(name);
 	builder.add(URL);
 	builder.add(apiKey);
 	builder.add(username);
@@ -566,6 +567,7 @@ std::expected<BugzillaInfoMessage, UnpackError> BugzillaInfoMessage::unpack(std:
 	auto parser = PacketParser(data);
 
 	const auto packetType = parser.parse_next<PacketType>();
+	const auto name = parser.parse_next<std::string>();
 	const auto URL = parser.parse_next<std::string>();
 	const auto apiKey = parser.parse_next<std::string>();
 	const auto username = parser.parse_next<std::string>();
@@ -574,7 +576,7 @@ std::expected<BugzillaInfoMessage, UnpackError> BugzillaInfoMessage::unpack(std:
 
 	try
 	{
-		auto info = BugzillaInfoMessage(URL.value(), apiKey.value());
+		auto info = BugzillaInfoMessage(name.value(), URL.value(), apiKey.value());
 		info.username = username.value();
 		info.rootTaskID = rootTaskID.value();
 		info.groupTasksBy = groupTasksBy.value();

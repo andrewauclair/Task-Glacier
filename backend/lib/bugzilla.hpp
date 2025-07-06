@@ -14,6 +14,7 @@ class API;
 
 struct BugzillaInstance
 {
+	std::string bugzillaName;
 	std::string bugzillaURL;
 	std::string bugzillaApiKey;
 	std::string bugzillaUsername;

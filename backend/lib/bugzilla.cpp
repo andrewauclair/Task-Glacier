@@ -9,18 +9,19 @@
 
 void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, std::ostream& file)
 {
-	m_bugzilla[info.URL].bugzillaURL = info.URL;
-	m_bugzilla[info.URL].bugzillaApiKey = info.apiKey;
-	m_bugzilla[info.URL].bugzillaUsername = info.username;
-	m_bugzilla[info.URL].bugzillaRootTaskID = info.rootTaskID;
-	m_bugzilla[info.URL].bugzillaGroupTasksBy = info.groupTasksBy;
-	m_bugzilla[info.URL].bugzillaLabelToField = info.labelToField;
+	m_bugzilla[info.name].bugzillaName = info.name;
+	m_bugzilla[info.name].bugzillaURL = info.URL;
+	m_bugzilla[info.name].bugzillaApiKey = info.apiKey;
+	m_bugzilla[info.name].bugzillaUsername = info.username;
+	m_bugzilla[info.name].bugzillaRootTaskID = info.rootTaskID;
+	m_bugzilla[info.name].bugzillaGroupTasksBy = info.groupTasksBy;
+	m_bugzilla[info.name].bugzillaLabelToField = info.labelToField;
 
-	file << "bugzilla-config " << m_bugzilla[info.URL].bugzillaURL << ' ' << m_bugzilla[info.URL].bugzillaApiKey << '\n';
-	file << m_bugzilla[info.URL].bugzillaUsername << '\n';
-	file << m_bugzilla[info.URL].bugzillaRootTaskID._val << '\n';
-	file << m_bugzilla[info.URL].bugzillaGroupTasksBy << '\n';
-	file << m_bugzilla[info.URL].bugzillaLabelToField.size() << '\n';
+	file << "bugzilla-config " << m_bugzilla[info.name].bugzillaName << ' ' << m_bugzilla[info.name].bugzillaURL << ' ' << m_bugzilla[info.name].bugzillaApiKey << '\n';
+	file << m_bugzilla[info.name].bugzillaUsername << '\n';
+	file << m_bugzilla[info.name].bugzillaRootTaskID._val << '\n';
+	file << m_bugzilla[info.name].bugzillaGroupTasksBy << '\n';
+	file << m_bugzilla[info.name].bugzillaLabelToField.size() << '\n';
 
 	for (auto&& f : info.labelToField)
 	{
@@ -32,9 +33,9 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, std
 
 void Bugzilla::send_info(std::vector<std::unique_ptr<Message>>& output)
 {
-	for (auto&& [URL, info] : m_bugzilla)
+	for (auto&& [name, info] : m_bugzilla)
 	{
-		auto bugzilla = BugzillaInfoMessage(info.bugzillaURL, info.bugzillaApiKey);
+		auto bugzilla = BugzillaInfoMessage(info.bugzillaName, info.bugzillaURL, info.bugzillaApiKey);
 		bugzilla.username = info.bugzillaUsername;
 		bugzilla.rootTaskID = info.bugzillaRootTaskID;
 		bugzilla.groupTasksBy = info.bugzillaGroupTasksBy;
@@ -50,7 +51,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 	{
 		const auto now = m_clock->now();
 
-		for (auto&& [URL, info] : m_bugzilla)
+		for (auto&& [name, info] : m_bugzilla)
 		{
 			if (app.find_task(info.bugzillaRootTaskID) == nullptr)
 			{
@@ -62,7 +63,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 		// TODO eventually we'll have to send back a failure if we weren't able to contact bugzilla
 		output.push_back(std::make_unique<SuccessResponse>(request.requestID));
 
-		for (auto&& [URL, info] : m_bugzilla)
+		for (auto&& [name, info] : m_bugzilla)
 		{
 			const bool initial_refresh = !info.lastBugzillaRefresh.has_value();
 
@@ -182,6 +183,16 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 
 						api.send_task_info(*task, false, output);
 					}
+					else
+					{
+						const auto result = app.create_task(std::format("{} - {}", i, std::string_view(bug["summary"])), parentID, true);
+
+						auto* task = app.find_task(result.value());
+
+						api.send_task_info(*task, true, output);
+
+						info.bugzillaTasks.emplace(static_cast<std::int32_t>(i), result.value());
+					}
 				}
 
 				for (auto&& parent : info.bugzillaGroupBy)
@@ -207,7 +218,9 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 
 			info.lastBugzillaRefresh = now;
 
-			file << "bugzilla-refresh " << info.bugzillaURL << ' ' << info.lastBugzillaRefresh->count() << std::endl;
+			file << "bugzilla-refresh " << info.bugzillaName << ' ' << info.lastBugzillaRefresh->count() << std::endl;
+
+			//file << "bugzilla-tasks " << info.bugzillaName
 		}
 		m_lastBugzillaRefresh = now;
 	}
@@ -219,8 +232,9 @@ void Bugzilla::load_config(const std::string& line, std::istream& input)
 
 	BugzillaInstance& bugzilla = m_bugzilla[values[1]];
 
-	bugzilla.bugzillaURL = values[1];
-	bugzilla.bugzillaApiKey = values[2];
+	bugzilla.bugzillaName = values[1];
+	bugzilla.bugzillaURL = values[2];
+	bugzilla.bugzillaApiKey = values[3];
 	std::getline(input, bugzilla.bugzillaUsername);
 
 	std::string temp;

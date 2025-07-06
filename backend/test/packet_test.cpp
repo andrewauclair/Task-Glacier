@@ -1128,16 +1128,17 @@ TEST_CASE("Bugzilla Info Packet", "[message]")
 	API api = API(clock, curl, input, output);
 	MicroTask app = MicroTask(api, clock, output);
 
-	const auto message = BugzillaInfoMessage("bugzilla", "aBSEFASDfOJOEFfjlsojFEF");
+	const auto message = BugzillaInfoMessage("bugzilla", "0.0.0.0", "aBSEFASDfOJOEFfjlsojFEF");
 
 	SECTION("Pack")
 	{
-		auto verifier = PacketVerifier(message.pack(), 55);
+		auto verifier = PacketVerifier(message.pack(), 64);
 
 		verifier
-			.verify_value<std::uint32_t>(55, "packet length")
+			.verify_value<std::uint32_t>(64, "packet length")
 			.verify_value<std::uint32_t>(13, "packet ID")
-			.verify_string("bugzilla", "URL")
+			.verify_string("bugzilla", "name")
+			.verify_string("0.0.0.0", "URL")
 			.verify_string("aBSEFASDfOJOEFfjlsojFEF", "API Key");
 	}
 
@@ -1150,6 +1151,6 @@ TEST_CASE("Bugzilla Info Packet", "[message]")
 		const auto packet = dynamic_cast<BugzillaInfoMessage&>(*result.packet.get());
 
 		CHECK(packet == message);
-		CHECK(result.bytes_read == 55);
+		CHECK(result.bytes_read == 64);
 	}
 }
