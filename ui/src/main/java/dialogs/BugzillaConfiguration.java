@@ -9,14 +9,13 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.prefs.Preferences;
 
 public class BugzillaConfiguration extends JDialog {
     private DefaultTableModel instanceModel = new DefaultTableModel(0, 1);
     private JTable instanceTable = new JTable(instanceModel);
 
-    private JButton add = new JButton("+");
-    private JButton remove = new JButton("-");
+    private JButton instanceAdd = new JButton("+");
+    private JButton instanceRemove = new JButton("-");
 
     private JButton save = new JButton("Save");
 
@@ -45,9 +44,9 @@ public class BugzillaConfiguration extends JDialog {
 
         JPanel panel = new JPanel(new GridBagLayout());
 
-        panel.add(add, gbc);
+        panel.add(instanceAdd, gbc);
         gbc.gridx++;
-        panel.add(remove, gbc);
+        panel.add(instanceRemove, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
@@ -102,11 +101,6 @@ public class BugzillaConfiguration extends JDialog {
 
         general.add(new JLabel(), gbc);
 
-        // option to split tasks by a specific bugzilla field
-        JTextField groupTasksBy = new JTextField();
-        groupBy.add(new LabeledComponent("Group Tasks By", groupTasksBy), gbc);
-        gbc.gridy++;
-
         // configure search parameters and task arrangement
         // configure labels
         JTable groupByTable = new JTable(instance.groupByModel);
@@ -122,12 +116,28 @@ public class BugzillaConfiguration extends JDialog {
         instance.labelModel.addRow(new Object[] { "Target", "target_milestone" });
         instance.labelModel.addRow(new Object[] { "Component", "component" });
 
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        gbc.fill = GridBagConstraints.BOTH;
+        JButton groupByAdd = new JButton("+");
+        JButton groupByRemove = new JButton("-");
+
         gbc.gridx = 0;
         gbc.gridy = 0;
 
+        groupByAdd.addActionListener(e -> {
+            String newGroupBy = JOptionPane.showInputDialog(this, "New Group By");
+
+            instance.groupByModel.addRow(new Object[] { newGroupBy });
+            instance.groupByModel.fireTableRowsInserted(instance.groupByModel.getRowCount() - 1, instance.groupByModel.getRowCount() - 1);
+        });
+
+        groupBy.add(groupByAdd, gbc);
+        gbc.gridx++;
+        groupBy.add(groupByRemove, gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 2;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
         groupBy.add(new JScrollPane(groupByTable), gbc);
 
         labels.add(new JScrollPane(labelTable), gbc);
@@ -178,7 +188,7 @@ public class BugzillaConfiguration extends JDialog {
 
         split.setRightComponent(stack);
 
-        add.addActionListener(e -> {
+        instanceAdd.addActionListener(e -> {
             String name = JOptionPane.showInputDialog(this, "New Bugzilla Instance Name");
 
             BugzillaInstance instance = new BugzillaInstance();
@@ -195,16 +205,16 @@ public class BugzillaConfiguration extends JDialog {
         });
 
         instanceTable.getSelectionModel().addListSelectionListener(e -> {
-            remove.setEnabled(instanceTable.getSelectedRow() != -1);
+            instanceRemove.setEnabled(instanceTable.getSelectedRow() != -1);
 
             String name = instanceTable.getSelectedRow() != -1 ? (String) instanceModel.getValueAt(instanceTable.getSelectedRow(), 0) : "blank";
 
             layout.show(stack, name);
         });
 
-        remove.setEnabled(false);
+        instanceRemove.setEnabled(false);
 
-        remove.addActionListener(e -> {
+        instanceRemove.addActionListener(e -> {
             if (instanceTable.getSelectedRow() != -1) {
                 String name = (String) instanceModel.getValueAt(instanceTable.getSelectedRow(), 0);
 
@@ -241,7 +251,7 @@ public class BugzillaConfiguration extends JDialog {
                 BugzillaInfo info = new BugzillaInfo(instance.name, instance.URL.getText(), instance.apiKey.getText(), instance.username.getText());
 
                 for (int i = 0; i < instance.groupByModel.getRowCount(); i++) {
-                    info.groupTasksBy.add((String) instance.groupByModel.getValueAt(0, 0));
+                    info.groupTasksBy.add((String) instance.groupByModel.getValueAt(i, 0));
                 }
 
                 info.setRootTaskID(Integer.parseInt(instance.rootTask.getText()));

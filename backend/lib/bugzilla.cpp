@@ -40,7 +40,7 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 	{
 		m_bugzilla[info.name].fields.clear();
 
-		std::string request = info.URL + "/rest/field/bug";
+		std::string request = info.URL + "/rest/field/bug?api_key=" + info.apiKey;
 
 		auto result = m_curl->execute_request(request);
 

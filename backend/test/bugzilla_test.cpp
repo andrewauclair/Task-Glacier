@@ -597,7 +597,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 	helper.api.process_packet(configure, helper.output);
 
-	CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/field/bug");
+	CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/field/bug?api_key=asfesdFEASfslj");
 
 	auto root = TaskInfoMessage(TaskID(1), NO_PARENT, "Bugzilla");
 	root.createTime = 1737344039870ms;
