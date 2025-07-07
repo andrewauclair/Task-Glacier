@@ -7,6 +7,7 @@ import taskglacier.MainFrame;
 
 import javax.swing.*;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -61,7 +62,7 @@ public class ServerConnection {
                 System.out.println("Received packet with length: " + packetLength + ", type: " + packetType);
 
                 if (packetType == PacketType.TASK_INFO) {
-                    TaskInfo info = TaskInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
+                    TaskInfo info = TaskInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
 
                     SwingUtilities.invokeLater(() -> mainFrame.getTaskModel().receiveInfo(info));
                 }
@@ -76,27 +77,27 @@ public class ServerConnection {
                     toSend.clear();
                 }
                 else if (packetType == PacketType.BUGZILLA_INFO) {
-                    BugzillaInfo info = BugzillaInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
+                    BugzillaInfo info = BugzillaInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
 
                     MainFrame.bugzillaInfo.put(info.name, info);
                 }
                 else if (packetType == PacketType.DAILY_REPORT) {
-                    DailyReportMessage dailyReport = DailyReportMessage.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
+                    DailyReportMessage dailyReport = DailyReportMessage.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
 
                     SwingUtilities.invokeLater(() -> mainFrame.receivedDailyReport(dailyReport));
                 }
                 else if (packetType == PacketType.WEEKLY_REPORT) {
-                    WeeklyReport report = WeeklyReport.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
+                    WeeklyReport report = WeeklyReport.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
 
                     SwingUtilities.invokeLater(() -> mainFrame.receivedWeeklyReport(report));
                 }
                 else if (packetType == PacketType.TIME_CATEGORIES_DATA) {
-                    TimeCategoriesMessage message = TimeCategoriesMessage.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
+                    TimeCategoriesMessage message = TimeCategoriesMessage.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
 
                     SwingUtilities.invokeLater(() -> mainFrame.getTimeData().processPacket(message));
                 }
                 else if (packetType == PacketType.FAILURE_RESPONSE) {
-                    FailureResponse failure = FailureResponse.parse(new DataInputStream((new ByteArrayInputStream(bytes))));
+                    FailureResponse failure = FailureResponse.parse(new DataInputStream((new ByteArrayInputStream(bytes))), packetLength);
 
                     SwingUtilities.invokeLater(() -> {
                         if (AddModifyTask.openInstance != null) {
@@ -128,10 +129,15 @@ public class ServerConnection {
     public boolean sendPacket(Packet packet) {
         if (output != null) {
             try {
-                packet.writeToOutput(output);
+                try (ByteArrayOutputStream output = new ByteArrayOutputStream(packet.size())) {
+                    packet.writeToOutput(new DataOutputStream(output));
+                }
+
+                packet.writeToOutput(this.output);
+                System.out.println("Sent packet with size: " + packet.size() + ", type: " + packet.type());
                 return true;
             } catch (IOException e) {
-//                throw new RuntimeException(e);
+                throw new RuntimeException(e);
             }
         }
         return false;

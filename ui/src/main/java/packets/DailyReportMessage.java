@@ -13,6 +13,18 @@ import java.util.List;
 import java.util.Map;
 
 public class DailyReportMessage implements Packet {
+    private int size = 0;
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public PacketType type() {
+        return PacketType.DAILY_REPORT;
+    }
+
     public static class DailyReport {
         public boolean found;
 
@@ -52,7 +64,7 @@ public class DailyReportMessage implements Packet {
 
     private DailyReport report = null;
 
-    public static DailyReportMessage parse(DataInputStream input) throws IOException {
+    public static DailyReportMessage parse(DataInputStream input, int size) throws IOException {
         DailyReportMessage message = new DailyReportMessage();
 
         input.readInt(); // packet type

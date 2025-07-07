@@ -4,6 +4,18 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class RequestDailyReport implements Packet {
+    private int size = 0;
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public PacketType type() {
+        return PacketType.REQUEST_DAILY_REPORT;
+    }
+
     public int requestID;
     public int month;
     public int day;
@@ -11,7 +23,9 @@ public class RequestDailyReport implements Packet {
 
     @Override
     public void writeToOutput(DataOutputStream output) throws IOException {
-        output.writeInt(16);
+        size = 16;
+
+        output.writeInt(size);
         output.writeInt(PacketType.REQUEST_DAILY_REPORT.value());
         output.writeInt(requestID);
         output.writeByte(month);

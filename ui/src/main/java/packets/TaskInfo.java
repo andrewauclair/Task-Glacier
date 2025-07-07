@@ -12,6 +12,18 @@ import java.util.List;
 import java.util.Optional;
 
 public class TaskInfo implements Packet {
+    private int size = 0;
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public PacketType type() {
+        return PacketType.TASK_INFO;
+    }
+
     public int taskID = 0;
     public int parentID = 0;
     public TaskState state = TaskState.INACTIVE;
@@ -35,8 +47,9 @@ public class TaskInfo implements Packet {
 
     public List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
 
-    public static TaskInfo parse(DataInputStream input) throws IOException {
+    public static TaskInfo parse(DataInputStream input, int size) throws IOException {
         TaskInfo info = new TaskInfo();
+        info.size = size;
 
         input.readInt(); // packet type
         info.taskID = input.readInt();

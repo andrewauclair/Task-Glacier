@@ -5,6 +5,10 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public interface Packet {
+    int size();
+
+    PacketType type();
+
     void writeToOutput(DataOutputStream output) throws IOException;
 
     static void writeString(DataOutputStream output, String str) throws IOException {

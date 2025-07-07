@@ -9,6 +9,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TimeCategoriesMessage implements Packet {
+    private int size = 0;
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public PacketType type() {
+        return packetType;
+    }
+
     private final PacketType packetType;
     public int requestID;
     public TimeCategoryModType type = TimeCategoryModType.UPDATE;
@@ -23,8 +35,10 @@ public class TimeCategoriesMessage implements Packet {
         this.packetType = packetType;
     }
 
-    public static TimeCategoriesMessage parse(DataInputStream input) throws IOException {
+    public static TimeCategoriesMessage parse(DataInputStream input, int size) throws IOException {
         TimeCategoriesMessage data = new TimeCategoriesMessage(PacketType.valueOf(input.readInt()));
+
+        data.size = size;
 
         int categoryCount = input.readInt();
 

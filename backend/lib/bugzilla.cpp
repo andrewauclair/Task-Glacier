@@ -58,7 +58,13 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 			{
 				for (auto value : field["values"])
 				{
-					values.emplace_back(std::string_view(value["name"]));
+					try
+					{
+						values.emplace_back(std::string_view(value["name"]));
+					}
+					catch (const simdjson::simdjson_error& ignore)
+					{
+					}
 				}
 			}
 

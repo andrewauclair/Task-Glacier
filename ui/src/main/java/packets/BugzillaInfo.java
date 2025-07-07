@@ -14,9 +14,21 @@ public class BugzillaInfo implements Packet {
     public final String url;
     public final String apiKey;
     public final String username;
-    public List<String> groupTasksBy = new ArrayList<>();
     public int rootTaskID;
+    public List<String> groupTasksBy = new ArrayList<>();
     public Map<String, String> labelToField = new HashMap<>();
+
+    private int size = 0;
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public PacketType type() {
+        return PacketType.BUGZILLA_INFO;
+    }
 
     public BugzillaInfo(String name, String url, String apiKey, String username) {
         this.name = name;
@@ -25,7 +37,7 @@ public class BugzillaInfo implements Packet {
         this.username = username;
     }
 
-    public static BugzillaInfo parse(DataInputStream input) throws IOException {
+    public static BugzillaInfo parse(DataInputStream input, int size) throws IOException {
         input.readInt(); // packet type
         String name = Packet.parseString(input);
         String url = Packet.parseString(input);
@@ -33,7 +45,7 @@ public class BugzillaInfo implements Packet {
         String username = Packet.parseString(input);
 
         BugzillaInfo message = new BugzillaInfo(name, url, apiKey, username);
-
+        message.size = size;
         message.rootTaskID = input.readInt();
 
         int groupTasksByCount = input.readInt();
@@ -56,16 +68,25 @@ public class BugzillaInfo implements Packet {
 
     @Override
     public void writeToOutput(DataOutputStream output) throws IOException {
-        AtomicInteger size = new AtomicInteger(30 + name.length() + url.length() + apiKey.length() + username.length());
+        AtomicInteger size = new AtomicInteger(12); // size, packet type, and root task ID
+        size.addAndGet(2 + name.length());
+        size.addAndGet(2 + url.length());
+        size.addAndGet(2 + apiKey.length());
+        size.addAndGet(2 + username.length());
+
+        size.addAndGet(4);
         groupTasksBy.forEach(s -> {
             size.addAndGet(2);
             size.addAndGet(s.length());
         });
+        size.addAndGet(4);
         labelToField.forEach((s, s2) -> {
             size.addAndGet(4);
             size.addAndGet(s.length());
             size.addAndGet(s2.length());
         });
+        this.size = size.get();
+
         output.writeInt(size.get());
         output.writeInt(PacketType.BUGZILLA_INFO.value());
         Packet.writeString(output, name);
@@ -85,10 +106,8 @@ public class BugzillaInfo implements Packet {
         for (String label : labelToField.keySet()) {
             String field = labelToField.get(label);
 
-            output.writeShort(label.length());
-            output.write(label.getBytes());
-            output.writeShort(field.length());
-            output.write(field.getBytes());
+            Packet.writeString(output, label);
+            Packet.writeString(output, field);
         }
     }
 

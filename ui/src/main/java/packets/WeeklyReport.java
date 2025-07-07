@@ -12,8 +12,21 @@ public class WeeklyReport implements Packet {
 
     public DailyReportMessage.DailyReport[] reports = new DailyReportMessage.DailyReport[7];
 
-    public static WeeklyReport parse(DataInputStream input) throws IOException {
+    private int size = 0;
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public PacketType type() {
+        return PacketType.WEEKLY_REPORT;
+    }
+
+    public static WeeklyReport parse(DataInputStream input, int size) throws IOException {
         WeeklyReport message = new WeeklyReport();
+        message.size = message.size;
 
         input.readInt(); // packet type
         message.requestID = input.readInt();

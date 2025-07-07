@@ -8,6 +8,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CreateTask implements Packet {
+    private int size = 0;
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public PacketType type() {
+        return PacketType.CREATE_TASK;
+    }
+
     private final int requestID;
 
     private final String name;
@@ -22,13 +34,14 @@ public class CreateTask implements Packet {
     }
 
     public void writeToOutput(DataOutputStream output) throws IOException {
-        int size = 16; // size, packet type, request ID, parent ID
+        size = 16; // size, packet type, request ID, parent ID
         size += 2 + name.length();
         size += 4 + (labels.size() * 2); // labels size, label string lengths
         for (String label : labels) {
             size += label.length();
         }
         size += 4 + (timeEntry.size() * 8);
+
         output.writeInt(size);
         output.writeInt(PacketType.CREATE_TASK.value());
         output.writeInt(requestID);
