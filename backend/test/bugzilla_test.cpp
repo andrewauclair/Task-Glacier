@@ -407,7 +407,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 		helper.expect_success(refresh);
 
-		CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&resolution=---&api_key=asfesdFEASfslj");
+		CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&api_key=asfesdFEASfslj&resolution=---");
 
 		auto taskInfo22 = TaskInfoMessage(TaskID(22), TaskID(9), "50 - bug 1");
 		auto taskInfo23 = TaskInfoMessage(TaskID(23), TaskID(9), "55 - bug 2");
@@ -433,7 +433,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 			helper.expect_success(refresh);
 
-			CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&resolution=---&api_key=asfesdFEASfslj&last_change_time=2025-01-20T16:48:59Z");
+			CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&api_key=asfesdFEASfslj&last_change_time=2025-01-20T16:48:59Z");
 
 			helper.required_messages({});
 		}
@@ -461,6 +461,205 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 			helper.required_messages({ &taskInfo22, &taskInfo24, &taskInfo26 });
 		}
+
+		SECTION("New Bugs Are Added")
+		{
+			helper.clear_message_output();
+
+			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 75, \"summary\": \"bug 6\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+
+			helper.expect_success(refresh);
+
+			auto taskInfo27 = TaskInfoMessage(TaskID(27), TaskID(18), "75 - bug 6");
+
+			setup_task(taskInfo27, 1737392639870ms);
+
+			helper.required_messages({ &taskInfo27 });
+		}
+
+		SECTION("Resolved Bugs Are Finished")
+		{
+			helper.clear_message_output();
+
+			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1 rename\", \"status\": \"RESOLVED\", \"priority\": \"P2\", \"severity\": \"Minor\" } ] }");
+
+			helper.expect_success(refresh);
+
+			taskInfo22.name = "50 - bug 1 rename";
+			taskInfo22.newTask = false;
+			taskInfo22.state = TaskState::FINISHED;
+			taskInfo22.finishTime = 1737392639870ms;
+
+			helper.required_messages({ &taskInfo22 });
+		}
+
+		SECTION("Creating New Grouping Tasks - Moving Bug to New Group By")
+		{
+			
+
+			SECTION("Change Priority (First Layer of Grouping)")
+			{
+				helper.clear_message_output();
+
+				helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P5\", \"severity\": \"Nitpick\" } ] }");
+
+				helper.expect_success(refresh);
+
+				auto p5 = TaskInfoMessage(TaskID(27), TaskID(1), "P5");
+				auto p5_nitpick = TaskInfoMessage(TaskID(28), TaskID(27), "Nitpick");
+
+				setup_task(p5, 1737392639870ms);
+				setup_task(p5_nitpick, 1737394439870ms);
+
+				taskInfo26.newTask = false;
+				taskInfo26.parentID = TaskID(28);
+
+				helper.required_messages({ &p5, &p5_nitpick, &taskInfo26 });
+			}
+
+			SECTION("Change Severity (Second Layer of Grouping)")
+			{
+				helper.clear_message_output();
+
+				helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Minor2\" } ] }");
+
+				helper.expect_success(refresh);
+
+				auto p4_minor2 = TaskInfoMessage(TaskID(27), TaskID(17), "Minor2");
+
+				setup_task(p4_minor2, 1737392639870ms);
+
+				taskInfo26.newTask = false;
+				taskInfo26.parentID = TaskID(27);
+
+				helper.required_messages({ &p4_minor2, &taskInfo26 });
+			}
+		}
+
+		SECTION("Creating New Grouping Tasks - New Bug in New Group By")
+		{
+			SECTION("Change Priority (First Layer of Grouping)")
+			{
+				helper.clear_message_output();
+
+				helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 75, \"summary\": \"bug 6\", \"status\": \"Confirmed\", \"priority\": \"P3\", \"severity\": \"Nitpick\" } ] }");
+
+				helper.expect_success(refresh);
+
+				auto taskInfo27 = TaskInfoMessage(TaskID(27), TaskID(13), "75 - bug 6");
+
+				setup_task(taskInfo27, 1737392639870ms);
+
+				helper.required_messages({ &taskInfo27 });
+			}
+
+			SECTION("Change Severity (Second Layer of Grouping)")
+			{
+				helper.clear_message_output();
+
+				helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 75, \"summary\": \"bug 6\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Minor\" } ] }");
+
+				helper.expect_success(refresh);
+
+				auto taskInfo27 = TaskInfoMessage(TaskID(27), TaskID(19), "75 - bug 6");
+
+				setup_task(taskInfo27, 1737392639870ms);
+
+				helper.required_messages({ &taskInfo27 });
+			}
+		}
+
+		SECTION("Finishing Old Grouping Tasks - Last Bug is Moved")
+		{
+			helper.clear_message_output();
+
+			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 60, \"summary\": \"bug 3\", \"status\": \"RESOLVED\", \"priority\": \"P2\", \"severity\": \"Critical\" } ] }");
+
+			helper.expect_success(refresh);
+
+			auto taskInfo24 = TaskInfoMessage(TaskID(24), TaskID(10), "60 - bug 3");
+
+			p1_critical.state = TaskState::FINISHED;
+			p1_critical.finishTime = 33ms;
+
+			helper.required_messages({ &p1_critical, &taskInfo24 });
+		}
+
+		SECTION("Finishing Old Grouping Tasks - Last Bug is Finished")
+		{
+			helper.clear_message_output();
+
+			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 60, \"summary\": \"bug 3\", \"status\": \"RESOLVED\", \"priority\": \"P1\", \"severity\": \"Critical\" } ] }");
+
+			helper.expect_success(refresh);
+
+			auto taskInfo24 = TaskInfoMessage(TaskID(24), TaskID(5), "60 - bug 3");
+			taskInfo24.state = TaskState::FINISHED;
+
+			p1_critical.state = TaskState::FINISHED;
+			p1_critical.finishTime = 33ms;
+
+			helper.required_messages({ &p1_critical, &taskInfo24 });
+		}
+
+		SECTION("Building a Totally New Grouping")
+		{
+			configure.groupTasksBy.push_back("severity");
+			configure.groupTasksBy.push_back("priority");
+
+			helper.curl.requestResponse.clear();
+			helper.curl.current = 0;
+
+			helper.api.process_packet(configure, helper.output);
+
+			auto nitpick = TaskInfoMessage(TaskID(27), TaskID(1), "Nitpick");
+			auto minor = TaskInfoMessage(TaskID(28), TaskID(1), "Minor");
+			auto critical = TaskInfoMessage(TaskID(29), TaskID(1), "Critical");
+			auto blocker = TaskInfoMessage(TaskID(30), TaskID(1), "Blocker");
+
+			auto nitpick_p1 = TaskInfoMessage(TaskID(31), TaskID(27), "P1");
+			auto nitpick_p2 = TaskInfoMessage(TaskID(32), TaskID(27), "P2");
+			auto nitpick_p3 = TaskInfoMessage(TaskID(33), TaskID(27), "P3");
+			auto nitpick_p4 = TaskInfoMessage(TaskID(34), TaskID(27), "P4");
+
+			auto minor_p1 = TaskInfoMessage(TaskID(31), TaskID(27), "P1");
+			auto minor_p2 = TaskInfoMessage(TaskID(32), TaskID(27), "P2");
+			auto minor_p3 = TaskInfoMessage(TaskID(33), TaskID(27), "P3");
+			auto minor_p4 = TaskInfoMessage(TaskID(34), TaskID(27), "P4");
+
+			auto critical_p1 = TaskInfoMessage(TaskID(31), TaskID(27), "P1");
+			auto critical_p2 = TaskInfoMessage(TaskID(32), TaskID(27), "P2");
+			auto critical_p3 = TaskInfoMessage(TaskID(33), TaskID(27), "P3");
+			auto critical_p4 = TaskInfoMessage(TaskID(34), TaskID(27), "P4");
+
+			auto blocker_p1 = TaskInfoMessage(TaskID(31), TaskID(27), "P1");
+			auto blocker_p2 = TaskInfoMessage(TaskID(32), TaskID(27), "P2");
+			auto blocker_p3 = TaskInfoMessage(TaskID(33), TaskID(27), "P3");
+			auto blocker_p4 = TaskInfoMessage(TaskID(34), TaskID(27), "P4");
+
+			helper.required_messages(
+				{
+					&p1,
+					& p1_nitpick,& p1_minor,& p1_critical,& p1_blocker,
+					& p2,
+					& p2_nitpick,& p2_minor,& p2_critical,& p2_blocker,
+					& p3,
+					& p3_nitpick,& p3_minor,& p3_critical,& p3_blocker,
+					& p4,
+					& p4_nitpick,& p4_minor,& p4_critical,& p4_blocker,
+
+					&nitpick,
+					&nitpick_p1, &nitpick_p2, & nitpick_p3, &nitpick_p4,
+					&minor,
+					&minor_p1, & minor_p2, & minor_p3, & minor_p4,
+					&critical,
+					& critical_p1, & critical_p2, & critical_p3, & critical_p4,
+					&blocker,
+					& blocker_p1, & blocker_p2, & blocker_p3, & blocker_p4,
+
+					& taskInfo22,& taskInfo23,& taskInfo24,& taskInfo25,& taskInfo26
+				});
+		}
 	}
 
 	SECTION("Group By Task as Array")
@@ -478,7 +677,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			
 		helper.expect_success(refresh);
 
-		CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&resolution=---&api_key=asfesdFEASfslj");
+		CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&api_key=asfesdFEASfslj&resolution=---");
 
 		auto taskInfo22 = TaskInfoMessage(TaskID(22), TaskID(9), "50 - bug 1");
 		auto taskInfo23 = TaskInfoMessage(TaskID(23), TaskID(9), "55 - bug 2");
@@ -496,53 +695,6 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			{
 				&taskInfo22, &taskInfo23, &taskInfo24, &taskInfo25, &taskInfo26
 			});
-	}
-
-	SECTION("Bug Renames Are Picked Up")
-	{
-		helper.curl.requestResponse.clear();
-		helper.curl.current = 0;
-
-		const auto refresh = RequestMessage(PacketType::BUGZILLA_REFRESH, helper.next_request_id());
-
-		helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
-			"{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
-			"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
-			"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
-			"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
-
-		helper.expect_success(refresh);
-
-		CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&resolution=---&api_key=asfesdFEASfslj");
-
-		auto taskInfo22 = TaskInfoMessage(TaskID(22), TaskID(9), "50 - bug 1");
-		auto taskInfo23 = TaskInfoMessage(TaskID(23), TaskID(9), "55 - bug 2");
-		auto taskInfo24 = TaskInfoMessage(TaskID(24), TaskID(5), "60 - bug 3");
-		auto taskInfo25 = TaskInfoMessage(TaskID(25), TaskID(16), "65 - bug 4");
-		auto taskInfo26 = TaskInfoMessage(TaskID(26), TaskID(18), "70 - bug 5");
-
-		setup_task(taskInfo22, 1737382739870ms);
-		setup_task(taskInfo23, 1737384539870ms);
-		setup_task(taskInfo24, 1737386339870ms);
-		setup_task(taskInfo25, 1737388139870ms);
-		setup_task(taskInfo26, 1737389939870ms);
-
-		helper.required_messages(
-			{
-				&taskInfo22, &taskInfo23, &taskInfo24, &taskInfo25, &taskInfo26
-			});
-
-		SECTION("Refreshing Again Does Not Add New Tasks")
-		{
-			helper.clear_message_output();
-			helper.curl.current = 0;
-
-			helper.expect_success(refresh);
-
-			CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&resolution=---&api_key=asfesdFEASfslj&last_change_time=2025-01-20T16:48:59Z");
-
-			helper.required_messages({});
-		}
 	}
 }
 

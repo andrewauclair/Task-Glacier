@@ -50,7 +50,7 @@ public:
 private:
 	void build_group_by_task(BugzillaInstance& instance, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, TaskID parent, std::span<const std::string> groupTaskBy);
 
-	class Task* parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, const simdjson::dom::element& bug, TaskID currentParent, std::span<const std::string> groupTaskBy);
+	class Task* parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, const simdjson::dom::element& bug, TaskID currentParent, std::span<const std::string> groupTaskBy);
 
 	const Clock* m_clock;
 	cURL* m_curl;

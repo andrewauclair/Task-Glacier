@@ -101,7 +101,7 @@ void Bugzilla::build_group_by_task(BugzillaInstance& instance, MicroTask& app, A
 	}
 }
 
-Task* Bugzilla::parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, const simdjson::dom::element& bug, TaskID currentParent, std::span<const std::string> groupTaskBy)
+Task* Bugzilla::parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, const simdjson::dom::element& bug, TaskID currentParent, std::span<const std::string> groupTaskBy)
 {
 	auto field = groupTaskBy[0];
 	groupTaskBy = groupTaskBy.subspan(1);
@@ -121,11 +121,20 @@ Task* Bugzilla::parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, 
 	
 	Task* task = app.find_task_with_parent_and_name(groupBy, currentParent);
 
+	if (!task)
+	{
+		const auto result = app.create_task(groupBy, currentParent, true);
+
+		task = app.find_task(result.value());
+
+		api.send_task_info(*task, true, output);
+	}
+
 	if (groupTaskBy.empty())
 	{
 		return task;
 	}
-	return parent_task_for_bug(instance, app, bug, task->taskID(), groupTaskBy);
+	return parent_task_for_bug(instance, app, api, output, bug, task->taskID(), groupTaskBy);
 }
 
 void Bugzilla::send_info(std::vector<std::unique_ptr<Message>>& output)
@@ -167,7 +176,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 			// find all bugs that are not resolved
 			// TODO find only bugs that have changed since the last refresh
 			// TODO special processing for the initial refresh
-			std::string request = info.bugzillaURL + "/rest/bug?assigned_to=" + info.bugzillaUsername + "&resolution=---&api_key=" + info.bugzillaApiKey;
+			std::string request = info.bugzillaURL + "/rest/bug?assigned_to=" + info.bugzillaUsername + "&api_key=" + info.bugzillaApiKey;
 
 			if (!initial_refresh)
 			{
@@ -179,6 +188,10 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 				std::chrono::hh_mm_ss hms = std::chrono::hh_mm_ss{ now - m_clock->midnight() };
 
 				request += "&last_change_time=" + std::format("{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z", (int)ymd.year(), (unsigned int)ymd.month(), (unsigned int)ymd.day(), hms.hours().count(), hms.minutes().count(), hms.seconds().count());
+			}
+			else
+			{
+				request += "&resolution=---";
 			}
 
 			auto result = m_curl->execute_request(request);
@@ -192,9 +205,8 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 				// check if we already have a task ID for this bug
 
 				// find the parent for this task
-				Task* parent = parent_task_for_bug(m_bugzilla[name], app, bug, m_bugzilla[name].bugzillaRootTaskID, m_bugzilla[name].bugzillaGroupTasksBy);
+				Task* parent = parent_task_for_bug(m_bugzilla[name], app, api, output, bug, m_bugzilla[name].bugzillaRootTaskID, m_bugzilla[name].bugzillaGroupTasksBy);
 
-				// TODO what if parent is null? can it be?
 				auto id = bug["id"];
 				int i = id.get_int64();
 
@@ -206,10 +218,31 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 
 					Task* task = app.find_task(iter->second);
 
+					bool sendInfo = false;
+
 					if (task && name != task->m_name)
 					{
 						app.rename_task(iter->second, name);
 
+						sendInfo = true;
+					}
+
+					if (task && parent->taskID() != task->parentID())
+					{
+						app.reparent_task(task->taskID(), parent->taskID());
+
+						sendInfo = true;
+					}
+
+					if (task && std::string_view(bug["status"]) == "RESOLVED")
+					{
+						app.finish_task(task->taskID());
+
+						sendInfo = true;
+					}
+
+					if (sendInfo)
+					{
 						api.send_task_info(*task, false, output);
 					}
 				}
