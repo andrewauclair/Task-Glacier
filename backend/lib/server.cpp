@@ -85,11 +85,36 @@ Task* MicroTask::find_task_with_parent_and_name(const std::string& name, TaskID 
 	return nullptr;
 }
 
+void MicroTask::find_bugzilla_helper_tasks(TaskID bugzillaParentTaskID, const std::vector<TaskID>& bugTasks, std::map<TaskID, TaskState>& helperTasks)
+{
+	for (auto&& [taskID, task] : m_tasks)
+	{
+		if (task.parentID() == bugzillaParentTaskID && std::find(bugTasks.begin(), bugTasks.end(), task.taskID()) == bugTasks.end())
+		{
+			helperTasks[task.taskID()] = task.state;
+
+			find_bugzilla_helper_tasks(task.taskID(), bugTasks, helperTasks);
+		}
+	}
+}
+
 bool MicroTask::task_has_children(TaskID id) const
 {
 	for (auto&& [taskID, task] : m_tasks)
 	{
 		if (task.parentID() == id)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool MicroTask::task_has_inactive_children(TaskID id) const
+{
+	for (auto&& [taskID, task] : m_tasks)
+	{
+		if (task.parentID() == id && task.state != TaskState::FINISHED)
 		{
 			return true;
 		}

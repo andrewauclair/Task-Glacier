@@ -65,7 +65,10 @@ public:
 	Task* find_task(TaskID id);
 	Task* find_task_with_parent_and_name(const std::string& name, TaskID parentID);
 
+	void find_bugzilla_helper_tasks(TaskID bugzillaParentTaskID, const std::vector<TaskID>& bugTasks, std::map<TaskID, TaskState>& helperTasks);
+
 	bool task_has_children(TaskID id) const;
+	bool task_has_inactive_children(TaskID id) const;
 
 	struct FindTasksOnDay
 	{
