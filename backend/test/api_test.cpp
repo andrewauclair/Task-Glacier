@@ -91,7 +91,7 @@ TEST_CASE("Create Task", "[api][task]")
 		helper.expect_success(create);
 
 		// TODO this is all temporary. we need something setup to use, this will have to do. persistence will just be a log of steps to rebuild our data
-		CHECK(helper.fileOutput.str() == "create 1 0 1737344939870 (14 this is a test)\ntask-time-codes 1 1 2 2 3 \n");
+		CHECK(helper.fileOutput.str() == "create 1 0 1737344939870 0 (14 this is a test)\ntask-time-codes 1 1 2 2 3 \n");
 	}
 }
 
@@ -1566,21 +1566,21 @@ TEST_CASE("Persist Tasks", "[api][task]")
 	api.process_packet(reparent, output);
 
 	std::ostringstream expected;
-	expected << "create 1 0 1737344939870 (6 task 1)\n";
+	expected << "create 1 0 1737344939870 0 (6 task 1)\n";
 	expected << "task-time-codes 1 0 0 \n";
-	expected << "create 2 1 1737346739870 (6 task 2)\n";
+	expected << "create 2 1 1737346739870 0 (6 task 2)\n";
 	expected << "task-time-codes 2 0 0 \n";
 	expected << "start 2 1737348539870 0 \n";
-	expected << "create 3 2 1737350339870 (6 task 3)\n";
+	expected << "create 3 2 1737350339870 0 (6 task 3)\n";
 	expected << "task-time-codes 3 0 0 \n";
 	expected << "stop 2 1737352139870\n";
 	expected << "start 3 1737353939870 0 \n";
-	expected << "create 4 2 1737355739870 (6 task 4)\n";
+	expected << "create 4 2 1737355739870 0 (6 task 4)\n";
 	expected << "task-time-codes 4 0 0 \n";
-	expected << "create 5 3 1737357539870 (6 task 5)\n";
+	expected << "create 5 3 1737357539870 0 (6 task 5)\n";
 	expected << "task-time-codes 5 0 0 \n";
 	expected << "stop 3 1737359339870\n";
-	expected << "create 6 4 1737361139870 (6 task 6)\n";
+	expected << "create 6 4 1737361139870 0 (6 task 6)\n";
 	expected << "task-time-codes 6 0 0 \n";
 	expected << "start 2 1737362939870 0 \n";
 	expected << "stop 2 1737364739870\n";
@@ -1602,17 +1602,17 @@ TEST_CASE("Reload Tasks From File", "[api]")
 	std::istringstream fileInput;
 	std::ostringstream fileOutput;
 
-	fileOutput << "create 1 0 1737344939870 (6 task 1)\n";
+	fileOutput << "create 1 0 1737344939870 0 (6 task 1)\n";
 	fileOutput << "task-time-codes 1 1 2 2 3 \n";
-	fileOutput << "create 2 1 1737346739870 (6 task 2)\n";
+	fileOutput << "create 2 1 1737346739870 0 (6 task 2)\n";
 	fileOutput << "start 2 1737348539870 0\n";
-	fileOutput << "create 3 2 1737350339870 (6 task 3)\n";
+	fileOutput << "create 3 2 1737350339870 0 (6 task 3)\n";
 	fileOutput << "stop 2 1737352139870\n";
 	fileOutput << "start 3 1737353939870 0\n";
-	fileOutput << "create 4 2 1737355739870 (6 task 4)\n";
-	fileOutput << "create 5 3 1737357539870 (6 task 5)\n";
+	fileOutput << "create 4 2 1737355739870 0 (6 task 4)\n";
+	fileOutput << "create 5 3 1737357539870 0 (6 task 5)\n";
 	fileOutput << "stop 3 1737359339870\n";
-	fileOutput << "create 6 4 1737361139870 (6 task 6)\n";
+	fileOutput << "create 6 4 1737361139870 0 (6 task 6)\n";
 	fileOutput << "start 2 1737362939870 0\n";
 	fileOutput << "stop 2 1737364739870\n";
 	fileOutput << "start 4 1737366539870 0\n";
@@ -1753,7 +1753,7 @@ TEST_CASE("Persist Time Categories", "[api]")
 	api.process_packet(remove_category, output);
 
 	std::ostringstream expected;
-	expected << "create 1 0 1737344939870 (6 task 1)\n";
+	expected << "create 1 0 1737344939870 0 (6 task 1)\n";
 	expected << "task-time-codes 1 0 0 \n";
 	expected << "time-category add 0 (5 Te st) (4 TS T) 3 0 (4 Fo o) 0 (4 Ba r) 0 (5 Buz z) \n";
 	expected << "time-category add 0 (4 Tw o) (4 TW O) 1 0 (5 Biz z) \n";
@@ -1782,7 +1782,7 @@ TEST_CASE("Reload Time Categories", "[api]")
 	std::istringstream fileInput;
 	std::ostringstream fileOutput;
 
-	fileOutput << "create 1 0 1737344939870 (6 task 1)\n";
+	fileOutput << "create 1 0 1737344939870 0 (6 task 1)\n";
 	fileOutput << "time-category add 0 (5 Te st) (4 TS T) 2 0 (4 Fo o) 0 (4 Ba r)\n";
 	fileOutput << "time-category add 1 (5 Te st) (4 TS T) 3 1 (4 Fo o) 2 (4 Ba r) 0 (5 Buz z)\n";
 	fileOutput << "time-category add 0 (4 Tw o) (4 TW O) 1 0 (5 Biz z) \n";

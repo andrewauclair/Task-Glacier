@@ -143,6 +143,100 @@ TEST_CASE("Bugzilla Persistence", "[bugzilla][api]")
 {
 	TestHelper helper;
 
+	const std::string expectedOutput = R"expected_output(create 1 0 1737344939870 0 (6 test 1)
+task-time-codes 1 0 0 
+bugzilla-config bugzilla 0.0.0.0 asfesdFEASfslj
+test
+1
+2
+priority
+severity
+2
+Priority
+priority
+Status
+status
+create 2 1 1737346739870 1 (2 P1)
+create 3 2 1737348539870 1 (7 Nitpick)
+create 4 2 1737350339870 1 (5 Minor)
+create 5 2 1737352139870 1 (8 Critical)
+create 6 2 1737353939870 1 (7 Blocker)
+create 7 1 1737355739870 1 (2 P2)
+create 8 7 1737357539870 1 (7 Nitpick)
+create 9 7 1737359339870 1 (5 Minor)
+create 10 7 1737361139870 1 (8 Critical)
+create 11 7 1737362939870 1 (7 Blocker)
+create 12 1 1737364739870 1 (2 P3)
+create 13 12 1737366539870 1 (7 Nitpick)
+create 14 12 1737368339870 1 (5 Minor)
+create 15 12 1737370139870 1 (8 Critical)
+create 16 12 1737371939870 1 (7 Blocker)
+create 17 1 1737373739870 1 (2 P4)
+create 18 17 1737375539870 1 (7 Nitpick)
+create 19 17 1737377339870 1 (5 Minor)
+create 20 17 1737379139870 1 (8 Critical)
+create 21 17 1737380939870 1 (7 Blocker)
+finish 2 1737382739870
+finish 3 1737384539870
+finish 4 1737386339870
+finish 5 1737388139870
+finish 6 1737389939870
+finish 7 1737391739870
+finish 8 1737393539870
+finish 9 1737395339870
+finish 10 1737397139870
+finish 11 1737398939870
+finish 12 1737400739870
+finish 13 1737402539870
+finish 14 1737404339870
+finish 15 1737406139870
+finish 16 1737407939870
+finish 17 1737409739870
+finish 18 1737411539870
+finish 19 1737413339870
+finish 20 1737415139870
+finish 21 1737416939870
+unfinish 9
+unfinish 7
+unfinish 1
+create 22 9 1737419639870 1 (10 50 - bug 1)
+unfinish 9
+unfinish 7
+unfinish 1
+create 23 9 1737421439870 1 (10 55 - bug 2)
+unfinish 5
+unfinish 2
+unfinish 1
+create 24 5 1737423239870 1 (10 60 - bug 3)
+unfinish 16
+unfinish 12
+unfinish 1
+create 25 16 1737425039870 1 (10 65 - bug 4)
+unfinish 18
+unfinish 17
+unfinish 1
+create 26 18 1737426839870 1 (10 70 - bug 5)
+bugzilla-refresh bugzilla 1737417839870
+bugzilla-tasks bugzilla 50 22 55 23 60 24 65 25 70 26 
+unfinish 9
+unfinish 7
+unfinish 1
+unfinish 9
+unfinish 7
+unfinish 1
+unfinish 5
+unfinish 2
+unfinish 1
+unfinish 16
+unfinish 12
+unfinish 1
+unfinish 18
+unfinish 17
+unfinish 1
+bugzilla-refresh bugzilla 1737434939870
+bugzilla-tasks bugzilla 50 22 55 23 60 24 65 25 70 26 
+)expected_output";
+
 	SECTION("Save")
 	{
 		auto create1 = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1");
@@ -151,31 +245,120 @@ TEST_CASE("Bugzilla Persistence", "[bugzilla][api]")
 		auto configure = BugzillaInfoMessage("bugzilla", "0.0.0.0", "asfesdFEASfslj");
 		configure.username = "test";
 		configure.rootTaskID = TaskID(1);
-		configure.groupTasksBy.push_back("product");
+		configure.groupTasksBy.push_back("priority");
 		configure.groupTasksBy.push_back("severity");
 
 		configure.labelToField["Priority"] = "priority";
 		configure.labelToField["Status"] = "status";
 
-		helper.curl.requestResponse.emplace_back("{ \"fields\": [] }");
+		const std::string fieldsResponse = R"bugs_data(
+		{
+		  "fields": [
+			{
+			  "display_name": "Priority",
+			  "name": "priority",
+			  "type": 2,
+			  "is_mandatory": false,
+			  "value_field": null,
+			  "values": [
+				{
+				  "sortkey": 100,
+				  "sort_key": 100,
+				  "visibility_values": [],
+				  "name": "P1"
+				},
+				{
+				  "sort_key": 200,
+				  "name": "P2",
+				  "visibility_values": [],
+				  "sortkey": 200
+				},
+				{
+				  "sort_key": 300,
+				  "visibility_values": [],
+				  "name": "P3",
+				  "sortkey": 300
+				},
+				{
+				  "sort_key": 400,
+				  "name": "P4",
+				  "visibility_values": [],
+				  "sortkey": 400
+				}
+			  ],
+			  "visibility_values": [],
+			  "visibility_field": null,
+			  "is_on_bug_entry": false,
+			  "is_custom": false,
+			  "id": 13
+			},
+			{
+			  "display_name": "Severity",
+			  "name": "severity",
+			  "type": 2,
+			  "is_mandatory": false,
+			  "value_field": null,
+			  "values": [
+				{
+				  "sortkey": 100,
+				  "sort_key": 100,
+				  "visibility_values": [],
+				  "name": "Nitpick"
+				},
+				{
+				  "sort_key": 200,
+				  "name": "Minor",
+				  "visibility_values": [],
+				  "sortkey": 200
+				},
+				{
+				  "sort_key": 300,
+				  "visibility_values": [],
+				  "name": "Critical",
+				  "sortkey": 300
+				},
+				{
+				  "sort_key": 400,
+				  "name": "Blocker",
+				  "visibility_values": [],
+				  "sortkey": 400
+				}
+			  ],
+			  "visibility_values": [],
+			  "visibility_field": null,
+			  "is_on_bug_entry": false,
+			  "is_custom": false,
+			  "id": 14
+			}
+		  ]
+		}
+	)bugs_data";
+
+		helper.curl.requestResponse.emplace_back(fieldsResponse);
 
 		helper.api.process_packet(configure, helper.output);
 
 		const auto refresh = RequestMessage(PacketType::BUGZILLA_REFRESH, helper.next_request_id());
 
-		helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+		helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+			"{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+			"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
+			"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
+			"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
 
 		helper.expect_success(refresh);
 		helper.curl.current = 1;
 		helper.clock.time += std::chrono::hours(2);
 		helper.expect_success(refresh);
 
-		CHECK(helper.fileOutput.str() == "create 1 0 1737344939870 (6 test 1)\ntask-time-codes 1 0 0 \nbugzilla-config bugzilla 0.0.0.0 asfesdFEASfslj\ntest\n1\n2\nproduct\nseverity\n2\nPriority\npriority\nStatus\nstatus\nbugzilla-refresh bugzilla 1737345839870\nbugzilla-refresh bugzilla 1737353939870\n");
+		
+
+		CHECK(helper.fileOutput.str() == expectedOutput);
 	}
 
 	SECTION("Load")
 	{
-		helper.fileOutput << "bugzilla-config bugzilla 0.0.0.0 asfesdFEASfslj\ntest\n5\n2\nproduct\nseverity\n2\nPriority\npriority\nStatus\nstatus\nbugzilla-refresh bugzilla 1737344039870\nbugzilla-refresh bugzilla 1737352139870\n";
+		helper.fileOutput << expectedOutput;
 		helper.fileInput = std::istringstream(helper.fileOutput.str());
 		helper.fileOutput.clear();
 
@@ -184,12 +367,10 @@ TEST_CASE("Bugzilla Persistence", "[bugzilla][api]")
 		// now that we're setup, request the configuration and check the output
 		helper.api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, helper.output);
 
-		CHECK(helper.output.size() == 3);
-
 		auto configure = BugzillaInfoMessage("bugzilla", "0.0.0.0", "asfesdFEASfslj");
 		configure.username = "test";
-		configure.rootTaskID = TaskID(5);
-		configure.groupTasksBy.push_back("product");
+		configure.rootTaskID = TaskID(1);
+		configure.groupTasksBy.push_back("priority");
 		configure.groupTasksBy.push_back("severity");
 
 		configure.labelToField["Priority"] = "priority";
@@ -198,7 +379,115 @@ TEST_CASE("Bugzilla Persistence", "[bugzilla][api]")
 		auto timeCategories = TimeEntryDataPacket({});
 		auto complete = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
 
-		helper.required_messages({ &configure, &timeCategories, &complete });
+		auto p1 = TaskInfoMessage(TaskID(2), TaskID(1), "P1");
+		auto p2 = TaskInfoMessage(TaskID(7), TaskID(1), "P2");
+		auto p3 = TaskInfoMessage(TaskID(12), TaskID(1), "P3");
+		auto p4 = TaskInfoMessage(TaskID(17), TaskID(1), "P4");
+
+		auto p1_nitpick = TaskInfoMessage(TaskID(3), TaskID(2), "Nitpick");
+		auto p1_minor = TaskInfoMessage(TaskID(4), TaskID(2), "Minor");
+		auto p1_critical = TaskInfoMessage(TaskID(5), TaskID(2), "Critical");
+		auto p1_blocker = TaskInfoMessage(TaskID(6), TaskID(2), "Blocker");
+
+		auto p2_nitpick = TaskInfoMessage(TaskID(8), TaskID(7), "Nitpick");
+		auto p2_minor = TaskInfoMessage(TaskID(9), TaskID(7), "Minor");
+		auto p2_critical = TaskInfoMessage(TaskID(10), TaskID(7), "Critical");
+		auto p2_blocker = TaskInfoMessage(TaskID(11), TaskID(7), "Blocker");
+
+		auto p3_nitpick = TaskInfoMessage(TaskID(13), TaskID(12), "Nitpick");
+		auto p3_minor = TaskInfoMessage(TaskID(14), TaskID(12), "Minor");
+		auto p3_critical = TaskInfoMessage(TaskID(15), TaskID(12), "Critical");
+		auto p3_blocker = TaskInfoMessage(TaskID(16), TaskID(12), "Blocker");
+
+		auto p4_nitpick = TaskInfoMessage(TaskID(18), TaskID(17), "Nitpick");
+		auto p4_minor = TaskInfoMessage(TaskID(19), TaskID(17), "Minor");
+		auto p4_critical = TaskInfoMessage(TaskID(20), TaskID(17), "Critical");
+		auto p4_blocker = TaskInfoMessage(TaskID(21), TaskID(17), "Blocker");
+
+		const auto setup_task_inactive = [](TaskInfoMessage& task, std::chrono::milliseconds create_time)
+			{
+				task.createTime = create_time;
+				task.finishTime = std::nullopt;
+				task.state = TaskState::INACTIVE;
+				task.serverControlled = true;
+			};
+
+		const auto setup_task_finished = [](TaskInfoMessage& task, std::chrono::milliseconds create_time, std::chrono::milliseconds finishTime)
+			{
+				task.createTime = create_time;
+				task.finishTime = finishTime;
+				task.state = TaskState::FINISHED;
+				task.serverControlled = true;
+			};
+
+		using namespace std::chrono_literals;
+
+		auto root = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+		root.createTime = 1737344939870ms;
+
+		setup_task_inactive(p1, 1737346739870ms);
+		setup_task_inactive(p2, 1737355739870ms);
+		setup_task_inactive(p3, 1737364739870ms);
+		setup_task_inactive(p4, 1737373739870ms);
+
+		setup_task_finished(p1_nitpick, 1737348539870ms, 1737384539870ms);
+		setup_task_finished(p1_minor, 1737350339870ms, 1737386339870ms);
+		setup_task_inactive(p1_critical, 1737352139870ms);
+		setup_task_finished(p1_blocker, 1737353939870ms, 1737389939870ms);
+
+		setup_task_finished(p2_nitpick, 1737357539870ms, 1737393539870ms);
+		setup_task_inactive(p2_minor, 1737359339870ms);
+		setup_task_finished(p2_critical, 1737361139870ms, 1737397139870ms);
+		setup_task_finished(p2_blocker, 1737362939870ms, 1737398939870ms);
+
+		setup_task_finished(p3_nitpick, 1737366539870ms, 1737402539870ms);
+		setup_task_finished(p3_minor, 1737368339870ms, 1737404339870ms);
+		setup_task_finished(p3_critical, 1737370139870ms, 1737406139870ms);
+		setup_task_inactive(p3_blocker, 1737371939870ms);
+
+		setup_task_inactive(p4_nitpick, 1737375539870ms);
+		setup_task_finished(p4_minor, 1737377339870ms, 1737413339870ms);
+		setup_task_finished(p4_critical, 1737379139870ms, 1737415139870ms);
+		setup_task_finished(p4_blocker, 1737380939870ms, 1737416939870ms);
+
+		auto taskInfo22 = TaskInfoMessage(TaskID(22), TaskID(9), "50 - bug 1");
+		auto taskInfo23 = TaskInfoMessage(TaskID(23), TaskID(9), "55 - bug 2");
+		auto taskInfo24 = TaskInfoMessage(TaskID(24), TaskID(5), "60 - bug 3");
+		auto taskInfo25 = TaskInfoMessage(TaskID(25), TaskID(16), "65 - bug 4");
+		auto taskInfo26 = TaskInfoMessage(TaskID(26), TaskID(18), "70 - bug 5");
+
+		setup_task_inactive(taskInfo22, 1737419639870ms);
+		setup_task_inactive(taskInfo23, 1737421439870ms);
+		setup_task_inactive(taskInfo24, 1737423239870ms);
+		setup_task_inactive(taskInfo25, 1737425039870ms);
+		setup_task_inactive(taskInfo26, 1737426839870ms);
+
+		/*setup_task_inactive(p2, 1737354839870ms);
+		setup_task_inactive(p3, 1737363839870ms);
+		setup_task_inactive(p4, 1737372839870ms);
+		setup_task_inactive(p1_critical, 1737351239870ms);
+		setup_task_inactive(p2_minor, 1737358439870ms);
+		setup_task_inactive(p3_blocker, 1737371039870ms);
+		setup_task_inactive(p4_nitpick, 1737374639870ms);*/
+
+		//p1.newTask = p2.newTask = p3.newTask = p4.newTask = p1_critical.newTask = p2_minor.newTask = p3_blocker.newTask = p4_nitpick.newTask = false;
+		//p1.finishTime = p2.finishTime = p3.finishTime = p4.finishTime = p1_critical.finishTime = p2_minor.finishTime = p3_blocker.finishTime = p4_nitpick.finishTime = std::nullopt;
+
+		helper.required_messages(
+			{
+				&root,
+				
+				&p1,
+				&p1_nitpick, &p1_minor, &p1_critical, &p1_blocker,
+				&p2,
+				&p2_nitpick, &p2_minor, &p2_critical, &p2_blocker,
+				&p3,
+				&p3_nitpick, &p3_minor, &p3_critical, &p3_blocker,
+				&p4,
+				&p4_nitpick, &p4_minor, &p4_critical, &p4_blocker,
+				& taskInfo22,& taskInfo23,& taskInfo24,& taskInfo25,& taskInfo26,
+				& configure,& timeCategories,& complete,
+			});
 	}
 }
 

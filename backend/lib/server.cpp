@@ -34,7 +34,7 @@ std::expected<TaskID, std::string> MicroTask::create_task(const std::string& nam
 	
 	m_nextTaskID._val++;
 
-	*m_output << "create " << id._val << ' ' << parentID._val << ' ' << m_clock->now().count() << ' ' << persist_string(name) << std::endl;
+	*m_output << "create " << id._val << ' ' << parentID._val << ' ' << m_clock->now().count() << ' ' << task.serverControlled << ' ' << persist_string(name) << std::endl;
 
 	return std::expected<TaskID, std::string>(id);
 }
@@ -380,9 +380,13 @@ void MicroTask::load_from_file(std::istream& input)
 				TaskID id = TaskID(std::stoi(values[1]));
 				TaskID parentID = TaskID(std::stoi(values[2]));
 				std::chrono::milliseconds createTime = std::chrono::milliseconds(std::stoll(values[3]));
-				
+				bool serverControlled = std::stoi(values[4]);
+
 				std::string_view view = line;
-				m_tasks.emplace(id, Task(string_parser(view), id, parentID, createTime));
+				auto task = Task(string_parser(view), id, parentID, createTime);
+				task.serverControlled = serverControlled;
+
+				m_tasks.emplace(id, std::move(task));
 
 				// attempt to track the next task ID
 				// TODO test this
@@ -476,6 +480,18 @@ void MicroTask::load_from_file(std::istream& input)
 				task->state = TaskState::FINISHED;
 				task->m_finishTime = finishTime;
 			}
+			else if (line.starts_with("unfinish"))
+			{
+				auto values = split(line, ' ');
+				TaskID id = TaskID(std::stoi(values[1]));
+
+				auto* task = find_task(id);
+
+				if (!task) throw std::runtime_error("Task not found: " + std::to_string(id._val));
+
+				task->state = TaskState::INACTIVE;
+				task->m_finishTime = std::nullopt;
+			}
 			else if (line.starts_with("rename"))
 			{
 				auto values = split(line, ' ');
@@ -508,7 +524,10 @@ void MicroTask::load_from_file(std::istream& input)
 			}
 			else if (line.starts_with("bugzilla-refresh"))
 			{
-				m_api->m_bugzilla.load_refresh(line);
+				std::string tasks;
+				std::getline(input, tasks);
+
+				m_api->m_bugzilla.load_refresh(line, tasks);
 			}
 			else if (line.starts_with("time-category"))
 			{

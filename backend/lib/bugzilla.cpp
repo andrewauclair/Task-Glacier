@@ -151,6 +151,10 @@ Task* Bugzilla::parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, 
 	auto field = groupTaskBy[0];
 	groupTaskBy = groupTaskBy.subspan(1);
 
+	if (bug.at_key(field).error() == simdjson::error_code::NO_SUCH_FIELD)
+	{
+		return nullptr;
+	}
 	simdjson::dom::element temp = bug[field];
 
 	std::string groupBy;
@@ -273,6 +277,9 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 						{
 							nextParent->state = TaskState::INACTIVE;
 							nextParent->m_finishTime = std::nullopt;
+
+							file << "unfinish " << nextParent->taskID()._val << '\n';
+
 							nextParent = app.find_task(nextParent->parentID());
 						}
 					}();
@@ -316,7 +323,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 						api.send_task_info(*task, false, output);
 					}
 				}
-				else
+				else if (parent)
 				{
 					const auto result = app.create_task(std::format("{} - {}", i, std::string_view(bug["summary"])), parent->taskID(), true);
 
@@ -348,7 +355,13 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 
 			file << "bugzilla-refresh " << info.bugzillaName << ' ' << info.lastBugzillaRefresh->count() << std::endl;
 
-			//file << "bugzilla-tasks " << info.bugzillaName
+			file << "bugzilla-tasks " << info.bugzillaName << ' ';
+
+			for (auto&& [bug, task] : info.bugToTaskID)
+			{
+				file << bug << ' ' << task._val << ' ';
+			}
+			file << std::endl;
 		}
 		m_lastBugzillaRefresh = now;
 	}
@@ -397,7 +410,7 @@ void Bugzilla::load_config(const std::string& line, std::istream& input)
 	}
 }
 
-void Bugzilla::load_refresh(const std::string& line)
+void Bugzilla::load_refresh(const std::string& line, const std::string& tasks)
 {
 	auto values = split(line, ' ');
 
@@ -405,4 +418,16 @@ void Bugzilla::load_refresh(const std::string& line)
 
 	bugzilla.lastBugzillaRefresh = std::chrono::milliseconds(std::stoll(values[2]));
 	m_lastBugzillaRefresh = bugzilla.lastBugzillaRefresh;
+
+	values = split(tasks, ' ');
+
+	bugzilla.bugToTaskID.clear();
+
+	for (int i = 2; i < values.size() - 1; i += 2)
+	{
+		int bug = std::stoi(values[i]);
+		auto task = TaskID(std::stoi(values[i + 1]));
+
+		bugzilla.bugToTaskID.emplace(bug, task);
+	}
 }

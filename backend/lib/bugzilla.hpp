@@ -45,7 +45,7 @@ public:
 	void refresh(const RequestMessage& request, MicroTask& app, API& api, std::ostream& file, std::vector<std::unique_ptr<Message>>& output);
 
 	void load_config(const std::string& line, std::istream& input);
-	void load_refresh(const std::string& line);
+	void load_refresh(const std::string& line, const std::string& tasks);
 
 private:
 	void build_group_by_task(BugzillaInstance& instance, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, TaskID parent, std::span<const std::string> groupTaskBy);
