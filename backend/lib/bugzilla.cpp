@@ -172,6 +172,12 @@ Task* Bugzilla::parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, 
 
 	if (!task)
 	{
+		// make sure the parent task isn't finished
+		if (app.find_task(currentParent) != nullptr)
+		{
+			app.find_task(currentParent)->state = TaskState::INACTIVE;
+		}
+
 		const auto result = app.create_task(groupBy, currentParent, true);
 
 		task = app.find_task(result.value());

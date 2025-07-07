@@ -272,6 +272,7 @@ public class BugzillaConfiguration extends JDialog {
             instance.URL.setText(info.url);
             instance.apiKey.setText(info.apiKey);
             instance.username.setText(info.username);
+            instance.rootTask.setText(String.valueOf(info.rootTaskID));
 
             instances.put(info.name, instance);
 
