@@ -15,6 +15,8 @@ class LabeledComponent extends JPanel {
 
         add(new JLabel(label), gbc);
         gbc.gridx++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
         gbc.insets = new Insets(0, 5, 0, 0);
         add(component, gbc);
     }

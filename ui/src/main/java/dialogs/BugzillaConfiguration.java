@@ -73,6 +73,8 @@ public class BugzillaConfiguration extends JDialog {
         gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
 
         JPanel general = new JPanel(new GridBagLayout());
         JPanel groupBy = new JPanel(new GridBagLayout());
@@ -91,6 +93,7 @@ public class BugzillaConfiguration extends JDialog {
         general.add(new LabeledComponent("Username", instance.username), gbc);
         gbc.gridy++;
 
+        gbc.fill = GridBagConstraints.NONE;
 
         general.add(new LabeledComponent("Root Task", instance.rootTask), gbc);
         gbc.gridy++;
@@ -108,6 +111,7 @@ public class BugzillaConfiguration extends JDialog {
         instance.groupByModel.addRow(new Object[] { "target_milestone" });
 
         JTable labelTable = new JTable(instance.labelModel);
+        labelTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         instance.labelModel.addRow(new Object[] { "Priority", "priority" });
         instance.labelModel.addRow(new Object[] { "Status", "status" });
@@ -119,8 +123,18 @@ public class BugzillaConfiguration extends JDialog {
         JButton groupByAdd = new JButton("+");
         JButton groupByRemove = new JButton("-");
 
+        JButton groupByMoveUp = new JButton("^");
+        JButton groupByMoveDown = new JButton("v");
+
+        groupByRemove.setEnabled(false);
+        groupByMoveUp.setEnabled(false);
+        groupByMoveDown.setEnabled(false);
+
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.fill = GridBagConstraints.NONE;
 
         groupByAdd.addActionListener(e -> {
             String newGroupBy = JOptionPane.showInputDialog(this, "New Group By");
@@ -129,17 +143,73 @@ public class BugzillaConfiguration extends JDialog {
             instance.groupByModel.fireTableRowsInserted(instance.groupByModel.getRowCount() - 1, instance.groupByModel.getRowCount() - 1);
         });
 
+        groupByTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        groupByTable.getSelectionModel().addListSelectionListener(e -> {
+            groupByRemove.setEnabled(groupByTable.getSelectedRow() != -1);
+            groupByMoveUp.setEnabled(groupByTable.getSelectedRow() != -1 && groupByTable.getSelectedRow() != 0);
+            groupByMoveDown.setEnabled(groupByTable.getSelectedRow() != -1 && groupByTable.getSelectedRow() != instance.groupByModel.getRowCount() - 1);
+        });
+
+        groupByRemove.addActionListener(e -> {
+            instance.groupByModel.removeRow(groupByTable.getSelectedRow());
+            instance.groupByModel.fireTableRowsInserted(groupByTable.getSelectedRow(), groupByTable.getSelectedRow());
+        });
+
+        groupByMoveUp.addActionListener(e -> {
+            Object value1 = instance.groupByModel.getValueAt(groupByTable.getSelectedRow() - 1, 0);
+            Object value2 = instance.groupByModel.getValueAt(groupByTable.getSelectedRow(), 0);
+
+            instance.groupByModel.setValueAt(value2, groupByTable.getSelectedRow() - 1, 0);
+            instance.groupByModel.setValueAt(value1, groupByTable.getSelectedRow(), 0);
+
+            instance.groupByModel.fireTableRowsUpdated(groupByTable.getSelectedRow() - 1, groupByTable.getSelectedRow());
+            groupByTable.setRowSelectionInterval(groupByTable.getSelectedRow() - 1, groupByTable.getSelectedRow() - 1);
+        });
+
+        groupByMoveDown.addActionListener(e -> {
+            Object value1 = instance.groupByModel.getValueAt(groupByTable.getSelectedRow(), 0);
+            Object value2 = instance.groupByModel.getValueAt(groupByTable.getSelectedRow() + 1, 0);
+
+            instance.groupByModel.setValueAt(value2, groupByTable.getSelectedRow(), 0);
+            instance.groupByModel.setValueAt(value1, groupByTable.getSelectedRow() + 1, 0);
+
+            instance.groupByModel.fireTableRowsUpdated(groupByTable.getSelectedRow(), groupByTable.getSelectedRow() + 1);
+            groupByTable.setRowSelectionInterval(groupByTable.getSelectedRow() + 1, groupByTable.getSelectedRow() + 1);
+        });
+
         groupBy.add(groupByAdd, gbc);
         gbc.gridx++;
         groupBy.add(groupByRemove, gbc);
+
         gbc.gridx = 0;
         gbc.gridy++;
         gbc.gridwidth = 2;
+        gbc.gridheight = 2;
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
         groupBy.add(new JScrollPane(groupByTable), gbc);
 
+        gbc.gridx++;
+        gbc.gridx++;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.fill = GridBagConstraints.NONE;
+
+        groupBy.add(groupByMoveUp, gbc);
+        gbc.gridy++;
+        groupBy.add(groupByMoveDown, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
         labels.add(new JScrollPane(labelTable), gbc);
 
         JTabbedPane tabs = new JTabbedPane();
@@ -284,6 +354,22 @@ public class BugzillaConfiguration extends JDialog {
             if (instanceModel.getRowCount() == 1) {
                 instanceTable.getSelectionModel().setSelectionInterval(instanceModel.getRowCount() - 1, instanceModel.getRowCount() - 1);
             }
+
+            instance.groupByModel.setRowCount(0);
+            instance.groupByModel.fireTableDataChanged();
+
+            for (String groupBy : info.groupTasksBy) {
+                instance.groupByModel.addRow(new Object[] { groupBy });
+                instance.groupByModel.fireTableRowsInserted(instance.groupByModel.getRowCount() - 1, instance.groupByModel.getRowCount() - 1);
+            }
+
+            instance.labelModel.setRowCount(0);
+            instance.labelModel.fireTableDataChanged();
+
+            info.labelToField.forEach((label, field) -> {
+                instance.labelModel.addRow(new Object[] { label, field });
+                instance.labelModel.fireTableRowsInserted(instance.labelModel.getRowCount() - 1, instance.labelModel.getRowCount() - 1);
+            });
         }
 
 

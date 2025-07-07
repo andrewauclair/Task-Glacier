@@ -35,6 +35,8 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 
 	file.flush();
 
+	send_info(output);
+
 	// get the field values from bugzilla
 	if (m_curl)
 	{
@@ -82,7 +84,10 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 		app.find_bugzilla_helper_tasks(m_bugzilla[info.name].bugzillaRootTaskID, bugTasks, helperTasks);
 
 		// now go through all the group by tasks and construct our helper tasks
-		build_group_by_task(m_bugzilla[info.name], app, api, output, m_bugzilla[info.name].bugzillaRootTaskID, m_bugzilla[info.name].bugzillaGroupTasksBy);
+		if (!m_bugzilla[info.name].bugzillaGroupTasksBy.empty())
+		{
+			build_group_by_task(m_bugzilla[info.name], app, api, output, m_bugzilla[info.name].bugzillaRootTaskID, m_bugzilla[info.name].bugzillaGroupTasksBy);
+		}
 
 		std::map<TaskID, TaskState> helperTasks2;
 		app.find_bugzilla_helper_tasks(m_bugzilla[info.name].bugzillaRootTaskID, bugTasks, helperTasks2);
@@ -108,6 +113,10 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 			}
 		}
 	}
+
+	RequestMessage request(PacketType::BUGZILLA_REFRESH, RequestID(0));
+
+	refresh(request, app, api, file, output);
 }
 
 void Bugzilla::build_group_by_task(BugzillaInstance& instance, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, TaskID parent, std::span<const std::string> groupTaskBy)
@@ -231,9 +240,10 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 			// find all bugs that are not resolved
 			// TODO find only bugs that have changed since the last refresh
 			// TODO special processing for the initial refresh
-			std::string request = info.bugzillaURL + "/rest/bug?assigned_to=" + info.bugzillaUsername + "&api_key=" + info.bugzillaApiKey;
+			std::string requestAddress = info.bugzillaURL + "/rest/bug?assigned_to=" + info.bugzillaUsername + "&api_key=" + info.bugzillaApiKey;
 
-			if (!initial_refresh)
+			// not the initial refresh and not an internal request. only get latest changes
+			if (!initial_refresh && request.requestID != RequestID(0))
 			{
 				// YYYY-MM-DDTHH24:MI:SSZ
 
@@ -242,14 +252,14 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 				std::chrono::year_month_day ymd = std::chrono::year_month_day{ std::chrono::floor<std::chrono::days>(time) };
 				std::chrono::hh_mm_ss hms = std::chrono::hh_mm_ss{ now - m_clock->midnight() };
 
-				request += "&last_change_time=" + std::format("{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z", (int)ymd.year(), (unsigned int)ymd.month(), (unsigned int)ymd.day(), hms.hours().count(), hms.minutes().count(), hms.seconds().count());
+				requestAddress += "&last_change_time=" + std::format("{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z", (int)ymd.year(), (unsigned int)ymd.month(), (unsigned int)ymd.day(), hms.hours().count(), hms.minutes().count(), hms.seconds().count());
 			}
 			else
 			{
-				request += "&resolution=---";
+				requestAddress += "&resolution=---";
 			}
 
-			auto result = m_curl->execute_request(request);
+			auto result = m_curl->execute_request(requestAddress);
 
 			simdjson::dom::parser parser;
 			auto json = simdjson::padded_string(result);
@@ -273,7 +283,12 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 				// check if we already have a task ID for this bug
 
 				// find the parent for this task
-				Task* parent = parent_task_for_bug(m_bugzilla[name], app, api, output, bug, m_bugzilla[name].bugzillaRootTaskID, m_bugzilla[name].bugzillaGroupTasksBy);
+				Task* parent = app.find_task(info.bugzillaRootTaskID);
+
+				if (!m_bugzilla[name].bugzillaGroupTasksBy.empty())
+				{
+					parent = parent_task_for_bug(m_bugzilla[name], app, api, output, bug, m_bugzilla[name].bugzillaRootTaskID, m_bugzilla[name].bugzillaGroupTasksBy);
+				}
 
 				[&]()
 					{
@@ -310,7 +325,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 						sendInfo = true;
 					}
 
-					if (task && parent->taskID() != task->parentID())
+					if (task && parent && parent->taskID() != task->parentID())
 					{
 						app.reparent_task(task->taskID(), parent->taskID());
 
@@ -342,11 +357,20 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 				}
 			}
 
+			bugTasks.clear();
+			startingStates.clear();
+
+			for (auto&& [bug, task] : info.bugToTaskID)
+			{
+				bugTasks.push_back(task);
+				startingStates[task] = app.find_task(task)->state;
+			}
+
 			for (auto&& [taskID, state] : helperTasks)
 			{
 				Task* task = app.find_task(taskID);
 
-				if (!app.task_has_inactive_children(taskID))
+				if (!app.task_has_bug_tasks(taskID, bugTasks))
 				{
 					app.finish_task(taskID);
 				}
@@ -391,6 +415,8 @@ void Bugzilla::load_config(const std::string& line, std::istream& input)
 
 	std::getline(input, temp);
 
+	bugzilla.bugzillaGroupTasksBy.clear();
+
 	const int groupByCount = std::stoi(temp);
 
 	for (int i = 0; i < groupByCount; i++)
@@ -402,6 +428,8 @@ void Bugzilla::load_config(const std::string& line, std::istream& input)
 	}
 
 	std::getline(input, temp);
+
+	bugzilla.bugzillaLabelToField.clear();
 
 	const int labelCount = std::stoi(temp);
 
