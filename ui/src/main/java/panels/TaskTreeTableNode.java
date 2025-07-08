@@ -3,7 +3,6 @@ package panels;
 import data.Task;
 import data.TaskState;
 import org.jdesktop.swingx.treetable.AbstractMutableTreeTableNode;
-import org.jdesktop.swingx.treetable.TreeTableNode;
 
 import javax.swing.*;
 import java.util.Objects;
