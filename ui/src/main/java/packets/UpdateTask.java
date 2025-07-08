@@ -72,8 +72,8 @@ public class UpdateTask implements Packet {
         output.writeInt(timeEntry.size());
 
         for (TimeData.TimeEntry entry : timeEntry) {
-            output.writeInt(entry.category);
-            output.writeInt(entry.code);
+            output.writeInt(entry.category.id);
+            output.writeInt(entry.code.id);
         }
     }
 }

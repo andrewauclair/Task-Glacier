@@ -11,18 +11,43 @@ public class TimeData {
     public static class TimeCode {
         public int id;
         public String name;
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || getClass() != o.getClass()) return false;
+            TimeCode timeCode = (TimeCode) o;
+            return id == timeCode.id;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(id);
+        }
     }
+
     public static class TimeCategory {
         public int id;
         public String name = "";
         public String label = "";
 
         public List<TimeCode> timeCodes = new ArrayList<>();
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || getClass() != o.getClass()) return false;
+            TimeCategory that = (TimeCategory) o;
+            return id == that.id;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(id);
+        }
     }
 
     public static class TimeEntry {
-        public int category;
-        public int code;
+        public TimeCategory category;
+        public TimeCode code;
 
         @Override
         public boolean equals(Object o) {

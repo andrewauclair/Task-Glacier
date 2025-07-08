@@ -188,8 +188,8 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
                     }
 
                     Row row = rows.getOrDefault(timeEntry, new Row());
-                    row.category = mainFrame.getTimeData().findTimeCategory(timeEntry.category);
-                    row.code = mainFrame.getTimeData().findTimeCode(timeEntry.code);
+                    row.category = timeEntry.category;
+                    row.code = timeEntry.code;
 
                     if (row.code == null) {
                         row.code = new TimeData.TimeCode();

@@ -2,6 +2,7 @@ package packets;
 
 import data.TaskState;
 import data.TimeData;
+import taskglacier.MainFrame;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -93,8 +94,8 @@ public class TaskInfo implements Packet {
 
             for (int j = 0; j < timeEntryCount; j++) {
                 TimeData.TimeEntry entry = new TimeData.TimeEntry();
-                entry.category = input.readInt();
-                entry.code = input.readInt();
+                entry.category = MainFrame.mainFrame.getTimeData().findTimeCategory(input.readInt());
+                entry.code = MainFrame.mainFrame.getTimeData().findTimeCode(input.readInt());
 
                 time.timeEntry.add(entry);
             }
@@ -111,8 +112,8 @@ public class TaskInfo implements Packet {
 
         for (int i = 0; i < timeEntryCount; i++) {
             TimeData.TimeEntry e = new TimeData.TimeEntry();
-            e.category = input.readInt();
-            e.code = input.readInt();
+            e.category = MainFrame.mainFrame.getTimeData().findTimeCategory(input.readInt());
+            e.code = MainFrame.mainFrame.getTimeData().findTimeCode(input.readInt());
             info.timeEntry.add(e);
         }
 

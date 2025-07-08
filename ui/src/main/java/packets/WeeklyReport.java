@@ -1,6 +1,7 @@
 package packets;
 
 import data.TimeData;
+import taskglacier.MainFrame;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -54,8 +55,8 @@ public class WeeklyReport implements Packet {
                     Instant time = Instant.ofEpochMilli(input.readLong());
 
                     TimeData.TimeEntry entry = new TimeData.TimeEntry();
-                    entry.category = timeCategoryID;
-                    entry.code = timeCodeID;
+                    entry.category = MainFrame.mainFrame.getTimeData().findTimeCategory(timeCategoryID);
+                    entry.code = MainFrame.mainFrame.getTimeData().findTimeCode(timeCodeID);
 
                     dailyReport.timesPerTimeEntry.put(entry, time);
                 }

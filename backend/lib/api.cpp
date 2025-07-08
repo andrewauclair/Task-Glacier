@@ -227,12 +227,6 @@ void API::handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<
 {
 	if (message.packetType() == PacketType::REQUEST_CONFIGURATION)
 	{
-		const auto send_task = [&](const Task& task) { send_task_info(task, false, output); };
-
-		m_app.for_each_task_sorted(send_task);
-
-		m_bugzilla.send_info(output);
-
 		TimeEntryDataPacket data({});
 
 		for (auto&& category : m_app.timeCategories())
@@ -248,6 +242,12 @@ void API::handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<
 			data.timeCategories.push_back(packet);
 		}
 		output.push_back(std::make_unique<TimeEntryDataPacket>(data));
+
+		const auto send_task = [&](const Task& task) { send_task_info(task, false, output); };
+
+		m_app.for_each_task_sorted(send_task);
+
+		m_bugzilla.send_info(output);
 
 		output.push_back(std::make_unique<BasicMessage>(PacketType::REQUEST_CONFIGURATION_COMPLETE));
 	}

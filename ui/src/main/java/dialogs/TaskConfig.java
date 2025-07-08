@@ -14,6 +14,9 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -116,7 +119,7 @@ public class TaskConfig extends JDialog {
 
             @Override
             public Class<?> getColumnClass(int columnIndex) {
-                return String.class;
+                return Instant.class;
             }
 
             @Override
@@ -167,9 +170,15 @@ public class TaskConfig extends JDialog {
             public Object getValueAt(int rowIndex, int columnIndex) {
                 TimeData.TimeEntry row = data.get(rowIndex);
                 if (columnIndex == 0) {
-                    return row.category;
+                    if (row.category == null) {
+                        return null;
+                    }
+                    return row.category.name;
                 }
-                return row.code;
+                if (row.code == null) {
+                    return null;
+                }
+                return row.code.name;
             }
         }
 
@@ -196,6 +205,21 @@ public class TaskConfig extends JDialog {
 
             add(split, gbc);
 
+            sessionTable.setDefaultRenderer(Instant.class, new DefaultTableCellRenderer() {
+                @Override
+                public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                    JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+                    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy hh:mm:ss a");
+
+                    if (value != null) {
+                        label.setText(((Instant) value).atZone(ZoneId.systemDefault()).format(dateTimeFormatter));
+                    }
+
+                    return label;
+
+                }
+            });
             // table of sessions, of which has a table of time entries?
             // start time, stop time, time entry
             for (TaskInfo.Session session : task.sessions) {
@@ -378,11 +402,11 @@ public class TaskConfig extends JDialog {
 
                 while (parent != null) {
                     Optional<TimeData.TimeEntry> parentEntry = parent.timeEntry.stream()
-                            .filter(timeEntry -> timeEntry.category == existingRow.category.id)
+                            .filter(timeEntry -> timeEntry.category == existingRow.category)
                             .findFirst();
 
                     if (parentEntry.isPresent()) {
-                        row.code = timeData.findTimeCode(parentEntry.get().code);
+                        row.code = parentEntry.get().code;
                         row.inherited = true;
 
                         break;
@@ -445,11 +469,11 @@ public class TaskConfig extends JDialog {
                 row.category = category;
 
                 Optional<TimeData.TimeEntry> first = task.timeEntry.stream()
-                        .filter(timeEntry -> timeEntry.category == category.id)
+                        .filter(timeEntry -> timeEntry.category != null && timeEntry.category.equals(category))
                         .findFirst();
 
                 if (first.isPresent()) {
-                    row.code = timeData.findTimeCode(first.get().code);
+                    row.code = first.get().code;
 
                     if (row.code == null) {
                         row.code = new TimeData.TimeCode();
@@ -464,11 +488,11 @@ public class TaskConfig extends JDialog {
 
                     while (parent != null) {
                         Optional<TimeData.TimeEntry> parentEntry = parent.timeEntry.stream()
-                                .filter(timeEntry -> timeEntry.category == category.id)
+                                .filter(timeEntry -> timeEntry.category.equals(category))
                                 .findFirst();
 
                         if (parentEntry.isPresent()) {
-                            row.code = timeData.findTimeCode(parentEntry.get().code);
+                            row.code = parentEntry.get().code;
                             row.inherited = true;
 
                             break;
@@ -520,8 +544,8 @@ public class TaskConfig extends JDialog {
                 return true;
             }
             for (int i = 0; i < task.timeEntry.size(); i++) {
-                if (task.timeEntry.get(i).category != data.get(i).category.id ||
-                    task.timeEntry.get(i).code != data.get(i).code.id) {
+                if (!task.timeEntry.get(i).category.equals(data.get(i).category) ||
+                    !task.timeEntry.get(i).code.equals(data.get(i).code)) {
                     return true;
                 }
             }
@@ -539,8 +563,8 @@ public class TaskConfig extends JDialog {
 
                 for (Row row : data) {
                     TimeData.TimeEntry entry = new TimeData.TimeEntry();
-                    entry.category = row.category.id;
-                    entry.code = row.code.id;
+                    entry.category = row.category;
+                    entry.code = row.code;
                     update.timeEntry.add(entry);
                 }
                 connection.sendPacket(update);
@@ -624,7 +648,7 @@ public class TaskConfig extends JDialog {
             dispose();
         });
 
-        setSize(400, 300);
+        setSize(500, 350);
 
         // center on the main frame
         setLocationRelativeTo(mainFrame);

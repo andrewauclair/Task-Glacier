@@ -248,7 +248,7 @@ public class DailyReportPanel extends JPanel implements Dockable {
                     TaskInfo.Session session = task.sessions.get(time.index);
 
                     for (TimeData.TimeEntry timeEntry : session.timeEntry) {
-                        if (timeEntry.category == row.category.id && timeEntry.code == row.code.id) {
+                        if (timeEntry.category.equals(row.category) && timeEntry.code.equals(row.code)) {
                             double hours = taskRows.getOrDefault(task, 0.0);
 
                             Instant instant = report.timesPerTimeEntry.get(timeEntry);
@@ -312,8 +312,8 @@ public class DailyReportPanel extends JPanel implements Dockable {
                 }
 
                 Row row = new Row();
-                row.category = mainFrame.getTimeData().findTimeCategory(timeEntry.category);
-                row.code = mainFrame.getTimeData().findTimeCode(timeEntry.code);
+                row.category = timeEntry.category;
+                row.code = timeEntry.code;
 
                 if (row.code == null) {
                     row.code = new TimeData.TimeCode();

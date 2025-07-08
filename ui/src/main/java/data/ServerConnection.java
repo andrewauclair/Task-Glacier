@@ -94,7 +94,7 @@ public class ServerConnection {
                 else if (packetType == PacketType.TIME_CATEGORIES_DATA) {
                     TimeCategoriesMessage message = TimeCategoriesMessage.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
 
-                    SwingUtilities.invokeLater(() -> mainFrame.getTimeData().processPacket(message));
+                    mainFrame.getTimeData().processPacket(message);
                 }
                 else if (packetType == PacketType.FAILURE_RESPONSE) {
                     FailureResponse failure = FailureResponse.parse(new DataInputStream((new ByteArrayInputStream(bytes))), packetLength);
