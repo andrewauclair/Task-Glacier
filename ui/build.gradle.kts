@@ -22,6 +22,7 @@ dependencies {
     implementation("io.github.andrewauclair:modern-docking-ui:1.1.4")
     implementation("com.formdev:flatlaf:3.5.4")
     implementation("com.formdev:flatlaf-extras:3.5.4")
+    implementation("me.xdrop:fuzzywuzzy:1.4.0")
 
     // https://mvnrepository.com/artifact/org.swinglabs/swingx
     implementation("org.swinglabs:swingx:1.6.1")

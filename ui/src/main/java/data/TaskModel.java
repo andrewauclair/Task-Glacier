@@ -4,12 +4,17 @@ import packets.TaskInfo;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TaskModel {
+    public List<Task> getTasks() {
+        return Collections.unmodifiableList(tasks);
+    }
+
     public Task getTask(int taskID) {
         return tasks.stream().filter(task -> task.id == taskID)
                 .findFirst()

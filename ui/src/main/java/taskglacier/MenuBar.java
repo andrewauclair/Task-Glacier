@@ -1,11 +1,6 @@
 package taskglacier;
 
-import dialogs.AddModifyTask;
-import dialogs.BugzillaConfiguration;
-import dialogs.ConnectToServer;
-import dialogs.RequestDailyReportDialog;
-import dialogs.RequestWeeklyReportDialog;
-import dialogs.TimeEntryConfiguration;
+import dialogs.*;
 import io.github.andrewauclair.moderndocking.app.DockingState;
 import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
 import packets.BugzillaRefresh;
@@ -51,6 +46,10 @@ public class MenuBar extends JMenuBar {
         task.add(timeEntry);
 
         timeEntry.addActionListener(e -> new TimeEntryConfiguration(mainFrame).setVisible(true));
+
+        JMenuItem search = new JMenuItem("Search...");
+        search.addActionListener(e -> new TaskSearch().setVisible(true));
+        task.add(search);
 
         add(task);
 
