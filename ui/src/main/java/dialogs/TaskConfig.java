@@ -48,7 +48,7 @@ public class TaskConfig extends JDialog {
             name.setText(task.name);
 
             JComboBox<String> status = new JComboBox<>();
-            status.addItem("Inactive");
+            status.addItem("Pending");
             status.addItem("Active");
             status.addItem("Finished");
 
@@ -90,7 +90,7 @@ public class TaskConfig extends JDialog {
             name.setEnabled(!controlsLocked);
             status.setEnabled(!controlsLocked);
             parent.setEnabled(!controlsLocked);
-
+            locked.setEnabled(!serverControlled.isSelected());
         }
 
         private boolean hasChanges(Task task) {
