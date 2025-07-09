@@ -11,71 +11,17 @@
 #include <vector>
 #include <source_location>
 
-
-
-
-
-/*
-
-persist: bugzilla info, bugzilla refresh times, mappings of all bugzilla task IDs/bug IDs
-
-locked in after creation: name and root task
-
-keep a mapping of all the bugzilla task IDs to bug IDs
-
-all other sub-tasks of the root task will be set to finish before starting a refresh
-
-pull all bug data from server
-
-find all possible values for all group by options from the bugs
-
-for each layer of group by, find or create the necessary task
-
-move bugs to their proper parent, possibly one layer at a time
-
-
-
-*/
-
-
-/*
-* NEW TESTS
-* 
-* configuring the bugzilla info
-* saving/loading bugzilla info
-* saving/loading bugzilla refresh time
-* saving/loading bug to task ID mapping
-* 
-* initial refresh to add tasks
-* refresh to add tasks
-* refresh with resolved bug
-* refresh with bug that was reassigned (not sure how to handle this)
-* refresh finished grouping tasks
-* refresh adds new grouping tasks
-* refresh after changing group by
-* refresh with 3+ layers of grouping (a bit ridiculous)
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
 TEST_CASE("Configuring Bugzilla Information", "[bugzilla][api]")
 {
 	TestHelper helper;
 
+	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "Bugzilla"));
+	helper.clear_message_output();
+
 	// send bugzilla packet
 	auto configure = BugzillaInfoMessage("bugzilla", "0.0.0.0", "asfesdFEASfslj");
 	configure.username = "test";
-	configure.rootTaskID = TaskID(5);
+	configure.rootTaskID = TaskID(1);
 	configure.groupTasksBy.push_back("product");
 	configure.groupTasksBy.push_back("severity");
 
@@ -87,27 +33,20 @@ TEST_CASE("Configuring Bugzilla Information", "[bugzilla][api]")
 
 	helper.api.process_packet(configure, helper.output);
 
-	SECTION("Information is Set in Memory")
-	{
-		auto request = BasicMessage(PacketType::REQUEST_CONFIGURATION);
-
-		helper.api.process_packet(request, helper.output);
-
-		auto timeCategories = TimeEntryDataPacket({});
-		auto complete = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
-
-		helper.required_messages({ &configure, &timeCategories, &complete });
-	}
+	helper.required_messages({ &configure });
 }
 
-TEST_CASE("Configuring Multiple Bugzilla Instances", "[bugzilla][api]")
+TEST_CASE("Request Bugzilla Information", "[bugzilla][api]")
 {
 	TestHelper helper;
+
+	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "Bugzilla"));
+	helper.clear_message_output();
 
 	// send bugzilla packet
 	auto configure = BugzillaInfoMessage("bugzilla", "0.0.0.0", "asfesdFEASfslj");
 	configure.username = "test";
-	configure.rootTaskID = TaskID(5);
+	configure.rootTaskID = TaskID(1);
 	configure.groupTasksBy.push_back("product");
 	configure.groupTasksBy.push_back("severity");
 
@@ -115,6 +54,44 @@ TEST_CASE("Configuring Multiple Bugzilla Instances", "[bugzilla][api]")
 	configure.labelToField["Status"] = "status";
 
 	helper.curl.requestResponse.emplace_back("{ \"fields\": [] }");
+	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+
+	helper.api.process_packet(configure, helper.output);
+	helper.clear_message_output();
+
+	auto request = BasicMessage(PacketType::REQUEST_CONFIGURATION);
+
+	helper.api.process_packet(request, helper.output);
+
+	auto timeCategories = TimeEntryDataPacket({});
+	auto complete = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
+
+	auto root = TaskInfoMessage(TaskID(1), NO_PARENT, "Bugzilla");
+	root.createTime = std::chrono::milliseconds(1737344039870);
+
+	helper.required_messages({ &root, &configure, &timeCategories, &complete });
+}
+
+TEST_CASE("Configuring Multiple Bugzilla Instances", "[bugzilla][api]")
+{
+	TestHelper helper;
+
+	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "Bugzilla"));
+
+	// send bugzilla packet
+	auto configure = BugzillaInfoMessage("bugzilla", "0.0.0.0", "asfesdFEASfslj");
+	configure.username = "test";
+	configure.rootTaskID = TaskID(1);
+	configure.groupTasksBy.push_back("product");
+	configure.groupTasksBy.push_back("severity");
+
+	configure.labelToField["Priority"] = "priority";
+	configure.labelToField["Status"] = "status";
+
+	helper.curl.requestResponse.emplace_back("{ \"fields\": [] }");
+	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+	helper.curl.requestResponse.emplace_back("{ \"fields\": [] }");
+	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
 	helper.api.process_packet(configure, helper.output);
 
@@ -196,44 +173,31 @@ finish 18 1737411539870
 finish 19 1737413339870
 finish 20 1737415139870
 finish 21 1737416939870
-unfinish 9
-unfinish 7
-unfinish 1
-create 22 9 1737419639870 1 (10 50 - bug 1)
-unfinish 9
-unfinish 7
-unfinish 1
-create 23 9 1737421439870 1 (10 55 - bug 2)
-unfinish 5
-unfinish 2
-unfinish 1
-create 24 5 1737423239870 1 (10 60 - bug 3)
-unfinish 16
-unfinish 12
-unfinish 1
-create 25 16 1737425039870 1 (10 65 - bug 4)
-unfinish 18
-unfinish 17
-unfinish 1
-create 26 18 1737426839870 1 (10 70 - bug 5)
 bugzilla-refresh bugzilla 1737417839870
-bugzilla-tasks bugzilla 50 22 55 23 60 24 65 25 70 26 
+bugzilla-tasks bugzilla
 unfinish 9
 unfinish 7
 unfinish 1
+create 22 9 1737420539870 1 (10 50 - bug 1)
 unfinish 9
 unfinish 7
 unfinish 1
+create 23 9 1737422339870 1 (10 55 - bug 2)
 unfinish 5
 unfinish 2
 unfinish 1
+create 24 5 1737424139870 1 (10 60 - bug 3)
 unfinish 16
 unfinish 12
 unfinish 1
+create 25 16 1737425939870 1 (10 65 - bug 4)
 unfinish 18
 unfinish 17
 unfinish 1
-bugzilla-refresh bugzilla 1737434939870
+create 26 18 1737427739870 1 (10 70 - bug 5)
+bugzilla-refresh bugzilla 1737418739870
+bugzilla-tasks bugzilla 50 22 55 23 60 24 65 25 70 26 
+bugzilla-refresh bugzilla 1737435839870
 bugzilla-tasks bugzilla 50 22 55 23 60 24 65 25 70 26 
 )expected_output";
 
@@ -335,6 +299,7 @@ bugzilla-tasks bugzilla 50 22 55 23 60 24 65 25 70 26
 	)bugs_data";
 
 		helper.curl.requestResponse.emplace_back(fieldsResponse);
+		helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
 		helper.api.process_packet(configure, helper.output);
 
@@ -350,8 +315,6 @@ bugzilla-tasks bugzilla 50 22 55 23 60 24 65 25 70 26
 		helper.curl.current = 1;
 		helper.clock.time += std::chrono::hours(2);
 		helper.expect_success(refresh);
-
-		
 
 		CHECK(helper.fileOutput.str() == expectedOutput);
 	}

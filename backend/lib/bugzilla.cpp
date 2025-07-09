@@ -225,13 +225,19 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 		{
 			if (app.find_task(info.bugzillaRootTaskID) == nullptr)
 			{
-				output.push_back(std::make_unique<FailureResponse>(request.requestID, std::format("Root task {} does not exist", info.bugzillaRootTaskID)));
+				if (request.requestID != RequestID(0))
+				{
+					output.push_back(std::make_unique<FailureResponse>(request.requestID, std::format("Root task {} does not exist", info.bugzillaRootTaskID)));
+				}
 				return;
 			}
 		}
 
 		// TODO eventually we'll have to send back a failure if we weren't able to contact bugzilla
-		output.push_back(std::make_unique<SuccessResponse>(request.requestID));
+		if (request.requestID != RequestID(0))
+		{
+			output.push_back(std::make_unique<SuccessResponse>(request.requestID));
+		}
 
 		for (auto&& [name, info] : m_bugzilla)
 		{

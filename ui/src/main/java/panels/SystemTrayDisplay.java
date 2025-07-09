@@ -10,8 +10,7 @@ import java.util.Objects;
 
 public class SystemTrayDisplay extends JFrame {
     private final TrayIcon trayIcon;
-    JTextField search = new JTextField();
-
+    private final TaskSearch search;
 
     // https://www.flaticon.com/free-icon/cognitive_8920590?term=cognitive&related_id=8920590
     // https://www.flaticon.com/free-icon/clipboard_1527478?term=task&page=1&position=53&origin=search&related_id=1527478
@@ -48,8 +47,9 @@ public class SystemTrayDisplay extends JFrame {
         }
     };
 
-    public SystemTrayDisplay(TrayIcon trayIcon) {
+    public SystemTrayDisplay(MainFrame mainFrame, TrayIcon trayIcon) {
         this.trayIcon = trayIcon;
+        search = new TaskSearch(mainFrame);
 
         Timer test = new Timer(0, e2 -> {
             trayIcon.setToolTip("Multi\nline\ntool\ntip\n" + String.valueOf(System.currentTimeMillis()));
@@ -69,6 +69,8 @@ public class SystemTrayDisplay extends JFrame {
                         .getDefaultConfiguration()
                         .getDefaultTransform()
                         .getScaleX();
+
+                search.updateTasks();
 
                 setVisible(true);
 
@@ -112,22 +114,14 @@ public class SystemTrayDisplay extends JFrame {
         setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.weightx = 0;
-        gbc.weighty = 0;
-        gbc.fill = GridBagConstraints.NONE;
-
-        add(search, gbc);
-
-        gbc.gridy++;
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
 
-        add(new JLabel(), gbc);
+        add(search, gbc);
 
         gbc.gridy++;
         gbc.weightx = 0;

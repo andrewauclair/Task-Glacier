@@ -7,6 +7,7 @@ plugins {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven { url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/") }
 }
@@ -20,9 +21,9 @@ sourceSets.main {
 dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
-    implementation("io.github.andrewauclair:modern-docking-api:1.1.4")
-    implementation("io.github.andrewauclair:modern-docking-single-app:1.1.4")
-    implementation("io.github.andrewauclair:modern-docking-ui:1.1.4")
+    implementation("io.github.andrewauclair:modern-docking-api:1.2.0")
+    implementation("io.github.andrewauclair:modern-docking-single-app:1.2.0")
+    implementation("io.github.andrewauclair:modern-docking-ui:1.2.0")
     implementation("com.formdev:flatlaf:3.5.4")
     implementation("com.formdev:flatlaf-extras:3.5.4")
     implementation("me.xdrop:fuzzywuzzy:1.4.0")

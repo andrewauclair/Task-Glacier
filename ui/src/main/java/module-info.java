@@ -9,4 +9,5 @@ module task.glacier.ui {
     requires modern_docking.ui_ext;
 
     requires org.swinglabs.swingx;
+    requires me.xdrop.fuzzywuzzy;
 }

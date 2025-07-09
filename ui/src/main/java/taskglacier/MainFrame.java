@@ -54,7 +54,7 @@ public class MainFrame extends JFrame {
 
     public static Map<String, BugzillaInfo> bugzillaInfo = new HashMap<>();
 
-    private SystemTrayDisplay systemTrayDisplay = new SystemTrayDisplay(trayIcon);
+    private SystemTrayDisplay systemTrayDisplay = new SystemTrayDisplay(this, trayIcon);
 
     public boolean isConnected() {
         return connection != null;

@@ -5,6 +5,7 @@ import io.github.andrewauclair.moderndocking.app.DockingState;
 import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
 import packets.BugzillaRefresh;
 import packets.RequestID;
+import panels.TaskSearch;
 
 import javax.swing.*;
 
@@ -48,7 +49,7 @@ public class MenuBar extends JMenuBar {
         timeEntry.addActionListener(e -> new TimeEntryConfiguration(mainFrame).setVisible(true));
 
         JMenuItem search = new JMenuItem("Search...");
-        search.addActionListener(e -> new TaskSearch().setVisible(true));
+        search.addActionListener(e -> new SearchDialog(mainFrame).setVisible(true));
         task.add(search);
 
         add(task);

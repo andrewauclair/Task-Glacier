@@ -41,12 +41,6 @@ public class AddModifyTask extends JDialog {
         JTextField parent = new JTextField();
         parent.setText(String.valueOf(parentID));
 
-        JCheckBox inheritTime = new JCheckBox("Inherit Time From Parent");
-
-        JTextField time1 = new JTextField();
-        JTextField time2 = new JTextField();
-
-        JButton save = new JButton("Save");
         JButton add = new JButton("Add");
 
         if (modify) {
@@ -82,11 +76,6 @@ public class AddModifyTask extends JDialog {
 
         add(createFlow("Parent: ", parent), gbc);
         gbc.gridy++;
-
-        add(inheritTime, gbc);
-        gbc.gridy++;
-
-        inheritTime.setSelected(true);
 
         add(add, gbc);
         gbc.gridy++;

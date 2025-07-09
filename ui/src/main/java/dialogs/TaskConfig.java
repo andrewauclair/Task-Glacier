@@ -76,6 +76,21 @@ public class TaskConfig extends JDialog {
             gbc.weighty = 1;
             gbc.fill = GridBagConstraints.BOTH;
             add(new JLabel(), gbc);
+
+            locked.addActionListener(e -> {
+                boolean controlsLocked = serverControlled.isSelected() || locked.isSelected();
+
+                name.setEnabled(!controlsLocked);
+                status.setEnabled(!controlsLocked);
+                parent.setEnabled(!controlsLocked);
+            });
+
+            boolean controlsLocked = serverControlled.isSelected() || locked.isSelected();
+
+            name.setEnabled(!controlsLocked);
+            status.setEnabled(!controlsLocked);
+            parent.setEnabled(!controlsLocked);
+
         }
 
         private boolean hasChanges(Task task) {
