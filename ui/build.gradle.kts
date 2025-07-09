@@ -45,6 +45,7 @@ tasks.test {
 application {
     mainClass = "taskglacier.MainFrame"
     mainModule = "task.glacier.ui"
+    version = "0.2.3"
 }
 
 //tasks.withType<Jar> {
@@ -67,7 +68,7 @@ jlink {
 
     jpackage {
         if (org.gradle.internal.os.OperatingSystem.current().isWindows) {
-            installerOptions = listOf("--win-per-user-install", "--win-dir-chooser", "--win-menu", "--verbose")
+            installerOptions = listOf("--icon", "app-icon-64.ico", "--win-per-user-install", "--win-dir-chooser", "--win-menu", "--verbose")
         }
     }
 }
