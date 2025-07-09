@@ -14,6 +14,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -589,6 +591,19 @@ public class TaskConfig extends JDialog {
 
     public TaskConfig(MainFrame mainFrame, Task task) {
         super(mainFrame, true);
+
+        KeyStroke ESCAPE_KEY = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+
+        InputMap inputMap = ((JComponent) getContentPane()).getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = ((JComponent) getContentPane()).getActionMap();
+
+        inputMap.put(ESCAPE_KEY, "escape");
+        actionMap.put("escape", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                TaskConfig.this.dispose();
+            }
+        });
 
         setLayout(new GridBagLayout());
 

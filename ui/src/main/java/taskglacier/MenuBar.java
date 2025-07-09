@@ -8,6 +8,7 @@ import packets.RequestID;
 import panels.TaskSearch;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 
 public class MenuBar extends JMenuBar {
     private final JMenuItem add;

@@ -7,6 +7,7 @@ import data.ServerConnection;
 import data.TaskModel;
 import data.TimeData;
 import dialogs.ConnectToServer;
+import dialogs.SearchDialog;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.app.AppState;
 import io.github.andrewauclair.moderndocking.app.Docking;
@@ -20,14 +21,12 @@ import packets.DailyReportMessage;
 import packets.Packet;
 import packets.RequestConfig;
 import packets.WeeklyReport;
-import panels.DailyReportPanel;
-import panels.StatusBar;
-import panels.SystemTrayDisplay;
-import panels.TasksLists;
-import panels.WeeklyReportPanel;
+import panels.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -125,6 +124,19 @@ public class MainFrame extends JFrame {
         DockingLayouts.addLayout("default", builder.buildApplicationLayout());
 
         setJMenuBar(new MenuBar(this));
+
+        Action action = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Test!");
+                new SearchDialog(MainFrame.this).setVisible(true);
+            }
+        };
+
+        // Register the keyboard shortcut
+        KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK);
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(keyStroke, "search");
+        getRootPane().getActionMap().put("search", action);
 
         // now that the main frame is set up with the defaults, we can restore the layout
         File layoutFile;
