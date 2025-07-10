@@ -12,5 +12,5 @@ target_include_directories(task-glacier-server-lib PUBLIC .)
 set_target_properties(task-glacier-server-lib PROPERTIES CXX_STANDARD 23)
 
 target_link_libraries(task-glacier-server-lib PUBLIC
-	strong_type simdjson
+	strong_type simdjson SQLiteCpp
 )

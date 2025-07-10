@@ -45,4 +45,11 @@ FetchContent_Declare(
     GIT_TAG         v3.9.2
 )
 
-FetchContent_MakeAvailable(Catch2 sockpp strong_type libassert simdjson)
+FetchContent_Declare(
+    SQLiteCpp
+    GIT_SHALLOW     TRUE
+    GIT_REPOSITORY  https://github.com/SRombauts/SQLiteCpp
+    GIT_TAG         3.3.3
+)
+
+FetchContent_MakeAvailable(Catch2 sockpp strong_type libassert simdjson SQLiteCpp)
