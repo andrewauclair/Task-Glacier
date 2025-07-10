@@ -8,7 +8,9 @@ import java.awt.*;
 
 public class SearchDialog extends JDialog {
     public SearchDialog(MainFrame mainFrame) {
-        TaskSearch search = new TaskSearch(mainFrame);
+        TaskSearch search = new TaskSearch(mainFrame, this);
+
+        setModal(true);
 
         setLayout(new GridBagLayout());
         setTitle("Task Search");

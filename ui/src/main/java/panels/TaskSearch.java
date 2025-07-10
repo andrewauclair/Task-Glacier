@@ -34,6 +34,8 @@ public class TaskSearch extends JPanel {
 
     class ConfigDialog extends JDialog {
         ConfigDialog() {
+            super(parent);
+
             setLayout(new GridBagLayout());
 
             setSize(200, 200);
@@ -61,6 +63,7 @@ public class TaskSearch extends JPanel {
         }
     }
     private MainFrame mainFrame;
+    private Window parent;
     private JTextField search = new JTextField();
     private JButton config = new JButton("X");
 
@@ -74,8 +77,9 @@ public class TaskSearch extends JPanel {
     };
     JTable table = new JTable(model);
 
-    public TaskSearch(MainFrame mainFrame) {
+    public TaskSearch(MainFrame mainFrame, Window parent) {
         this.mainFrame = mainFrame;
+        this.parent = parent;
 
         setLayout(new GridBagLayout());
 
