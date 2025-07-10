@@ -67,13 +67,13 @@ struct curlpp_ : cURL
 };
 
 /*
-* task-glacier 127.0.0.1 5000 /var/lib/task-glacier
+* task-glacier 127.0.0.1 5000 /var/lib/task-glacier.db3
 */
 int main(int argc, char** argv)
 {
 	if (argc < 4)
 	{
-		std::cerr << "task-glacier <ip address> <port> <persistence directory>\n";
+		std::cerr << "task-glacier <ip address> <port> <database>\n";
 		return -1;
 	}
 
