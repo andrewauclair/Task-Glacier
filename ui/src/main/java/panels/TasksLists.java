@@ -269,7 +269,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
             TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
             Task task = (Task) node.getUserObject();
 
-            TaskConfig dialog = new TaskConfig(mainFrame, task);
+            TaskConfig dialog = new TaskConfig(mainFrame, mainFrame, task);
             dialog.setVisible(true);
         });
 
@@ -282,7 +282,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
         stop.addActionListener(e -> changeTaskState(PacketType.STOP_TASK));
         finish.addActionListener(e -> changeTaskState(PacketType.FINISH_TASK));
 
-        add.addActionListener(e -> new AddModifyTask(mainFrame, 0, false).setVisible(true));
+        add.addActionListener(e -> new AddModifyTask(mainFrame, mainFrame, 0, false).setVisible(true));
 
         addSubTask.addActionListener(e -> {
             int selectedRow = table.getSelectedRow();
@@ -295,7 +295,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
             TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
             Task task = (Task) node.getUserObject();
 
-            new AddModifyTask(mainFrame, task.id, false).setVisible(true);
+            new AddModifyTask(mainFrame, mainFrame, task.id, false).setVisible(true);
         });
 
         openInNewWindow.addActionListener(e -> {

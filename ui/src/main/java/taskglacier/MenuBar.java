@@ -41,7 +41,7 @@ public class MenuBar extends JMenuBar {
 
         add = new JMenuItem("Add...");
         add.setEnabled(false);
-        add.addActionListener(e -> new AddModifyTask(mainFrame, 0, false).setVisible(true));
+        add.addActionListener(e -> new AddModifyTask(mainFrame, mainFrame, 0, false).setVisible(true));
         task.add(add);
 
         JMenuItem timeEntry = new JMenuItem("Time Entry Configuration...");

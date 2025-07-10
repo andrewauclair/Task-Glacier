@@ -6,15 +6,19 @@ import me.xdrop.fuzzywuzzy.FuzzySearch;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TaskSearch extends JPanel {
+public class TaskSearch extends JPanel implements TaskContextMenu.TaskDisplay {
     class SearchRowFilter extends RowFilter {
         String search;
         int ratio;
@@ -26,6 +30,9 @@ public class TaskSearch extends JPanel {
 
         @Override
         public boolean include(Entry entry) {
+            if (!displayFinishedTasks && entry.getValue(1) == TaskState.FINISHED) {
+                return false;
+            }
             String value = (String) entry.getValue(0);
 
             return FuzzySearch.partialRatio(search, value) > ratio;
@@ -62,6 +69,58 @@ public class TaskSearch extends JPanel {
             });
         }
     }
+
+    class TableModel extends AbstractTableModel {
+        List<Task> tasks = new ArrayList<>();
+
+        @Override
+        public int getRowCount() {
+            return tasks.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 2;
+        }
+
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            Task task = tasks.get(rowIndex);
+
+            if (columnIndex == 0) {
+                StringBuilder text = new StringBuilder();
+
+                List<String> parents = new ArrayList<>();
+
+                int parentID = task.parentID;
+
+                while (parentID != 0) {
+                    Task parentTask = mainFrame.getTaskModel().getTask(parentID);
+
+                    if (task == null) {
+                        break;
+                    }
+                    parents.add(0, parentTask.name);
+
+                    parentID = parentTask.parentID;
+                }
+                for (String parent : parents) {
+                    text.append(parent);
+                    text.append(" / ");
+                }
+                text.append(task.name);
+
+                return text.toString();
+            }
+            return task.state;
+        }
+    }
+
     private MainFrame mainFrame;
     private Window parent;
     private JTextField search = new JTextField();
@@ -69,17 +128,16 @@ public class TaskSearch extends JPanel {
 
     private boolean displayFinishedTasks = false;
 
-    DefaultTableModel model = new DefaultTableModel() {
-        @Override
-        public boolean isCellEditable(int row, int column) {
-            return false;
-        }
-    };
+    private final TableModel model = new TableModel();
     JTable table = new JTable(model);
 
-    public TaskSearch(MainFrame mainFrame, Window parent) {
+    private final TaskContextMenu contextMenu;
+
+    public TaskSearch(MainFrame mainFrame, Window parent, boolean displayConfigOption) {
         this.mainFrame = mainFrame;
         this.parent = parent;
+
+        contextMenu = new TaskContextMenu(mainFrame, parent, this);
 
         setLayout(new GridBagLayout());
 
@@ -90,20 +148,22 @@ public class TaskSearch extends JPanel {
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        model.addColumn("Task");
-
         table.setTableHeader(null);
+        table.removeColumn(table.getColumnModel().getColumn(1));
 
-        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
-        RowFilter<DefaultTableModel, Object> filter = new SearchRowFilter("", 50);
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
+        RowFilter<TableModel, Object> filter = new SearchRowFilter("", 50);
 
         sorter.setRowFilter(filter);
         table.setRowSorter(sorter);
 
         add(search, gbc);
-        gbc.gridx++;
-        add(config, gbc);
-        gbc.gridx = 0;
+
+        if (displayConfigOption) {
+            gbc.gridx++;
+            add(config, gbc);
+            gbc.gridx = 0;
+        }
 
         gbc.gridy++;
         gbc.gridwidth = 2;
@@ -115,7 +175,7 @@ public class TaskSearch extends JPanel {
         search.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
-                RowFilter<DefaultTableModel, Object> filter = new SearchRowFilter(search.getText(), 50);
+                RowFilter<TableModel, Object> filter = new SearchRowFilter(search.getText(), 50);
                 sorter.setRowFilter(filter);
                 sorter.allRowsChanged();
             }
@@ -124,42 +184,33 @@ public class TaskSearch extends JPanel {
         config.addActionListener(e -> {
             new ConfigDialog().setVisible(true);
         });
+
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    contextMenu.show(table, e.getX(), e.getY());
+                }
+                else if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                    contextMenu.openConfigDialog();
+                }
+            }
+        });
+
         updateTasks();
     }
 
     public void updateTasks() {
-        model.setRowCount(0);
+        model.tasks.clear();
 
         for (Task task : mainFrame.getTaskModel().getTasks()) {
-            if (!displayFinishedTasks && task.state == TaskState.FINISHED) {
-                continue;
-            }
-
-            StringBuilder text = new StringBuilder();
-
-            List<String> parents = new ArrayList<>();
-
-            int parentID = task.parentID;
-
-            while (parentID != 0) {
-                Task parentTask = mainFrame.getTaskModel().getTask(parentID);
-
-                if (task == null) {
-                    break;
-                }
-                parents.add(0, parentTask.name);
-
-                parentID = parentTask.parentID;
-            }
-            for (String parent : parents) {
-                text.append(parent);
-                text.append(" / ");
-            }
-            text.append(task.name);
-
-            model.addRow(new Object[] { text.toString() });
-
+            model.tasks.add(task);
         }
         model.fireTableDataChanged();
+    }
+
+    @Override
+    public Task taskForSelectedRow() {
+        return model.tasks.get(table.convertRowIndexToModel(table.getSelectedRow()));
     }
 }

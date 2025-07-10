@@ -29,7 +29,8 @@ public class AddModifyTask extends JDialog {
         return panel;
     }
 
-    public AddModifyTask(MainFrame mainFrame, int parentID, boolean modify) {
+    public AddModifyTask(MainFrame mainFrame, Window parentWindow, int parentID, boolean modify) {
+        super(parentWindow);
         openInstance = this;
 
         setModal(true);

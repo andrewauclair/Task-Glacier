@@ -49,14 +49,14 @@ public class SystemTrayDisplay extends JFrame {
 
     public SystemTrayDisplay(MainFrame mainFrame, TrayIcon trayIcon) {
         this.trayIcon = trayIcon;
-        search = new TaskSearch(mainFrame, this);
+        search = new TaskSearch(mainFrame, this, false);
 
-        Timer test = new Timer(0, e2 -> {
-            trayIcon.setToolTip("Multi\nline\ntool\ntip\n" + String.valueOf(System.currentTimeMillis()));
-        });
-        test.setDelay(1000);
-        test.setRepeats(true);
-        test.start();
+//        Timer test = new Timer(0, e2 -> {
+//            trayIcon.setToolTip("Multi\nline\ntool\ntip\n" + String.valueOf(System.currentTimeMillis()));
+//        });
+//        test.setDelay(1000);
+//        test.setRepeats(true);
+//        test.start();
         timer = new Timer(250, e1 -> {
             if (isVisible()) {
                 // hide

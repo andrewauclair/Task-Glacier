@@ -589,8 +589,10 @@ public class TaskConfig extends JDialog {
         }
     }
 
-    public TaskConfig(MainFrame mainFrame, Task task) {
-        super(mainFrame, true);
+    public TaskConfig(MainFrame mainFrame, Window parent, Task task) {
+        super(parent);
+
+        setModal(true);
 
         KeyStroke ESCAPE_KEY = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
 
@@ -634,8 +636,11 @@ public class TaskConfig extends JDialog {
         stack.add(timeEntry, "Time Entry");
         split.setRightComponent(stack);
 
+        layout.show(stack, "General");
+
         SwingUtilities.invokeLater(() -> {
             split.setDividerLocation(0.3);
+            list.setRowSelectionInterval(0, 0);
         });
 
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
