@@ -9,7 +9,7 @@ import java.util.List;
 public class Task {
     public final int id;
     public int parentID;
-    public TaskState state = TaskState.INACTIVE;
+    public TaskState state = TaskState.PENDING;
     public String name;
 
     public boolean serverControlled = false;

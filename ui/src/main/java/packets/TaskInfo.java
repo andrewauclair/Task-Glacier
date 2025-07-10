@@ -27,7 +27,7 @@ public class TaskInfo implements Packet {
 
     public int taskID = 0;
     public int parentID = 0;
-    public TaskState state = TaskState.INACTIVE;
+    public TaskState state = TaskState.PENDING;
     public boolean newTask = false;
     public boolean serverControlled = false;
     public boolean locked = false;

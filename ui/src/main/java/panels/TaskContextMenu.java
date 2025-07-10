@@ -107,9 +107,9 @@ public class TaskContextMenu extends JPopupMenu {
 
         Task task = display.taskForSelectedRow();
 
-        start.setEnabled(task.state == TaskState.INACTIVE);
-        startStopActive.setEnabled(task.state == TaskState.INACTIVE);
-        startFinishActive.setEnabled(task.state == TaskState.INACTIVE);
+        start.setEnabled(task.state == TaskState.PENDING);
+        startStopActive.setEnabled(task.state == TaskState.PENDING);
+        startFinishActive.setEnabled(task.state == TaskState.PENDING);
         stop.setEnabled(task.state == TaskState.ACTIVE);
         finish.setEnabled(task.state != TaskState.FINISHED && !mainFrame.getTaskModel().taskHasNonFinishedChildren(task.id) && !task.locked);
 

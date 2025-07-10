@@ -1,7 +1,7 @@
 package data;
 
 public enum TaskState {
-    INACTIVE,
+    PENDING,
     ACTIVE,
     FINISHED;
 

@@ -4,8 +4,6 @@ import data.Task;
 import data.TaskModel;
 import data.TaskState;
 import dialogs.AddModifyTask;
-import dialogs.EditLabels;
-import dialogs.RenameTask;
 import dialogs.TaskConfig;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingProperty;
@@ -22,8 +20,6 @@ import taskglacier.MainFrame;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -31,8 +27,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
@@ -353,8 +347,8 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
                     TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
                     Task task = (Task) node.getUserObject();
 
-                    startStopActive.setEnabled(task.state == TaskState.INACTIVE);
-                    startFinishActive.setEnabled(task.state == TaskState.INACTIVE);
+                    startStopActive.setEnabled(task.state == TaskState.PENDING);
+                    startFinishActive.setEnabled(task.state == TaskState.PENDING);
                     stop.setEnabled(task.state == TaskState.ACTIVE);
                     finish.setEnabled(task.state != TaskState.FINISHED && !mainFrame.getTaskModel().taskHasNonFinishedChildren(task.id) && !task.locked);
 
