@@ -73,45 +73,45 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 			m_bugzilla[info.name].fields[name] = values;
 		}
 
-		std::vector<TaskID> bugTasks;
+		//std::vector<TaskID> bugTasks;
 
-		for (auto&& [bug, task] : m_bugzilla[info.name].bugToTaskID)
-		{
-			bugTasks.push_back(task);
-		}
+		//for (auto&& [bug, task] : m_bugzilla[info.name].bugToTaskID)
+		//{
+		//	bugTasks.push_back(task);
+		//}
 
-		std::map<TaskID, TaskState> helperTasks;
-		app.find_bugzilla_helper_tasks(m_bugzilla[info.name].bugzillaRootTaskID, bugTasks, helperTasks);
+		//std::map<TaskID, TaskState> helperTasks;
+		//app.find_bugzilla_helper_tasks(m_bugzilla[info.name].bugzillaRootTaskID, bugTasks, helperTasks);
 
-		// now go through all the group by tasks and construct our helper tasks
-		if (!m_bugzilla[info.name].bugzillaGroupTasksBy.empty())
-		{
-			build_group_by_task(m_bugzilla[info.name], app, api, output, m_bugzilla[info.name].bugzillaRootTaskID, m_bugzilla[info.name].bugzillaGroupTasksBy);
-		}
+		//// now go through all the group by tasks and construct our helper tasks
+		//if (!m_bugzilla[info.name].bugzillaGroupTasksBy.empty())
+		//{
+		//	build_group_by_task(m_bugzilla[info.name], app, api, output, m_bugzilla[info.name].bugzillaRootTaskID, m_bugzilla[info.name].bugzillaGroupTasksBy);
+		//}
 
-		std::map<TaskID, TaskState> helperTasks2;
-		app.find_bugzilla_helper_tasks(m_bugzilla[info.name].bugzillaRootTaskID, bugTasks, helperTasks2);
+		//std::map<TaskID, TaskState> helperTasks2;
+		//app.find_bugzilla_helper_tasks(m_bugzilla[info.name].bugzillaRootTaskID, bugTasks, helperTasks2);
 
 
-		// finish all the non-bug children of the root task. we'll find the parents and set them back to inactive as we need them
-		
-		for (auto&& [id, state] : helperTasks2)
-		{
-			Task* task = app.find_task(id);
+		//// finish all the non-bug children of the root task. we'll find the parents and set them back to inactive as we need them
+		//
+		//for (auto&& [id, state] : helperTasks2)
+		//{
+		//	Task* task = app.find_task(id);
 
-			const auto result = helperTasks.find(id);
+		//	const auto result = helperTasks.find(id);
 
-			if (result != helperTasks.end() && state != result->second)
-			{
-				api.send_task_info(*task, false, output);
-			}
-			else if (result == helperTasks.end())
-			{
-				app.finish_task(id);
+		//	if (result != helperTasks.end() && state != result->second)
+		//	{
+		//		api.send_task_info(*task, false, output);
+		//	}
+		//	else if (result == helperTasks.end())
+		//	{
+		//		app.finish_task(id);
 
-				api.send_task_info(*task, true, output);
-			}
-		}
+		//		api.send_task_info(*task, true, output);
+		//	}
+		//}
 	}
 
 	RequestMessage request(PacketType::BUGZILLA_REFRESH, RequestID(0));

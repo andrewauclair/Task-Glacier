@@ -1674,13 +1674,12 @@ TEST_CASE("Reload Tasks From File", "[api]")
 
 	task1.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
-	verify_message(task1, *output[0]);
-	verify_message(task2, *output[1]);
-	verify_message(task3, *output[2]);
-	verify_message(task4, *output[3]);
-	verify_message(task5, *output[4]);
-	verify_message(task6, *output[5]);
-	// TODO 6 is time categories & codes
+	verify_message(task1, *output[1]);
+	verify_message(task2, *output[2]);
+	verify_message(task3, *output[3]);
+	verify_message(task4, *output[4]);
+	verify_message(task5, *output[5]);
+	verify_message(task6, *output[6]);
 	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[7]);
 }
 
@@ -1774,7 +1773,7 @@ TEST_CASE("Persist Time Categories", "[api]")
 	auto& cat2 = timeCategoriesData.timeCategories.emplace_back(TimeCategoryID(2), "Tw o", "TW O");
 	cat2.codes.emplace_back(TimeCodeID(4), "Biz z");
 
-	verify_message(timeCategoriesData, *output[1]);
+	verify_message(timeCategoriesData, *output[0]);
 }
 
 TEST_CASE("Reload Time Categories", "[api]")
@@ -1804,17 +1803,17 @@ TEST_CASE("Reload Time Categories", "[api]")
 
 	REQUIRE(output.size() == 3);
 
-	auto task1 = TaskInfoMessage(TaskID(1), NO_PARENT, "task 1");
-	task1.state = TaskState::INACTIVE;
-	task1.createTime = std::chrono::milliseconds(1737344939870);
-
-	verify_message(task1, *output[0]);
-
 	auto timeCategoriesData = TimeEntryDataPacket({});
 	auto& cat2 = timeCategoriesData.timeCategories.emplace_back(TimeCategoryID(2), "Tw o", "TW O");
 	cat2.codes.emplace_back(TimeCodeID(4), "Biz z");
 
-	verify_message(timeCategoriesData, *output[1]);
+	verify_message(timeCategoriesData, *output[0]);
+
+	auto task1 = TaskInfoMessage(TaskID(1), NO_PARENT, "task 1");
+	task1.state = TaskState::INACTIVE;
+	task1.createTime = std::chrono::milliseconds(1737344939870);
+
+	verify_message(task1, *output[1]);
 
 	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[2]);
 }
@@ -1858,17 +1857,17 @@ TEST_CASE("request configuration at startup", "[api]")
 	api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, output);
 
 	REQUIRE(output.size() == 8);
-	
-	verify_message(TaskInfoMessage(TaskID(1), NO_PARENT, "task 1", std::chrono::milliseconds(1737344039870)), *output[0]);
-	verify_message(TaskInfoMessage(TaskID(2), TaskID(1), "task 2", std::chrono::milliseconds(1737345839870)), *output[1]);
-	verify_message(TaskInfoMessage(TaskID(3), TaskID(2), "task 3", std::chrono::milliseconds(1737347639870)), *output[2]);
-	verify_message(TaskInfoMessage(TaskID(4), TaskID(2), "task 4", std::chrono::milliseconds(1737349439870)), *output[3]);
-	verify_message(TaskInfoMessage(TaskID(5), TaskID(3), "task 5", std::chrono::milliseconds(1737351239870)), *output[4]);
-	verify_message(TaskInfoMessage(TaskID(6), TaskID(4), "task 6", std::chrono::milliseconds(1737353039870)), *output[5]);
 
 	auto timeCategoriesData = TimeEntryDataPacket({});
-	
-	verify_message(timeCategoriesData, *output[6]);
+
+	verify_message(timeCategoriesData, *output[0]);
+
+	verify_message(TaskInfoMessage(TaskID(1), NO_PARENT, "task 1", std::chrono::milliseconds(1737344039870)), *output[1]);
+	verify_message(TaskInfoMessage(TaskID(2), TaskID(1), "task 2", std::chrono::milliseconds(1737345839870)), *output[2]);
+	verify_message(TaskInfoMessage(TaskID(3), TaskID(2), "task 3", std::chrono::milliseconds(1737347639870)), *output[3]);
+	verify_message(TaskInfoMessage(TaskID(4), TaskID(2), "task 4", std::chrono::milliseconds(1737349439870)), *output[4]);
+	verify_message(TaskInfoMessage(TaskID(5), TaskID(3), "task 5", std::chrono::milliseconds(1737351239870)), *output[5]);
+	verify_message(TaskInfoMessage(TaskID(6), TaskID(4), "task 6", std::chrono::milliseconds(1737353039870)), *output[6]);
 
 	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[7]);
 }
