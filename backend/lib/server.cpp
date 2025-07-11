@@ -36,6 +36,8 @@ std::expected<TaskID, std::string> MicroTask::create_task(const std::string& nam
 
 	*m_output << "create " << id._val << ' ' << parentID._val << ' ' << m_clock->now().count() << ' ' << task.serverControlled << ' ' << persist_string(name) << std::endl;
 
+	m_database->write_task(task);
+
 	return std::expected<TaskID, std::string>(id);
 }
 

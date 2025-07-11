@@ -387,7 +387,7 @@ bugzilla-tasks bugzilla 50 4 55 5 60 8 65 11 70 14
 		helper.fileInput = std::istringstream(helper.fileOutput.str());
 		helper.fileOutput.clear();
 
-		helper.api = API(helper.clock, helper.curl, helper.fileInput, helper.fileOutput);
+		helper.api = API(helper.clock, helper.curl, helper.fileInput, helper.fileOutput, helper.database);
 
 		// now that we're setup, request the configuration and check the output
 		helper.api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, helper.output);

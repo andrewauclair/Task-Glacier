@@ -5,6 +5,7 @@
 #include "packets.hpp"
 #include "curl.hpp"
 #include "bugzilla.hpp"
+#include "database.hpp"
 
 #include <vector>
 #include <format>
@@ -29,11 +30,12 @@ inline std::vector<std::string> split(const std::string& s, char delim) {
 class API
 {
 public:
-	API(const Clock& clock, cURL& curl, std::istream& input, std::ostream& output) 
+	API(const Clock& clock, cURL& curl, std::istream& input, std::ostream& output, Database& database) 
 		: m_clock(&clock), 
-		m_app(*this, clock, output),
+		m_app(*this, clock, output, database),
 		m_bugzilla(clock, curl),
-		m_output(&output)
+		m_output(&output),
+		m_database(&database)
 	{
 		m_app.load_from_file(input);
 	}
@@ -65,6 +67,7 @@ public:
 	Bugzilla m_bugzilla;
 private:
 	std::ostream* m_output;
+	Database* m_database;
 };
 
 #endif

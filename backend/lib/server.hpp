@@ -18,6 +18,7 @@
 #include <strong_type/strong_type.hpp>
 
 class API;
+class Database;
 
 class Task
 {
@@ -55,7 +56,7 @@ public:
 class MicroTask
 {
 public:
-	MicroTask(API& api, const Clock& clock, std::ostream& output) : m_api(&api), m_clock(&clock), m_output(&output) {}
+	MicroTask(API& api, const Clock& clock, std::ostream& output, Database& database) : m_api(&api), m_clock(&clock), m_output(&output), m_database(&database) {}
 
 	std::expected<TaskID, std::string> create_task(const std::string& name, TaskID parentID = NO_PARENT, bool serverControlled = false);
 
@@ -150,6 +151,7 @@ private:
 
 	const Clock* m_clock;
 	std::ostream* m_output;
+	Database* m_database;
 
 	API* m_api;
 };

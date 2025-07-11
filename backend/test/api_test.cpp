@@ -1515,7 +1515,8 @@ TEST_CASE("Persist Tasks", "[api][task]")
 	std::istringstream fileInput;
 	std::ostringstream fileOutput;
 	curlTest curl;
-	API api(clock, curl, fileInput, fileOutput);
+	testDatabase db;
+	API api(clock, curl, fileInput, fileOutput, db);
 	std::vector<std::unique_ptr<Message>> output;
 
 	auto create_task_1 = CreateTaskMessage(NO_PARENT, RequestID(1), "task 1");
@@ -1630,7 +1631,8 @@ TEST_CASE("Reload Tasks From File", "[api]")
 
 	TestClock clock;
 	curlTest curl;
-	API api(clock, curl, fileInput, fileOutput);
+	testDatabase db;
+	API api(clock, curl, fileInput, fileOutput, db);
 
 	std::vector<std::unique_ptr<Message>> output;
 
@@ -1689,7 +1691,8 @@ TEST_CASE("Persist Time Categories", "[api]")
 	std::istringstream fileInput;
 	std::ostringstream fileOutput;
 	curlTest curl;
-	API api(clock, curl, fileInput, fileOutput);
+	testDatabase db;
+	API api(clock, curl, fileInput, fileOutput, db);
 	std::vector<std::unique_ptr<Message>> output;
 
 	auto create_task_1 = CreateTaskMessage(NO_PARENT, RequestID(1), "task 1");
@@ -1794,7 +1797,8 @@ TEST_CASE("Reload Time Categories", "[api]")
 
 	TestClock clock;
 	curlTest curl;
-	API api(clock, curl, fileInput, fileOutput);
+	testDatabase db;
+	API api(clock, curl, fileInput, fileOutput, db);
 
 	std::vector<std::unique_ptr<Message>> output;
 
@@ -1824,7 +1828,8 @@ TEST_CASE("request configuration at startup", "[api]")
 	std::istringstream fileInput;
 	std::ostringstream fileOutput;
 	curlTest curl;
-	API api(clock, curl, fileInput, fileOutput);
+	testDatabase db;
+	API api(clock, curl, fileInput, fileOutput, db);
 
 	std::vector<std::unique_ptr<Message>> output;
 
