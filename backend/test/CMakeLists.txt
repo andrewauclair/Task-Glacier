@@ -4,6 +4,8 @@ add_executable(task-glacier-tests
 	api_test.cpp
 	packet_test.cpp
 	bugzilla_test.cpp
+	storage_test.cpp
+	sqlite_test.cpp
 )
 
 set_target_properties(task-glacier-tests PROPERTIES CXX_STANDARD 23)
