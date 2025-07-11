@@ -376,7 +376,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 			{
 				Task* task = app.find_task(taskID);
 
-				if (!app.task_has_bug_tasks(taskID, bugTasks))
+				if (!app.task_has_active_bug_tasks(taskID, bugTasks))
 				{
 					app.finish_task(taskID);
 				}

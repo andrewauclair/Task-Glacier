@@ -908,15 +908,17 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			taskInfo24.createTime = 1737358439870ms;
 
 			p1_critical.state = TaskState::FINISHED;
-			p1_critical.finishTime = 1737431339870ms;
+			p1_critical.finishTime = 1737375539870ms;
 			
-			//setup_task_inactive(p2_critical, 1737360239870ms);
-			//p2_critical.newTask = false;
+			auto p2_critical = TaskInfoMessage(TaskID(15), TaskID(2), "Critical");
 
-			setup_task_finished(p1, 1737345839870ms, 1737429539870ms);
+			setup_task_inactive(p2_critical, 1737371939870ms);
+
+			setup_task_finished(p1, 1737354839870ms, 1737373739870ms);
 			p1.newTask = false;
+			p1_critical.newTask = false;
 
-			helper.required_messages({ &taskInfo24, &p1, &p1_critical/*, &p2_critical*/});
+			helper.required_messages({ &p2_critical, &taskInfo24, &p1, &p1_critical });
 		}
 
 		SECTION("Finishing Old Grouping Tasks - Last Bug is Finished")
@@ -927,14 +929,19 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 			helper.expect_success(refresh);
 
-			auto taskInfo24 = TaskInfoMessage(TaskID(24), TaskID(5), "60 - bug 3");
-			setup_task_finished(taskInfo24, 1737422339870ms, 1737429539870ms);
-			taskInfo24.newTask = false;
+			auto taskInfo8 = TaskInfoMessage(TaskID(8), TaskID(7), "60 - bug 3");
+			setup_task_finished(taskInfo8, 1737358439870ms, 1737371939870ms);
+			taskInfo8.newTask = false;
 
+			p1.state = TaskState::FINISHED;
+			p1.finishTime = 1737373739870ms;
+			p1.newTask = false;
+			
 			p1_critical.state = TaskState::FINISHED;
-			p1_critical.finishTime = 1737430439870ms;
+			p1_critical.finishTime = 1737375539870ms;
+			p1_critical.newTask = false;
 
-			helper.required_messages({ &taskInfo24, &p1_critical });
+			helper.required_messages({ &taskInfo8, &p1, &p1_critical });
 		}
 
 		SECTION("Building a Totally New Grouping")
@@ -958,79 +965,68 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 			helper.api.process_packet(configure, helper.output);
 
-			auto nitpick = TaskInfoMessage(TaskID(27), TaskID(1), "Nitpick");
-			auto minor = TaskInfoMessage(TaskID(32), TaskID(1), "Minor");
-			auto critical = TaskInfoMessage(TaskID(37), TaskID(1), "Critical");
-			auto blocker = TaskInfoMessage(TaskID(42), TaskID(1), "Blocker");
+			auto nitpick = TaskInfoMessage(TaskID(21), TaskID(1), "Nitpick");
+			auto minor = TaskInfoMessage(TaskID(15), TaskID(1), "Minor");
+			auto critical = TaskInfoMessage(TaskID(17), TaskID(1), "Critical");
+			auto blocker = TaskInfoMessage(TaskID(19), TaskID(1), "Blocker");
 
-			auto nitpick_p1 = TaskInfoMessage(TaskID(28), TaskID(27), "P1");
-			auto nitpick_p2 = TaskInfoMessage(TaskID(29), TaskID(27), "P2");
-			auto nitpick_p3 = TaskInfoMessage(TaskID(30), TaskID(27), "P3");
-			auto nitpick_p4 = TaskInfoMessage(TaskID(31), TaskID(27), "P4");
+			auto nitpick_p4 = TaskInfoMessage(TaskID(22), TaskID(21), "P4");
+			auto minor_p2 = TaskInfoMessage(TaskID(16), TaskID(15), "P2");
+			auto critical_p1 = TaskInfoMessage(TaskID(18), TaskID(17), "P1");
+			auto blocker_p3 = TaskInfoMessage(TaskID(20), TaskID(19), "P3");
 
-			auto minor_p1 = TaskInfoMessage(TaskID(33), TaskID(32), "P1");
-			auto minor_p2 = TaskInfoMessage(TaskID(34), TaskID(32), "P2");
-			auto minor_p3 = TaskInfoMessage(TaskID(35), TaskID(32), "P3");
-			auto minor_p4 = TaskInfoMessage(TaskID(36), TaskID(32), "P4");
+			setup_task_inactive(nitpick, 1737382739870ms);
+			setup_task_inactive(minor, 1737371939870ms);
+			setup_task_inactive(critical, 1737375539870ms);
+			setup_task_inactive(blocker, 1737379139870ms);
 
-			auto critical_p1 = TaskInfoMessage(TaskID(38), TaskID(37), "P1");
-			auto critical_p2 = TaskInfoMessage(TaskID(39), TaskID(37), "P2");
-			auto critical_p3 = TaskInfoMessage(TaskID(40), TaskID(37), "P3");
-			auto critical_p4 = TaskInfoMessage(TaskID(41), TaskID(37), "P4");
+			setup_task_inactive(nitpick_p4, 1737384539870ms);
+			setup_task_inactive(minor_p2, 1737373739870ms);
+			setup_task_inactive(critical_p1, 1737377339870ms);
+			setup_task_inactive(blocker_p3, 1737380939870ms);
 
-			auto blocker_p1 = TaskInfoMessage(TaskID(43), TaskID(42), "P1");
-			auto blocker_p2 = TaskInfoMessage(TaskID(44), TaskID(42), "P2");
-			auto blocker_p3 = TaskInfoMessage(TaskID(45), TaskID(42), "P3");
-			auto blocker_p4 = TaskInfoMessage(TaskID(46), TaskID(42), "P4");
-
-			setup_task_finished(nitpick, 1737427739870ms, 1737463739870ms);
-			setup_task_finished(minor, 1737436739870ms, 1737472739870ms);
-			setup_task_finished(critical, 1737445739870ms, 1737481739870ms);
-			setup_task_finished(blocker, 1737454739870ms, 1737490739870ms);
-
-			setup_task_finished(nitpick_p1, 1737429539870ms, 1737465539870ms);
-			setup_task_finished(nitpick_p2, 1737431339870ms, 1737467339870ms);
-			setup_task_finished(nitpick_p3, 1737433139870ms, 1737469139870ms);
-			setup_task_finished(nitpick_p4, 1737434939870ms, 1737470939870ms);
-
-			setup_task_finished(minor_p1, 1737438539870ms, 1737474539870ms);
-			setup_task_finished(minor_p2, 1737440339870ms, 1737476339870ms);
-			setup_task_finished(minor_p3, 1737442139870ms, 1737478139870ms);
-			setup_task_finished(minor_p4, 1737443939870ms, 1737479939870ms);
-
-			setup_task_finished(critical_p1, 1737447539870ms, 1737483539870ms);
-			setup_task_finished(critical_p2, 1737449339870ms, 1737485339870ms);
-			setup_task_finished(critical_p3, 1737451139870ms, 1737487139870ms);
-			setup_task_finished(critical_p4, 1737452939870ms, 1737488939870ms);
-
-			setup_task_finished(blocker_p1, 1737456539870ms, 1737492539870ms);
-			setup_task_finished(blocker_p2, 1737458339870ms, 1737494339870ms);
-			setup_task_finished(blocker_p3, 1737460139870ms, 1737496139870ms);
-			setup_task_finished(blocker_p4, 1737461939870ms, 1737497939870ms);
+			taskInfo4.parentID = TaskID(16);
+			taskInfo5.parentID = TaskID(16);
+			taskInfo8.parentID = TaskID(18);
+			taskInfo11.parentID = TaskID(20);
+			taskInfo14.parentID = TaskID(22);
+			taskInfo4.newTask = taskInfo5.newTask = taskInfo8.newTask = taskInfo11.newTask = taskInfo14.newTask = false;
+			
+			setup_task_finished(p2, 1737347639870ms, 1737386339870ms);
+			setup_task_finished(p1, 1737354839870ms, 1737389939870ms);
+			setup_task_finished(p3, 1737360239870ms, 1737393539870ms);
+			setup_task_finished(p4, 1737365639870ms, 1737397139870ms);
+			p2.newTask = false;
+			p1.newTask = false;
+			p3.newTask = false;
+			p4.newTask = false;
+			
+			setup_task_finished(p2_minor, 1737349439870ms, 1737388139870ms);
+			setup_task_finished(p1_critical, 1737356639870ms, 1737391739870ms);
+			setup_task_finished(p3_blocker, 1737362039870ms, 1737395339870ms);
+			setup_task_finished(p4_nitpick, 1737367439870ms, 1737398939870ms);
+			p2_minor.newTask = false;
+			p1_critical.newTask = false;
+			p3_blocker.newTask = false;
+			p4_nitpick.newTask = false;
 
 			helper.required_messages(
 				{
-					&taskInfo4, &taskInfo5, &taskInfo8, &taskInfo11, &taskInfo14,
+					&configure,
 
-					&p1,
-					&p1_critical,
+					&minor, &minor_p2, &taskInfo4, &taskInfo5,
+					&critical, &critical_p1, &taskInfo8, 
+					&blocker, &blocker_p3, &taskInfo11, 
+					&nitpick, &nitpick_p4, &taskInfo14,
+					
 					&p2,
 					&p2_minor,
+					&p1,
+					&p1_critical,
 					&p3,
 					&p3_blocker,
 					&p4,
-					&p4_nitpick,
-
-					&nitpick,
-					&nitpick_p1, &nitpick_p2, & nitpick_p3, &nitpick_p4,
-					&minor,
-					&minor_p1, &minor_p2, &minor_p3, &minor_p4,
-					&critical,
-					&critical_p1, &critical_p2, &critical_p3, &critical_p4,
-					&blocker,
-					&blocker_p1, &blocker_p2, &blocker_p3, &blocker_p4,
-
-					
+					&p4_nitpick
 				});
 		}
 	}
@@ -1050,61 +1046,47 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			
 		helper.expect_success(refresh);
 
-		CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&api_key=asfesdFEASfslj&resolution=---");
+		CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&api_key=asfesdFEASfslj&last_change_time=2025-01-20T04:18:59Z");
 
-		auto taskInfo22 = TaskInfoMessage(TaskID(22), TaskID(9), "50 - bug 1");
-		auto taskInfo23 = TaskInfoMessage(TaskID(23), TaskID(9), "55 - bug 2");
-		auto taskInfo24 = TaskInfoMessage(TaskID(24), TaskID(5), "60 - bug 3");
-		auto taskInfo25 = TaskInfoMessage(TaskID(25), TaskID(16), "65 - bug 4");
-		auto taskInfo26 = TaskInfoMessage(TaskID(26), TaskID(18), "70 - bug 5");
+		auto p1 = TaskInfoMessage(TaskID(6), TaskID(1), "P1");
+		auto p2 = TaskInfoMessage(TaskID(2), TaskID(1), "P2");
+		auto p3 = TaskInfoMessage(TaskID(9), TaskID(1), "P3");
+		auto p4 = TaskInfoMessage(TaskID(12), TaskID(1), "P4");
 
-		auto p1 = TaskInfoMessage(TaskID(2), TaskID(1), "P1");
-		auto p2 = TaskInfoMessage(TaskID(7), TaskID(1), "P2");
-		auto p3 = TaskInfoMessage(TaskID(12), TaskID(1), "P3");
-		auto p4 = TaskInfoMessage(TaskID(17), TaskID(1), "P4");
+		auto p1_critical = TaskInfoMessage(TaskID(7), TaskID(6), "Critical");
+		auto p2_minor = TaskInfoMessage(TaskID(3), TaskID(2), "Minor");
+		auto p3_blocker = TaskInfoMessage(TaskID(10), TaskID(9), "Blocker");
+		auto p4_nitpick = TaskInfoMessage(TaskID(13), TaskID(12), "Nitpick");
 
-		auto p1_nitpick = TaskInfoMessage(TaskID(3), TaskID(2), "Nitpick");
-		auto p1_minor = TaskInfoMessage(TaskID(4), TaskID(2), "Minor");
-		auto p1_critical = TaskInfoMessage(TaskID(5), TaskID(2), "Critical");
-		auto p1_blocker = TaskInfoMessage(TaskID(6), TaskID(2), "Blocker");
+		auto taskInfo4 = TaskInfoMessage(TaskID(4), TaskID(3), "50 - bug 1");
+		auto taskInfo5 = TaskInfoMessage(TaskID(5), TaskID(3), "55 - bug 2");
+		auto taskInfo8 = TaskInfoMessage(TaskID(8), TaskID(7), "60 - bug 3");
+		auto taskInfo11 = TaskInfoMessage(TaskID(11), TaskID(10), "65 - bug 4");
+		auto taskInfo14 = TaskInfoMessage(TaskID(14), TaskID(13), "70 - bug 5");
 
-		auto p2_nitpick = TaskInfoMessage(TaskID(8), TaskID(7), "Nitpick");
-		auto p2_minor = TaskInfoMessage(TaskID(9), TaskID(7), "Minor");
-		auto p2_critical = TaskInfoMessage(TaskID(10), TaskID(7), "Critical");
-		auto p2_blocker = TaskInfoMessage(TaskID(11), TaskID(7), "Blocker");
+		setup_task_inactive(taskInfo4, 1737351239870ms);
+		setup_task_inactive(taskInfo5, 1737353039870ms);
+		setup_task_inactive(taskInfo8, 1737358439870ms);
+		setup_task_inactive(taskInfo11, 1737363839870ms);
+		setup_task_inactive(taskInfo14, 1737369239870ms);
 
-		auto p3_nitpick = TaskInfoMessage(TaskID(13), TaskID(12), "Nitpick");
-		auto p3_minor = TaskInfoMessage(TaskID(14), TaskID(12), "Minor");
-		auto p3_critical = TaskInfoMessage(TaskID(15), TaskID(12), "Critical");
-		auto p3_blocker = TaskInfoMessage(TaskID(16), TaskID(12), "Blocker");
+		setup_task_inactive(p1, 1737354839870ms);
+		setup_task_inactive(p2, 1737347639870ms);
+		setup_task_inactive(p3, 1737360239870ms);
+		setup_task_inactive(p4, 1737365639870ms);
+		setup_task_inactive(p1_critical, 1737356639870ms);
+		setup_task_inactive(p2_minor, 1737349439870ms);
+		setup_task_inactive(p3_blocker, 1737362039870ms);
+		setup_task_inactive(p4_nitpick, 1737367439870ms);
 
-		auto p4_nitpick = TaskInfoMessage(TaskID(18), TaskID(17), "Nitpick");
-		auto p4_minor = TaskInfoMessage(TaskID(19), TaskID(17), "Minor");
-		auto p4_critical = TaskInfoMessage(TaskID(20), TaskID(17), "Critical");
-		auto p4_blocker = TaskInfoMessage(TaskID(21), TaskID(17), "Blocker");
-
-		setup_task_inactive(taskInfo22, 1737418739870ms);
-		setup_task_inactive(taskInfo23, 1737420539870ms);
-		setup_task_inactive(taskInfo24, 1737422339870ms);
-		setup_task_inactive(taskInfo25, 1737424139870ms);
-		setup_task_inactive(taskInfo26, 1737425939870ms);
-
-		setup_task_inactive(p1, 1737345839870ms);
-		setup_task_inactive(p2, 1737354839870ms);
-		setup_task_inactive(p3, 1737363839870ms);
-		setup_task_inactive(p4, 1737372839870ms);
-		setup_task_inactive(p1_critical, 1737351239870ms);
-		setup_task_inactive(p2_minor, 1737358439870ms);
-		setup_task_inactive(p3_blocker, 1737371039870ms);
-		setup_task_inactive(p4_nitpick, 1737374639870ms);
-
-		p1.newTask = p2.newTask = p3.newTask = p4.newTask = p1_critical.newTask = p2_minor.newTask = p3_blocker.newTask = p4_nitpick.newTask = false;
-		p1.finishTime = p2.finishTime = p3.finishTime = p4.finishTime = p1_critical.finishTime = p2_minor.finishTime = p3_blocker.finishTime = p4_nitpick.finishTime = std::nullopt;
+		p1.newTask = p2.newTask = p3.newTask = p4.newTask = p1_critical.newTask = p2_minor.newTask = p3_blocker.newTask = p4_nitpick.newTask = true;
 
 		helper.required_messages(
 			{
-				&taskInfo22, &taskInfo23, &taskInfo24, &taskInfo25, &taskInfo26,
-				&p1, &p1_critical, &p2, &p2_minor, &p3, &p3_blocker, &p4, &p4_nitpick
+				&p2, &p2_minor, &taskInfo4, &taskInfo5, 
+				&p1, &p1_critical, &taskInfo8, 
+				&p3, &p3_blocker, &taskInfo11, 
+				&p4, &p4_nitpick, &taskInfo14
 			});
 	}
 }

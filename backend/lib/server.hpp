@@ -68,7 +68,7 @@ public:
 	void find_bugzilla_helper_tasks(TaskID bugzillaParentTaskID, const std::vector<TaskID>& bugTasks, std::map<TaskID, TaskState>& helperTasks);
 
 	bool task_has_children(TaskID id) const;
-	bool task_has_bug_tasks(TaskID id, const std::vector<TaskID>& bugTasks) const;
+	bool task_has_active_bug_tasks(TaskID id, const std::vector<TaskID>& bugTasks) const;
 
 	struct FindTasksOnDay
 	{

@@ -110,7 +110,7 @@ bool MicroTask::task_has_children(TaskID id) const
 	return false;
 }
 
-bool MicroTask::task_has_bug_tasks(TaskID id, const std::vector<TaskID>& bugTasks) const
+bool MicroTask::task_has_active_bug_tasks(TaskID id, const std::vector<TaskID>& bugTasks) const
 {
 	for (auto&& [taskID, task] : m_tasks)
 	{
@@ -119,7 +119,7 @@ bool MicroTask::task_has_bug_tasks(TaskID id, const std::vector<TaskID>& bugTask
 		// return true if:
 		//  - parent matches and this is a bug
 		//  - or, task_has_bug_tasks is true for any children
-		if (task.parentID() == id && isBug)
+		if (task.parentID() == id && isBug && task.state != TaskState::FINISHED)
 		{
 			return true;
 		}
@@ -129,7 +129,7 @@ bool MicroTask::task_has_bug_tasks(TaskID id, const std::vector<TaskID>& bugTask
 			continue;
 		}
 
-		if (task_has_bug_tasks(taskID, bugTasks))
+		if (task_has_active_bug_tasks(taskID, bugTasks))
 		{
 			return true;
 		}
