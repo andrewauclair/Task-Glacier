@@ -34,18 +34,4 @@ void DatabaseImpl::write_task(const Task& task)
 		insert.exec();
 	}
 	catch (const std::exception& e) {}
-	// first, check if this task is already in the database
-	/*SQLite::Statement check(m_database, "SELECT * FROM tasks WHERE TaskID == ?");
-	check.bind(1, task.taskID()._val);
-
-	check.executeStep();
-
-	if (check.hasRow())
-	{
-
-	}
-	else
-	{
-
-	}*/
 }
