@@ -2,7 +2,7 @@
 	api.hpp		api.cpp
 	clock.hpp
 	curl.hpp
-	database.hpp
+	database.hpp database.cpp
 	packets.hpp packets.cpp
 	persist.hpp persist.cpp
 	server.cpp  server.hpp

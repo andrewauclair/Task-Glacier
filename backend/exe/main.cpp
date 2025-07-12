@@ -66,34 +66,6 @@ struct curlpp_ : cURL
 	}
 };
 
-struct database_ : Database
-{
-	bool database_exists(const std::string& file) override { return true; }
-
-	void create_database(const std::string& file) override {}
-
-	void load(Bugzilla& bugzilla, MicroTask& app, API& api) override {}
-
-	// write task
-	void write_task(const Task& task) override {}
-	void next_task_id(TaskID taskID) override {}
-
-	// write bugzilla config
-	void write_bugzilla_instance(const BugzillaInstance& instance) override {}
-	void remove_bugzilla_instance(int ID) override {}
-	void next_bugzilla_instance_id(int ID) override {}
-	void bugzilla_refreshed(int ID) override {}
-
-	// write time entry configuration
-	// write sessions
-	void write_session(TaskID task, const TaskTimes& session) override {}
-	void remove_session() override {}
-
-	// write time entries
-	void write_time_entry(TaskID task) override {}
-	void remove_time_entry() override {}
-};
-
 /*
 * task-glacier 127.0.0.1 5000 /var/lib/task-glacier.db3
 */
@@ -108,7 +80,7 @@ int main(int argc, char** argv)
 	sockpp::initialize();
 
 	curlpp_ curl;
-	database_ db;
+	DatabaseImpl db;
 
 	const std::string ip_address = argv[1];
 

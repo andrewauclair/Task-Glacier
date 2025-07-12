@@ -56,10 +56,6 @@ struct curlTest : cURL
 
 struct nullDatabase : Database
 {
-	bool database_exists(const std::string& file) override { return true; }
-
-	void create_database(const std::string& file) override {}
-
 	void load(Bugzilla& bugzilla, MicroTask& app, API& api) override {}
 
 	// write task
@@ -84,10 +80,6 @@ struct nullDatabase : Database
 
 struct testDatabase : Database
 {
-	bool exists = true;
-
-	bool created = false;
-
 	std::vector<Task> tasks_written;
 
 	TaskID next_task_id_ = TaskID(0);
@@ -99,10 +91,6 @@ struct testDatabase : Database
 
 	std::vector<TaskTimes> sessions_written;
 	
-	bool database_exists(const std::string& file) override { return exists; }
-
-	void create_database(const std::string& file) override { created = true; }
-
 	void load(Bugzilla& bugzilla, MicroTask& app, API& api) override {}
 
 	// write task
