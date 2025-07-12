@@ -141,8 +141,19 @@ TEST_CASE("Storage for Renaming Task", "[storage]")
 	CHECK(task == helper.database.tasks_written[0]);
 }
 
-// rename
+// TODO this is only done on create? that's a bug
+TEST_CASE("Storage for Updating Task Time Entry", "[.storage]")
+{
+	TestHelper helper;
 
-// changing task time entry
+	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "alpha"));
 
-// reparent
+	helper.database.tasks_written.clear();
+
+	helper.expect_success(UpdateTaskMessage(helper.next_request_id(), TaskID(1), NO_PARENT, "alpha"));
+
+	auto task = Task("alpha", TaskID(1), NO_PARENT, std::chrono::milliseconds(1737344039870));
+
+	REQUIRE(helper.database.tasks_written.size() == 1);
+	CHECK(task == helper.database.tasks_written[0]);
+}
