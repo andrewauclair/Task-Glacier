@@ -7,11 +7,6 @@
 
 Task::Task(std::string name, TaskID id, TaskID parentID, std::chrono::milliseconds createTime) : m_name(std::move(name)), m_taskID(id), m_parentID(parentID), m_createTime(createTime) {}
 
-bool Task::operator==(const Task& task) const
-{
-	return m_taskID == task.m_taskID;
-}
-
 std::expected<TaskID, std::string> MicroTask::create_task(const std::string& name, TaskID parentID, bool serverControlled)
 {
 	auto* parent_task = find_task(parentID);
@@ -256,6 +251,8 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 		}
 		*m_output << std::endl;
 
+		m_database->write_task(*task);
+
 		return std::nullopt;
 	}
 	return std::format("Task with ID {} does not exist.", id);
@@ -273,6 +270,8 @@ std::optional<std::string> MicroTask::stop_task(TaskID id)
 		task->m_times.back().stop = m_clock->now();
 
 		*m_output << "stop " << id._val << ' ' << m_clock->now().count() << std::endl;
+
+		m_database->write_task(*task);
 
 		return std::nullopt;
 	}
@@ -303,6 +302,8 @@ std::optional<std::string> MicroTask::finish_task(TaskID id)
 		task->state = TaskState::FINISHED;
 
 		*m_output << "finish " << id._val << ' ' << m_clock->now().count() << std::endl;
+
+		m_database->write_task(*task);
 
 		return std::nullopt;
 	}

@@ -45,22 +45,63 @@ TEST_CASE("Storage for Create Task", "[storage]")
 
 	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test"));
 
-	auto task = Task("this is a test", TaskID(1), NO_PARENT, std::chrono::milliseconds(0));
+	auto task = Task("this is a test", TaskID(1), NO_PARENT, std::chrono::milliseconds(1737344039870));
 	REQUIRE(helper.database.tasks_written.size() == 1);
 	CHECK(task == helper.database.tasks_written[0]);
 }
 
 TEST_CASE("Storage for Start Task", "[storage]")
 {
+	TestHelper helper;
 
+	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test"));
+
+	helper.database.tasks_written.clear();
+
+	helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+	auto task = Task("this is a test", TaskID(1), NO_PARENT, std::chrono::milliseconds(1737344039870));
+	task.state = TaskState::ACTIVE;
+	task.m_times.emplace_back(std::chrono::milliseconds(1737345839870));
+
+	REQUIRE(helper.database.tasks_written.size() == 1);
+	CHECK(task == helper.database.tasks_written[0]);
 }
 
 TEST_CASE("Storage for Stop Task", "[storage]")
 {
+	TestHelper helper;
 
+	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test"));
+	helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+	helper.database.tasks_written.clear();
+
+	helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+	
+	auto task = Task("this is a test", TaskID(1), NO_PARENT, std::chrono::milliseconds(1737344039870));
+	task.m_times.emplace_back(std::chrono::milliseconds(1737345839870), std::chrono::milliseconds(1737347639870));
+
+	REQUIRE(helper.database.tasks_written.size() == 1);
+	CHECK(task == helper.database.tasks_written[0]);
 }
 
 TEST_CASE("Storage for Finish Task", "[storage]")
 {
+	TestHelper helper;
 
+	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test"));
+	helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+	helper.database.tasks_written.clear();
+
+	helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1)));
+
+	auto task = Task("this is a test", TaskID(1), NO_PARENT, std::chrono::milliseconds(1737344039870));
+	task.m_times.emplace_back(std::chrono::milliseconds(1737345839870), std::chrono::milliseconds(1737347639870));
+	task.state = TaskState::FINISHED;
+	task.m_finishTime = std::chrono::milliseconds(1737347639870);
+
+	REQUIRE(helper.database.tasks_written.size() == 1);
+	CHECK(task == helper.database.tasks_written[0]);
 }

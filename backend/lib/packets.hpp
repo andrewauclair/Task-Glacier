@@ -71,6 +71,14 @@ struct TimeEntry
 	TimeCodeID codeID;
 
 	constexpr auto operator<=>(const TimeEntry&) const = default;
+
+	friend std::ostream& operator<<(std::ostream& out, const TimeEntry& entry)
+	{
+		out << "TimeEntry { catID: " << entry.categoryID._val << "codeID: " << entry.codeID._val;
+		out << " }";
+
+		return out;
+	}
 };
 
 struct TaskTimes
@@ -78,6 +86,31 @@ struct TaskTimes
 	std::chrono::milliseconds start = std::chrono::milliseconds(0);
 	std::optional<std::chrono::milliseconds> stop;
 	std::vector<TimeEntry> timeEntry;
+
+	constexpr auto operator<=>(const TaskTimes&) const = default;
+
+	friend std::ostream& operator<<(std::ostream& out, const TaskTimes& session)
+	{
+		out << "Session { start: " << session.start;
+		out << ", stop: ";
+		if (session.stop)
+		{
+			out << session.stop.value();
+		}
+		else
+		{
+			out << "empty";
+		}
+		out << ", ";
+
+		for (auto&& time : session.timeEntry)
+		{
+			out << time;
+		}
+		out << " }";
+
+		return out;
+	}
 };
 
 struct TimeCode

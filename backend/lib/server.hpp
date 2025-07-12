@@ -42,7 +42,7 @@ public:
 
 	Task(std::string name, TaskID id, TaskID parentID, std::chrono::milliseconds createTime);
 
-	bool operator==(const Task& task) const;
+	constexpr auto operator<=>(const Task&) const = default;
 
 	TaskID taskID() const { return m_taskID; }
 	TaskID parentID() const { return m_parentID; }
@@ -51,6 +51,27 @@ public:
 
 	std::string m_name;
 	TaskState state = TaskState::INACTIVE;
+
+	friend std::ostream& operator<<(std::ostream& out, const Task& task)
+	{
+		out << "Task { ";
+		out << "id: " << task.m_taskID._val << ", parent: " << task.m_parentID._val;
+		out << ", create: " << task.m_createTime << ", serverControlled: " << task.serverControlled;
+		out << ", locked: " << task.locked;
+		out << ", state: " << static_cast<std::int32_t>(task.state);
+		if (task.m_finishTime)
+		{
+			out << ", finish: " << task.m_finishTime.value();
+		}
+		else
+		{
+			out << ", finish: empty";
+		}
+		for (auto&& t : task.timeEntry) out << t;
+		for (auto&& t : task.m_times) out << t;
+		out << "}";
+		return out;
+	}
 };
 
 class MicroTask
