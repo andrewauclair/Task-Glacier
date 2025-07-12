@@ -36,9 +36,20 @@ TEST_CASE("Create Database", "[database]")
 {
 	DatabaseImpl db(":memory:");
 
-	// check that we have the proper tables
-	SQLite::Statement query(db.database(), "SELECT name FROM sqlite_schema WHERE type='table' AND name='tasks'");
-	query.executeStep();
-	
-	CHECK(query.hasRow());
+	const auto has_table = [&](const std::string& table)
+		{
+			SQLite::Statement query(db.database(), "SELECT name FROM sqlite_schema WHERE type='table' AND name=?");
+			query.bind(1, table);
+			query.executeStep();
+			INFO(table);
+			CHECK(query.hasRow());
+		};
+
+	has_table("tasks");
+	has_table("timeConfig");
+	has_table("timeEntryTask");
+	has_table("timeEntrySession");
+	has_table("bugzilla");
+	has_table("bugzillaGroupBy");
+	has_table("bugzillaBugToTask");
 }
