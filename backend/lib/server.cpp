@@ -325,6 +325,8 @@ std::optional<std::string> MicroTask::reparent_task(TaskID id, TaskID new_parent
 
 		*m_output << "reparent " << id._val << ' ' << new_parent_id._val << std::endl;
 
+		m_database->write_task(*task);
+
 		return std::nullopt;
 	}
 	if (!parent_task)
@@ -343,6 +345,8 @@ std::optional<std::string> MicroTask::rename_task(TaskID id, std::string_view na
 		task->m_name = name;
 
 		*m_output << "rename " << id._val << ' ' << persist_string(task->m_name) << std::endl;
+
+		m_database->write_task(*task);
 
 		return std::nullopt;
 	}

@@ -46,6 +46,7 @@ TEST_CASE("Storage for Create Task", "[storage]")
 	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "this is a test"));
 
 	auto task = Task("this is a test", TaskID(1), NO_PARENT, std::chrono::milliseconds(1737344039870));
+
 	REQUIRE(helper.database.tasks_written.size() == 1);
 	CHECK(task == helper.database.tasks_written[0]);
 }
@@ -105,3 +106,43 @@ TEST_CASE("Storage for Finish Task", "[storage]")
 	REQUIRE(helper.database.tasks_written.size() == 1);
 	CHECK(task == helper.database.tasks_written[0]);
 }
+
+TEST_CASE("Storage for Reparenting Task", "[storage]")
+{
+	TestHelper helper;
+
+	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "b"));
+
+	helper.database.tasks_written.clear();
+
+	helper.expect_success(UpdateTaskMessage(helper.next_request_id(), TaskID(1), TaskID(2), "a"));
+
+	auto task = Task("a", TaskID(1), TaskID(2), std::chrono::milliseconds(1737344039870));
+
+	REQUIRE(helper.database.tasks_written.size() == 1);
+	CHECK(task == helper.database.tasks_written[0]);
+}
+
+TEST_CASE("Storage for Renaming Task", "[storage]")
+{
+	TestHelper helper;
+
+	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "b"));
+
+	helper.database.tasks_written.clear();
+
+	helper.expect_success(UpdateTaskMessage(helper.next_request_id(), TaskID(1), NO_PARENT, "alpha"));
+
+	auto task = Task("alpha", TaskID(1), NO_PARENT, std::chrono::milliseconds(1737344039870));
+
+	REQUIRE(helper.database.tasks_written.size() == 1);
+	CHECK(task == helper.database.tasks_written[0]);
+}
+
+// rename
+
+// changing task time entry
+
+// reparent
