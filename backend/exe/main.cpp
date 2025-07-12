@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 	sockpp::initialize();
 
 	curlpp_ curl;
-	DatabaseImpl db;
+	DatabaseImpl db(argv[3]);
 
 	const std::string ip_address = argv[1];
 
@@ -91,8 +91,8 @@ int main(int argc, char** argv)
 	auto acceptor = sockpp::tcp_acceptor(sockpp::inet_address(ip_address, port));
 
 	Clock clock;
-	std::ifstream input(argv[3]);
-	std::ofstream output(argv[3], std::ios::out | std::ios::app);
+	std::ifstream input;// (argv[3]);
+	std::ofstream output;// (argv[3], std::ios::out | std::ios::app);
 	
 
 	API api(clock, curl, input, output, db);

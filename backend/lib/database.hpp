@@ -42,7 +42,7 @@ struct DatabaseImpl : Database
 	void load(Bugzilla& bugzilla, MicroTask& app, API& api) override {}
 
 	// write task
-	void write_task(const Task& task) override {}
+	void write_task(const Task& task) override;
 	void next_task_id(TaskID taskID) override {}
 
 	// write bugzilla config
