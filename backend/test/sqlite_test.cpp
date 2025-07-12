@@ -34,17 +34,10 @@
 
 TEST_CASE("Create Database", "[database]")
 {
-	// remove the existing file if it's there
-	std::filesystem::remove("test.db3");
-
-	DatabaseImpl db("test.db3");
-
-	REQUIRE(std::filesystem::exists("test.db3"));
-
-	SQLite::Database sql("test.db3", SQLite::OPEN_READONLY);
+	DatabaseImpl db(":memory:");
 
 	// check that we have the proper tables
-	SQLite::Statement query(sql, "SELECT name FROM sqlite_schema WHERE type='table' AND name='tasks'");
+	SQLite::Statement query(db.database(), "SELECT name FROM sqlite_schema WHERE type='table' AND name='tasks'");
 	query.executeStep();
 	
 	CHECK(query.hasRow());

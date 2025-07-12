@@ -39,6 +39,8 @@ struct DatabaseImpl : Database
 {
 	DatabaseImpl(const std::string& file);
 
+	SQLite::Database& database() { return m_database; }
+
 	void load(Bugzilla& bugzilla, MicroTask& app, API& api) override {}
 
 	// write task
