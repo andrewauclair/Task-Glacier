@@ -60,7 +60,7 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 	}
 	case PacketType::BUGZILLA_REFRESH:
 	{
-		m_bugzilla.refresh(static_cast<const RequestMessage&>(message), m_app, *this, output);
+		m_bugzilla.refresh(static_cast<const RequestMessage&>(message), m_app, *this, output, *m_database);
 		break;
 	}
 	}

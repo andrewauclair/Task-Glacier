@@ -767,6 +767,8 @@ TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
 
 	std::vector<std::unique_ptr<Message>> output;
 
+	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+
 	SECTION("Add")
 	{
 		auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla", "0.0.0.0", "asfesdFEASfslj");
@@ -802,19 +804,107 @@ TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
 		CHECK(apiKey == "asfesdFEASfslj");
 		CHECK(userName == "test");
 		CHECK(rootTask == 1);
-		CHECK(lastRefresh == 0);
+		CHECK(lastRefresh == 1737345839870);
 	}
 
 	SECTION("Update")
 	{
+		auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla", "0.0.0.0", "asfesdFEASfslj");
+		configure.username = "test";
+		configure.rootTaskID = TaskID(1);
+		configure.groupTasksBy.push_back("product");
+		configure.groupTasksBy.push_back("severity");
 
+		configure.labelToField["Priority"] = "priority";
+		configure.labelToField["Status"] = "status";
+
+		curl.requestResponse.emplace_back("{ \"fields\": [] }");
+		curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+
+		api.process_packet(configure, output);
+
+		configure.instanceID = BugzillaInstanceID(1);
+		configure.apiKey = "asdfasdf";
+
+		curl.current = 0;
+
+		api.process_packet(configure, output);
+
+		SQLite::Statement query(database.database(), "SELECT * FROM bugzilla");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		int instance = query.getColumn(0);
+		std::string name = query.getColumn(1);
+		std::string url = query.getColumn(2);
+		std::string apiKey = query.getColumn(3);
+		std::string userName = query.getColumn(4);
+		int rootTask = query.getColumn(5);
+		std::int64_t lastRefresh = query.getColumn(6);
+
+		CHECK(instance == 1);
+		CHECK(name == "bugzilla");
+		CHECK(url == "0.0.0.0");
+		CHECK(apiKey == "asdfasdf");
+		CHECK(userName == "test");
+		CHECK(rootTask == 1);
+		CHECK(lastRefresh == 1737346739870);
+
+		query.executeStep();
+
+		CHECK(!query.hasRow());
 	}
 
 	SECTION("Refresh")
 	{
+		auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla", "0.0.0.0", "asfesdFEASfslj");
+		configure.username = "test";
+		configure.rootTaskID = TaskID(1);
+		configure.groupTasksBy.push_back("product");
+		configure.groupTasksBy.push_back("severity");
 
+		configure.labelToField["Priority"] = "priority";
+		configure.labelToField["Status"] = "status";
+
+		curl.requestResponse.emplace_back("{ \"fields\": [] }");
+		curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+
+		api.process_packet(configure, output);
+
+		const auto refresh = RequestMessage(PacketType::BUGZILLA_REFRESH, RequestID(3));
+
+		curl.current = 1;
+
+		api.process_packet(refresh, output);
+
+		SQLite::Statement query(database.database(), "SELECT * FROM bugzilla");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		int instance = query.getColumn(0);
+		std::string name = query.getColumn(1);
+		std::string url = query.getColumn(2);
+		std::string apiKey = query.getColumn(3);
+		std::string userName = query.getColumn(4);
+		int rootTask = query.getColumn(5);
+		std::int64_t lastRefresh = query.getColumn(6);
+
+		CHECK(instance == 1);
+		CHECK(name == "bugzilla");
+		CHECK(url == "0.0.0.0");
+		CHECK(apiKey == "asfesdFEASfslj");
+		CHECK(userName == "test");
+		CHECK(rootTask == 1);
+		CHECK(lastRefresh == 1737346739870);
+
+		query.executeStep();
+
+		CHECK(!query.hasRow());
 	}
 
+	// TODO we haven't implemented this at all yet
 	SECTION("Remove")
 	{
 
@@ -831,6 +921,33 @@ TEST_CASE("Write Bugzilla Group By to Database", "[database]")
 	API api = API(clock, curl, database);
 
 	std::vector<std::unique_ptr<Message>> output;
+
+	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+
+	auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla", "0.0.0.0", "asfesdFEASfslj");
+	configure.username = "test";
+	configure.rootTaskID = TaskID(1);
+	configure.groupTasksBy.push_back("product");
+	configure.groupTasksBy.push_back("severity");
+
+	configure.labelToField["Priority"] = "priority";
+	configure.labelToField["Status"] = "status";
+
+	curl.requestResponse.emplace_back("{ \"fields\": [] }");
+	curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+
+	api.process_packet(configure, output);
+
+	SQLite::Statement query(database.database(), "SELECT * FROM bugzillaGroupBy");
+	query.executeStep();
+
+	REQUIRE(query.hasRow());
+
+	int instanceID = query.getColumn(0);
+	std::string groupBy = query.getColumn(1);
+
+	CHECK(instanceID == 1);
+	CHECK(groupBy == "product,severity");
 }
 
 TEST_CASE("Write Bugzilla Bug ID to Task ID to Database", "[database]")
@@ -843,4 +960,167 @@ TEST_CASE("Write Bugzilla Bug ID to Task ID to Database", "[database]")
 	API api = API(clock, curl, database);
 
 	std::vector<std::unique_ptr<Message>> output;
+
+	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+
+	auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla", "0.0.0.0", "asfesdFEASfslj");
+	configure.username = "test";
+	configure.rootTaskID = TaskID(1);
+	configure.groupTasksBy.push_back("priority");
+	configure.groupTasksBy.push_back("severity");
+
+	configure.labelToField["Priority"] = "priority";
+	configure.labelToField["Status"] = "status";
+
+	const std::string fieldsResponse = R"bugs_data(
+		{
+		  "fields": [
+			{
+			  "display_name": "Priority",
+			  "name": "priority",
+			  "type": 2,
+			  "is_mandatory": false,
+			  "value_field": null,
+			  "values": [
+				{
+				  "sortkey": 100,
+				  "sort_key": 100,
+				  "visibility_values": [],
+				  "name": "P1"
+				},
+				{
+				  "sort_key": 200,
+				  "name": "P2",
+				  "visibility_values": [],
+				  "sortkey": 200
+				},
+				{
+				  "sort_key": 300,
+				  "visibility_values": [],
+				  "name": "P3",
+				  "sortkey": 300
+				},
+				{
+				  "sort_key": 400,
+				  "name": "P4",
+				  "visibility_values": [],
+				  "sortkey": 400
+				}
+			  ],
+			  "visibility_values": [],
+			  "visibility_field": null,
+			  "is_on_bug_entry": false,
+			  "is_custom": false,
+			  "id": 13
+			},
+			{
+			  "display_name": "Severity",
+			  "name": "severity",
+			  "type": 2,
+			  "is_mandatory": false,
+			  "value_field": null,
+			  "values": [
+				{
+				  "sortkey": 100,
+				  "sort_key": 100,
+				  "visibility_values": [],
+				  "name": "Nitpick"
+				},
+				{
+				  "sort_key": 200,
+				  "name": "Minor",
+				  "visibility_values": [],
+				  "sortkey": 200
+				},
+				{
+				  "sort_key": 300,
+				  "visibility_values": [],
+				  "name": "Critical",
+				  "sortkey": 300
+				},
+				{
+				  "sort_key": 400,
+				  "name": "Blocker",
+				  "visibility_values": [],
+				  "sortkey": 400
+				}
+			  ],
+			  "visibility_values": [],
+			  "visibility_field": null,
+			  "is_on_bug_entry": false,
+			  "is_custom": false,
+			  "id": 14
+			}
+		  ]
+		}
+	)bugs_data";
+
+	curl.requestResponse.emplace_back(fieldsResponse);
+	curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+		"{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+		"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
+		"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
+		"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+
+	api.process_packet(configure, output);
+
+	SQLite::Statement query(database.database(), "SELECT * FROM bugzillaBugToTask");
+	query.executeStep();
+
+	REQUIRE(query.hasRow());
+
+	int instanceID = query.getColumn(0);
+	int bug = query.getColumn(1);
+	int task = query.getColumn(2);
+
+	CHECK(instanceID == 1);
+	CHECK(bug == 50);
+	CHECK(task == 4);
+
+	query.executeStep();
+	REQUIRE(query.hasRow());
+
+	instanceID = query.getColumn(0);
+	bug = query.getColumn(1);
+	task = query.getColumn(2);
+
+	CHECK(instanceID == 1);
+	CHECK(bug == 55);
+	CHECK(task == 5);
+
+	query.executeStep();
+	REQUIRE(query.hasRow());
+
+	instanceID = query.getColumn(0);
+	bug = query.getColumn(1);
+	task = query.getColumn(2);
+
+	CHECK(instanceID == 1);
+	CHECK(bug == 60);
+	CHECK(task == 8);
+
+	query.executeStep();
+	REQUIRE(query.hasRow());
+
+	instanceID = query.getColumn(0);
+	bug = query.getColumn(1);
+	task = query.getColumn(2);
+
+	CHECK(instanceID == 1);
+	CHECK(bug == 65);
+	CHECK(task == 11);
+
+	query.executeStep();
+	REQUIRE(query.hasRow());
+
+	instanceID = query.getColumn(0);
+	bug = query.getColumn(1);
+	task = query.getColumn(2);
+
+	CHECK(instanceID == 1);
+	CHECK(bug == 70);
+	CHECK(task == 14);
+
+	query.executeStep();
+	CHECK(!query.hasRow());
 }

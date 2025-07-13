@@ -63,6 +63,9 @@ void DatabaseImpl::write_bugzilla_instance(const BugzillaInstance& instance)
 	{
 		std::cerr << e.what() << std::endl;
 	}
+
+	write_bugzilla_group_by(instance);
+	write_bugzilla_bug_to_task(instance);
 }
 
 void DatabaseImpl::write_task_time_entry(const Task& task)
@@ -192,3 +195,53 @@ void DatabaseImpl::remove_time_code(const TimeCategory& entry, const TimeCode& c
 	}
 }
 
+void DatabaseImpl::write_bugzilla_group_by(const BugzillaInstance& instance)
+{
+	SQLite::Statement insert(m_database, "insert or replace into bugzillaGroupBy values(?, ?)");
+
+	std::string group_by_full;
+	bool first = true;
+
+	for (const std::string& group_by : instance.bugzillaGroupTasksBy)
+	{
+		if (!first)
+		{
+			group_by_full += ',';
+		}
+		first = false;
+
+		group_by_full += group_by;
+	}
+
+	insert.bind(1, instance.instanceID._val);
+	insert.bind(2, group_by_full);
+
+	try
+	{
+		insert.exec();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
+}
+
+void DatabaseImpl::write_bugzilla_bug_to_task(const BugzillaInstance& instance)
+{
+	for (auto&& [bug, task] : instance.bugToTaskID)
+	{
+		SQLite::Statement insert(m_database, "insert or replace into bugzillaBugToTask values(?, ?, ?)");
+		insert.bind(1, instance.instanceID._val);
+		insert.bind(2, bug);
+		insert.bind(3, task._val);
+
+		try
+		{
+			insert.exec();
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+		}
+	}
+}

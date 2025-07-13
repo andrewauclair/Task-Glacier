@@ -75,5 +75,8 @@ private:
 	void write_task_time_entry(const Task& task);
 	void write_sessions(const Task& task);
 
+	void write_bugzilla_group_by(const BugzillaInstance& instance);
+	void write_bugzilla_bug_to_task(const BugzillaInstance& instance);
+
 	SQLite::Database m_database;
 };

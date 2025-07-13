@@ -128,7 +128,7 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 
 	RequestMessage request(PacketType::BUGZILLA_REFRESH, RequestID(0));
 
-	refresh(request, app, api, output);
+	refresh(request, app, api, output, database);
 }
 
 void Bugzilla::build_group_by_task(BugzillaInstance& instance, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, TaskID parent, std::span<const std::string> groupTaskBy)
@@ -227,7 +227,7 @@ void Bugzilla::send_info(std::vector<std::unique_ptr<Message>>& output)
 	}
 }
 
-void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output)
+void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, Database& database)
 {
 	if (m_curl)
 	{
@@ -251,7 +251,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 			output.push_back(std::make_unique<SuccessResponse>(request.requestID));
 		}
 
-		for (auto&& [name, info] : m_bugzilla)
+		for (auto&& [asdf, info] : m_bugzilla)
 		{
 			const bool initial_refresh = !info.lastBugzillaRefresh.has_value();
 
@@ -303,9 +303,9 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 				// find the parent for this task
 				Task* parent = app.find_task(info.bugzillaRootTaskID);
 
-				if (!m_bugzilla.at(name).bugzillaGroupTasksBy.empty())
+				if (!info.bugzillaGroupTasksBy.empty())
 				{
-					parent = parent_task_for_bug(m_bugzilla.at(name), app, api, output, bug, m_bugzilla.at(name).bugzillaRootTaskID, m_bugzilla.at(name).bugzillaGroupTasksBy);
+					parent = parent_task_for_bug(info, app, api, output, bug, info.bugzillaRootTaskID, info.bugzillaGroupTasksBy);
 				}
 
 				[&]()
@@ -400,6 +400,8 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 			}
 
 			info.lastBugzillaRefresh = now;
+
+			database.write_bugzilla_instance(info);
 
 			//file << "bugzilla-refresh " << info.bugzillaName << ' ' << info.lastBugzillaRefresh->count() << std::endl;
 
