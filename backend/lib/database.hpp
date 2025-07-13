@@ -10,6 +10,7 @@ class Bugzilla;
 class MicroTask;
 class API;
 struct TaskTimes;
+struct TimeCategory;
 
 struct Database
 {
@@ -33,6 +34,10 @@ struct Database
 	// write time entries
 	virtual void write_time_entry(TaskID task) = 0;
 	virtual void remove_time_entry() = 0;
+
+	virtual void write_time_entry_config(const TimeCategory& entry) = 0;
+	virtual void remove_time_category(const TimeCategory& entry) = 0;
+	virtual void remove_time_code(const TimeCategory& entry, const TimeCode& code) = 0;
 };
 
 struct DatabaseImpl : Database
@@ -61,6 +66,10 @@ struct DatabaseImpl : Database
 	// write time entries
 	void write_time_entry(TaskID task) override {}
 	void remove_time_entry() override {}
+
+	void write_time_entry_config(const TimeCategory& entry) override;
+	void remove_time_category(const TimeCategory& entry) override;
+	void remove_time_code(const TimeCategory& entry, const TimeCode& code) override;
 
 private:
 	void write_sessions(const Task& task);

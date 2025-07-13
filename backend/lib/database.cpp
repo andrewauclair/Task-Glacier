@@ -7,12 +7,13 @@ DatabaseImpl::DatabaseImpl(const std::string& file)
 	try
 	{
 		m_database.exec("create table if not exists tasks (TaskID integer PRIMARY KEY, Name text, ParentID integer, State int, CreateTime bigint, FinishTime bigint)");
-		m_database.exec("create table if not exists timeConfig (TimeCategoryID integer, TimeCodeID integer)");
+		m_database.exec("create table if not exists timeEntryCategory (TimeCategoryID integer PRIMARY KEY, TimeCategoryName text)");
+		m_database.exec("create table if not exists timeEntryCode (TimeCategoryID integer, TimeCodeID integer, TimeCodeName text, PRIMARY KEY (TimeCategoryID, TimeCodeID))");
 		m_database.exec("create table if not exists timeEntryTask (TaskID integer, TimeCategoryID integer, TimeCodeID integer)");
 		m_database.exec("create table if not exists timeEntrySession (TaskID integer, SessionIndex integer, TimeCategoryID integer, TimeCodeID integer, StartTime bigint, StopTime bigint, PRIMARY KEY (TaskID, SessionIndex, TimeCategoryID))");
-		m_database.exec("create table if not exists bugzilla (BugzillaConfigID integer PRIMARY KEY, Name text, URL text, APIKey text, UserName text, RootTaskID integer, LastRefresh integer)");
-		m_database.exec("create table if not exists bugzillaGroupBy (BugzillaConfigID integer, Field text)");
-		m_database.exec("create table if not exists bugzillaBugToTask (BugzillaConfigID integer, BugID integer, TaskID integer)");
+		m_database.exec("create table if not exists bugzilla (BugzillaInstanceID integer PRIMARY KEY, Name text, URL text, APIKey text, UserName text, RootTaskID integer, LastRefresh bigint)");
+		m_database.exec("create table if not exists bugzillaGroupBy (BugzillaInstanceID integer, Field text)");
+		m_database.exec("create table if not exists bugzillaBugToTask (BugzillaInstanceID integer, BugID integer, TaskID integer, PRIMARY KEY (BugzillaInstanceID, BugID))");
 	}
 	catch (const std::exception& e)
 	{
@@ -48,6 +49,7 @@ void DatabaseImpl::write_sessions(const Task& task)
 
 	for (const TaskTimes& times : task.m_times)
 	{
+		// TODO we don't write anything when we don't have time config data
 		for (const TimeEntry& entry : times.timeEntry)
 		{
 			SQLite::Statement insert(m_database, "insert or replace into timeEntrySession values(?, ?, ?, ?, ?, ?)");
@@ -71,3 +73,48 @@ void DatabaseImpl::write_sessions(const Task& task)
 		index++;
 	}
 }
+
+void DatabaseImpl::write_time_entry_config(const TimeCategory& entry)
+{
+	SQLite::Statement insert_cat(m_database, "insert or replace into timeEntryCategory values (?, ?)");
+	insert_cat.bind(1, entry.id._val);
+	insert_cat.bind(2, entry.name);
+
+	try
+	{
+		insert_cat.exec();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
+
+	for (const TimeCode& code : entry.codes)
+	{
+		SQLite::Statement insert(m_database, "insert or replace into timeEntryCode values (?, ?, ?)");
+
+		insert.bind(1, entry.id._val);
+		insert.bind(2, code.id._val);
+		insert.bind(3, code.name);
+
+		try
+		{
+			insert.exec();
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+		}
+	}
+}
+
+void DatabaseImpl::remove_time_category(const TimeCategory& entry)
+{
+
+}
+
+void DatabaseImpl::remove_time_code(const TimeCategory& entry, const TimeCode& code)
+{
+
+}
+

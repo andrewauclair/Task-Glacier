@@ -46,7 +46,8 @@ TEST_CASE("Create Database", "[database]")
 		};
 
 	has_table("tasks");
-	has_table("timeConfig");
+	has_table("timeEntryCategory");
+	has_table("timeEntryCode");
 	has_table("timeEntryTask");
 	has_table("timeEntrySession");
 	has_table("bugzilla");
@@ -206,7 +207,219 @@ TEST_CASE("Write Task Session to Database", "[database]")
 	REQUIRE(!query.hasRow());
 }
 
+TEST_CASE("Write Time Configuration to Database", "[database]")
+{
+	TestClock clock;
+	curlTest curl;
+
+	DatabaseImpl database(":memory:");
+
+	std::istringstream fileInput;
+	std::ostringstream fileOutput;
+
+	API api = API(clock, curl, fileInput, fileOutput, database);
+
+	std::vector<std::unique_ptr<Message>> output;
+
+	auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
+	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A", "A");
+	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
+	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
+
+	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B", "B");
+	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
+	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
+
+	api.process_packet(modify, output);
+
+	SECTION("Add")
+	{
+		SQLite::Statement query(database.database(), "SELECT * FROM timeEntryCategory");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		int categoryID = query.getColumn(0);
+		std::string categoryName = query.getColumn(1);
+
+		CHECK(categoryID == 1);
+		CHECK(categoryName == "A");
+
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		categoryID = query.getColumn(0);
+		categoryName = query.getColumn(1).getString();
+
+		CHECK(categoryID == 2);
+		CHECK(categoryName == "B");
+
+		query.executeStep();
+
+		REQUIRE(!query.hasRow());
+
+		query = SQLite::Statement(database.database(), "SELECT * FROM timeEntryCode");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		categoryID = query.getColumn(0);
+		int codeID = query.getColumn(1);
+		std::string codeName = query.getColumn(2);
+
+		CHECK(categoryID == 1);
+		CHECK(codeID == 1);
+		CHECK(codeName == "Code 1");
+
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		categoryID = query.getColumn(0);
+		codeID = query.getColumn(1);
+		codeName = query.getColumn(2).getString();
+
+		CHECK(categoryID == 1);
+		CHECK(codeID == 2);
+		CHECK(codeName == "Code 2");
+
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		categoryID = query.getColumn(0);
+		codeID = query.getColumn(1);
+		codeName = query.getColumn(2).getString();
+
+		CHECK(categoryID == 2);
+		CHECK(codeID == 3);
+		CHECK(codeName == "Code 3");
+
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		categoryID = query.getColumn(0);
+		codeID = query.getColumn(1);
+		codeName = query.getColumn(2).getString();
+
+		CHECK(categoryID == 2);
+		CHECK(codeID == 4);
+		CHECK(codeName == "Code 4");
+
+		query.executeStep();
+
+		REQUIRE(!query.hasRow());
+	}
+
+	SECTION("Update")
+	{
+		auto cat = TimeCategory(TimeCategoryID(1));
+		cat.name = "Test er";
+		cat.label = "TST R";
+		cat.codes.clear();
+		cat.codes.push_back(TimeCode{ TimeCodeID(1), "Fo o" });
+		cat.codes.push_back(TimeCode{ TimeCodeID(2), "Bar s" });
+
+		auto update_category = TimeEntryModifyPacket(RequestID(4), TimeCategoryModType::UPDATE, {});
+		update_category.timeCategories.push_back(cat);
+
+		api.process_packet(update_category, output);
+	}
+
+	SECTION("Remove")
+	{
+		SECTION("Category")
+		{
+
+		}
+
+		SECTION("Code")
+		{
+
+		}
+	}
+}
+
 TEST_CASE("Write Task Time Entry to Database", "[database]")
 {
+	TestClock clock;
+	curlTest curl;
 
+	DatabaseImpl database(":memory:");
+
+	std::istringstream fileInput;
+	std::ostringstream fileOutput;
+
+	API api = API(clock, curl, fileInput, fileOutput, database);
+
+	std::vector<std::unique_ptr<Message>> output;
+
+	auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
+	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A", "A");
+	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
+	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
+
+	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B", "B");
+	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
+	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
+
+	api.process_packet(modify, output);
+
+	auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
+	create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
+	create.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
+
+	api.process_packet(create, output);
+}
+
+TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
+{
+	TestClock clock;
+	curlTest curl;
+
+	DatabaseImpl database(":memory:");
+
+	std::istringstream fileInput;
+	std::ostringstream fileOutput;
+
+	API api = API(clock, curl, fileInput, fileOutput, database);
+
+	std::vector<std::unique_ptr<Message>> output;
+
+	SECTION("Remove")
+	{
+
+	}
+}
+
+TEST_CASE("Write Bugzilla Group By to Database", "[database]")
+{
+	TestClock clock;
+	curlTest curl;
+
+	DatabaseImpl database(":memory:");
+
+	std::istringstream fileInput;
+	std::ostringstream fileOutput;
+
+	API api = API(clock, curl, fileInput, fileOutput, database);
+
+	std::vector<std::unique_ptr<Message>> output;
+}
+
+TEST_CASE("Write Bugzilla Bug ID to Task ID to Database", "[database]")
+{
+	TestClock clock;
+	curlTest curl;
+
+	DatabaseImpl database(":memory:");
+
+	std::istringstream fileInput;
+	std::ostringstream fileOutput;
+
+	API api = API(clock, curl, fileInput, fileOutput, database);
+
+	std::vector<std::unique_ptr<Message>> output;
 }

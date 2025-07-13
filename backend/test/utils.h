@@ -111,6 +111,10 @@ struct testDatabase : Database
 	// write time entries
 	void write_time_entry(TaskID task) override {}
 	void remove_time_entry() override {}
+
+	void write_time_entry_config(const TimeCategory& entry) override {}
+	void remove_time_category(const TimeCategory& entry) override {}
+	void remove_time_code(const TimeCategory& entry, const TimeCode& code) override {}
 };
 
 struct TestHelper
