@@ -30,14 +30,13 @@ inline std::vector<std::string> split(const std::string& s, char delim) {
 class API
 {
 public:
-	API(const Clock& clock, cURL& curl, std::istream& input, std::ostream& output, Database& database) 
+	API(const Clock& clock, cURL& curl, Database& database) 
 		: m_clock(&clock), 
-		m_app(*this, clock, output, database),
+		m_app(*this, clock, database),
 		m_bugzilla(clock, curl),
-		m_output(&output),
 		m_database(&database)
 	{
-		m_app.load_from_file(input);
+		//m_app.load_from_file(input);
 	}
 
 	void process_packet(const Message& message, std::vector<std::unique_ptr<Message>>& output);
@@ -66,7 +65,6 @@ private:
 public:
 	Bugzilla m_bugzilla;
 private:
-	std::ostream* m_output;
 	Database* m_database;
 };
 

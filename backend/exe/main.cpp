@@ -91,11 +91,8 @@ int main(int argc, char** argv)
 	auto acceptor = sockpp::tcp_acceptor(sockpp::inet_address(ip_address, port));
 
 	Clock clock;
-	std::ifstream input;// (argv[3]);
-	std::ofstream output;// (argv[3], std::ios::out | std::ios::app);
-	
 
-	API api(clock, curl, input, output, db);
+	API api(clock, curl, db);
 
 	// ctrl-c app to kill it
 	while (true)

@@ -54,13 +54,13 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 	{
 		const auto& info = static_cast<const BugzillaInfoMessage&>(message);
 
-		m_bugzilla.receive_info(info, m_app, *this, output, *m_output, *m_database);
+		m_bugzilla.receive_info(info, m_app, *this, output, *m_database);
 
 		break;
 	}
 	case PacketType::BUGZILLA_REFRESH:
 	{
-		m_bugzilla.refresh(static_cast<const RequestMessage&>(message), m_app, *this, *m_output, output);
+		m_bugzilla.refresh(static_cast<const RequestMessage&>(message), m_app, *this, output);
 		break;
 	}
 	}
@@ -174,7 +174,7 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 		// TODO validation of time codes, make sure they exist
 		task->timeEntry = message.timeEntry;
 
-		*m_output << "task-time-codes " << task->taskID()._val << ' ';
+		/**m_output << "task-time-codes " << task->taskID()._val << ' ';
 
 		if (task->timeEntry.empty())
 		{
@@ -187,7 +187,7 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 				*m_output << code.categoryID._val << ' ' << code.codeID._val << ' ';
 			}
 		}
-		*m_output << std::endl;
+		*m_output << std::endl;*/
 
 		m_database->write_task(*task);
 	}
@@ -337,7 +337,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<st
 				}
 			}
 
-			*m_output << "time-category update " << timeCategory->id._val << ' ' << persist_string(timeCategory->name) << ' ';
+			/**m_output << "time-category update " << timeCategory->id._val << ' ' << persist_string(timeCategory->name) << ' ';
 			*m_output << persist_string(timeCategory->label) << ' ';
 
 			*m_output << category.codes.size() << ' ';
@@ -346,7 +346,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<st
 			{
 				*m_output << code.id._val << ' ' << persist_string(code.name) << ' ';
 			}
-			*m_output << std::endl;
+			*m_output << std::endl;*/
 
 			m_database->write_time_entry_config(*timeCategory);
 		}
@@ -356,12 +356,12 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<st
 
 			if (result != m_app.timeCategories().end())
 			{
-				*m_output << "time-category remove-category " << result->id._val << '\n';
+				//*m_output << "time-category remove-category " << result->id._val << '\n';
 
 				m_database->remove_time_category(*result);
 			}
 
-			m_output->flush();
+			//m_output->flush();
 
 			m_app.timeCategories().erase(result);
 		}
@@ -382,21 +382,21 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<st
 				}
 			}
 
-			*m_output << "time-category remove-code " << category.id._val;
+			/**m_output << "time-category remove-code " << category.id._val;
 
-			*m_output << " { ";
+			*m_output << " { ";*/
 
 			for (auto&& code : category.codes)
 			{
-				*m_output << code.id._val << ' ';
+				//*m_output << code.id._val << ' ';
 
 				// TODO validate that this is called multiple times in storage_test.cpp
 				m_database->remove_time_code(category, code);
 			}
 
-			*m_output << "}";
+			//*m_output << "}";
 
-			*m_output << std::endl;
+			//*m_output << std::endl;
 		}
 		else
 		{
@@ -427,7 +427,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<st
 				}
 			}
 
-			*m_output << "time-category add " << category.id._val << ' ' << persist_string(category.name) << ' ';
+			/**m_output << "time-category add " << category.id._val << ' ' << persist_string(category.name) << ' ';
 			*m_output << persist_string(category.label) << ' ';
 
 			*m_output << category.codes.size() << ' ';
@@ -436,7 +436,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<st
 			{
 				*m_output << code.id._val << ' ' << persist_string(code.name) << ' ';
 			}
-			*m_output << std::endl;
+			*m_output << std::endl;*/
 
 			m_database->write_time_entry_config(*timeCategory);
 		}

@@ -77,7 +77,7 @@ public:
 class MicroTask
 {
 public:
-	MicroTask(API& api, const Clock& clock, std::ostream& output, Database& database) : m_api(&api), m_clock(&clock), m_output(&output), m_database(&database) {}
+	MicroTask(API& api, const Clock& clock, Database& database) : m_api(&api), m_clock(&clock), m_database(&database) {}
 
 	std::expected<TaskID, std::string> create_task(const std::string& name, TaskID parentID = NO_PARENT, bool serverControlled = false);
 
@@ -171,7 +171,6 @@ private:
 	std::vector<TimeCategory> m_timeCategories;
 
 	const Clock* m_clock;
-	std::ostream* m_output;
 	Database* m_database;
 
 	API* m_api;

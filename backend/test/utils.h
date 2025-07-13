@@ -89,10 +89,7 @@ struct TestHelper
 
 	nullDatabase database;
 
-	std::istringstream fileInput;
-	std::ostringstream fileOutput;
-
-	API api = API(clock, curl, fileInput, fileOutput, database);
+	API api = API(clock, curl, database);
 
 	std::vector<std::unique_ptr<Message>> output;
 
@@ -106,11 +103,6 @@ struct TestHelper
 	RequestID prev_request_id() const
 	{
 		return m_prev_request_id;
-	}
-
-	void clear_file_output()
-	{
-		fileOutput.str("");
 	}
 
 	void clear_message_output()

@@ -5,7 +5,7 @@
 #include <memory>
 #include <string>
 
-void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, std::ostream& file, Database& database)
+void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, Database& database)
 {
 	BugzillaInstance* instance = nullptr;
 
@@ -25,11 +25,11 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 	instance->bugzillaGroupTasksBy = info.groupTasksBy;
 	instance->bugzillaLabelToField = info.labelToField;
 
-	file << "bugzilla-config " << instance->bugzillaName << ' ' << instance->bugzillaURL << ' ' << instance->bugzillaApiKey << '\n';
+	/*file << "bugzilla-config " << instance->bugzillaName << ' ' << instance->bugzillaURL << ' ' << instance->bugzillaApiKey << '\n';
 	file << instance->bugzillaUsername << '\n';
-	file << instance->bugzillaRootTaskID._val << '\n';
+	file << instance->bugzillaRootTaskID._val << '\n';*/
 
-	file << instance->bugzillaGroupTasksBy.size() << '\n';
+	/*file << instance->bugzillaGroupTasksBy.size() << '\n';
 
 	for (auto&& f : info.groupTasksBy)
 	{
@@ -43,7 +43,7 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 		file << f.first << '\n' << f.second << '\n';
 	}
 
-	file.flush();
+	file.flush();*/
 
 	database.write_bugzilla_instance(*instance);
 
@@ -128,7 +128,7 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 
 	RequestMessage request(PacketType::BUGZILLA_REFRESH, RequestID(0));
 
-	refresh(request, app, api, file, output);
+	refresh(request, app, api, output);
 }
 
 void Bugzilla::build_group_by_task(BugzillaInstance& instance, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, TaskID parent, std::span<const std::string> groupTaskBy)
@@ -227,7 +227,7 @@ void Bugzilla::send_info(std::vector<std::unique_ptr<Message>>& output)
 	}
 }
 
-void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, std::ostream& file, std::vector<std::unique_ptr<Message>>& output)
+void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output)
 {
 	if (m_curl)
 	{
@@ -317,7 +317,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 							nextParent->state = TaskState::INACTIVE;
 							nextParent->m_finishTime = std::nullopt;
 
-							file << "unfinish " << nextParent->taskID()._val << '\n';
+							//file << "unfinish " << nextParent->taskID()._val << '\n';
 
 							nextParent = app.find_task(nextParent->parentID());
 						}
@@ -401,15 +401,15 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 
 			info.lastBugzillaRefresh = now;
 
-			file << "bugzilla-refresh " << info.bugzillaName << ' ' << info.lastBugzillaRefresh->count() << std::endl;
+			//file << "bugzilla-refresh " << info.bugzillaName << ' ' << info.lastBugzillaRefresh->count() << std::endl;
 
-			file << "bugzilla-tasks " << info.bugzillaName << ' ';
+			//file << "bugzilla-tasks " << info.bugzillaName << ' ';
 
-			for (auto&& [bug, task] : info.bugToTaskID)
-			{
-				file << bug << ' ' << task._val << ' ';
-			}
-			file << std::endl;
+			//for (auto&& [bug, task] : info.bugToTaskID)
+			//{
+			//	file << bug << ' ' << task._val << ' ';
+			//}
+			//file << std::endl;
 		}
 		m_lastBugzillaRefresh = now;
 	}

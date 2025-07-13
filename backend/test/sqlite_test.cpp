@@ -62,10 +62,7 @@ TEST_CASE("Write Task to Database", "[database]")
 
 	DatabaseImpl database(":memory:");
 
-	std::istringstream fileInput;
-	std::ostringstream fileOutput;
-
-	API api = API(clock, curl, fileInput, fileOutput, database);
+	API api = API(clock, curl, database);
 
 	std::vector<std::unique_ptr<Message>> output;
 
@@ -250,10 +247,7 @@ TEST_CASE("Write Task Session to Database", "[database]")
 
 	DatabaseImpl database(":memory:");
 
-	std::istringstream fileInput;
-	std::ostringstream fileOutput;
-
-	API api = API(clock, curl, fileInput, fileOutput, database);
+	API api = API(clock, curl, database);
 
 	std::vector<std::unique_ptr<Message>> output;
 
@@ -362,10 +356,7 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 
 	DatabaseImpl database(":memory:");
 
-	std::istringstream fileInput;
-	std::ostringstream fileOutput;
-
-	API api = API(clock, curl, fileInput, fileOutput, database);
+	API api = API(clock, curl, database);
 
 	std::vector<std::unique_ptr<Message>> output;
 
@@ -662,10 +653,7 @@ TEST_CASE("Write Task Time Entry to Database", "[database]")
 
 	DatabaseImpl database(":memory:");
 
-	std::istringstream fileInput;
-	std::ostringstream fileOutput;
-
-	API api = API(clock, curl, fileInput, fileOutput, database);
+	API api = API(clock, curl, database);
 
 	std::vector<std::unique_ptr<Message>> output;
 
@@ -775,7 +763,7 @@ TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
 	std::istringstream fileInput;
 	std::ostringstream fileOutput;
 
-	API api = API(clock, curl, fileInput, fileOutput, database);
+	API api = API(clock, curl, database);
 
 	std::vector<std::unique_ptr<Message>> output;
 
@@ -840,10 +828,7 @@ TEST_CASE("Write Bugzilla Group By to Database", "[database]")
 
 	DatabaseImpl database(":memory:");
 
-	std::istringstream fileInput;
-	std::ostringstream fileOutput;
-
-	API api = API(clock, curl, fileInput, fileOutput, database);
+	API api = API(clock, curl, database);
 
 	std::vector<std::unique_ptr<Message>> output;
 }
@@ -855,10 +840,7 @@ TEST_CASE("Write Bugzilla Bug ID to Task ID to Database", "[database]")
 
 	DatabaseImpl database(":memory:");
 
-	std::istringstream fileInput;
-	std::ostringstream fileOutput;
-
-	API api = API(clock, curl, fileInput, fileOutput, database);
+	API api = API(clock, curl, database);
 
 	std::vector<std::unique_ptr<Message>> output;
 }
