@@ -359,6 +359,8 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<st
 			if (result != m_app.timeCategories().end())
 			{
 				*m_output << "time-category remove-category " << result->id._val << '\n';
+
+				m_database->remove_time_category(*result);
 			}
 
 			m_output->flush();
@@ -389,6 +391,9 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<st
 			for (auto&& code : category.codes)
 			{
 				*m_output << code.id._val << ' ';
+
+				// TODO validate that this is called multiple times in storage_test.cpp
+				m_database->remove_time_code(category, code);
 			}
 
 			*m_output << "}";

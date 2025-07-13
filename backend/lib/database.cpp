@@ -110,11 +110,43 @@ void DatabaseImpl::write_time_entry_config(const TimeCategory& entry)
 
 void DatabaseImpl::remove_time_category(const TimeCategory& entry)
 {
+	SQLite::Statement remove_cat(m_database, "delete from timeEntryCategory where TimeCategoryID == ?");
+	remove_cat.bind(1, entry.id._val);
 
+	try
+	{
+		remove_cat.exec();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
+
+	SQLite::Statement remove_code(m_database, "delete from timeEntryCode where TimeCategoryID == ?");
+	remove_code.bind(1, entry.id._val);
+
+	try
+	{
+		remove_code.exec();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
 }
 
 void DatabaseImpl::remove_time_code(const TimeCategory& entry, const TimeCode& code)
 {
+	SQLite::Statement remove_code(m_database, "delete from timeEntryCode where TimeCodeID == ?");
+	remove_code.bind(1, code.id._val);
 
+	try
+	{
+		remove_code.exec();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
 }
 

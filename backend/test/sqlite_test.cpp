@@ -376,12 +376,133 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 	{
 		SECTION("Category")
 		{
+			auto cat = TimeCategory(TimeCategoryID(1));
 
+			auto remove_category = TimeEntryModifyPacket(RequestID(5), TimeCategoryModType::REMOVE_CATEGORY, {});
+			remove_category.timeCategories.push_back(cat);
+
+			api.process_packet(remove_category, output);
+
+			SQLite::Statement query(database.database(), "SELECT * FROM timeEntryCategory");
+			query.executeStep();
+
+			REQUIRE(query.hasRow());
+
+			int categoryID = query.getColumn(0);
+			std::string categoryName = query.getColumn(1);
+
+			CHECK(categoryID == 2);
+			CHECK(categoryName == "B");
+
+			query.executeStep();
+
+			REQUIRE(!query.hasRow());
+
+			query = SQLite::Statement(database.database(), "SELECT * FROM timeEntryCode");
+			query.executeStep();
+
+			REQUIRE(query.hasRow());
+
+			categoryID = query.getColumn(0);
+			int codeID = query.getColumn(1);
+			std::string codeName = query.getColumn(2);
+
+			CHECK(categoryID == 2);
+			CHECK(codeID == 3);
+			CHECK(codeName == "Code 3");
+
+			query.executeStep();
+
+			REQUIRE(query.hasRow());
+
+			categoryID = query.getColumn(0);
+			codeID = query.getColumn(1);
+			codeName = query.getColumn(2).getString();
+
+			CHECK(categoryID == 2);
+			CHECK(codeID == 4);
+			CHECK(codeName == "Code 4");
+
+			query.executeStep();
+
+			REQUIRE(!query.hasRow());
 		}
 
 		SECTION("Code")
 		{
+			auto cat = TimeCategory(TimeCategoryID(1));
+			cat.codes.push_back(TimeCode{ TimeCodeID(1), "Bar" });
 
+			auto remove_category = TimeEntryModifyPacket(RequestID(5), TimeCategoryModType::REMOVE_CODE, {});
+			remove_category.timeCategories.push_back(cat);
+
+			api.process_packet(remove_category, output);
+
+			SQLite::Statement query(database.database(), "SELECT * FROM timeEntryCategory");
+			query.executeStep();
+
+			REQUIRE(query.hasRow());
+
+			int categoryID = query.getColumn(0);
+			std::string categoryName = query.getColumn(1);
+
+			CHECK(categoryID == 1);
+			CHECK(categoryName == "A");
+
+			query.executeStep();
+
+			REQUIRE(query.hasRow());
+
+			categoryID = query.getColumn(0);
+			categoryName = query.getColumn(1).getString();
+
+			CHECK(categoryID == 2);
+			CHECK(categoryName == "B");
+
+			query.executeStep();
+
+			REQUIRE(!query.hasRow());
+
+			query = SQLite::Statement(database.database(), "SELECT * FROM timeEntryCode");
+			query.executeStep();
+
+			REQUIRE(query.hasRow());
+
+			categoryID = query.getColumn(0);
+			int codeID = query.getColumn(1);
+			std::string codeName = query.getColumn(2);
+
+			CHECK(categoryID == 1);
+			CHECK(codeID == 2);
+			CHECK(codeName == "Code 2");
+
+			query.executeStep();
+
+			REQUIRE(query.hasRow());
+
+			categoryID = query.getColumn(0);
+			codeID = query.getColumn(1);
+			codeName = query.getColumn(2).getString();
+
+			CHECK(categoryID == 2);
+			CHECK(codeID == 3);
+			CHECK(codeName == "Code 3");
+
+			query.executeStep();
+
+			REQUIRE(query.hasRow());
+
+			categoryID = query.getColumn(0);
+			codeID = query.getColumn(1);
+			codeName = query.getColumn(2).getString();
+
+			CHECK(categoryID == 2);
+			CHECK(codeID == 4);
+			CHECK(codeName == "Code 4");
+
+			query.executeStep();
+
+			REQUIRE(!query.hasRow());
 		}
 	}
 }
@@ -416,6 +537,8 @@ TEST_CASE("Write Task Time Entry to Database", "[database]")
 	create.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
 
 	api.process_packet(create, output);
+
+	// TODO test: add, update, remove
 }
 
 TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
