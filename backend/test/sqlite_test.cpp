@@ -53,3 +53,37 @@ TEST_CASE("Create Database", "[database]")
 	has_table("bugzillaGroupBy");
 	has_table("bugzillaBugToTask");
 }
+
+TEST_CASE("Write Task to Database", "[database]")
+{
+	TestClock clock;
+	curlTest curl;
+
+	DatabaseImpl database(":memory:");
+
+	std::istringstream fileInput;
+	std::ostringstream fileOutput;
+
+	API api = API(clock, curl, fileInput, fileOutput, database);
+
+	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "this is a test"));
+
+	auto task = Task("this is a test", TaskID(1), NO_PARENT, std::chrono::milliseconds(1737344039870));
+
+	REQUIRE(helper.database.tasks_written.size() == 1);
+	CHECK(task == helper.database.tasks_written[0]);
+	SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 1");
+	query.exec();
+
+	REQUIRE(query.hasRow());
+}
+
+TEST_CASE("Write Task Session to Database", "[database]")
+{
+
+}
+
+TEST_CASE("Write Task Time Entry to Database", "[database]")
+{
+
+}
