@@ -54,7 +54,7 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 	{
 		const auto& info = static_cast<const BugzillaInfoMessage&>(message);
 
-		m_bugzilla.receive_info(info, m_app, *this, output, *m_output);
+		m_bugzilla.receive_info(info, m_app, *this, output, *m_output, *m_database);
 
 		break;
 	}
@@ -169,7 +169,7 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 	{
 		result = m_app.reparent_task(message.taskID, message.parentID);
 	}
-	else if (message.timeEntry.size() != task->timeEntry.size())
+	else // assume time entry changed
 	{
 		// TODO validation of time codes, make sure they exist
 		task->timeEntry = message.timeEntry;
@@ -188,10 +188,8 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 			}
 		}
 		*m_output << std::endl;
-	}
-	else
-	{
-		// TODO failure
+
+		m_database->write_task(*task);
 	}
 	
 

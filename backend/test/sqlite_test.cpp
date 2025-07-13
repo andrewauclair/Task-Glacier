@@ -69,30 +69,178 @@ TEST_CASE("Write Task to Database", "[database]")
 
 	std::vector<std::unique_ptr<Message>> output;
 
-	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
-	api.process_packet(CreateTaskMessage(TaskID(1), RequestID(2), "this is a test"), output);
-	api.process_packet(TaskMessage(PacketType::FINISH_TASK, RequestID(3), TaskID(2)), output);
+	SECTION("Create")
+	{
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+		api.process_packet(CreateTaskMessage(TaskID(1), RequestID(2), "this is a test"), output);
+		
+		SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 2");
+		query.executeStep();
 
-	auto task = Task("this is a test", TaskID(1), NO_PARENT, std::chrono::milliseconds(1737344039870));
+		REQUIRE(query.hasRow());
 
-	SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 2");
-	query.executeStep();
+		int id = query.getColumn(0);
+		std::string name = query.getColumn(1);
+		int parentID = query.getColumn(2);
+		int state = query.getColumn(3);
+		std::int64_t create_time = query.getColumn(4);
+		std::int64_t finish_time = query.getColumn(5);
 
-	REQUIRE(query.hasRow());
+		CHECK(id == 2);
+		CHECK(name == "this is a test");
+		CHECK(parentID == 1);
+		CHECK(state == 0);
+		CHECK(create_time == 1737345839870);
+		CHECK(finish_time == 0);
 
-	int id = query.getColumn(0);
-	std::string name = query.getColumn(1);
-	int parentID = query.getColumn(2);
-	int state = query.getColumn(3);
-	std::int64_t create_time = query.getColumn(4);
-	std::int64_t finish_time = query.getColumn(5);
+		query.executeStep();
+		CHECK(!query.hasRow());
+	}
 
-	CHECK(id == 2);
-	CHECK(name == "this is a test");
-	CHECK(parentID == 1);
-	CHECK(state == 2);
-	CHECK(create_time == 1737345839870);
-	CHECK(finish_time == 1737347639870);
+	SECTION("Start")
+	{
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(2), TaskID(1)), output);
+
+		SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 1");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		int id = query.getColumn(0);
+		std::string name = query.getColumn(1);
+		int parentID = query.getColumn(2);
+		int state = query.getColumn(3);
+		std::int64_t create_time = query.getColumn(4);
+		std::int64_t finish_time = query.getColumn(5);
+
+		CHECK(id == 1);
+		CHECK(name == "parent");
+		CHECK(parentID == 0);
+		CHECK(state == 1);
+		CHECK(create_time == 1737344039870);
+		CHECK(finish_time == 0);
+
+		query.executeStep();
+		CHECK(!query.hasRow());
+	}
+
+	SECTION("Stop")
+	{
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(2), TaskID(1)), output);
+		api.process_packet(TaskMessage(PacketType::STOP_TASK, RequestID(3), TaskID(1)), output);
+
+
+		SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 1");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		int id = query.getColumn(0);
+		std::string name = query.getColumn(1);
+		int parentID = query.getColumn(2);
+		int state = query.getColumn(3);
+		std::int64_t create_time = query.getColumn(4);
+		std::int64_t finish_time = query.getColumn(5);
+
+		CHECK(id == 1);
+		CHECK(name == "parent");
+		CHECK(parentID == 0);
+		CHECK(state == 0);
+		CHECK(create_time == 1737344039870);
+		CHECK(finish_time == 0);
+
+		query.executeStep();
+		CHECK(!query.hasRow());
+	}
+
+	SECTION("Finish")
+	{
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+		api.process_packet(TaskMessage(PacketType::FINISH_TASK, RequestID(2), TaskID(1)), output);
+
+		SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 1");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		int id = query.getColumn(0);
+		std::string name = query.getColumn(1);
+		int parentID = query.getColumn(2);
+		int state = query.getColumn(3);
+		std::int64_t create_time = query.getColumn(4);
+		std::int64_t finish_time = query.getColumn(5);
+
+		CHECK(id == 1);
+		CHECK(name == "parent");
+		CHECK(parentID == 0);
+		CHECK(state == 2);
+		CHECK(create_time == 1737344039870);
+		CHECK(finish_time == 1737345839870);
+
+		query.executeStep();
+		CHECK(!query.hasRow());
+	}
+
+	SECTION("Reparent")
+	{
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(2), "this is a test"), output);
+
+		api.process_packet(UpdateTaskMessage(RequestID(3), TaskID(2), TaskID(1), "this is a test"), output);
+
+		SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 2");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		int id = query.getColumn(0);
+		std::string name = query.getColumn(1);
+		int parentID = query.getColumn(2);
+		int state = query.getColumn(3);
+		std::int64_t create_time = query.getColumn(4);
+		std::int64_t finish_time = query.getColumn(5);
+
+		CHECK(id == 2);
+		CHECK(name == "this is a test");
+		CHECK(parentID == 1);
+		CHECK(state == 0);
+		CHECK(create_time == 1737345839870);
+		CHECK(finish_time == 0);
+
+		query.executeStep();
+		CHECK(!query.hasRow());
+	}
+
+	SECTION("Rename")
+	{
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+
+		api.process_packet(UpdateTaskMessage(RequestID(3), TaskID(1), NO_PARENT, "child"), output);
+
+		SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 1");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		int id = query.getColumn(0);
+		std::string name = query.getColumn(1);
+		int parentID = query.getColumn(2);
+		int state = query.getColumn(3);
+		std::int64_t create_time = query.getColumn(4);
+		std::int64_t finish_time = query.getColumn(5);
+
+		CHECK(id == 1);
+		CHECK(name == "child");
+		CHECK(parentID == 0);
+		CHECK(state == 0);
+		CHECK(create_time == 1737344039870);
+		CHECK(finish_time == 0);
+
+		query.executeStep();
+		CHECK(!query.hasRow());
+	}
 }
 
 TEST_CASE("Write Task Session to Database", "[database]")
@@ -532,13 +680,89 @@ TEST_CASE("Write Task Time Entry to Database", "[database]")
 
 	api.process_packet(modify, output);
 
-	auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
-	create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
-	create.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
+	SECTION("Add")
+	{
+		auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
+		create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
+		create.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
 
-	api.process_packet(create, output);
+		api.process_packet(create, output);
 
-	// TODO test: add, update, remove
+		SQLite::Statement query(database.database(), "SELECT * FROM timeEntryTask");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		int taskID = query.getColumn(0);
+		int categoryID = query.getColumn(1);
+		int codeID = query.getColumn(2);
+
+		CHECK(taskID == 1);
+		CHECK(categoryID == 1);
+		CHECK(codeID == 1);
+
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		taskID = query.getColumn(0);
+		categoryID = query.getColumn(1);
+		codeID = query.getColumn(2);
+
+		CHECK(taskID == 1);
+		CHECK(categoryID == 2);
+		CHECK(codeID == 4);
+
+		query.executeStep();
+
+		CHECK(!query.hasRow());
+	}
+
+	SECTION("Update - Change Time Codes")
+	{
+		auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
+		create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
+		create.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
+
+		auto update = UpdateTaskMessage(RequestID(2), TaskID(1), NO_PARENT, "parent");
+		update.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(2));
+		update.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(3));
+
+		api.process_packet(create, output);
+		api.process_packet(update, output);
+
+		SQLite::Statement query(database.database(), "SELECT * FROM timeEntryTask");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		int taskID = query.getColumn(0);
+		int categoryID = query.getColumn(1);
+		int codeID = query.getColumn(2);
+
+		CHECK(taskID == 1);
+		CHECK(categoryID == 1);
+		CHECK(codeID == 2);
+
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		taskID = query.getColumn(0);
+		categoryID = query.getColumn(1);
+		codeID = query.getColumn(2);
+
+		CHECK(taskID == 1);
+		CHECK(categoryID == 2);
+		CHECK(codeID == 3);
+
+		query.executeStep();
+
+		CHECK(!query.hasRow());
+	}
+
+	// TODO should we add a new time category to all existing tasks?
+	// TODO I think I decided to leave category/code data and not delete it? archive instead of delete, so no remove here?
 }
 
 TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
@@ -554,6 +778,54 @@ TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
 	API api = API(clock, curl, fileInput, fileOutput, database);
 
 	std::vector<std::unique_ptr<Message>> output;
+
+	SECTION("Add")
+	{
+		auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla", "0.0.0.0", "asfesdFEASfslj");
+		configure.username = "test";
+		configure.rootTaskID = TaskID(1);
+		configure.groupTasksBy.push_back("product");
+		configure.groupTasksBy.push_back("severity");
+
+		configure.labelToField["Priority"] = "priority";
+		configure.labelToField["Status"] = "status";
+
+		curl.requestResponse.emplace_back("{ \"fields\": [] }");
+		curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+
+		api.process_packet(configure, output);
+
+		SQLite::Statement query(database.database(), "SELECT * FROM bugzilla");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		int instance = query.getColumn(0);
+		std::string name = query.getColumn(1);
+		std::string url = query.getColumn(2);
+		std::string apiKey = query.getColumn(3);
+		std::string userName = query.getColumn(4);
+		int rootTask = query.getColumn(5);
+		std::int64_t lastRefresh = query.getColumn(6);
+
+		CHECK(instance == 1);
+		CHECK(name == "bugzilla");
+		CHECK(url == "0.0.0.0");
+		CHECK(apiKey == "asfesdFEASfslj");
+		CHECK(userName == "test");
+		CHECK(rootTask == 1);
+		CHECK(lastRefresh == 0);
+	}
+
+	SECTION("Update")
+	{
+
+	}
+
+	SECTION("Refresh")
+	{
+
+	}
 
 	SECTION("Remove")
 	{

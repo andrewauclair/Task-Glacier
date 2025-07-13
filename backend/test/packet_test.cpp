@@ -94,7 +94,7 @@ struct PacketTestHelper
 	std::istringstream input;
 	std::ostringstream output;
 
-	testDatabase db;
+	nullDatabase db;
 	API api = API(clock, curl, input, output, db);
 	MicroTask app = MicroTask(api, clock, output, db);
 
@@ -1105,7 +1105,7 @@ TEST_CASE("unpack the empty packet", "[message][unpack]")
 	curlTest curl;
 	std::istringstream input;
 	std::ostringstream output;
-	testDatabase db;
+	nullDatabase db;
 	API api = API(clock, curl, input, output, db);
 	MicroTask app = MicroTask(api, clock, output, db);
 
@@ -1128,11 +1128,11 @@ TEST_CASE("Bugzilla Info Packet", "[message]")
 	curlTest curl;
 	std::istringstream input;
 	std::ostringstream output;
-	testDatabase db;
+	nullDatabase db;
 	API api = API(clock, curl, input, output, db);
 	MicroTask app = MicroTask(api, clock, output, db);
 
-	auto message = BugzillaInfoMessage("bugzilla", "0.0.0.0", "aBSEFASDfOJOEFfjlsojFEF");
+	auto message = BugzillaInfoMessage(BugzillaInstanceID(1), "bugzilla", "0.0.0.0", "aBSEFASDfOJOEFfjlsojFEF");
 	message.username = "admin";
 	message.rootTaskID = TaskID(3);
 	message.groupTasksBy.push_back("product");
@@ -1142,11 +1142,12 @@ TEST_CASE("Bugzilla Info Packet", "[message]")
 
 	SECTION("Pack")
 	{
-		auto verifier = PacketVerifier(message.pack(), 126);
+		auto verifier = PacketVerifier(message.pack(), 130);
 
 		verifier
-			.verify_value<std::uint32_t>(126, "packet length")
+			.verify_value<std::uint32_t>(130, "packet length")
 			.verify_value<std::uint32_t>(13, "packet ID")
+			.verify_value<std::int32_t>(1, "instance ID")
 			.verify_string("bugzilla", "name")
 			.verify_string("0.0.0.0", "URL")
 			.verify_string("aBSEFASDfOJOEFfjlsojFEF", "API Key")
@@ -1171,6 +1172,6 @@ TEST_CASE("Bugzilla Info Packet", "[message]")
 		const auto packet = dynamic_cast<BugzillaInfoMessage&>(*result.packet.get());
 
 		CHECK(packet == message);
-		CHECK(result.bytes_read == 126);
+		CHECK(result.bytes_read == 130);
 	}
 }

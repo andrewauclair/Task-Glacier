@@ -76,45 +76,10 @@ struct nullDatabase : Database
 	// write time entries
 	void write_time_entry(TaskID task) override {}
 	void remove_time_entry() override {}
-};
 
-struct testDatabase : Database
-{
-	std::vector<Task> tasks_written;
-
-	TaskID next_task_id_ = TaskID(0);
-
-	std::vector<BugzillaInstance> bugzilla_instances_written;
-	std::vector<int> bugzilla_instances_removed;
-	std::vector<int> bugzilla_instances_refreshed;
-	int next_bugzilla_id = 0;
-
-	std::vector<TaskTimes> sessions_written;
-	
-	void load(Bugzilla& bugzilla, MicroTask& app, API& api) override {}
-
-	// write task
-	void write_task(const Task& task) override { tasks_written.push_back(task); }
-	void next_task_id(TaskID taskID) override { next_task_id_ = taskID; }
-
-	// write bugzilla config
-	void write_bugzilla_instance(const BugzillaInstance& instance) override {}
-	void remove_bugzilla_instance(int ID) override {}
-	void next_bugzilla_instance_id(int ID) override {}
-	void bugzilla_refreshed(int ID) override {}
-
-	// write time entry configuration
-	// write sessions
-	void write_session(TaskID task, const TaskTimes& session) override {}
-	void remove_session() override {}
-
-	// write time entries
-	void write_time_entry(TaskID task) override {}
-	void remove_time_entry() override {}
-
-	void write_time_entry_config(const TimeCategory& entry) override {}
-	void remove_time_category(const TimeCategory& entry) override {}
-	void remove_time_code(const TimeCategory& entry, const TimeCode& code) override {}
+	virtual void write_time_entry_config(const TimeCategory& entry) override {}
+	virtual void remove_time_category(const TimeCategory& entry) override {}
+	virtual void remove_time_code(const TimeCategory& entry, const TimeCode& code) override {}
 };
 
 struct TestHelper
@@ -122,7 +87,7 @@ struct TestHelper
 	TestClock clock;
 	curlTest curl;
 
-	testDatabase database;
+	nullDatabase database;
 
 	std::istringstream fileInput;
 	std::ostringstream fileOutput;

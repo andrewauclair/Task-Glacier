@@ -13,9 +13,11 @@
 
 class MicroTask;
 class API;
+class Database;
 
 struct BugzillaInstance
 {
+	BugzillaInstanceID instanceID;
 	std::string bugzillaName;
 	std::string bugzillaURL;
 	std::string bugzillaApiKey;
@@ -28,6 +30,8 @@ struct BugzillaInstance
 	std::map<int, TaskID> bugToTaskID;
 
 	std::map<std::string, std::vector<std::string>> fields;
+
+	BugzillaInstance(BugzillaInstanceID instanceID) : instanceID(instanceID) {}
 };
 
 class Bugzilla
@@ -39,7 +43,7 @@ public:
 	{
 	}
 
-	void receive_info(const BugzillaInfoMessage& info, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, std::ostream& file);
+	void receive_info(const BugzillaInfoMessage& info, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, std::ostream& file, Database& database);
 	void send_info(std::vector<std::unique_ptr<Message>>& output);
 
 	void refresh(const RequestMessage& request, MicroTask& app, API& api, std::ostream& file, std::vector<std::unique_ptr<Message>>& output);
@@ -55,6 +59,7 @@ private:
 	const Clock* m_clock;
 	cURL* m_curl;
 
+	BugzillaInstanceID m_nextBugzillaID = BugzillaInstanceID(1);
 	std::map<std::string, BugzillaInstance> m_bugzilla;
 	std::optional<std::chrono::milliseconds> m_lastBugzillaRefresh;
 };

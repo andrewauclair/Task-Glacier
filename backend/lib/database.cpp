@@ -9,10 +9,10 @@ DatabaseImpl::DatabaseImpl(const std::string& file)
 		m_database.exec("create table if not exists tasks (TaskID integer PRIMARY KEY, Name text, ParentID integer, State int, CreateTime bigint, FinishTime bigint)");
 		m_database.exec("create table if not exists timeEntryCategory (TimeCategoryID integer PRIMARY KEY, TimeCategoryName text)");
 		m_database.exec("create table if not exists timeEntryCode (TimeCategoryID integer, TimeCodeID integer, TimeCodeName text, PRIMARY KEY (TimeCategoryID, TimeCodeID))");
-		m_database.exec("create table if not exists timeEntryTask (TaskID integer, TimeCategoryID integer, TimeCodeID integer)");
+		m_database.exec("create table if not exists timeEntryTask (TaskID integer, TimeCategoryID integer, TimeCodeID integer, PRIMARY KEY (TaskID, TimeCategoryID))");
 		m_database.exec("create table if not exists timeEntrySession (TaskID integer, SessionIndex integer, TimeCategoryID integer, TimeCodeID integer, StartTime bigint, StopTime bigint, PRIMARY KEY (TaskID, SessionIndex, TimeCategoryID))");
 		m_database.exec("create table if not exists bugzilla (BugzillaInstanceID integer PRIMARY KEY, Name text, URL text, APIKey text, UserName text, RootTaskID integer, LastRefresh bigint)");
-		m_database.exec("create table if not exists bugzillaGroupBy (BugzillaInstanceID integer, Field text)");
+		m_database.exec("create table if not exists bugzillaGroupBy (BugzillaInstanceID integer PRIMARY KEY, Field text)");
 		m_database.exec("create table if not exists bugzillaBugToTask (BugzillaInstanceID integer, BugID integer, TaskID integer, PRIMARY KEY (BugzillaInstanceID, BugID))");
 	}
 	catch (const std::exception& e)
@@ -40,7 +40,49 @@ void DatabaseImpl::write_task(const Task& task)
 		std::cerr << e.what() << std::endl;
 	}
 
+	write_task_time_entry(task);
 	write_sessions(task);
+}
+
+void DatabaseImpl::write_bugzilla_instance(const BugzillaInstance& instance)
+{
+	SQLite::Statement insert(m_database, "insert or replace into bugzilla values(?, ?, ?, ?, ?, ?, ?)");
+	insert.bind(1, instance.instanceID._val);
+	insert.bind(2, instance.bugzillaName);
+	insert.bind(3, instance.bugzillaURL);
+	insert.bind(4, instance.bugzillaApiKey);
+	insert.bind(5, instance.bugzillaUsername);
+	insert.bind(6, instance.bugzillaRootTaskID._val);
+	insert.bind(7, instance.lastBugzillaRefresh.value_or(std::chrono::milliseconds(0)).count());
+
+	try
+	{
+		insert.exec();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
+}
+
+void DatabaseImpl::write_task_time_entry(const Task& task)
+{
+	for (const TimeEntry& entry : task.timeEntry)
+	{
+		SQLite::Statement insert(m_database, "insert or replace into timeEntryTask values(?, ?, ?)");
+		insert.bind(1, task.taskID()._val);
+		insert.bind(2, entry.categoryID._val);
+		insert.bind(3, entry.codeID._val);
+
+		try
+		{
+			insert.exec();
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+		}
+	}
 }
 
 void DatabaseImpl::write_sessions(const Task& task)

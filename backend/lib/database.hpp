@@ -53,7 +53,7 @@ struct DatabaseImpl : Database
 	void next_task_id(TaskID taskID) override {}
 
 	// write bugzilla config
-	void write_bugzilla_instance(const BugzillaInstance& instance) override {}
+	void write_bugzilla_instance(const BugzillaInstance& instance) override;
 	void remove_bugzilla_instance(int ID) override {}
 	void next_bugzilla_instance_id(int ID) override {}
 	void bugzilla_refreshed(int ID) override {}
@@ -72,6 +72,7 @@ struct DatabaseImpl : Database
 	void remove_time_code(const TimeCategory& entry, const TimeCode& code) override;
 
 private:
+	void write_task_time_entry(const Task& task);
 	void write_sessions(const Task& task);
 
 	SQLite::Database m_database;

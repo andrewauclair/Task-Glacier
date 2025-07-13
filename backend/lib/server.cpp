@@ -58,6 +58,8 @@ std::optional<std::string> MicroTask::configure_task_time_entry(TaskID taskID, s
 			}
 		}
 		*m_output << std::endl;
+
+		m_database->write_task(*task);
 	}
 
 	return std::nullopt;

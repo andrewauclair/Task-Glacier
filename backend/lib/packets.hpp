@@ -16,6 +16,8 @@
 
 #include <strong_type/strong_type.hpp>
 
+using BugzillaInstanceID = strong::type<std::int32_t, struct bugzilla_instance_id_, strong::equality, strong::incrementable, strong::ordered, strong::partially_ordered>;
+
 enum class UnpackError {
 	NOT_ENOUGH_BYTES
 };
@@ -793,6 +795,7 @@ struct TaskInfoMessage : Message
 
 struct BugzillaInfoMessage : Message
 {
+	BugzillaInstanceID instanceID;
 	std::string name;
 	std::string URL;
 	std::string apiKey;
@@ -801,7 +804,7 @@ struct BugzillaInfoMessage : Message
 	std::vector<std::string> groupTasksBy;
 	std::map<std::string, std::string> labelToField;
 
-	BugzillaInfoMessage(std::string name, std::string URL, std::string apiKey) : Message(PacketType::BUGZILLA_INFO), name(std::move(name)), URL(std::move(URL)), apiKey(std::move(apiKey)) {}
+	BugzillaInfoMessage(BugzillaInstanceID instanceID, std::string name, std::string URL, std::string apiKey) : Message(PacketType::BUGZILLA_INFO), instanceID(instanceID), name(std::move(name)), URL(std::move(URL)), apiKey(std::move(apiKey)) {}
 
 	bool operator==(const Message& message) const override
 	{
@@ -814,7 +817,7 @@ struct BugzillaInfoMessage : Message
 
 	bool operator==(const BugzillaInfoMessage& message) const
 	{
-		return name == message.name && URL == message.URL && apiKey == message.apiKey && username == message.username && rootTaskID == message.rootTaskID &&
+		return instanceID == message.instanceID && name == message.name && URL == message.URL && apiKey == message.apiKey && username == message.username && rootTaskID == message.rootTaskID &&
 			groupTasksBy == message.groupTasksBy && labelToField == message.labelToField;
 	}
 
@@ -823,7 +826,7 @@ struct BugzillaInfoMessage : Message
 
 	std::ostream& print(std::ostream& out) const override
 	{
-		out << "BugzillaInfoMessage { name: " << name << ", URL: \"" << URL << "\", apiKey: \"" << apiKey << "\", username: " << username << ", rootTaskID: " << rootTaskID._val << " }";
+		out << "BugzillaInfoMessage { id: " << instanceID._val << ", name: " << name << ", URL : \"" << URL << "\", apiKey: \"" << apiKey << "\", username: " << username << ", rootTaskID: " << rootTaskID._val << " }";
 
 		out << '\n';
 		out << "groupBy {\n";

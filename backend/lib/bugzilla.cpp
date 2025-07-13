@@ -5,28 +5,38 @@
 #include <memory>
 #include <string>
 
-void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, std::ostream& file)
+void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, std::ostream& file, Database& database)
 {
-	m_bugzilla[info.name].bugzillaName = info.name;
-	m_bugzilla[info.name].bugzillaURL = info.URL;
-	m_bugzilla[info.name].bugzillaApiKey = info.apiKey;
-	m_bugzilla[info.name].bugzillaUsername = info.username;
-	m_bugzilla[info.name].bugzillaRootTaskID = info.rootTaskID;
-	m_bugzilla[info.name].bugzillaGroupTasksBy = info.groupTasksBy;
-	m_bugzilla[info.name].bugzillaLabelToField = info.labelToField;
+	BugzillaInstance* instance = nullptr;
 
-	file << "bugzilla-config " << m_bugzilla[info.name].bugzillaName << ' ' << m_bugzilla[info.name].bugzillaURL << ' ' << m_bugzilla[info.name].bugzillaApiKey << '\n';
-	file << m_bugzilla[info.name].bugzillaUsername << '\n';
-	file << m_bugzilla[info.name].bugzillaRootTaskID._val << '\n';
+	if (info.instanceID._val == 0)
+	{
+		m_bugzilla.emplace(info.name, BugzillaInstance(m_nextBugzillaID));
+		++m_nextBugzillaID;
+	}
+	
+	instance = &m_bugzilla.at(info.name);
 
-	file << m_bugzilla[info.name].bugzillaGroupTasksBy.size() << '\n';
+	instance->bugzillaName = info.name;
+	instance->bugzillaURL = info.URL;
+	instance->bugzillaApiKey = info.apiKey;
+	instance->bugzillaUsername = info.username;
+	instance->bugzillaRootTaskID = info.rootTaskID;
+	instance->bugzillaGroupTasksBy = info.groupTasksBy;
+	instance->bugzillaLabelToField = info.labelToField;
+
+	file << "bugzilla-config " << instance->bugzillaName << ' ' << instance->bugzillaURL << ' ' << instance->bugzillaApiKey << '\n';
+	file << instance->bugzillaUsername << '\n';
+	file << instance->bugzillaRootTaskID._val << '\n';
+
+	file << instance->bugzillaGroupTasksBy.size() << '\n';
 
 	for (auto&& f : info.groupTasksBy)
 	{
 		file << f << '\n';
 	}
 
-	file << m_bugzilla[info.name].bugzillaLabelToField.size() << '\n';
+	file << instance->bugzillaLabelToField.size() << '\n';
 
 	for (auto&& f : info.labelToField)
 	{
@@ -35,12 +45,14 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 
 	file.flush();
 
+	database.write_bugzilla_instance(*instance);
+
 	send_info(output);
 
 	// get the field values from bugzilla
 	if (m_curl)
 	{
-		m_bugzilla[info.name].fields.clear();
+		m_bugzilla.at(info.name).fields.clear();
 
 		std::string request = info.URL + "/rest/field/bug?api_key=" + info.apiKey;
 
@@ -70,7 +82,7 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 				}
 			}
 
-			m_bugzilla[info.name].fields[name] = values;
+			m_bugzilla.at(info.name).fields[name] = values;
 		}
 
 		//std::vector<TaskID> bugTasks;
@@ -205,7 +217,7 @@ void Bugzilla::send_info(std::vector<std::unique_ptr<Message>>& output)
 {
 	for (auto&& [name, info] : m_bugzilla)
 	{
-		auto bugzilla = BugzillaInfoMessage(info.bugzillaName, info.bugzillaURL, info.bugzillaApiKey);
+		auto bugzilla = BugzillaInfoMessage(info.instanceID, info.bugzillaName, info.bugzillaURL, info.bugzillaApiKey);
 		bugzilla.username = info.bugzillaUsername;
 		bugzilla.rootTaskID = info.bugzillaRootTaskID;
 		bugzilla.groupTasksBy = info.bugzillaGroupTasksBy;
@@ -291,9 +303,9 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 				// find the parent for this task
 				Task* parent = app.find_task(info.bugzillaRootTaskID);
 
-				if (!m_bugzilla[name].bugzillaGroupTasksBy.empty())
+				if (!m_bugzilla.at(name).bugzillaGroupTasksBy.empty())
 				{
-					parent = parent_task_for_bug(m_bugzilla[name], app, api, output, bug, m_bugzilla[name].bugzillaRootTaskID, m_bugzilla[name].bugzillaGroupTasksBy);
+					parent = parent_task_for_bug(m_bugzilla.at(name), app, api, output, bug, m_bugzilla.at(name).bugzillaRootTaskID, m_bugzilla.at(name).bugzillaGroupTasksBy);
 				}
 
 				[&]()
@@ -407,8 +419,8 @@ void Bugzilla::load_config(const std::string& line, std::istream& input)
 {
 	auto values = split(line, ' ');
 
-	BugzillaInstance& bugzilla = m_bugzilla[values[1]];
-
+	BugzillaInstance bugzilla = BugzillaInstance(BugzillaInstanceID(1));//m_bugzilla.at(values[1]);
+	
 	bugzilla.bugzillaName = values[1];
 	bugzilla.bugzillaURL = values[2];
 	bugzilla.bugzillaApiKey = values[3];
@@ -448,13 +460,15 @@ void Bugzilla::load_config(const std::string& line, std::istream& input)
 
 		bugzilla.bugzillaLabelToField[label] = field;
 	}
+
+	m_bugzilla.emplace(bugzilla.bugzillaName, bugzilla);
 }
 
 void Bugzilla::load_refresh(const std::string& line, const std::string& tasks)
 {
 	auto values = split(line, ' ');
 
-	BugzillaInstance& bugzilla = m_bugzilla[values[1]];
+	BugzillaInstance& bugzilla = m_bugzilla.at(values[1]);
 
 	bugzilla.lastBugzillaRefresh = std::chrono::milliseconds(std::stoll(values[2]));
 	m_lastBugzillaRefresh = bugzilla.lastBugzillaRefresh;

@@ -19,7 +19,7 @@ TEST_CASE("Configuring Bugzilla Information", "[bugzilla][api]")
 	helper.clear_message_output();
 
 	// send bugzilla packet
-	auto configure = BugzillaInfoMessage("bugzilla", "0.0.0.0", "asfesdFEASfslj");
+	auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla", "0.0.0.0", "asfesdFEASfslj");
 	configure.username = "test";
 	configure.rootTaskID = TaskID(1);
 	configure.groupTasksBy.push_back("product");
@@ -32,6 +32,7 @@ TEST_CASE("Configuring Bugzilla Information", "[bugzilla][api]")
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
 	helper.api.process_packet(configure, helper.output);
+	configure.instanceID = BugzillaInstanceID(1);
 
 	helper.required_messages({ &configure });
 }
@@ -44,7 +45,7 @@ TEST_CASE("Request Bugzilla Information", "[bugzilla][api]")
 	helper.clear_message_output();
 
 	// send bugzilla packet
-	auto configure = BugzillaInfoMessage("bugzilla", "0.0.0.0", "asfesdFEASfslj");
+	auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla", "0.0.0.0", "asfesdFEASfslj");
 	configure.username = "test";
 	configure.rootTaskID = TaskID(1);
 	configure.groupTasksBy.push_back("product");
@@ -69,6 +70,8 @@ TEST_CASE("Request Bugzilla Information", "[bugzilla][api]")
 	auto root = TaskInfoMessage(TaskID(1), NO_PARENT, "Bugzilla");
 	root.createTime = std::chrono::milliseconds(1737344039870);
 
+	configure.instanceID = BugzillaInstanceID(1);
+
 	helper.required_messages({ &timeCategories, &root, &configure, &complete });
 }
 
@@ -79,7 +82,7 @@ TEST_CASE("Configuring Multiple Bugzilla Instances", "[bugzilla][api]")
 	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "Bugzilla"));
 
 	// send bugzilla packet
-	auto configure = BugzillaInfoMessage("bugzilla", "0.0.0.0", "asfesdFEASfslj");
+	auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla", "0.0.0.0", "asfesdFEASfslj");
 	configure.username = "test";
 	configure.rootTaskID = TaskID(1);
 	configure.groupTasksBy.push_back("priority");
@@ -203,6 +206,9 @@ TEST_CASE("Configuring Multiple Bugzilla Instances", "[bugzilla][api]")
 		auto root = TaskInfoMessage(TaskID(1), NO_PARENT, "Bugzilla");
 		root.createTime = std::chrono::milliseconds(1737344039870);
 
+		configure.instanceID = BugzillaInstanceID(1);
+		configure2.instanceID = BugzillaInstanceID(2);
+
 		helper.required_messages({ &timeCategories, &root, &configure, &configure2, &complete });
 	}
 }
@@ -266,7 +272,7 @@ bugzilla-tasks bugzilla 50 4 55 5 60 8 65 11 70 14
 		auto create1 = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1");
 		helper.expect_success(create1);
 
-		auto configure = BugzillaInfoMessage("bugzilla", "0.0.0.0", "asfesdFEASfslj");
+		auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla", "0.0.0.0", "asfesdFEASfslj");
 		configure.username = "test";
 		configure.rootTaskID = TaskID(1);
 		configure.groupTasksBy.push_back("priority");
@@ -392,7 +398,7 @@ bugzilla-tasks bugzilla 50 4 55 5 60 8 65 11 70 14
 		// now that we're setup, request the configuration and check the output
 		helper.api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, helper.output);
 
-		auto configure = BugzillaInfoMessage("bugzilla", "0.0.0.0", "asfesdFEASfslj");
+		auto configure = BugzillaInfoMessage(BugzillaInstanceID(1), "bugzilla", "0.0.0.0", "asfesdFEASfslj");
 		configure.username = "test";
 		configure.rootTaskID = TaskID(1);
 		configure.groupTasksBy.push_back("priority");
@@ -482,7 +488,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "Bugzilla"));
 
 	// send bugzilla packet
-	auto configure = BugzillaInfoMessage("bugzilla", "0.0.0.0", "asfesdFEASfslj");
+	auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla", "0.0.0.0", "asfesdFEASfslj");
 	configure.username = "test";
 	configure.rootTaskID = TaskID(1);
 	configure.groupTasksBy.push_back("priority");
@@ -579,37 +585,13 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
 	helper.api.process_packet(configure, helper.output);
+	configure.instanceID = BugzillaInstanceID(1);
 
 	CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/field/bug?api_key=asfesdFEASfslj");
 
 	auto root = TaskInfoMessage(TaskID(1), NO_PARENT, "Bugzilla");
 	root.createTime = 1737344039870ms;
 	root.newTask = true;
-
-	/*auto p1 = TaskInfoMessage(TaskID(2), TaskID(1), "P1");
-	auto p2 = TaskInfoMessage(TaskID(7), TaskID(1), "P2");
-	auto p3 = TaskInfoMessage(TaskID(12), TaskID(1), "P3");
-	auto p4 = TaskInfoMessage(TaskID(17), TaskID(1), "P4");
-
-	auto p1_nitpick = TaskInfoMessage(TaskID(3), TaskID(2), "Nitpick");
-	auto p1_minor = TaskInfoMessage(TaskID(4), TaskID(2), "Minor");
-	auto p1_critical = TaskInfoMessage(TaskID(5), TaskID(2), "Critical");
-	auto p1_blocker = TaskInfoMessage(TaskID(6), TaskID(2), "Blocker");
-
-	auto p2_nitpick = TaskInfoMessage(TaskID(8), TaskID(7), "Nitpick");
-	auto p2_minor = TaskInfoMessage(TaskID(9), TaskID(7), "Minor");
-	auto p2_critical = TaskInfoMessage(TaskID(10), TaskID(7), "Critical");
-	auto p2_blocker = TaskInfoMessage(TaskID(11), TaskID(7), "Blocker");
-
-	auto p3_nitpick = TaskInfoMessage(TaskID(13), TaskID(12), "Nitpick");
-	auto p3_minor = TaskInfoMessage(TaskID(14), TaskID(12), "Minor");
-	auto p3_critical = TaskInfoMessage(TaskID(15), TaskID(12), "Critical");
-	auto p3_blocker = TaskInfoMessage(TaskID(16), TaskID(12), "Blocker");
-
-	auto p4_nitpick = TaskInfoMessage(TaskID(18), TaskID(17), "Nitpick");
-	auto p4_minor = TaskInfoMessage(TaskID(19), TaskID(17), "Minor");
-	auto p4_critical = TaskInfoMessage(TaskID(20), TaskID(17), "Critical");
-	auto p4_blocker = TaskInfoMessage(TaskID(21), TaskID(17), "Blocker");*/
 
 	const auto setup_task_inactive = [](TaskInfoMessage& task, std::chrono::milliseconds create_time)
 		{
@@ -628,31 +610,6 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			task.newTask = true;
 			task.serverControlled = true;
 		};
-
-	/*setup_task_finished(p1, 1737345839870ms, 1737381839870ms);
-	setup_task_finished(p2, 1737354839870ms, 1737390839870ms);
-	setup_task_finished(p3, 1737363839870ms, 1737399839870ms);
-	setup_task_finished(p4, 1737372839870ms, 1737408839870ms);
-
-	setup_task_finished(p1_nitpick, 1737347639870ms, 1737383639870ms);
-	setup_task_finished(p1_minor, 1737349439870ms, 1737385439870ms);
-	setup_task_finished(p1_critical, 1737351239870ms, 1737387239870ms);
-	setup_task_finished(p1_blocker, 1737353039870ms, 1737389039870ms);
-
-	setup_task_finished(p2_nitpick, 1737356639870ms, 1737392639870ms);
-	setup_task_finished(p2_minor, 1737358439870ms, 1737394439870ms);
-	setup_task_finished(p2_critical, 1737360239870ms, 1737396239870ms);
-	setup_task_finished(p2_blocker, 1737362039870ms, 1737398039870ms);
-
-	setup_task_finished(p3_nitpick, 1737365639870ms, 1737401639870ms);
-	setup_task_finished(p3_minor, 1737367439870ms, 1737403439870ms);
-	setup_task_finished(p3_critical, 1737369239870ms, 1737405239870ms);
-	setup_task_finished(p3_blocker, 1737371039870ms, 1737407039870ms);
-
-	setup_task_finished(p4_nitpick, 1737374639870ms, 1737410639870ms);
-	setup_task_finished(p4_minor, 1737376439870ms, 1737412439870ms);
-	setup_task_finished(p4_critical, 1737378239870ms, 1737414239870ms);
-	setup_task_finished(p4_blocker, 1737380039870ms, 1737416039870ms);*/
 
 	helper.required_messages(
 		{
