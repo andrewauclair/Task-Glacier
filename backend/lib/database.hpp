@@ -63,5 +63,7 @@ struct DatabaseImpl : Database
 	void remove_time_entry() override {}
 
 private:
+	void write_sessions(const Task& task);
+
 	SQLite::Database m_database;
 };

@@ -66,21 +66,144 @@ TEST_CASE("Write Task to Database", "[database]")
 
 	API api = API(clock, curl, fileInput, fileOutput, database);
 
-	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "this is a test"));
+	std::vector<std::unique_ptr<Message>> output;
+
+	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+	api.process_packet(CreateTaskMessage(TaskID(1), RequestID(2), "this is a test"), output);
+	api.process_packet(TaskMessage(PacketType::FINISH_TASK, RequestID(3), TaskID(2)), output);
 
 	auto task = Task("this is a test", TaskID(1), NO_PARENT, std::chrono::milliseconds(1737344039870));
 
-	REQUIRE(helper.database.tasks_written.size() == 1);
-	CHECK(task == helper.database.tasks_written[0]);
-	SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 1");
-	query.exec();
+	SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 2");
+	query.executeStep();
 
 	REQUIRE(query.hasRow());
+
+	int id = query.getColumn(0);
+	std::string name = query.getColumn(1);
+	int parentID = query.getColumn(2);
+	int state = query.getColumn(3);
+	std::int64_t create_time = query.getColumn(4);
+	std::int64_t finish_time = query.getColumn(5);
+
+	CHECK(id == 2);
+	CHECK(name == "this is a test");
+	CHECK(parentID == 1);
+	CHECK(state == 2);
+	CHECK(create_time == 1737345839870);
+	CHECK(finish_time == 1737347639870);
 }
 
 TEST_CASE("Write Task Session to Database", "[database]")
 {
+	TestClock clock;
+	curlTest curl;
 
+	DatabaseImpl database(":memory:");
+
+	std::istringstream fileInput;
+	std::ostringstream fileOutput;
+
+	API api = API(clock, curl, fileInput, fileOutput, database);
+
+	std::vector<std::unique_ptr<Message>> output;
+
+	auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
+	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A", "A");
+	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
+	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
+
+	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B", "B");
+	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
+	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
+
+	api.process_packet(modify, output);
+
+	auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
+	create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
+	create.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
+
+	api.process_packet(create, output);
+	api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(3), TaskID(1)), output);
+	api.process_packet(TaskMessage(PacketType::STOP_TASK, RequestID(4), TaskID(1)), output);
+	api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(5), TaskID(1)), output);
+
+	SQLite::Statement query(database.database(), "SELECT * FROM timeEntrySession WHERE TaskID == 1");
+	query.executeStep();
+
+	REQUIRE(query.hasRow());
+
+	int id = query.getColumn(0);
+	int sessionIndex = query.getColumn(1);
+	int timeCategoryID = query.getColumn(2);
+	std::int64_t start = query.getColumn(3);
+	std::int64_t stop = query.getColumn(4);
+	int timeCodeID = query.getColumn(5);
+
+	CHECK(id == 1);
+	CHECK(sessionIndex == 0);
+	CHECK(start == 1737345839870);
+	CHECK(stop == 1737347639870);
+	CHECK(timeCategoryID == 1);
+	CHECK(timeCodeID == 1);
+
+	query.executeStep();
+
+	REQUIRE(query.hasRow());
+
+	id = query.getColumn(0);
+	sessionIndex = query.getColumn(1);
+	timeCategoryID = query.getColumn(2);
+	start = query.getColumn(3);
+	stop = query.getColumn(4);
+	timeCodeID = query.getColumn(5);
+
+	CHECK(id == 1);
+	CHECK(sessionIndex == 0);
+	CHECK(start == 1737345839870);
+	CHECK(stop == 1737347639870);
+	CHECK(timeCategoryID == 2);
+	CHECK(timeCodeID == 4);
+
+	query.executeStep();
+
+	REQUIRE(query.hasRow());
+
+	id = query.getColumn(0);
+	sessionIndex = query.getColumn(1);
+	timeCategoryID = query.getColumn(2);
+	start = query.getColumn(3);
+	stop = query.getColumn(4);
+	timeCodeID = query.getColumn(5);
+
+	CHECK(id == 1);
+	CHECK(sessionIndex == 1);
+	CHECK(start == 1737349439870);
+	CHECK(stop == 0);
+	CHECK(timeCategoryID == 1);
+	CHECK(timeCodeID == 1);
+
+	query.executeStep();
+
+	REQUIRE(query.hasRow());
+
+	id = query.getColumn(0);
+	sessionIndex = query.getColumn(1);
+	timeCategoryID = query.getColumn(2);
+	start = query.getColumn(3);
+	stop = query.getColumn(4);
+	timeCodeID = query.getColumn(5);
+
+	CHECK(id == 1);
+	CHECK(sessionIndex == 1);
+	CHECK(start == 1737349439870);
+	CHECK(stop == 0);
+	CHECK(timeCategoryID == 2);
+	CHECK(timeCodeID == 4);
+
+	query.executeStep();
+
+	REQUIRE(!query.hasRow());
 }
 
 TEST_CASE("Write Task Time Entry to Database", "[database]")
