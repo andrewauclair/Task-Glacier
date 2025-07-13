@@ -326,6 +326,50 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 		update_category.timeCategories.push_back(cat);
 
 		api.process_packet(update_category, output);
+
+		SQLite::Statement query(database.database(), "SELECT * FROM timeEntryCategory WHERE TimeCategoryID == 1");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		int categoryID = query.getColumn(0);
+		std::string categoryName = query.getColumn(1);
+
+		CHECK(categoryID == 1);
+		CHECK(categoryName == "Test er");
+
+		query.executeStep();
+
+		REQUIRE(!query.hasRow());
+
+		query = SQLite::Statement(database.database(), "SELECT * FROM timeEntryCode WHERE TimeCategoryID == 1");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		categoryID = query.getColumn(0);
+		int codeID = query.getColumn(1);
+		std::string codeName = query.getColumn(2);
+
+		CHECK(categoryID == 1);
+		CHECK(codeID == 1);
+		CHECK(codeName == "Fo o");
+
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		categoryID = query.getColumn(0);
+		codeID = query.getColumn(1);
+		codeName = query.getColumn(2).getString();
+
+		CHECK(categoryID == 1);
+		CHECK(codeID == 2);
+		CHECK(codeName == "Bar s");
+
+		query.executeStep();
+
+		REQUIRE(!query.hasRow());
 	}
 
 	SECTION("Remove")

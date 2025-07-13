@@ -349,6 +349,8 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<st
 				*m_output << code.id._val << ' ' << persist_string(code.name) << ' ';
 			}
 			*m_output << std::endl;
+
+			m_database->write_time_entry_config(*timeCategory);
 		}
 		else if (message.type == TimeCategoryModType::REMOVE_CATEGORY)
 		{
