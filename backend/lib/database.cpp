@@ -19,6 +19,8 @@ DatabaseImpl::DatabaseImpl(const std::string& file)
 	{
 		std::cerr << e.what() << std::endl;
 	}
+
+
 }
 
 void DatabaseImpl::write_task(const Task& task)
@@ -66,6 +68,30 @@ void DatabaseImpl::write_bugzilla_instance(const BugzillaInstance& instance)
 
 	write_bugzilla_group_by(instance);
 	write_bugzilla_bug_to_task(instance);
+}
+
+void DatabaseImpl::load_tasks(Bugzilla& bugzilla, MicroTask& app, API& api)
+{
+	SQLite::Statement query(m_database, "SELECT * FROM tasks");
+	query.executeStep();
+
+	while (query.hasRow())
+	{
+		int taskID = query.getColumn(0);
+		std::string name = query.getColumn(1);
+		int parentID = query.getColumn(2);
+		int state = query.getColumn(3);
+		std::int64_t create_time = query.getColumn(4);
+		std::int64_t finish_time = query.getColumn(5);
+
+		
+		query.executeStep();
+	}
+}
+
+void DatabaseImpl::load_bugzilla_instances(Bugzilla& bugzilla, MicroTask& app, API& api)
+{
+
 }
 
 void DatabaseImpl::write_task_time_entry(const Task& task)

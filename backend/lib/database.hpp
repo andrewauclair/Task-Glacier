@@ -72,6 +72,9 @@ struct DatabaseImpl : Database
 	void remove_time_code(const TimeCategory& entry, const TimeCode& code) override;
 
 private:
+	void load_tasks(Bugzilla& bugzilla, MicroTask& app, API& api);
+	void load_bugzilla_instances(Bugzilla& bugzilla, MicroTask& app, API& api);
+
 	void write_task_time_entry(const Task& task);
 	void write_sessions(const Task& task);
 

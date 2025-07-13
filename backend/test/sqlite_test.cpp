@@ -55,6 +55,171 @@ TEST_CASE("Create Database", "[database]")
 	has_table("bugzillaBugToTask");
 }
 
+TEST_CASE("Load Database", "[database]")
+{
+	TestClock clock;
+	curlTest curl;
+
+	std::filesystem::remove("database_load_test.db3");
+
+	{
+		DatabaseImpl database("database_load_test.db3");
+
+		API api = API(clock, curl, database);
+
+		std::vector<std::unique_ptr<Message>> output;
+
+		auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
+		auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A", "A");
+		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
+		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
+
+		auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B", "B");
+		newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
+		newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
+
+		api.process_packet(modify, output);
+
+		CreateTaskMessage create1(NO_PARENT, RequestID(1), "parent");
+		create1.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
+		create1.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
+
+		CreateTaskMessage create2(TaskID(1), RequestID(2), "child 1");
+		create2.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(2));
+		create2.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(3));
+
+		CreateTaskMessage create3(TaskID(2), RequestID(3), "child 2");
+		create3.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(2));
+		create3.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
+
+		api.process_packet(create1, output);
+		api.process_packet(create2, output);
+		api.process_packet(create3, output);
+
+		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(1)), output);
+		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(2)), output);
+		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(3)), output);
+		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(1)), output);
+		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(2)), output);
+		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(3)), output);
+		api.process_packet(TaskMessage(PacketType::FINISH_TASK, RequestID(1), TaskID(2)), output);
+
+		auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla", "0.0.0.0", "asfesdFEASfslj");
+		configure.username = "test";
+		configure.rootTaskID = TaskID(1);
+		configure.groupTasksBy.push_back("priority");
+		configure.groupTasksBy.push_back("severity");
+
+		configure.labelToField["Priority"] = "priority";
+		configure.labelToField["Status"] = "status";
+
+		const std::string fieldsResponse = R"bugs_data(
+		{
+		  "fields": [
+			{
+			  "display_name": "Priority",
+			  "name": "priority",
+			  "type": 2,
+			  "is_mandatory": false,
+			  "value_field": null,
+			  "values": [
+				{
+				  "sortkey": 100,
+				  "sort_key": 100,
+				  "visibility_values": [],
+				  "name": "P1"
+				},
+				{
+				  "sort_key": 200,
+				  "name": "P2",
+				  "visibility_values": [],
+				  "sortkey": 200
+				},
+				{
+				  "sort_key": 300,
+				  "visibility_values": [],
+				  "name": "P3",
+				  "sortkey": 300
+				},
+				{
+				  "sort_key": 400,
+				  "name": "P4",
+				  "visibility_values": [],
+				  "sortkey": 400
+				}
+			  ],
+			  "visibility_values": [],
+			  "visibility_field": null,
+			  "is_on_bug_entry": false,
+			  "is_custom": false,
+			  "id": 13
+			},
+			{
+			  "display_name": "Severity",
+			  "name": "severity",
+			  "type": 2,
+			  "is_mandatory": false,
+			  "value_field": null,
+			  "values": [
+				{
+				  "sortkey": 100,
+				  "sort_key": 100,
+				  "visibility_values": [],
+				  "name": "Nitpick"
+				},
+				{
+				  "sort_key": 200,
+				  "name": "Minor",
+				  "visibility_values": [],
+				  "sortkey": 200
+				},
+				{
+				  "sort_key": 300,
+				  "visibility_values": [],
+				  "name": "Critical",
+				  "sortkey": 300
+				},
+				{
+				  "sort_key": 400,
+				  "name": "Blocker",
+				  "visibility_values": [],
+				  "sortkey": 400
+				}
+			  ],
+			  "visibility_values": [],
+			  "visibility_field": null,
+			  "is_on_bug_entry": false,
+			  "is_custom": false,
+			  "id": 14
+			}
+		  ]
+		}
+	)bugs_data";
+
+		curl.requestResponse.emplace_back(fieldsResponse);
+		curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+			"{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+			"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
+			"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
+			"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+
+		api.process_packet(configure, output);
+
+	}
+
+	{
+		DatabaseImpl database("database_load_test.db3");
+
+		API api = API(clock, curl, database);
+
+		std::vector<std::unique_ptr<Message>> output;
+
+		api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, output);
+
+		REQUIRE(output.size() == 8);
+	}
+}
+
 TEST_CASE("Write Task to Database", "[database]")
 {
 	TestClock clock;
