@@ -29,9 +29,6 @@ std::expected<TaskID, std::string> MicroTask::create_task(const std::string& nam
 	
 	m_nextTaskID._val++;
 
-	// TODO we need to remove this again. Adding it back so that the tests pass the same as they used to
-	m_clock->now();
-
 	m_database->write_task(task);
 	m_database->write_next_task_id(m_nextTaskID);
 
@@ -228,9 +225,6 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 
 		m_activeTask = task;
 
-		// TODO we need to remove this again. Adding it back so that the tests pass the same as they used to
-		m_clock->now();
-
 		m_database->write_task(*task);
 
 		return std::nullopt;
@@ -248,9 +242,6 @@ std::optional<std::string> MicroTask::stop_task(TaskID id)
 
 		task->state = TaskState::INACTIVE;
 		task->m_times.back().stop = m_clock->now();
-
-		// TODO we need to remove this again. Adding it back so that the tests pass the same as they used to
-		m_clock->now();
 
 		m_database->write_task(*task);
 
@@ -281,9 +272,6 @@ std::optional<std::string> MicroTask::finish_task(TaskID id)
 		task->m_finishTime = finish_time;
 
 		task->state = TaskState::FINISHED;
-
-		// TODO we need to remove this again. Adding it back so that the tests pass the same as they used to
-		m_clock->now();
 
 		m_database->write_task(*task);
 
