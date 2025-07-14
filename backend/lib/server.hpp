@@ -109,6 +109,7 @@ public:
 	std::expected<TaskState, std::string> task_state(TaskID id);
 
 	void load_task(const Task& task);
+	void load_time_entry(const std::vector<TimeCategory>& timeCategories);
 
 	template<typename Func>
 	void for_each_task_sorted(Func&& func)
@@ -163,12 +164,13 @@ public:
 public:
 	TimeCategoryID m_nextTimeCategoryID = TimeCategoryID(1);
 	TimeCodeID m_nextTimeCodeID = TimeCodeID(1);
+	TaskID m_nextTaskID = TaskID(1);
 
 private:
 	std::unordered_map<TaskID, Task> m_tasks;
 	Task* m_activeTask = nullptr;
 
-	TaskID m_nextTaskID = TaskID(1);
+	
 
 	std::vector<TimeCategory> m_timeCategories;
 

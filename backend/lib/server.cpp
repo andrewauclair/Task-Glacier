@@ -35,6 +35,7 @@ std::expected<TaskID, std::string> MicroTask::create_task(const std::string& nam
 	//*m_output << "create " << id._val << ' ' << parentID._val << ' ' << m_clock->now().count() << ' ' << task.serverControlled << ' ' << persist_string(name) << std::endl;
 
 	m_database->write_task(task);
+	m_database->write_next_task_id(m_nextTaskID);
 
 	return std::expected<TaskID, std::string>(id);
 }
@@ -381,6 +382,11 @@ std::expected<TaskState, std::string> MicroTask::task_state(TaskID id)
 void MicroTask::load_task(const Task& task)
 {
 	m_tasks.emplace(task.taskID(), task);
+}
+
+void MicroTask::load_time_entry(const std::vector<TimeCategory>& timeCategories)
+{
+	m_timeCategories = timeCategories;
 }
 
 void MicroTask::load_from_file(std::istream& input)

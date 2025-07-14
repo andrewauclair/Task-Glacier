@@ -14,6 +14,7 @@ DatabaseImpl::DatabaseImpl(const std::string& file)
 		m_database.exec("create table if not exists bugzilla (BugzillaInstanceID integer PRIMARY KEY, Name text, URL text, APIKey text, UserName text, RootTaskID integer, LastRefresh bigint)");
 		m_database.exec("create table if not exists bugzillaGroupBy (BugzillaInstanceID integer PRIMARY KEY, Field text)");
 		m_database.exec("create table if not exists bugzillaBugToTask (BugzillaInstanceID integer, BugID integer, TaskID integer, PRIMARY KEY (BugzillaInstanceID, BugID))");
+		m_database.exec("create table if not exists nextIDs (Name text PRIMARY KEY, ID integer)");
 	}
 	catch (const std::exception& e)
 	{
@@ -23,9 +24,10 @@ DatabaseImpl::DatabaseImpl(const std::string& file)
 
 void DatabaseImpl::load(Bugzilla& bugzilla, MicroTask& app, API& api)
 {
-	load_time_entry(app, api);
-	load_tasks(app, api);
-	load_bugzilla_instances(bugzilla, app, api);
+	load_time_entry(app);
+	load_tasks(app);
+	load_bugzilla_instances(bugzilla, app);
+	load_next_ids(bugzilla, app);
 }
 
 void DatabaseImpl::write_task(const Task& task)
@@ -49,6 +51,21 @@ void DatabaseImpl::write_task(const Task& task)
 
 	write_task_time_entry(task);
 	write_sessions(task);
+}
+
+void DatabaseImpl::write_next_task_id(TaskID nextID)
+{
+	SQLite::Statement insert(m_database, "insert or replace into nextIDs values ('task', ?)");
+	insert.bind(1, nextID._val);
+
+	try
+	{
+		insert.exec();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
 }
 
 void DatabaseImpl::write_bugzilla_instance(const BugzillaInstance& instance)
@@ -75,7 +92,21 @@ void DatabaseImpl::write_bugzilla_instance(const BugzillaInstance& instance)
 	write_bugzilla_bug_to_task(instance);
 }
 
-void DatabaseImpl::load_time_entry(MicroTask& app, API& api)
+void DatabaseImpl::write_next_bugzilla_instance_id(BugzillaInstanceID nextID)
+{
+	SQLite::Statement insert(m_database, "insert or replace into nextIDs values ('bugzilla', ?)");
+	insert.bind(1, nextID._val);
+
+	try
+	{
+		insert.exec();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
+}
+void DatabaseImpl::load_time_entry(MicroTask& app)
 {
 	SQLite::Statement query_category(m_database, "SELECT * FROM timeEntryCategory");
 	SQLite::Statement query_code(m_database, "SELECT * FROM timeEntryCode");
@@ -107,9 +138,18 @@ void DatabaseImpl::load_time_entry(MicroTask& app, API& api)
 
 		query_code.executeStep();
 	}
+
+	std::vector<TimeCategory> timeCategories;
+
+	for (auto&& [id, cat] : categories)
+	{
+		timeCategories.push_back(cat);
+	}
+
+	app.load_time_entry(timeCategories);
 }
 
-void DatabaseImpl::load_tasks(MicroTask& app, API& api)
+void DatabaseImpl::load_tasks(MicroTask& app)
 {
 	SQLite::Statement query(m_database, "SELECT * FROM tasks");
 	query.executeStep();
@@ -155,15 +195,15 @@ void DatabaseImpl::load_tasks(MicroTask& app, API& api)
 
 			if (task.m_times.size() > index)
 			{
+				task.m_times.back().timeEntry.emplace_back(TimeCategoryID(catID), TimeCodeID(codeID));
+			}
+			else
+			{
 				TaskTimes times{ std::chrono::milliseconds(start_time) };
 				times.stop = stop_time == 0 ? std::nullopt : std::optional(std::chrono::milliseconds(stop_time));
 				times.timeEntry.emplace_back(TimeCategoryID(catID), TimeCodeID(codeID));
 
 				task.m_times.push_back(times);
-			}
-			else
-			{
-				task.m_times.back().timeEntry.emplace_back(TimeCategoryID(catID), TimeCodeID(codeID));
 			}
 
 			query_sessions.executeStep();
@@ -175,7 +215,7 @@ void DatabaseImpl::load_tasks(MicroTask& app, API& api)
 	}
 }
 
-void DatabaseImpl::load_bugzilla_instances(Bugzilla& bugzilla, MicroTask& app, API& api)
+void DatabaseImpl::load_bugzilla_instances(Bugzilla& bugzilla, MicroTask& app)
 {
 	SQLite::Statement query_instances(m_database, "SELECT * FROM bugzilla");
 	query_instances.executeStep();
@@ -189,6 +229,8 @@ void DatabaseImpl::load_bugzilla_instances(Bugzilla& bugzilla, MicroTask& app, A
 		std::string userName = query_instances.getColumn(4);
 		int rootTaskID = query_instances.getColumn(5);
 		std::int64_t last_refresh = query_instances.getColumn(6);
+
+		query_instances.executeStep();
 
 		BugzillaInstance instance = BugzillaInstance(BugzillaInstanceID(instanceID));
 		instance.bugzillaName = name;
@@ -223,6 +265,36 @@ void DatabaseImpl::load_bugzilla_instances(Bugzilla& bugzilla, MicroTask& app, A
 
 			query_bug_to_task.executeStep();
 		}
+
+		bugzilla.load_instance(instance);
+	}
+}
+
+void DatabaseImpl::load_next_ids(Bugzilla& bugzilla, MicroTask& app)
+{
+	SQLite::Statement query(m_database, "SELECT * FROM nextIDs");
+	query.executeStep();
+
+	while (query.hasRow())
+	{
+		if (query.getColumn(0).getString() == "bugzilla")
+		{
+			bugzilla.next_instance_id(BugzillaInstanceID(query.getColumn(1).getInt()));
+		}
+		else if (query.getColumn(0).getString() == "task")
+		{
+			app.m_nextTaskID = TaskID(query.getColumn(1).getInt());
+		}
+		else if (query.getColumn(0).getString() == "category")
+		{
+			app.m_nextTimeCategoryID = TimeCategoryID(query.getColumn(1).getInt());
+		}
+		else if (query.getColumn(0).getString() == "code")
+		{
+			app.m_nextTimeCodeID = TimeCodeID(query.getColumn(1).getInt());
+		}
+
+		query.executeStep();
 	}
 }
 
@@ -308,6 +380,36 @@ void DatabaseImpl::write_time_entry_config(const TimeCategory& entry)
 		{
 			std::cerr << e.what() << std::endl;
 		}
+	}
+}
+
+void DatabaseImpl::write_next_time_category_id(TimeCategoryID nextID)
+{
+	SQLite::Statement insert(m_database, "insert or replace into nextIDs values ('category', ?)");
+	insert.bind(1, nextID._val);
+
+	try
+	{
+		insert.exec();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
+}
+
+void DatabaseImpl::write_next_time_code_id(TimeCodeID nextID)
+{
+	SQLite::Statement insert(m_database, "insert or replace into nextIDs values ('code', ?)");
+	insert.bind(1, nextID._val);
+
+	try
+	{
+		insert.exec();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
 	}
 }
 

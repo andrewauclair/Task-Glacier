@@ -51,6 +51,9 @@ public:
 	void load_config(const std::string& line, std::istream& input);
 	void load_refresh(const std::string& line, const std::string& tasks);
 
+	void load_instance(const BugzillaInstance& instance);
+	void next_instance_id(BugzillaInstanceID next);
+
 private:
 	void build_group_by_task(BugzillaInstance& instance, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, TaskID parent, std::span<const std::string> groupTaskBy);
 
@@ -61,5 +64,4 @@ private:
 
 	BugzillaInstanceID m_nextBugzillaID = BugzillaInstanceID(1);
 	std::map<std::string, BugzillaInstance> m_bugzilla;
-	std::optional<std::chrono::milliseconds> m_lastBugzillaRefresh;
 };

@@ -13,6 +13,8 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 	{
 		m_bugzilla.emplace(info.name, BugzillaInstance(m_nextBugzillaID));
 		++m_nextBugzillaID;
+
+		database.write_next_bugzilla_instance_id(m_nextBugzillaID);
 	}
 	
 	instance = &m_bugzilla.at(info.name);
@@ -413,7 +415,6 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 			//}
 			//file << std::endl;
 		}
-		m_lastBugzillaRefresh = now;
 	}
 }
 
@@ -473,7 +474,6 @@ void Bugzilla::load_refresh(const std::string& line, const std::string& tasks)
 	BugzillaInstance& bugzilla = m_bugzilla.at(values[1]);
 
 	bugzilla.lastBugzillaRefresh = std::chrono::milliseconds(std::stoll(values[2]));
-	m_lastBugzillaRefresh = bugzilla.lastBugzillaRefresh;
 
 	values = split(tasks, ' ');
 
@@ -486,4 +486,14 @@ void Bugzilla::load_refresh(const std::string& line, const std::string& tasks)
 
 		bugzilla.bugToTaskID.emplace(bug, task);
 	}
+}
+
+void Bugzilla::load_instance(const BugzillaInstance& instance)
+{
+	m_bugzilla.emplace(instance.bugzillaName, instance);
+}
+
+void Bugzilla::next_instance_id(BugzillaInstanceID next)
+{
+	m_nextBugzillaID = next;
 }

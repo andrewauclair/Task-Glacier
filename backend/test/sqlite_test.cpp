@@ -216,7 +216,48 @@ TEST_CASE("Load Database", "[database]")
 
 		api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, output);
 
-		REQUIRE(output.size() == 8);
+		REQUIRE(output.size() == 19);
+
+		// test next bugzilla instance ID
+		output.clear();
+		auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla2", "0.0.0.0", "asfesdFEASfslj");
+		configure.username = "test";
+		configure.rootTaskID = TaskID(1);
+		configure.groupTasksBy.push_back("product");
+		configure.groupTasksBy.push_back("severity");
+
+		configure.labelToField["Priority"] = "priority";
+		configure.labelToField["Status"] = "status";
+
+		curl.requestResponse.emplace_back("{ \"fields\": [] }");
+		curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+		curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+
+		api.process_packet(configure, output);
+
+		REQUIRE(output.size() == 15);
+		CHECK(dynamic_cast<BugzillaInfoMessage*>(output[1].get())->instanceID == BugzillaInstanceID(2));
+
+		// test next task ID
+		output.clear();
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+		REQUIRE(output.size() == 2);
+		CHECK(dynamic_cast<TaskInfoMessage*>(output[1].get())->taskID == TaskID(17));
+
+		// test next time category ID
+		// test next time code ID
+		auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
+		auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "C", "C");
+		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 5");
+
+		output.clear();
+		api.process_packet(modify, output);
+		REQUIRE(output.size() == 2);
+
+		auto* timeEntry = dynamic_cast<TimeEntryDataPacket*>(output[1].get());
+		REQUIRE(timeEntry->timeCategories.size() == 3);
+		CHECK(timeEntry->timeCategories[2].id == TimeCategoryID(3));
+		CHECK(timeEntry->timeCategories[2].codes[0].id == TimeCodeID(5));
 	}
 }
 

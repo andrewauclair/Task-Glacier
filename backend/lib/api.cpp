@@ -289,6 +289,8 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<st
 
 			m_app.m_nextTimeCategoryID++;
 
+			m_database->write_next_time_category_id(m_app.m_nextTimeCategoryID);
+
 			m_app.timeCategories().push_back(newCategory);
 
 			timeCategory = &m_app.timeCategories().back();
@@ -423,6 +425,8 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<st
 						m_app.m_nextTimeCodeID++;
 
 						timeCategory->codes.push_back(copyCode);
+
+						m_database->write_next_time_code_id(m_app.m_nextTimeCodeID);
 					}
 				}
 			}

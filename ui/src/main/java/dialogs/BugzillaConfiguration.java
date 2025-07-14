@@ -20,6 +20,7 @@ public class BugzillaConfiguration extends JDialog {
     private JButton save = new JButton("Save");
 
     class BugzillaInstance {
+        int instanceID;
         String name;
         JTextField URL = new JTextField();
         JTextField apiKey = new JTextField();
@@ -318,7 +319,7 @@ public class BugzillaConfiguration extends JDialog {
 
         save.addActionListener(e -> {
             for (BugzillaInstance instance : instances.values()) {
-                BugzillaInfo info = new BugzillaInfo(instance.name, instance.URL.getText(), instance.apiKey.getText(), instance.username.getText());
+                BugzillaInfo info = new BugzillaInfo(instance.instanceID, instance.name, instance.URL.getText(), instance.apiKey.getText(), instance.username.getText());
 
                 for (int i = 0; i < instance.groupByModel.getRowCount(); i++) {
                     info.groupTasksBy.add((String) instance.groupByModel.getValueAt(i, 0));

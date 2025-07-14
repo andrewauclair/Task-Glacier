@@ -60,12 +60,12 @@ struct nullDatabase : Database
 
 	// write task
 	void write_task(const Task& task) override {}
-	void next_task_id(TaskID taskID) override {}
+	void write_next_task_id(TaskID nextID) override {}
 
 	// write bugzilla config
 	void write_bugzilla_instance(const BugzillaInstance& instance) override {}
+	void write_next_bugzilla_instance_id(BugzillaInstanceID nextID) override {}
 	void remove_bugzilla_instance(int ID) override {}
-	void next_bugzilla_instance_id(int ID) override {}
 	void bugzilla_refreshed(int ID) override {}
 
 	// write time entry configuration
@@ -77,9 +77,12 @@ struct nullDatabase : Database
 	void write_time_entry(TaskID task) override {}
 	void remove_time_entry() override {}
 
-	virtual void write_time_entry_config(const TimeCategory& entry) override {}
-	virtual void remove_time_category(const TimeCategory& entry) override {}
-	virtual void remove_time_code(const TimeCategory& entry, const TimeCode& code) override {}
+	void write_time_entry_config(const TimeCategory& entry) override {}
+	void write_next_time_category_id(TimeCategoryID nextID) override {}
+	void write_next_time_code_id(TimeCodeID nextID) override {}
+
+	void remove_time_category(const TimeCategory& entry) override {}
+	void remove_time_code(const TimeCategory& entry, const TimeCode& code) override {}
 };
 
 struct TestHelper

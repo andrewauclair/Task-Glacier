@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BugzillaInfo implements Packet {
+    public final int instanceID;
     public final String name;
     public final String url;
     public final String apiKey;
@@ -30,7 +31,8 @@ public class BugzillaInfo implements Packet {
         return PacketType.BUGZILLA_INFO;
     }
 
-    public BugzillaInfo(String name, String url, String apiKey, String username) {
+    public BugzillaInfo(int instanceID, String name, String url, String apiKey, String username) {
+        this.instanceID = instanceID;
         this.name = name;
         this.url = url;
         this.apiKey = apiKey;
@@ -39,12 +41,13 @@ public class BugzillaInfo implements Packet {
 
     public static BugzillaInfo parse(DataInputStream input, int size) throws IOException {
         input.readInt(); // packet type
+        int instanceID = input.readInt();
         String name = Packet.parseString(input);
         String url = Packet.parseString(input);
         String apiKey = Packet.parseString(input);
         String username = Packet.parseString(input);
 
-        BugzillaInfo message = new BugzillaInfo(name, url, apiKey, username);
+        BugzillaInfo message = new BugzillaInfo(instanceID, name, url, apiKey, username);
         message.size = size;
         message.rootTaskID = input.readInt();
 
@@ -68,7 +71,7 @@ public class BugzillaInfo implements Packet {
 
     @Override
     public void writeToOutput(DataOutputStream output) throws IOException {
-        AtomicInteger size = new AtomicInteger(12); // size, packet type, and root task ID
+        AtomicInteger size = new AtomicInteger(16); // size, packet type, instance ID, and root task ID
         size.addAndGet(2 + name.length());
         size.addAndGet(2 + url.length());
         size.addAndGet(2 + apiKey.length());
@@ -89,6 +92,7 @@ public class BugzillaInfo implements Packet {
 
         output.writeInt(size.get());
         output.writeInt(PacketType.BUGZILLA_INFO.value());
+        output.writeInt(instanceID);
         Packet.writeString(output, name);
         Packet.writeString(output, url);
         Packet.writeString(output, apiKey);
