@@ -642,7 +642,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 		helper.expect_success(refresh);
 
-		CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&api_key=asfesdFEASfslj&last_change_time=2025-01-20T04:18:59Z");
+		CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&api_key=asfesdFEASfslj&last_change_time=2025-01-20T04:03:59Z");
 
 		auto p1 = TaskInfoMessage(TaskID(6), TaskID(1), "P1");
 		auto p2 = TaskInfoMessage(TaskID(2), TaskID(1), "P2");
@@ -694,7 +694,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 			helper.expect_success(refresh);
 
-			CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&api_key=asfesdFEASfslj&last_change_time=2025-01-20T11:03:59Z");
+			CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&api_key=asfesdFEASfslj&last_change_time=2025-01-20T04:18:59Z");
 
 			helper.required_messages({});
 		}
@@ -1003,7 +1003,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			
 		helper.expect_success(refresh);
 
-		CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&api_key=asfesdFEASfslj&last_change_time=2025-01-20T04:18:59Z");
+		CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&api_key=asfesdFEASfslj&last_change_time=2025-01-20T04:03:59Z");
 
 		auto p1 = TaskInfoMessage(TaskID(6), TaskID(1), "P1");
 		auto p2 = TaskInfoMessage(TaskID(2), TaskID(1), "P2");

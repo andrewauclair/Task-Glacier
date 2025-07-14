@@ -267,10 +267,12 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 			{
 				// YYYY-MM-DDTHH24:MI:SSZ
 
-				auto time = std::chrono::system_clock::time_point(now);
+				auto last_refresh_time = info.lastBugzillaRefresh.value_or(std::chrono::milliseconds(0));
+
+				auto time = std::chrono::system_clock::time_point(last_refresh_time);
 
 				std::chrono::year_month_day ymd = std::chrono::year_month_day{ std::chrono::floor<std::chrono::days>(time) };
-				std::chrono::hh_mm_ss hms = std::chrono::hh_mm_ss{ now - m_clock->midnight() };
+				std::chrono::hh_mm_ss hms = std::chrono::hh_mm_ss{ last_refresh_time - m_clock->midnight() };
 
 				requestAddress += "&last_change_time=" + std::format("{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z", (int)ymd.year(), (unsigned int)ymd.month(), (unsigned int)ymd.day(), hms.hours().count(), hms.minutes().count(), hms.seconds().count());
 			}
