@@ -19,8 +19,13 @@ DatabaseImpl::DatabaseImpl(const std::string& file)
 	{
 		std::cerr << e.what() << std::endl;
 	}
+}
 
-
+void DatabaseImpl::load(Bugzilla& bugzilla, MicroTask& app, API& api)
+{
+	load_time_entry(app, api);
+	load_tasks(app, api);
+	load_bugzilla_instances(bugzilla, app, api);
 }
 
 void DatabaseImpl::write_task(const Task& task)
@@ -70,7 +75,41 @@ void DatabaseImpl::write_bugzilla_instance(const BugzillaInstance& instance)
 	write_bugzilla_bug_to_task(instance);
 }
 
-void DatabaseImpl::load_tasks(Bugzilla& bugzilla, MicroTask& app, API& api)
+void DatabaseImpl::load_time_entry(MicroTask& app, API& api)
+{
+	SQLite::Statement query_category(m_database, "SELECT * FROM timeEntryCategory");
+	SQLite::Statement query_code(m_database, "SELECT * FROM timeEntryCode");
+
+	std::map<TimeCategoryID, TimeCategory> categories;
+
+	query_category.executeStep();
+
+	while (query_category.hasRow())
+	{
+		int id = query_category.getColumn(0);
+		auto cat = TimeCategory{ TimeCategoryID(id) };
+		cat.name = query_category.getColumn(1).getString();
+
+		categories.emplace(cat.id, cat);
+
+		query_category.executeStep();
+	}
+
+	query_code.executeStep();
+
+	while (query_code.hasRow())
+	{
+		int catID = query_code.getColumn(0);
+		int codeID = query_code.getColumn(1);
+		std::string code_name = query_code.getColumn(2);
+
+		categories.at(TimeCategoryID(catID)).codes.emplace_back(TimeCodeID(codeID), code_name);
+
+		query_code.executeStep();
+	}
+}
+
+void DatabaseImpl::load_tasks(MicroTask& app, API& api)
 {
 	SQLite::Statement query(m_database, "SELECT * FROM tasks");
 	query.executeStep();
@@ -84,14 +123,107 @@ void DatabaseImpl::load_tasks(Bugzilla& bugzilla, MicroTask& app, API& api)
 		std::int64_t create_time = query.getColumn(4);
 		std::int64_t finish_time = query.getColumn(5);
 
-		
+		Task task = Task(std::move(name), TaskID(taskID), TaskID(parentID), std::chrono::milliseconds(create_time));
+		task.state = static_cast<TaskState>(state);
+		task.m_finishTime = finish_time == 0 ? std::nullopt : std::optional(std::chrono::milliseconds(finish_time));
+
+		SQLite::Statement query_time_entry(m_database, "SELECT * FROM timeEntryTask WHERE TaskID == ?");
+		query_time_entry.bind(1, taskID);
+		query_time_entry.executeStep();
+
+		while (query_time_entry.hasRow())
+		{
+			int catID = query_time_entry.getColumn(1);
+			int codeID = query_time_entry.getColumn(2);
+
+			task.timeEntry.emplace_back(TimeCategoryID(catID), TimeCodeID(codeID));
+
+			query_time_entry.executeStep();
+		}
+
+		SQLite::Statement query_sessions(m_database, "SELECT * FROM timeEntrySession WHERE TaskID == ?; ORDER BY Index ASC;");
+		query_sessions.bind(1, taskID);
+		query_sessions.executeStep();
+
+		while (query_sessions.hasRow())
+		{
+			int index = query_sessions.getColumn(1);
+			int catID = query_sessions.getColumn(2);
+			std::int64_t start_time = query_sessions.getColumn(3);
+			std::int64_t stop_time = query_sessions.getColumn(4);
+			int codeID = query_sessions.getColumn(5);
+
+			if (task.m_times.size() > index)
+			{
+				TaskTimes times{ std::chrono::milliseconds(start_time) };
+				times.stop = stop_time == 0 ? std::nullopt : std::optional(std::chrono::milliseconds(stop_time));
+				times.timeEntry.emplace_back(TimeCategoryID(catID), TimeCodeID(codeID));
+
+				task.m_times.push_back(times);
+			}
+			else
+			{
+				task.m_times.back().timeEntry.emplace_back(TimeCategoryID(catID), TimeCodeID(codeID));
+			}
+
+			query_sessions.executeStep();
+		}
+
+		app.load_task(task);
+
 		query.executeStep();
 	}
 }
 
 void DatabaseImpl::load_bugzilla_instances(Bugzilla& bugzilla, MicroTask& app, API& api)
 {
+	SQLite::Statement query_instances(m_database, "SELECT * FROM bugzilla");
+	query_instances.executeStep();
 
+	while (query_instances.hasRow())
+	{
+		int instanceID = query_instances.getColumn(0);
+		std::string name = query_instances.getColumn(1);
+		std::string url = query_instances.getColumn(2);
+		std::string apiKey = query_instances.getColumn(3);
+		std::string userName = query_instances.getColumn(4);
+		int rootTaskID = query_instances.getColumn(5);
+		std::int64_t last_refresh = query_instances.getColumn(6);
+
+		BugzillaInstance instance = BugzillaInstance(BugzillaInstanceID(instanceID));
+		instance.bugzillaName = name;
+		instance.bugzillaURL = url;
+		instance.bugzillaApiKey = apiKey;
+		instance.bugzillaUsername = userName;
+		instance.bugzillaRootTaskID = TaskID(rootTaskID);
+		instance.lastBugzillaRefresh = std::chrono::milliseconds(last_refresh);
+
+		SQLite::Statement query_group_by(m_database, "SELECT * FROM bugzillaGroupBy WHERE BugzillaInstanceID == ?");
+		query_group_by.bind(1, instanceID);
+
+		query_group_by.executeStep();
+
+		const auto groupBy = split(query_group_by.getColumn(0).getString(), ',');
+
+		for (const std::string& g : groupBy)
+		{
+			instance.bugzillaGroupTasksBy.push_back(g);
+		}
+
+		SQLite::Statement query_bug_to_task(m_database, "SELECT * FROM bugzillaBugToTask WHERE BugzillaInstanceID == ?");
+		query_bug_to_task.bind(1, instanceID);
+		query_bug_to_task.executeStep();
+
+		while (query_bug_to_task.hasRow())
+		{
+			int bug = query_bug_to_task.getColumn(1);
+			int task = query_bug_to_task.getColumn(2);
+
+			instance.bugToTaskID.emplace(bug, TaskID(task));
+
+			query_bug_to_task.executeStep();
+		}
+	}
 }
 
 void DatabaseImpl::write_task_time_entry(const Task& task)

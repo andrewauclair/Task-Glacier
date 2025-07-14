@@ -37,6 +37,7 @@ public:
 		m_database(&database)
 	{
 		//m_app.load_from_file(input);
+		database.load(m_bugzilla, m_app, *this);
 	}
 
 	void process_packet(const Message& message, std::vector<std::unique_ptr<Message>>& output);

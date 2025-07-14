@@ -108,6 +108,8 @@ public:
 	
 	std::expected<TaskState, std::string> task_state(TaskID id);
 
+	void load_task(const Task& task);
+
 	template<typename Func>
 	void for_each_task_sorted(Func&& func)
 	{

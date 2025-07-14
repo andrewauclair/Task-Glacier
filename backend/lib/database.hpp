@@ -46,7 +46,7 @@ struct DatabaseImpl : Database
 
 	SQLite::Database& database() { return m_database; }
 
-	void load(Bugzilla& bugzilla, MicroTask& app, API& api) override {}
+	void load(Bugzilla& bugzilla, MicroTask& app, API& api) override;
 
 	// write task
 	void write_task(const Task& task) override;
@@ -72,7 +72,8 @@ struct DatabaseImpl : Database
 	void remove_time_code(const TimeCategory& entry, const TimeCode& code) override;
 
 private:
-	void load_tasks(Bugzilla& bugzilla, MicroTask& app, API& api);
+	void load_time_entry(MicroTask& app, API& api);
+	void load_tasks(MicroTask& app, API& api);
 	void load_bugzilla_instances(Bugzilla& bugzilla, MicroTask& app, API& api);
 
 	void write_task_time_entry(const Task& task);

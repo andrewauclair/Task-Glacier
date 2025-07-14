@@ -378,6 +378,11 @@ std::expected<TaskState, std::string> MicroTask::task_state(TaskID id)
 	return std::unexpected("");
 }
 
+void MicroTask::load_task(const Task& task)
+{
+	m_tasks.emplace(task.taskID(), task);
+}
+
 void MicroTask::load_from_file(std::istream& input)
 {
 	const auto string_parser = [](std::string_view& str) -> std::string
