@@ -385,6 +385,11 @@ std::expected<TaskState, std::string> MicroTask::task_state(TaskID id)
 void MicroTask::load_task(const Task& task)
 {
 	m_tasks.emplace(task.taskID(), task);
+
+	if (task.state == TaskState::ACTIVE)
+	{
+		m_activeTask = find_task(task.taskID());
+	}
 }
 
 void MicroTask::load_time_entry(const std::vector<TimeCategory>& timeCategories)

@@ -85,12 +85,13 @@ struct nullDatabase : Database
 	void remove_time_code(const TimeCategory& entry, const TimeCode& code) override {}
 };
 
+template<typename DatabaseType>
 struct TestHelper
 {
+	DatabaseType database;
+
 	TestClock clock;
 	curlTest curl;
-
-	nullDatabase database;
 
 	API api = API(clock, curl, database);
 
@@ -227,7 +228,6 @@ struct TestHelper
 		CHECK(match);
 	}
 
-private:
 	RequestID m_next_request_id = RequestID(1);
 	RequestID m_prev_request_id = RequestID(1);
 };

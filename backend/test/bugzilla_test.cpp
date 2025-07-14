@@ -13,7 +13,7 @@
 
 TEST_CASE("Configuring Bugzilla Information", "[bugzilla][api]")
 {
-	TestHelper helper;
+	TestHelper<nullDatabase> helper;
 
 	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "Bugzilla"));
 	helper.clear_message_output();
@@ -39,7 +39,7 @@ TEST_CASE("Configuring Bugzilla Information", "[bugzilla][api]")
 
 TEST_CASE("Request Bugzilla Information", "[bugzilla][api]")
 {
-	TestHelper helper;
+	TestHelper<nullDatabase> helper;
 
 	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "Bugzilla"));
 	helper.clear_message_output();
@@ -77,7 +77,7 @@ TEST_CASE("Request Bugzilla Information", "[bugzilla][api]")
 
 TEST_CASE("Configuring Multiple Bugzilla Instances", "[bugzilla][api]")
 {
-	TestHelper helper;
+	TestHelper<nullDatabase> helper;
 
 	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "Bugzilla"));
 
@@ -483,7 +483,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 {
 	using namespace std::chrono_literals;
 
-	TestHelper helper;
+	TestHelper<nullDatabase> helper;
 
 	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "Bugzilla"));
 

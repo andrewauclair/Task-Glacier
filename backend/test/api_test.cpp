@@ -18,7 +18,7 @@ TEST_CASE("no parent ID is 0", "[task]")
 
 TEST_CASE("Create Task", "[api][task]")
 {
-	TestHelper helper;
+	TestHelper<nullDatabase> helper;
 
 	SECTION("Success")
 	{
@@ -86,7 +86,7 @@ TEST_CASE("Create Task", "[api][task]")
 
 TEST_CASE("Start Task", "[api][task]")
 {
-	TestHelper helper;
+	TestHelper<nullDatabase> helper;
 
 	SECTION("Success")
 	{
@@ -178,7 +178,7 @@ TEST_CASE("Start Task", "[api][task]")
 
 TEST_CASE("Start Task - Time Entry", "[api][task]")
 {
-	TestHelper helper;
+	TestHelper<nullDatabase> helper;
 
 	auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A", "A");
@@ -387,7 +387,7 @@ TEST_CASE("Start Task - Time Entry", "[api][task]")
 
 TEST_CASE("Stop Task", "[api][task]")
 {
-	TestHelper helper;
+	TestHelper<nullDatabase> helper;
 
 	SECTION("Success - Stop Active Task")
 	{
@@ -485,7 +485,7 @@ TEST_CASE("Stop Task", "[api][task]")
 
 TEST_CASE("Finish Task", "[api][task]")
 {
-	TestHelper helper;
+	TestHelper<nullDatabase> helper;
 
 	SECTION("Success - Finish Active Task")
 	{
@@ -635,7 +635,7 @@ TEST_CASE("Finish Task", "[api][task]")
 
 TEST_CASE("Modify Task", "[api][task]")
 {
-	TestHelper helper;
+	TestHelper<nullDatabase> helper;
 
 	SECTION("Success - Rename Task")
 	{
@@ -717,7 +717,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 	// - time category can be archived if all associated tasks are finished
 	// - time code can be archived if all associated tasks are finished
 	// - task cannot be changed back to inactive from finished if using an archived time category or time code (I don't think this feature exists yet)
-	TestHelper helper;
+	TestHelper<nullDatabase> helper;
 
 	SECTION("Success - Add Time Category")
 	{
@@ -999,7 +999,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 
 TEST_CASE("Request Daily Report", "[api][task]")
 {
-	TestHelper helper;
+	TestHelper<nullDatabase> helper;
 
 	auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A", "A");
@@ -1367,7 +1367,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 TEST_CASE("Request Weekly Report", "[api][task]")
 {
-	TestHelper helper;
+	TestHelper<nullDatabase> helper;
 
 	SECTION("No Report Found")
 	{

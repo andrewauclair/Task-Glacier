@@ -57,17 +57,10 @@ TEST_CASE("Create Database", "[database]")
 
 TEST_CASE("Load Database", "[database]")
 {
-	TestClock clock;
-	curlTest curl;
-
 	std::filesystem::remove("database_load_test.db3");
 
 	{
-		DatabaseImpl database("database_load_test.db3");
-
-		API api = API(clock, curl, database);
-
-		std::vector<std::unique_ptr<Message>> output;
+		TestHelper<DatabaseImpl> helper{ DatabaseImpl("database_load_test.db3") };
 
 		auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
 		auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A", "A");
@@ -78,7 +71,7 @@ TEST_CASE("Load Database", "[database]")
 		newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
 		newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
 
-		api.process_packet(modify, output);
+		helper.expect_success(modify);
 
 		CreateTaskMessage create1(NO_PARENT, RequestID(1), "parent");
 		create1.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
@@ -92,17 +85,23 @@ TEST_CASE("Load Database", "[database]")
 		create3.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(2));
 		create3.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
 
-		api.process_packet(create1, output);
-		api.process_packet(create2, output);
-		api.process_packet(create3, output);
+		CreateTaskMessage create4(NO_PARENT, RequestID(3), "parent 2");
+		create3.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(2));
+		create3.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
 
-		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(1)), output);
-		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(2)), output);
-		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(3)), output);
-		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(1)), output);
-		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(2)), output);
-		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(3)), output);
-		api.process_packet(TaskMessage(PacketType::FINISH_TASK, RequestID(1), TaskID(2)), output);
+		helper.expect_success(create1);
+		helper.expect_success(create2);
+		helper.expect_success(create3);
+		helper.expect_success(create4);
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(2)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(3)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(2)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(3)));
+		helper.expect_success(TaskMessage(PacketType::FINISH_TASK, RequestID(1), TaskID(2)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(4)));
 
 		auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla", "0.0.0.0", "asfesdFEASfslj");
 		configure.username = "test";
@@ -196,30 +195,28 @@ TEST_CASE("Load Database", "[database]")
 		}
 	)bugs_data";
 
-		curl.requestResponse.emplace_back(fieldsResponse);
-		curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+		helper.curl.requestResponse.emplace_back(fieldsResponse);
+		helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
 			"{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
 			"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
 			"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
 			"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
 
-		api.process_packet(configure, output);
-
+		helper.api.process_packet(configure, helper.output);
 	}
 
 	{
-		DatabaseImpl database("database_load_test.db3");
+		TestHelper<DatabaseImpl> helper{ DatabaseImpl("database_load_test.db3") };
 
-		API api = API(clock, curl, database);
+		helper.api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, helper.output);
 
-		std::vector<std::unique_ptr<Message>> output;
+		REQUIRE(helper.output.size() == 20);
 
-		api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, output);
 
-		REQUIRE(output.size() == 19);
+
 
 		// test next bugzilla instance ID
-		output.clear();
+		helper.output.clear();
 		auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla2", "0.0.0.0", "asfesdFEASfslj");
 		configure.username = "test";
 		configure.rootTaskID = TaskID(1);
@@ -229,20 +226,20 @@ TEST_CASE("Load Database", "[database]")
 		configure.labelToField["Priority"] = "priority";
 		configure.labelToField["Status"] = "status";
 
-		curl.requestResponse.emplace_back("{ \"fields\": [] }");
-		curl.requestResponse.emplace_back("{ \"bugs\": [] }");
-		curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+		helper.curl.requestResponse.emplace_back("{ \"fields\": [] }");
+		helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+		helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
-		api.process_packet(configure, output);
+		helper.api.process_packet(configure, helper.output);
 
-		REQUIRE(output.size() == 15);
-		CHECK(dynamic_cast<BugzillaInfoMessage*>(output[1].get())->instanceID == BugzillaInstanceID(2));
+		REQUIRE(helper.output.size() == 15);
+		CHECK(dynamic_cast<BugzillaInfoMessage*>(helper.output[1].get())->instanceID == BugzillaInstanceID(2));
 
 		// test next task ID
-		output.clear();
-		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
-		REQUIRE(output.size() == 2);
-		CHECK(dynamic_cast<TaskInfoMessage*>(output[1].get())->taskID == TaskID(17));
+		helper.output.clear();
+		helper.expect_success(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"));
+		REQUIRE(helper.output.size() == 1);
+		CHECK(dynamic_cast<TaskInfoMessage*>(helper.output[0].get())->taskID == TaskID(18));
 
 		// test next time category ID
 		// test next time code ID
@@ -250,14 +247,21 @@ TEST_CASE("Load Database", "[database]")
 		auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "C", "C");
 		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 5");
 
-		output.clear();
-		api.process_packet(modify, output);
-		REQUIRE(output.size() == 2);
+		helper.output.clear();
+		helper.api.process_packet(modify, helper.output);
+		REQUIRE(helper.output.size() == 2);
 
-		auto* timeEntry = dynamic_cast<TimeEntryDataPacket*>(output[1].get());
+		auto* timeEntry = dynamic_cast<TimeEntryDataPacket*>(helper.output[1].get());
 		REQUIRE(timeEntry->timeCategories.size() == 3);
 		CHECK(timeEntry->timeCategories[2].id == TimeCategoryID(3));
 		CHECK(timeEntry->timeCategories[2].codes[0].id == TimeCodeID(5));
+
+		// verify that we have an active task by starting a new task (this sends an info message for the old active task)
+		helper.expect_success(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(1)));
+
+		REQUIRE(helper.output.size() == 2);
+
+
 	}
 }
 
