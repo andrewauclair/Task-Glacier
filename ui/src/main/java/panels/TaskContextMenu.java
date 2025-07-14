@@ -111,7 +111,7 @@ public class TaskContextMenu extends JPopupMenu {
         startStopActive.setEnabled(task.state == TaskState.PENDING);
         startFinishActive.setEnabled(task.state == TaskState.PENDING);
         stop.setEnabled(task.state == TaskState.ACTIVE);
-        finish.setEnabled(task.state != TaskState.FINISHED && !mainFrame.getTaskModel().taskHasNonFinishedChildren(task.id) && !task.locked);
+        finish.setEnabled(task.state != TaskState.FINISHED && !mainFrame.getTaskModel().taskHasNonFinishedChildren(task.id) && !task.locked && !task.serverControlled);
 
         super.show(invoker, x, y);
     }

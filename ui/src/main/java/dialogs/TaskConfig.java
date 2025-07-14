@@ -572,6 +572,7 @@ public class TaskConfig extends JDialog {
         public void save(Task task, ServerConnection connection) {
             if (hasChanges(task)) {
                 UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task);
+                update.locked = task.locked;
                 update.timeEntry.clear();
 
                 List<Row> data = model.data.stream()

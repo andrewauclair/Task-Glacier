@@ -350,7 +350,7 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
                     startStopActive.setEnabled(task.state == TaskState.PENDING);
                     startFinishActive.setEnabled(task.state == TaskState.PENDING);
                     stop.setEnabled(task.state == TaskState.ACTIVE);
-                    finish.setEnabled(task.state != TaskState.FINISHED && !mainFrame.getTaskModel().taskHasNonFinishedChildren(task.id) && !task.locked);
+                    finish.setEnabled(task.state != TaskState.FINISHED && !mainFrame.getTaskModel().taskHasNonFinishedChildren(task.id) && !task.locked && !task.serverControlled);
 
                     // task has subtasks, allow an option to open it in a new panel
                     if (!node.isLeaf()) {

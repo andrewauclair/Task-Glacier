@@ -185,6 +185,9 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 		{
 			m_activeTask->state = TaskState::INACTIVE;
 			m_activeTask->m_times.back().stop = m_clock->now();
+
+			// TODO test this. we end up with multple active tasks on reload without it
+			m_database->write_task(*m_activeTask);
 		}
 
 		task->state = TaskState::ACTIVE;
