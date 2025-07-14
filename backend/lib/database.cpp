@@ -195,10 +195,10 @@ void DatabaseImpl::load_tasks(MicroTask& app)
 		{
 			int index = query_sessions.getColumn(1);
 			int catID = query_sessions.getColumn(2);
-			std::int64_t start_time = query_sessions.getColumn(3);
-			std::int64_t stop_time = query_sessions.getColumn(4);
-			int codeID = query_sessions.getColumn(5);
-
+			int codeID = query_sessions.getColumn(3);
+			std::int64_t start_time = query_sessions.getColumn(4);
+			std::int64_t stop_time = query_sessions.getColumn(5);
+			
 			if (task.m_times.size() > index)
 			{
 				task.m_times.back().timeEntry.emplace_back(TimeCategoryID(catID), TimeCodeID(codeID));
