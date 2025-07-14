@@ -337,9 +337,10 @@ void DatabaseImpl::write_sessions(const Task& task)
 			insert.bind(1, task.taskID()._val);
 			insert.bind(2, index);
 			insert.bind(3, entry.categoryID._val);
-			insert.bind(4, times.start.count());
-			insert.bind(5, times.stop.value_or(std::chrono::milliseconds(0)).count());
-			insert.bind(6, entry.codeID._val);
+			insert.bind(4, entry.codeID._val);
+			insert.bind(5, times.start.count());
+			insert.bind(6, times.stop.value_or(std::chrono::milliseconds(0)).count());
+			
 
 			try
 			{
