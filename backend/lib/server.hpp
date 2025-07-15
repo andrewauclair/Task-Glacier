@@ -130,8 +130,6 @@ public:
 		}
 	}
 
-	void load_from_file(std::istream& input);
-
 	std::vector<TimeCategory>& timeCategories() { return m_timeCategories; }
 	std::optional<std::string> add_time_category(std::string_view name)
 	{

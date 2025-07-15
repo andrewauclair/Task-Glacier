@@ -36,7 +36,6 @@ public:
 		m_bugzilla(clock, curl),
 		m_database(&database)
 	{
-		//m_app.load_from_file(input);
 		database.load(m_bugzilla, m_app, *this);
 	}
 
