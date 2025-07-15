@@ -27,26 +27,6 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 	instance->bugzillaGroupTasksBy = info.groupTasksBy;
 	instance->bugzillaLabelToField = info.labelToField;
 
-	/*file << "bugzilla-config " << instance->bugzillaName << ' ' << instance->bugzillaURL << ' ' << instance->bugzillaApiKey << '\n';
-	file << instance->bugzillaUsername << '\n';
-	file << instance->bugzillaRootTaskID._val << '\n';*/
-
-	/*file << instance->bugzillaGroupTasksBy.size() << '\n';
-
-	for (auto&& f : info.groupTasksBy)
-	{
-		file << f << '\n';
-	}
-
-	file << instance->bugzillaLabelToField.size() << '\n';
-
-	for (auto&& f : info.labelToField)
-	{
-		file << f.first << '\n' << f.second << '\n';
-	}
-
-	file.flush();*/
-
 	database.write_bugzilla_instance(*instance);
 
 	send_info(output);
@@ -320,8 +300,6 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 						{
 							nextParent->state = TaskState::INACTIVE;
 							nextParent->m_finishTime = std::nullopt;
-
-							//file << "unfinish " << nextParent->taskID()._val << '\n';
 
 							nextParent = app.find_task(nextParent->parentID());
 						}
