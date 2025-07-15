@@ -301,8 +301,6 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<st
 			return;
 		}
 
-		// TODO persist to file so we can reload next time
-
 		if (message.type == TimeCategoryModType::UPDATE)
 		{
 			// update names

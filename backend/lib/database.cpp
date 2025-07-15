@@ -1,6 +1,13 @@
 #include "database.hpp"
 #include "api.hpp"
 
+/*
+* Database Versions for Reference
+* 
+* 1 = 0.3.3
+*/
+static constexpr std::int32_t CURRENT_DATABASE_VERSION = 1;
+
 DatabaseImpl::DatabaseImpl(const std::string& file)
 	: m_database(file, SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE)
 {
@@ -15,6 +22,15 @@ DatabaseImpl::DatabaseImpl(const std::string& file)
 		m_database.exec("create table if not exists bugzillaGroupBy (BugzillaInstanceID integer PRIMARY KEY, Field text)");
 		m_database.exec("create table if not exists bugzillaBugToTask (BugzillaInstanceID integer, BugID integer, TaskID integer, PRIMARY KEY (BugzillaInstanceID, BugID))");
 		m_database.exec("create table if not exists nextIDs (Name text PRIMARY KEY, ID integer)");
+
+		SQLite::Statement get_version(m_database, "PRAGMA user_version;");
+		get_version.executeStep();
+
+		int version = get_version.getColumn(0);
+		std::cout << "current database version: " << version << '\n';
+
+		SQLite::Statement set_version(m_database, std::format("PRAGMA user_version={};", CURRENT_DATABASE_VERSION));
+		set_version.executeStep();
 	}
 	catch (const std::exception& e)
 	{
