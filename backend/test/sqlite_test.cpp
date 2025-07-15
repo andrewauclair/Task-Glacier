@@ -297,7 +297,7 @@ TEST_CASE("Write Task to Database", "[database]")
 		CHECK(name == "this is a test");
 		CHECK(parentID == 1);
 		CHECK(state == 0);
-		CHECK(create_time == 1737345839870);
+		CHECK(create_time == 1737344939870);
 		CHECK(finish_time == 0);
 
 		query.executeStep();
@@ -384,7 +384,7 @@ TEST_CASE("Write Task to Database", "[database]")
 		CHECK(parentID == 0);
 		CHECK(state == 2);
 		CHECK(create_time == 1737344039870);
-		CHECK(finish_time == 1737345839870);
+		CHECK(finish_time == 1737344939870);
 
 		query.executeStep();
 		CHECK(!query.hasRow());
@@ -413,7 +413,7 @@ TEST_CASE("Write Task to Database", "[database]")
 		CHECK(name == "this is a test");
 		CHECK(parentID == 1);
 		CHECK(state == 0);
-		CHECK(create_time == 1737345839870);
+		CHECK(create_time == 1737344939870);
 		CHECK(finish_time == 0);
 
 		query.executeStep();
@@ -497,8 +497,8 @@ TEST_CASE("Write Task Session to Database", "[database]")
 	CHECK(sessionIndex == 0);
 	CHECK(timeCategoryID == 1);
 	CHECK(timeCodeID == 1);
-	CHECK(start == 1737345839870);
-	CHECK(stop == 1737347639870);
+	CHECK(start == 1737344939870);
+	CHECK(stop == 1737345839870);
 	
 	query.executeStep();
 
@@ -515,8 +515,8 @@ TEST_CASE("Write Task Session to Database", "[database]")
 	CHECK(sessionIndex == 0);
 	CHECK(timeCategoryID == 2);
 	CHECK(timeCodeID == 4);
-	CHECK(start == 1737345839870);
-	CHECK(stop == 1737347639870);
+	CHECK(start == 1737344939870);
+	CHECK(stop == 1737345839870);
 
 	query.executeStep();
 
@@ -531,7 +531,7 @@ TEST_CASE("Write Task Session to Database", "[database]")
 
 	CHECK(id == 1);
 	CHECK(sessionIndex == 1);
-	CHECK(start == 1737349439870);
+	CHECK(start == 1737346739870);
 	CHECK(stop == 0);
 	CHECK(timeCategoryID == 1);
 	CHECK(timeCodeID == 1);
@@ -551,7 +551,7 @@ TEST_CASE("Write Task Session to Database", "[database]")
 	CHECK(sessionIndex == 1);
 	CHECK(timeCategoryID == 2);
 	CHECK(timeCodeID == 4);
-	CHECK(start == 1737349439870);
+	CHECK(start == 1737346739870);
 	CHECK(stop == 0);
 
 	query.executeStep();
@@ -1014,7 +1014,7 @@ TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
 		CHECK(apiKey == "asfesdFEASfslj");
 		CHECK(userName == "test");
 		CHECK(rootTask == 1);
-		CHECK(lastRefresh == 1737345839870);
+		CHECK(lastRefresh == 1737344939870);
 	}
 
 	SECTION("Update")
@@ -1059,7 +1059,7 @@ TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
 		CHECK(apiKey == "asdfasdf");
 		CHECK(userName == "test");
 		CHECK(rootTask == 1);
-		CHECK(lastRefresh == 1737346739870);
+		CHECK(lastRefresh == 1737345839870);
 
 		query.executeStep();
 
@@ -1107,7 +1107,7 @@ TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
 		CHECK(apiKey == "asfesdFEASfslj");
 		CHECK(userName == "test");
 		CHECK(rootTask == 1);
-		CHECK(lastRefresh == 1737346739870);
+		CHECK(lastRefresh == 1737345839870);
 
 		query.executeStep();
 

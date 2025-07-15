@@ -667,15 +667,15 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			auto critical_p1 = TaskInfoMessage(TaskID(18), TaskID(17), "P1");
 			auto blocker_p3 = TaskInfoMessage(TaskID(20), TaskID(19), "P3");
 
-			setup_task_inactive(nitpick, 1737382739870ms);
+			setup_task_inactive(nitpick, 1737364739870ms);
 			setup_task_inactive(minor, 1737359339870ms);
 			setup_task_inactive(critical, 1737361139870ms);
-			setup_task_inactive(blocker, 1737379139870ms);
+			setup_task_inactive(blocker, 1737362939870ms);
 
-			setup_task_inactive(nitpick_p4, 1737384539870ms);
+			setup_task_inactive(nitpick_p4, 1737365639870ms);
 			setup_task_inactive(minor_p2, 1737360239870ms);
-			setup_task_inactive(critical_p1, 1737377339870ms);
-			setup_task_inactive(blocker_p3, 1737380939870ms);
+			setup_task_inactive(critical_p1, 1737362039870ms);
+			setup_task_inactive(blocker_p3, 1737363839870ms);
 
 			taskInfo4.parentID = TaskID(16);
 			taskInfo5.parentID = TaskID(16);
@@ -684,19 +684,19 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			taskInfo14.parentID = TaskID(22);
 			taskInfo4.newTask = taskInfo5.newTask = taskInfo8.newTask = taskInfo11.newTask = taskInfo14.newTask = false;
 			
-			setup_task_finished(p2, 1737347639870ms, 1737386339870ms);
-			setup_task_finished(p1, 1737354839870ms, 1737389939870ms);
-			setup_task_finished(p3, 1737360239870ms, 1737393539870ms);
-			setup_task_finished(p4, 1737365639870ms, 1737397139870ms);
+			setup_task_finished(p2, 1737346739870ms, 1737366539870ms);
+			setup_task_finished(p1, 1737350339870ms, 1737368339870ms);
+			setup_task_finished(p3, 1737353039870ms, 1737370139870ms);
+			setup_task_finished(p4, 1737355739870ms, 1737371939870ms);
 			p2.newTask = false;
 			p1.newTask = false;
 			p3.newTask = false;
 			p4.newTask = false;
 			
-			setup_task_finished(p2_minor, 1737349439870ms, 1737388139870ms);
-			setup_task_finished(p1_critical, 1737356639870ms, 1737391739870ms);
-			setup_task_finished(p3_blocker, 1737362039870ms, 1737395339870ms);
-			setup_task_finished(p4_nitpick, 1737367439870ms, 1737398939870ms);
+			setup_task_finished(p2_minor, 1737347639870ms, 1737367439870ms);
+			setup_task_finished(p1_critical, 1737351239870ms, 1737369239870ms);
+			setup_task_finished(p3_blocker, 1737353939870ms, 1737371039870ms);
+			setup_task_finished(p4_nitpick, 1737356639870ms, 1737372839870ms);
 			p2_minor.newTask = false;
 			p1_critical.newTask = false;
 			p3_blocker.newTask = false;
@@ -738,7 +738,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			
 		helper.expect_success(refresh);
 
-		CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&api_key=asfesdFEASfslj&last_change_time=2025-01-20T04:03:59Z");
+		CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&api_key=asfesdFEASfslj&last_change_time=2025-01-20T03:48:59Z");
 
 		auto p1 = TaskInfoMessage(TaskID(6), TaskID(1), "P1");
 		auto p2 = TaskInfoMessage(TaskID(2), TaskID(1), "P2");
@@ -756,20 +756,20 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 		auto taskInfo11 = TaskInfoMessage(TaskID(11), TaskID(10), "65 - bug 4");
 		auto taskInfo14 = TaskInfoMessage(TaskID(14), TaskID(13), "70 - bug 5");
 
-		setup_task_inactive(taskInfo4, 1737351239870ms);
-		setup_task_inactive(taskInfo5, 1737353039870ms);
-		setup_task_inactive(taskInfo8, 1737358439870ms);
-		setup_task_inactive(taskInfo11, 1737363839870ms);
-		setup_task_inactive(taskInfo14, 1737369239870ms);
+		setup_task_inactive(taskInfo4, 1737348539870ms);
+		setup_task_inactive(taskInfo5, 1737349439870ms);
+		setup_task_inactive(taskInfo8, 1737352139870ms);
+		setup_task_inactive(taskInfo11, 1737354839870ms);
+		setup_task_inactive(taskInfo14, 1737357539870ms);
 
-		setup_task_inactive(p1, 1737354839870ms);
-		setup_task_inactive(p2, 1737347639870ms);
-		setup_task_inactive(p3, 1737360239870ms);
-		setup_task_inactive(p4, 1737365639870ms);
-		setup_task_inactive(p1_critical, 1737356639870ms);
-		setup_task_inactive(p2_minor, 1737349439870ms);
-		setup_task_inactive(p3_blocker, 1737362039870ms);
-		setup_task_inactive(p4_nitpick, 1737367439870ms);
+		setup_task_inactive(p1, 1737350339870ms);
+		setup_task_inactive(p2, 1737346739870ms);
+		setup_task_inactive(p3, 1737353039870ms);
+		setup_task_inactive(p4, 1737355739870ms);
+		setup_task_inactive(p1_critical, 1737351239870ms);
+		setup_task_inactive(p2_minor, 1737347639870ms);
+		setup_task_inactive(p3_blocker, 1737353939870ms);
+		setup_task_inactive(p4_nitpick, 1737356639870ms);
 
 		p1.newTask = p2.newTask = p3.newTask = p4.newTask = p1_critical.newTask = p2_minor.newTask = p3_blocker.newTask = p4_nitpick.newTask = true;
 
