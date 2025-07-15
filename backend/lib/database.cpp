@@ -251,7 +251,7 @@ void DatabaseImpl::load_bugzilla_instances(Bugzilla& bugzilla, MicroTask& app)
 
 		query_group_by.executeStep();
 
-		const auto groupBy = split(query_group_by.getColumn(0).getString(), ',');
+		const auto groupBy = split(query_group_by.getColumn(1).getString(), ',');
 
 		for (const std::string& g : groupBy)
 		{
