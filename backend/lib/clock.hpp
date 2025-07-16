@@ -49,6 +49,12 @@ struct Clock
 		auto days = std::chrono::floor<std::chrono::days>(point).time_since_epoch();
 		return std::chrono::duration_cast<std::chrono::milliseconds>(days);
 	}
+
+	std::chrono::milliseconds midnight(std::chrono::system_clock::time_point point) const
+	{
+		auto days = std::chrono::floor<std::chrono::days>(point).time_since_epoch();
+		return std::chrono::duration_cast<std::chrono::milliseconds>(days);
+	}
 };
 
 struct TestClock : Clock

@@ -27,7 +27,6 @@ DatabaseImpl::DatabaseImpl(const std::string& file)
 		get_version.executeStep();
 
 		int version = get_version.getColumn(0);
-		std::cout << "current database version: " << version << '\n';
 
 		SQLite::Statement set_version(m_database, std::format("PRAGMA user_version={};", CURRENT_DATABASE_VERSION));
 		set_version.executeStep();
