@@ -17,6 +17,10 @@ public class Task {
 
     public Instant createTime;
 
+    public List<Task> getChildren() {
+        return children;
+    }
+
     public List<Task> children = new ArrayList<>();
 
     public List<TaskInfo.Session> sessions = new ArrayList<>();

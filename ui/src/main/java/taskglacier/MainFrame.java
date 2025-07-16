@@ -115,6 +115,7 @@ public class MainFrame extends JFrame {
         Docking.registerDockingPanel(root, this);
 
         new TasksLists(this);
+        new AltTasksList(this);
 
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 

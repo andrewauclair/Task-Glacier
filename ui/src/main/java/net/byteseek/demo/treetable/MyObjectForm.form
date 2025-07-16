@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="net.byteseek.demo.treetable.MyObjectForm">
+  <grid id="27dc6" binding="panel1" default-binding="true" layout-manager="BorderLayout" hgap="0" vgap="0">
+    <constraints>
+      <xy x="20" y="20" width="699" height="439"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <grid id="6ff38" binding="rootPanel" layout-manager="GridBagLayout">
+        <constraints border-constraint="Center"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <scrollpane id="dd0b7" binding="scrollPane">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="1.0"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="391db" class="javax.swing.JTable" binding="table1" default-binding="true">
+                <constraints/>
+                <properties/>
+              </component>
+            </children>
+          </scrollpane>
+          <toolbar id="66044">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false">
+                <preferred-size width="-1" height="20"/>
+              </grid>
+              <gridbag weightx="1.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <floatable value="false"/>
+            </properties>
+            <border type="none"/>
+            <children>
+              <component id="f1c6d" class="javax.swing.JButton" binding="showRootButton">
+                <constraints/>
+                <properties>
+                  <text value="toggle root"/>
+                </properties>
+              </component>
+              <component id="af38f" class="javax.swing.JButton" binding="insertButton">
+                <constraints/>
+                <properties>
+                  <text value="insert"/>
+                </properties>
+              </component>
+              <component id="e3fe2" class="javax.swing.JButton" binding="deleteButton">
+                <constraints/>
+                <properties>
+                  <text value="delete"/>
+                </properties>
+              </component>
+              <component id="90c92" class="javax.swing.JLabel">
+                <constraints/>
+                <properties>
+                  <text value="Filter text  "/>
+                </properties>
+              </component>
+              <component id="7751c" class="javax.swing.JTextField" binding="sTextField" default-binding="true">
+                <constraints/>
+                <properties>
+                  <minimumSize width="128" height="43"/>
+                  <preferredSize width="128" height="43"/>
+                  <text value=""/>
+                </properties>
+              </component>
+            </children>
+          </toolbar>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>
