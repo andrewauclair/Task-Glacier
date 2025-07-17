@@ -16,19 +16,22 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 
 import java.awt.*;
+import java.util.Enumeration;
 
 import static net.byteseek.demo.treetable.MyObjectForm.CHANCE_OUT_OF_TEN_FOR_CHILDREN;
 import static net.byteseek.demo.treetable.MyObjectForm.MAX_LEVELS;
 
 public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener {
+    private final DefaultMutableTreeNode rootNode;
     private TreeTableModel treeTableModel;
     private DefaultTreeModel treeModel;
 
     private JTable table1;
-    public JTextField sTextField;
+    public JTextField sTextField = new JTextField(20);
 
     public AltTasksList(MainFrame mainFrame) {
         Docking.registerDockable(this);
@@ -36,8 +39,9 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
 
 
         Task rootObject = new Task(0, 0, "");
-        TreeNode rootNode = TreeUtils.buildTree(rootObject, Task::getChildren, parent -> { return false; });
+        rootNode = TreeUtils.buildTree(rootObject, Task::getChildren, parent -> { return false; });
         table1 = new JTable();
+        table1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         treeTableModel = createTreeTableModel(rootNode);
         treeModel = createTreeModel(rootNode);
 
@@ -93,7 +97,10 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
                 return true;
             }
         }
-
+        // if we made it this far, and we have children, return false
+        if (!obj.children.isEmpty()) {
+            return false;
+        }
         return obj.name.contains(text);
     }
 
@@ -104,7 +111,7 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
     }
 
     private TreeTableModel createTreeTableModel(TreeNode rootNode) {
-        TreeTableModel localTreeTableModel = new MyObjectTreeTableModel(rootNode, false);
+        TreeTableModel localTreeTableModel = new TaskTreeTableModel(rootNode, false);
 
         TreeTableHeaderRenderer renderer = new TreeTableHeaderRenderer();
         renderer.setShowNumber(true); // true is default, this code is just for testing the false option.
@@ -139,10 +146,54 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
 
     @Override
     public void newTask(Task task) {
+        DefaultMutableTreeNode parent = findParentNode(rootNode, task.parentID);
+        if (parent == null) {
+            int breakpoint = 0;
+            return;
+        }
+        MutableTreeNode newChild = new DefaultMutableTreeNode(task);
+        ((DefaultMutableTreeNode) parent).setAllowsChildren(true);
+//        int index = parent.getChildCount() - 1;
+//        parent.insert(newChild, index);
+        parent.add(newChild);
+        treeTableModel.treeNodeInserted(parent, parent.getChildCount() - 1);
+
     }
 
     @Override
     public void updatedTask(Task task, boolean parentChanged) {
 
+    }
+
+    @Override
+    public void configComplete() {
+        treeTableModel.expandTree();
+    }
+
+    private DefaultMutableTreeNode findParentNode(DefaultMutableTreeNode currentParent, int parentID) {
+        if (parentID == 0) {
+            return rootNode;
+        }
+        Enumeration<TreeNode> children = currentParent.children();
+
+        while (children.hasMoreElements()) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) children.nextElement();
+
+            Task task = (Task) node.getUserObject();
+
+            if (task.id == parentID) {
+                return node;
+            }
+
+            if (node.getChildCount() != 0) {
+                DefaultMutableTreeNode result = findParentNode(node, parentID);
+
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+
+        return null;
     }
 }

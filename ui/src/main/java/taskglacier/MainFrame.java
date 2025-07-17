@@ -120,6 +120,7 @@ public class MainFrame extends JFrame {
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
         WindowLayoutBuilder builder = new WindowLayoutBuilder("tasks");
+        builder.dock("alt-tasks-list", "tasks");
 
         AppState.setDefaultApplicationLayout(builder.buildApplicationLayout());
         DockingLayouts.addLayout("default", builder.buildApplicationLayout());

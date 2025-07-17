@@ -76,4 +76,8 @@ public class StatusBar extends JPanel implements TaskModel.Listener {
             updateDisplay(mainFrame.getTaskModel());
         }
     }
+
+    @Override
+    public void configComplete() {
+    }
 }

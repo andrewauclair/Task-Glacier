@@ -456,4 +456,8 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
 
         resizeColumnWidth();
     }
+
+    @Override
+    public void configComplete() {
+    }
 }

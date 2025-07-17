@@ -51,6 +51,7 @@ public class TaskModel {
     public interface Listener {
         void newTask(Task task);
         void updatedTask(Task task, boolean parentChanged);
+        void configComplete();
     }
 
     private List<Task> tasks = new ArrayList<>();
@@ -158,6 +159,7 @@ public class TaskModel {
     // it's possible that we receive data out-of-order the first time. for updates for everything
     public void configurationComplete() {
         forceUpdates();
+        listeners.forEach(Listener::configComplete);
     }
 
     private void forceUpdates() {
