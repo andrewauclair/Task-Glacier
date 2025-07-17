@@ -9,21 +9,24 @@ import net.byteseek.demo.treetable.MyObjectTreeTableModel;
 import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
 import net.byteseek.swing.treetable.TreeTableModel;
 import net.byteseek.swing.treetable.TreeUtils;
+import packets.RequestID;
+import packets.UpdateTask;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.MutableTreeNode;
-import javax.swing.tree.TreeNode;
+import javax.swing.tree.*;
 
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DnDConstants;
 import java.util.Enumeration;
 
 import static net.byteseek.demo.treetable.MyObjectForm.CHANCE_OUT_OF_TEN_FOR_CHILDREN;
 import static net.byteseek.demo.treetable.MyObjectForm.MAX_LEVELS;
+import static taskglacier.MainFrame.mainFrame;
 
 public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener {
     private final DefaultMutableTreeNode rootNode;
@@ -42,6 +45,9 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
         rootNode = TreeUtils.buildTree(rootObject, Task::getChildren, parent -> { return false; });
         table1 = new JTable();
         table1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table1.setDragEnabled(true);
+        table1.setDropMode(DropMode.ON_OR_INSERT_ROWS);
+        table1.setTransferHandler(new TaskTransferHandler());
         treeTableModel = createTreeTableModel(rootNode);
         treeModel = createTreeModel(rootNode);
 
@@ -89,6 +95,87 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
         gbc.fill = GridBagConstraints.BOTH;
 
         add(new JScrollPane(table1), gbc);
+    }
+    class TaskTransferHandler extends TransferHandler {
+        private int[] rows;
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            return MOVE;
+        }
+
+        @Override
+        protected Transferable createTransferable(JComponent c) {
+            rows = table1.getSelectedRows();
+
+            int parent = -1;
+
+            // all the rows must have the same parent
+            for (int row : rows) {
+//                TreePath pathForRow = table.getPathForRow(row);
+//                TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
+//                Task task = (Task) node.getUserObject();
+                DefaultMutableTreeNode nodeAtTableRow = (DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(row);
+                Task task = (Task) nodeAtTableRow.getUserObject();
+
+                if (parent == -1) {
+                    parent = task.parentID;
+                }
+                else if (task.parentID != parent) {
+//                    return null;
+                }
+            }
+
+            return new StringSelection("");
+        }
+
+        @Override
+        public boolean canImport(TransferSupport support) {
+            return true;
+        }
+
+        @Override
+        public boolean importData(TransferSupport support) {
+            // send to server
+            for (int row : rows) {
+                DefaultMutableTreeNode nodeAtTableRow = (DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(row);
+                Task task = (Task) nodeAtTableRow.getUserObject();
+
+                JTable.DropLocation dl = (JTable.DropLocation) support.getDropLocation();
+
+                DefaultMutableTreeNode dropNode = (DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(dl.getRow());
+
+                // dropping after the last node on the tree
+                if (dropNode == null) {
+                    System.out.println("insert as last task in root list");
+                }
+                else {
+                    Task dropTask = (Task) dropNode.getUserObject();
+                    Task parentTask;
+
+                    // the drop row is always the row below where the insert line is
+                    if (dl.isInsertRow()) {
+                        parentTask = mainFrame.getTaskModel().getTask(dropTask.parentID);
+                    }
+                    else {
+                        parentTask = dropTask;
+                    }
+                    int index = dl.isInsertRow() ? 1 : 0;
+
+                    if (parentTask == null) {
+                        System.out.println("insert as first task in root list");
+                    }
+                    else {
+                        System.out.println("Reparent '" + task.name + "' to '" + parentTask.name);
+
+                        UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task.id, parentTask.id, task.name);
+                    }
+                    // move task: request id, task id, new parent id
+//                mainFrame.getConnection().sendPacket(update);
+                }
+            }
+            return true;
+        }
     }
 
     private boolean childrenHaveMatch(Task obj, String text) {

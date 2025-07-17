@@ -12,6 +12,7 @@ public class UpdateTask implements Packet {
     private int requestID;
     private int taskID;
     private int parentID;
+    private int indexInParent = 0;
     public boolean serverControlled = false;
     public boolean locked = false;
     private final String name;
@@ -46,7 +47,7 @@ public class UpdateTask implements Packet {
     }
 
     public void writeToOutput(DataOutputStream output) throws IOException {
-        size = 22; // size, packet type, request ID, task ID, parent ID, server controlled, locked
+        size = 26; // size, packet type, request ID, task ID, parent ID, index in parent, server controlled, locked
         size += 2 + name.length();
         size += 4 + (labels.size() * 2); // labels size, label string lengths
         for (String label : labels) {
@@ -59,6 +60,7 @@ public class UpdateTask implements Packet {
         output.writeInt(requestID);
         output.writeInt(taskID);
         output.writeInt(parentID);
+        output.writeInt(indexInParent);
         output.writeByte(serverControlled ? 1 : 0);
         output.writeByte(locked ? 1 : 0);
         Packet.writeString(output, name);

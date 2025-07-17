@@ -347,6 +347,7 @@ struct UpdateTaskMessage : RequestMessage
 {
 	TaskID taskID;
 	TaskID parentID;
+	std::int32_t indexInParent = 0;
 	bool serverControlled = false;
 	bool locked = false;
 	std::string name;
@@ -366,7 +367,7 @@ struct UpdateTaskMessage : RequestMessage
 
 	bool operator==(const UpdateTaskMessage& message) const
 	{
-		return requestID == message.requestID && taskID == message.taskID && parentID == message.parentID && name == message.name && labels == message.labels && timeEntry == message.timeEntry;
+		return requestID == message.requestID && taskID == message.taskID && parentID == message.parentID && indexInParent == message.indexInParent && name == message.name && labels == message.labels && timeEntry == message.timeEntry;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -376,7 +377,7 @@ struct UpdateTaskMessage : RequestMessage
 	{
 		out << "UpdateTaskMessage { ";
 		RequestMessage::print(out);
-		out << ", taskID: " << taskID._val << ", parentID: " << parentID._val << ", serverControlled: " << serverControlled << ", locked: " << locked << ", name: \"" << name << "\"";
+		out << ", taskID: " << taskID._val << ", parentID: " << parentID._val << ", indexInParent: " << indexInParent << ", serverControlled: " << serverControlled << ", locked : " << locked << ", name : \"" << name << "\"";
 		out << ", labels { ";
 		for (auto&& label : labels)
 		{
