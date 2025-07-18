@@ -6,11 +6,14 @@ import data.TaskState;
 import dialogs.AddModifyTask;
 import dialogs.TaskConfig;
 import io.github.andrewauclair.moderndocking.Dockable;
+import io.github.andrewauclair.moderndocking.DockingProperty;
 import io.github.andrewauclair.moderndocking.DockingRegion;
+import io.github.andrewauclair.moderndocking.DynamicDockableParameters;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
 import net.byteseek.swing.treetable.TreeTableModel;
 import net.byteseek.swing.treetable.TreeUtils;
+import org.jdesktop.swingx.JXTreeTable;
 import packets.PacketType;
 import packets.RequestID;
 import packets.TaskStateChange;
@@ -22,8 +25,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.tree.*;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseAdapter;
@@ -38,7 +40,18 @@ import java.util.stream.Collectors;
 import static taskglacier.MainFrame.mainFrame;
 
 public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener {
-    private final DefaultMutableTreeNode rootNode;
+    @DockingProperty(name = "taskID", required = true)
+    private int taskID = 0;
+
+    @DockingProperty(name = "allTasks", required = true)
+    private boolean allTasks = false;
+
+    private String persistentID;
+    private String titleText;
+    private String tabText;
+
+    private MainFrame mainFrame;
+    private DefaultMutableTreeNode rootNode;
     private TreeTableModel treeTableModel;
     private DefaultTreeModel treeModel;
 
@@ -68,12 +81,70 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
     }
 
     public AltTasksList(MainFrame mainFrame) {
+        allTasks = true;
+
+        this.mainFrame = mainFrame;
+        this.persistentID = "alt-tasks";
+        this.titleText = "Tasks";
+        this.tabText = "Tasks";
+
         Docking.registerDockable(this);
         mainFrame.getTaskModel().addListener(this);
 
+        configure();
+    }
 
+    public AltTasksList(MainFrame mainFrame, Task task) {
+        taskID = task.id;
+        this.mainFrame = mainFrame;
+        persistentID = "task-list-" + task.id;
+        titleText = "Tasks (" + task.name + ")";
+        tabText = "Tasks (" + task.name + ")";
+
+        Docking.registerDockable(this);
+        mainFrame.getTaskModel().addListener(this);
+
+        configure();
+    }
+
+    public AltTasksList(DynamicDockableParameters parameters) {
+        super(new BorderLayout());
+
+        this.persistentID = parameters.getPersistentID();
+        this.titleText = parameters.getTitleText();
+        this.tabText = parameters.getTabText();
+
+        mainFrame = MainFrame.mainFrame;
+
+        Docking.registerDockable(this);
+        mainFrame.getTaskModel().addListener(this);
+
+        configure();
+    }
+
+    @Override
+    public void updateProperties() {
+        mainFrame = MainFrame.mainFrame;
+
+        if (allTasks) {
+//            table.expandAll();
+        }
+        else {
+            Task task = mainFrame.getTaskModel().getTask(taskID);
+
+            if (task != null) {
+//                table.setRootVisible(false);
+//                treeTableModel.setRoot(new ParentTaskTreeTableNode(task));
+//                addTasks(task);
+            }
+
+//            table.expandAll();
+        }
+    }
+
+    private void configure() {
         Task rootObject = new Task(0, 0, "");
-        rootNode = TreeUtils.buildTree(rootObject, Task::getChildren, parent -> { return false; });
+        rootNode = TreeUtils.buildTree(rootObject, Task::getChildren, parent -> false);
         table = new JTable();
         table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         table.setDragEnabled(true);
@@ -165,12 +236,12 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
 
             Task task = (Task) ((DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(selectedRow)).getUserObject();
 
-            if (!Docking.isDockableRegistered("task-list-" + task.id)) {
-                TasksLists newList = new TasksLists(mainFrame, task);
+            if (!Docking.isDockableRegistered("alt-tasks-list-" + task.id)) {
+                AltTasksList newList = new AltTasksList(mainFrame, task);
                 Docking.dock(newList, AltTasksList.this, DockingRegion.CENTER);
             }
             else {
-                Docking.display("task-list-" + task.id);
+                Docking.display("alt-tasks-list-" + task.id);
             }
         });
 
@@ -366,12 +437,17 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
 
     @Override
     public String getPersistentID() {
-        return "alt-tasks-list";
+        return persistentID;
     }
 
     @Override
     public String getTabText() {
-        return "Alt Tasks List";
+        return tabText;
+    }
+
+    @Override
+    public String getTitleText() {
+        return titleText;
     }
 
     @Override

@@ -43,7 +43,6 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
     private MainFrame mainFrame;
     private final TasksTreeTableModel treeTableModel;
     private final JXTreeTable table;
-
     private TaskInfoSubPanel infoSubPanel = new TaskInfoSubPanel();
 
     public TasksLists(MainFrame mainFrame) {
