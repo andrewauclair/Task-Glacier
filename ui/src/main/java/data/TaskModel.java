@@ -50,7 +50,8 @@ public class TaskModel {
 
     public interface Listener {
         void newTask(Task task);
-        void updatedTask(Task task, boolean parentChanged);
+        void updatedTask(Task task);
+        void reparentTask(Task task, int oldParent);
         void configComplete();
     }
 
@@ -84,6 +85,7 @@ public class TaskModel {
             newTask = true;
         }
 
+        task.indexInParent = info.indexInParent;
         task.serverControlled = info.serverControlled;
         task.locked = info.locked;
 
@@ -122,9 +124,16 @@ public class TaskModel {
                 optionalNewParent.get().children.add(task);
             }
 
+            int oldParent = task.parentID;
+
             task.parentID = info.parentID;
 
-            listeners.forEach(listener -> listener.updatedTask(first.get(), parentChanged));
+            if (parentChanged) {
+                listeners.forEach(listener -> listener.reparentTask(task, oldParent));
+            }
+            else {
+                listeners.forEach(listener -> listener.updatedTask(first.get()));
+            }
         }
 //
 //        if (hasTask(info.taskID)) {
@@ -170,7 +179,7 @@ public class TaskModel {
                     .toList();
 
             for (Task task1 : toUpdate) {
-                listeners.forEach(listener -> listener.updatedTask(task1, false));
+                listeners.forEach(listener -> listener.updatedTask(task1));
             }
         }
     }

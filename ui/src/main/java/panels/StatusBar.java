@@ -66,7 +66,7 @@ public class StatusBar extends JPanel implements TaskModel.Listener {
     }
 
     @Override
-    public void updatedTask(Task task, boolean parentChanged) {
+    public void updatedTask(Task task) {
         if (task == activeTask && task.state != TaskState.ACTIVE) {
             activeTask = null;
             updateDisplay(mainFrame.getTaskModel());
@@ -75,6 +75,11 @@ public class StatusBar extends JPanel implements TaskModel.Listener {
             activeTask = task;
             updateDisplay(mainFrame.getTaskModel());
         }
+    }
+
+    @Override
+    public void reparentTask(Task task, int oldParent) {
+
     }
 
     @Override

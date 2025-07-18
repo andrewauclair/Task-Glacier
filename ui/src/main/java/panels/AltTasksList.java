@@ -4,8 +4,6 @@ import data.Task;
 import data.TaskModel;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.app.Docking;
-import net.byteseek.demo.treetable.MyObject;
-import net.byteseek.demo.treetable.MyObjectTreeTableModel;
 import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
 import net.byteseek.swing.treetable.TreeTableModel;
 import net.byteseek.swing.treetable.TreeUtils;
@@ -18,14 +16,16 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.tree.*;
 
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.awt.dnd.DnDConstants;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.List;
 
-import static net.byteseek.demo.treetable.MyObjectForm.CHANCE_OUT_OF_TEN_FOR_CHILDREN;
-import static net.byteseek.demo.treetable.MyObjectForm.MAX_LEVELS;
 import static taskglacier.MainFrame.mainFrame;
 
 public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener {
@@ -160,7 +160,7 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
                     else {
                         parentTask = dropTask;
                     }
-                    int index = dl.isInsertRow() ? 1 : 0;
+                    int index = dl.isInsertRow() ? dropTask.indexInParent : 0;
 
                     if (parentTask == null) {
                         System.out.println("insert as first task in root list");
@@ -169,9 +169,11 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
                         System.out.println("Reparent '" + task.name + "' to '" + parentTask.name);
 
                         UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task.id, parentTask.id, task.name);
+                        update.indexInParent = index;
+                        mainFrame.getConnection().sendPacket(update);
                     }
                     // move task: request id, task id, new parent id
-//                mainFrame.getConnection().sendPacket(update);
+
                 }
             }
             return true;
@@ -233,7 +235,7 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
 
     @Override
     public void newTask(Task task) {
-        DefaultMutableTreeNode parent = findParentNode(rootNode, task.parentID);
+        DefaultMutableTreeNode parent = findTaskNode(rootNode, task.parentID);
         if (parent == null) {
             int breakpoint = 0;
             return;
@@ -248,8 +250,60 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
     }
 
     @Override
-    public void updatedTask(Task task, boolean parentChanged) {
+    public void updatedTask(Task task) {
+        DefaultMutableTreeNode parent = findTaskNode(rootNode, task.parentID);
+        DefaultMutableTreeNode node = findTaskNode(rootNode, task.id);
 
+        if (node != null) {
+            if (parent.getIndex(node) != task.indexInParent) {
+                ArrayList<TreeNode> nodes = Collections.list(parent.children());
+                List<Task> list = nodes.stream()
+                        .map(treeNode -> (Task)((DefaultMutableTreeNode) treeNode).getUserObject())
+                        .sorted(Comparator.comparingInt(o -> o.indexInParent))
+                        .toList();
+
+                parent.removeAllChildren();
+
+                for (TreeNode removedNode : nodes) {
+                    treeTableModel.treeNodeRemoved(parent, removedNode);
+                }
+
+                nodes.sort(Comparator.comparingInt(o -> ((Task) ((DefaultMutableTreeNode) o).getUserObject()).indexInParent));
+                for (TreeNode addNode : nodes) {
+                    parent.add((MutableTreeNode) addNode);
+                    treeTableModel.treeNodeInserted(parent, parent.getChildCount() - 1);
+                }
+            }
+            else {
+                treeTableModel.treeNodeChanged(node);
+            }
+        }
+    }
+
+    @Override
+    public void reparentTask(Task task, int oldParent) {
+        DefaultMutableTreeNode oldParentNode = findTaskNode(rootNode, oldParent);
+        DefaultMutableTreeNode newParentNode = findTaskNode(rootNode, task.parentID);
+
+        DefaultMutableTreeNode node = findTaskNode(rootNode, task.id);
+
+        if (node == null) {
+            return;
+        }
+
+        if (oldParentNode != null) {
+            oldParentNode.remove(node);
+            if (oldParentNode.getChildCount() == 0) {
+                oldParentNode.setAllowsChildren(false);
+            }
+            treeTableModel.treeNodeRemoved(oldParentNode, node);
+        }
+
+        if (newParentNode != null) {
+            newParentNode.setAllowsChildren(true);
+            newParentNode.insert(node, task.indexInParent);
+            treeTableModel.treeNodeInserted(newParentNode, task.indexInParent);
+        }
     }
 
     @Override
@@ -257,7 +311,7 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
         treeTableModel.expandTree();
     }
 
-    private DefaultMutableTreeNode findParentNode(DefaultMutableTreeNode currentParent, int parentID) {
+    private DefaultMutableTreeNode findTaskNode(DefaultMutableTreeNode currentParent, int parentID) {
         if (parentID == 0) {
             return rootNode;
         }
@@ -273,7 +327,7 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
             }
 
             if (node.getChildCount() != 0) {
-                DefaultMutableTreeNode result = findParentNode(node, parentID);
+                DefaultMutableTreeNode result = findTaskNode(node, parentID);
 
                 if (result != null) {
                     return result;

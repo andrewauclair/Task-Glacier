@@ -157,6 +157,10 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 		return;
 	}
 
+	bool indexChanged = task->indexInParent != message.indexInParent;
+	bool parentChanged = task->parentID() != message.parentID;
+	TaskID currentParent = task->parentID();
+
 	// TODO test and persist
 	task->locked = message.locked;
 
@@ -177,13 +181,35 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 		m_database->write_task(*task);
 	}
 	
-
 	if (result)
 	{
 		output.push_back(std::make_unique<FailureResponse>(message.requestID, result.value()));
 	}
 	else
 	{
+		if (indexChanged)
+		{
+			// find all tasks for the parent and fix the index values, keeping the current task as is
+			std::vector<Task*> children = m_app.find_tasks_with_parent(task->parentID());
+			std::sort(children.begin(), children.end(), [&](Task* a, Task* b) { 
+				if (a == task) return true;
+				if (b == task) return false;
+				return a->indexInParent < b->indexInParent; 
+			});
+
+			int expectedIndex = 0;
+
+			for (Task* child : children)
+			{
+				if (child->indexInParent != expectedIndex)
+				{
+					child->indexInParent = expectedIndex;
+					send_task_info(*child, false, output);
+				}
+				++expectedIndex;
+			}
+		}
+
 		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
 
 		send_task_info(*task, false, output);
@@ -244,6 +270,7 @@ void API::send_task_info(const Task& task, bool newTask, std::vector<std::unique
 	info->createTime = task.createTime();
 	info->finishTime = task.m_finishTime;
 	info->newTask = newTask;
+	info->indexInParent = task.indexInParent;
 	info->serverControlled = task.serverControlled;
 	info->locked = task.locked;
 	info->times = task.m_times;

@@ -60,7 +60,8 @@ public class TasksTreeTableModel extends AbstractTreeTableModel {
         }
     }
 
-    public void updateTask(Task task, boolean parentChanged) {
+    public void updateTask(Task task) {
+        boolean parentChanged = false;
         TaskTreeTableNode node = findTaskNode(parentTask, task.id);
 
         if (node != null) {

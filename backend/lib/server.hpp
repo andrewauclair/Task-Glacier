@@ -34,6 +34,8 @@ public:
 	bool serverControlled = false;
 	bool locked = false;
 
+	std::int32_t indexInParent = 0;
+
 	std::vector<TimeEntry> timeEntry;
 	std::vector<TaskTimes> m_times;
 	std::optional<std::chrono::milliseconds> m_finishTime;
@@ -85,6 +87,7 @@ public:
 
 	Task* active_task() const { return m_activeTask; }
 	Task* find_task(TaskID id);
+	std::vector<Task*> find_tasks_with_parent(TaskID parentID);
 	Task* find_task_with_parent_and_name(const std::string& name, TaskID parentID);
 
 	void find_bugzilla_helper_tasks(TaskID bugzillaParentTaskID, const std::vector<TaskID>& bugTasks, std::map<TaskID, TaskState>& helperTasks);

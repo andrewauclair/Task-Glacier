@@ -12,7 +12,7 @@ public class Task {
     public int parentID;
     public TaskState state = TaskState.PENDING;
     public String name;
-
+    public int indexInParent = 0;
     public boolean serverControlled = false;
     public boolean locked = false;
 
@@ -39,11 +39,11 @@ public class Task {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Task task = (Task) o;
-        return id == task.id && parentID == task.parentID && serverControlled == task.serverControlled && locked == task.locked && state == task.state && Objects.equals(name, task.name) && Objects.equals(createTime, task.createTime) && Objects.equals(children, task.children) && Objects.equals(sessions, task.sessions) && Objects.equals(labels, task.labels) && Objects.equals(timeEntry, task.timeEntry);
+        return id == task.id && parentID == task.parentID && indexInParent == task.indexInParent && serverControlled == task.serverControlled && locked == task.locked && state == task.state && Objects.equals(name, task.name) && Objects.equals(createTime, task.createTime) && Objects.equals(children, task.children) && Objects.equals(sessions, task.sessions) && Objects.equals(labels, task.labels) && Objects.equals(timeEntry, task.timeEntry);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, parentID, state, name, serverControlled, locked, createTime, children, sessions, labels, timeEntry);
+        return Objects.hash(id, parentID, state, name, serverControlled, indexInParent, locked, createTime, children, sessions, labels, timeEntry);
     }
 }

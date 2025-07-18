@@ -420,6 +420,7 @@ std::vector<std::byte> TaskInfoMessage::pack() const
 	builder.add(parentID);
 	builder.add(state);
 	builder.add(newTask);
+	builder.add(indexInParent);
 	builder.add(serverControlled);
 	builder.add(locked);
 	builder.add(name);
@@ -471,6 +472,7 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 	const auto parentID = parser.parse_next<TaskID>();
 	const auto state = parser.parse_next<TaskState>();
 	const auto newTask = parser.parse_next<bool>();
+	const auto indexInParent = parser.parse_next<std::int32_t>();
 	const auto serverControlled = parser.parse_next<bool>();
 	const auto locked = parser.parse_next<bool>();
 	const auto name = parser.parse_next<std::string>();
@@ -480,6 +482,7 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 		auto info = TaskInfoMessage(taskID.value(), parentID.value(), name.value());
 		info.state = state.value();
 		info.newTask = newTask.value();
+		info.indexInParent = indexInParent.value();
 		info.serverControlled = serverControlled.value();
 		info.locked = locked.value();
 

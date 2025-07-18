@@ -29,6 +29,7 @@ public class TaskInfo implements Packet {
     public int parentID = 0;
     public TaskState state = TaskState.PENDING;
     public boolean newTask = false;
+    public int indexInParent = 0;
     public boolean serverControlled = false;
     public boolean locked = false;
 
@@ -57,6 +58,7 @@ public class TaskInfo implements Packet {
         info.parentID = input.readInt();
         info.state = TaskState.valueOf(input.readInt());
         info.newTask = input.readByte() != 0;
+        info.indexInParent = input.readInt();
         info.serverControlled = input.readByte() != 0;
         info.locked = input.readByte() != 0;
 

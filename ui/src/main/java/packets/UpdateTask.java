@@ -12,7 +12,7 @@ public class UpdateTask implements Packet {
     private int requestID;
     private int taskID;
     private int parentID;
-    private int indexInParent = 0;
+    public int indexInParent = 0;
     public boolean serverControlled = false;
     public boolean locked = false;
     private final String name;

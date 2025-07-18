@@ -451,10 +451,15 @@ public class TasksLists extends JPanel implements Dockable, TaskModel.Listener {
     }
 
     @Override
-    public void updatedTask(Task task, boolean parentChanged) {
-        treeTableModel.updateTask(task, parentChanged);
+    public void updatedTask(Task task) {
+        treeTableModel.updateTask(task);
 
         resizeColumnWidth();
+    }
+
+    @Override
+    public void reparentTask(Task task, int oldParent) {
+
     }
 
     @Override
