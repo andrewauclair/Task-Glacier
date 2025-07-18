@@ -163,6 +163,7 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 
 	// TODO test and persist
 	task->locked = message.locked;
+	task->indexInParent = message.indexInParent;
 
 	std::optional<std::string> result;
 	if (message.name != task->m_name)
@@ -192,8 +193,11 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 			// find all tasks for the parent and fix the index values, keeping the current task as is
 			std::vector<Task*> children = m_app.find_tasks_with_parent(task->parentID());
 			std::sort(children.begin(), children.end(), [&](Task* a, Task* b) { 
-				if (a == task) return true;
-				if (b == task) return false;
+				if (a->indexInParent == b->indexInParent)
+				{
+					if (a == task) return true;
+					if (b == task) return false;
+				}
 				return a->indexInParent < b->indexInParent; 
 			});
 
@@ -252,9 +256,10 @@ void API::handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<
 		}
 		output.push_back(std::make_unique<TimeEntryDataPacket>(data));
 
-		const auto send_task = [&](const Task& task) { send_task_info(task, false, output); };
+		/*const auto send_task = [&](const Task& task) { send_task_info(task, false, output); };
 
-		m_app.for_each_task_sorted(send_task);
+		m_app.for_each_task_sorted(send_task);*/
+		m_app.send_all_tasks(output);
 
 		m_bugzilla.send_info(output);
 

@@ -133,6 +133,53 @@ public:
 		}
 	}
 
+	void send_task_info(const Task& task, bool newTask, std::vector<std::unique_ptr<Message>>& output)
+	{
+		auto info = std::make_unique<TaskInfoMessage>(task.taskID(), task.parentID(), task.m_name);
+
+		info->state = task.state;
+		info->createTime = task.createTime();
+		info->finishTime = task.m_finishTime;
+		info->newTask = newTask;
+		info->indexInParent = task.indexInParent;
+		info->serverControlled = task.serverControlled;
+		info->locked = task.locked;
+		info->times = task.m_times;
+		info->timeEntry = task.timeEntry;
+		info->labels = task.labels;
+
+		output.push_back(std::move(info));
+	}
+
+	void send_all_tasks(std::vector<std::unique_ptr<Message>>& output)
+	{
+		std::vector<TaskID> parents;
+
+		parents.push_back(NO_PARENT);
+
+		while (!parents.empty())
+		{
+			std::vector<TaskID> next;
+
+			for (TaskID parent : parents)
+			{
+				if (parent != NO_PARENT)
+				{
+					send_task_info(m_tasks.at(parent), false, output);
+				}
+
+				auto all_tasks = find_tasks_with_parent(parent);
+
+				for (auto&& task : all_tasks)
+				{
+					next.push_back(task->taskID());
+					send_task_info(m_tasks.at(task->taskID()), false, output);
+				}
+			}
+			parents = next;
+		}
+	}
+
 	std::vector<TimeCategory>& timeCategories() { return m_timeCategories; }
 	std::optional<std::string> add_time_category(std::string_view name)
 	{

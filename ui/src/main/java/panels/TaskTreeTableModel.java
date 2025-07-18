@@ -41,6 +41,7 @@ import net.byteseek.swing.treetable.TreeUtils;
 import javax.swing.*;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumnModel;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.Comparator;
 
@@ -53,7 +54,8 @@ public final class TaskTreeTableModel extends TreeTableModel {
     public TaskTreeTableModel(final TreeNode rootNode, final boolean showRoot) {
         super(rootNode, showRoot);
         setIcons();
-        setGroupingComparator(Comparators.ALLOWS_CHILDREN);
+//        setGroupingComparator(Comparators.ALLOWS_CHILDREN_DESCENDING);
+        setGroupingComparator(Comparator.comparingInt(o -> ((Task) ((DefaultMutableTreeNode) o).getUserObject()).indexInParent));
         leafIcon = null;
     }
 
@@ -64,33 +66,33 @@ public final class TaskTreeTableModel extends TreeTableModel {
 
     @Override
     public Class<?> getColumnClass(final int columnIndex) {
-//        switch (columnIndex) {
-//            case 0: return String.class;
-//            case 1: return Long.class;
+        switch (columnIndex) {
+            case 0: return String.class;
+//            case 1: return Integer.class;
 //            case 2: return Boolean.class;
 //            case 3: return Integer.class;
-//        }
+        }
         return String.class;
     }
 
     @Override
     public Object getColumnValue(final TreeNode node, final int column) {
         final Task obj = TreeUtils.getUserObject(node);
-//        switch (column) {
-//            case 0: return obj.getDescription();
-//            case 1: return obj.getSize();
+        switch (column) {
+            case 0: return obj.name;
+//            case 1: return obj.indexInParent;
 //            case 2: return obj.isEnabled();
 //            case 3: return node.getChildCount();
-//            default: return null;
-//        }
-        return obj.name;
+            default: return null;
+        }
+//        return obj.name;
     }
 
     @Override
     public TableColumnModel createTableColumnModel() {
         TableColumnModel result = new DefaultTableColumnModel();
         result.addColumn(TableUtils.createColumn(0, "description"));
-//        result.addColumn(TableUtils.createColumn(1, "size"));
+//        result.addColumn(TableUtils.createColumn(1, "index"));
 //        result.addColumn(TableUtils.createColumn(2, "enabled"));
 //        result.addColumn(TableUtils.createColumn(3, "children"));
         return result;

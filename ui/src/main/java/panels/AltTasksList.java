@@ -148,6 +148,8 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
                 // dropping after the last node on the tree
                 if (dropNode == null) {
                     System.out.println("insert as last task in root list");
+
+                    
                 }
                 else {
                     Task dropTask = (Task) dropNode.getUserObject();
@@ -163,7 +165,11 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
                     int index = dl.isInsertRow() ? dropTask.indexInParent : 0;
 
                     if (parentTask == null) {
-                        System.out.println("insert as first task in root list");
+                        System.out.println("insert with root as parent");
+
+                        UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task.id, 0, task.name);
+                        update.indexInParent = index;
+                        mainFrame.getConnection().sendPacket(update);
                     }
                     else {
                         System.out.println("Reparent '" + task.name + "' to '" + parentTask.name);
@@ -241,7 +247,7 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
             return;
         }
         MutableTreeNode newChild = new DefaultMutableTreeNode(task);
-        ((DefaultMutableTreeNode) parent).setAllowsChildren(true);
+        parent.setAllowsChildren(true);
 //        int index = parent.getChildCount() - 1;
 //        parent.insert(newChild, index);
         parent.add(newChild);
@@ -255,28 +261,29 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
         DefaultMutableTreeNode node = findTaskNode(rootNode, task.id);
 
         if (node != null) {
-            if (parent.getIndex(node) != task.indexInParent) {
-                ArrayList<TreeNode> nodes = Collections.list(parent.children());
-                List<Task> list = nodes.stream()
-                        .map(treeNode -> (Task)((DefaultMutableTreeNode) treeNode).getUserObject())
-                        .sorted(Comparator.comparingInt(o -> o.indexInParent))
-                        .toList();
-
-                parent.removeAllChildren();
-
-                for (TreeNode removedNode : nodes) {
-                    treeTableModel.treeNodeRemoved(parent, removedNode);
-                }
-
-                nodes.sort(Comparator.comparingInt(o -> ((Task) ((DefaultMutableTreeNode) o).getUserObject()).indexInParent));
-                for (TreeNode addNode : nodes) {
-                    parent.add((MutableTreeNode) addNode);
-                    treeTableModel.treeNodeInserted(parent, parent.getChildCount() - 1);
-                }
-            }
-            else {
-                treeTableModel.treeNodeChanged(node);
-            }
+            treeTableModel.treeNodeChanged(node);
+//            if (parent.getIndex(node) != task.indexInParent) {
+//                ArrayList<TreeNode> nodes = Collections.list(parent.children());
+//                List<Task> list = nodes.stream()
+//                        .map(treeNode -> (Task)((DefaultMutableTreeNode) treeNode).getUserObject())
+//                        .sorted(Comparator.comparingInt(o -> o.indexInParent))
+//                        .toList();
+//
+//                parent.removeAllChildren();
+//
+//                for (TreeNode removedNode : nodes) {
+//                    treeTableModel.treeNodeRemoved(parent, removedNode);
+//                }
+//
+//                nodes.sort(Comparator.comparingInt(o -> ((Task) ((DefaultMutableTreeNode) o).getUserObject()).indexInParent));
+//                for (TreeNode addNode : nodes) {
+//                    parent.add((MutableTreeNode) addNode);
+//                    treeTableModel.treeNodeInserted(parent, parent.getChildCount() - 1);
+//                }
+//            }
+//            else {
+//                treeTableModel.treeNodeChanged(node);
+//            }
         }
     }
 
@@ -301,8 +308,8 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
 
         if (newParentNode != null) {
             newParentNode.setAllowsChildren(true);
-            newParentNode.insert(node, task.indexInParent);
-            treeTableModel.treeNodeInserted(newParentNode, task.indexInParent);
+            newParentNode.add(node);//, task.indexInParent);
+            treeTableModel.treeNodeInserted(newParentNode, newParentNode.getChildCount() - 1);
         }
     }
 

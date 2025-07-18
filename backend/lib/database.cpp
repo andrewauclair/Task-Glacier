@@ -13,7 +13,7 @@ DatabaseImpl::DatabaseImpl(const std::string& file)
 {
 	try
 	{
-		m_database.exec("create table if not exists tasks (TaskID integer PRIMARY KEY, Name text, ParentID integer, State integer, CreateTime bigint, FinishTime bigint, Locked integer, ServerControlled integer)");
+		m_database.exec("create table if not exists tasks (TaskID integer PRIMARY KEY, Name text, ParentID integer, State integer, CreateTime bigint, FinishTime bigint, Locked integer, ServerControlled integer, IndexInParent integer)");
 		m_database.exec("create table if not exists timeEntryCategory (TimeCategoryID integer PRIMARY KEY, TimeCategoryName text)");
 		m_database.exec("create table if not exists timeEntryCode (TimeCategoryID integer, TimeCodeID integer, TimeCodeName text, PRIMARY KEY (TimeCategoryID, TimeCodeID))");
 		m_database.exec("create table if not exists timeEntryTask (TaskID integer, TimeCategoryID integer, TimeCodeID integer, PRIMARY KEY (TaskID, TimeCategoryID))");
@@ -47,7 +47,7 @@ void DatabaseImpl::load(Bugzilla& bugzilla, MicroTask& app, API& api)
 
 void DatabaseImpl::write_task(const Task& task)
 {
-	SQLite::Statement insert(m_database, "insert or replace into tasks values(?, ?, ?, ?, ?, ?, ?, ?)");
+	SQLite::Statement insert(m_database, "insert or replace into tasks values(?, ?, ?, ?, ?, ?, ?, ?, ?)");
 	insert.bind(1, task.taskID()._val);
 	insert.bind(2, task.m_name);
 	insert.bind(3, task.parentID()._val);
@@ -56,6 +56,7 @@ void DatabaseImpl::write_task(const Task& task)
 	insert.bind(6, task.m_finishTime.value_or(std::chrono::milliseconds(0)).count());
 	insert.bind(7, task.locked);
 	insert.bind(8, task.serverControlled);
+	insert.bind(9, task.indexInParent);
 
 	try
 	{
@@ -181,10 +182,12 @@ void DatabaseImpl::load_tasks(MicroTask& app)
 		std::int64_t finish_time = query.getColumn(5);
 		int locked = query.getColumn(6);
 		int serverControlled = query.getColumn(7);
+		int indexInParent = query.getColumn(8);
 
 		Task task = Task(std::move(name), TaskID(taskID), TaskID(parentID), std::chrono::milliseconds(create_time));
 		task.state = static_cast<TaskState>(state);
 		task.m_finishTime = finish_time == 0 ? std::nullopt : std::optional(std::chrono::milliseconds(finish_time));
+		task.indexInParent = indexInParent;
 		task.locked = locked;
 		task.serverControlled = serverControlled;
 
