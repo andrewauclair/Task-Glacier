@@ -523,17 +523,8 @@ public class MenuBar extends JMenuBar {
                     "Organize garden hoses",
                     "Wipe down the garage door opener");
 
-
-            // generate 1000 random tasks from the list
-            int lastTask = 0;
-            Random rand = new Random();
-
-            for (int i = 0; i < 1000; i++) {
-                int index = rand.nextInt(list.size() - 1);
-                int parent = lastTask == 0 ? 0 : rand.nextInt(lastTask);
-                lastTask++;
-
-                CreateTask create = new CreateTask(list.get(index), parent, RequestID.nextRequestID());
+            for (String str : list) {
+                CreateTask create = new CreateTask(str, 0, RequestID.nextRequestID());
                 mainFrame.getConnection().sendPacket(create);
             }
         });

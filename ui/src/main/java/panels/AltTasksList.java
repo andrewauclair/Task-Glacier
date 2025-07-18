@@ -2,12 +2,18 @@ package panels;
 
 import data.Task;
 import data.TaskModel;
+import data.TaskState;
+import dialogs.AddModifyTask;
+import dialogs.TaskConfig;
 import io.github.andrewauclair.moderndocking.Dockable;
+import io.github.andrewauclair.moderndocking.DockingRegion;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
 import net.byteseek.swing.treetable.TreeTableModel;
 import net.byteseek.swing.treetable.TreeUtils;
+import packets.PacketType;
 import packets.RequestID;
+import packets.TaskStateChange;
 import packets.UpdateTask;
 import taskglacier.MainFrame;
 
@@ -20,11 +26,14 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static taskglacier.MainFrame.mainFrame;
 
@@ -33,8 +42,30 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
     private TreeTableModel treeTableModel;
     private DefaultTreeModel treeModel;
 
-    private JTable table1;
+    private JTable table;
     public JTextField sTextField = new JTextField(20);
+
+    private void finishActiveTask() {
+        TaskStateChange change = new TaskStateChange();
+        change.packetType = PacketType.FINISH_TASK;
+        change.taskID = mainFrame.getTaskModel().getActiveTaskID().get();
+        mainFrame.getConnection().sendPacket(change);
+    }
+
+    private void changeTaskState(PacketType type) {
+        int selectedRow = table.getSelectedRow();
+
+        if (selectedRow == -1) {
+            return;
+        }
+
+        Task task = (Task) ((DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(selectedRow)).getUserObject();
+
+        TaskStateChange change = new TaskStateChange();
+        change.packetType = type;
+        change.taskID = task.id;
+        mainFrame.getConnection().sendPacket(change);
+    }
 
     public AltTasksList(MainFrame mainFrame) {
         Docking.registerDockable(this);
@@ -43,11 +74,11 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
 
         Task rootObject = new Task(0, 0, "");
         rootNode = TreeUtils.buildTree(rootObject, Task::getChildren, parent -> { return false; });
-        table1 = new JTable();
-        table1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table1.setDragEnabled(true);
-        table1.setDropMode(DropMode.ON_OR_INSERT_ROWS);
-        table1.setTransferHandler(new TaskTransferHandler());
+        table = new JTable();
+        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        table.setDragEnabled(true);
+        table.setDropMode(DropMode.ON_OR_INSERT_ROWS);
+        table.setTransferHandler(new TaskTransferHandler());
         treeTableModel = createTreeTableModel(rootNode);
         treeModel = createTreeModel(rootNode);
 
@@ -79,25 +110,142 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
             }
         });
 
+        JMenuItem add = new JMenuItem("Add Task...");
+        JMenuItem addSubTask = new JMenuItem("Add Sub-Task...");
+        JMenuItem start = new JMenuItem("Start");
+        JMenuItem startStopActive = new JMenuItem("Start (Stop Active)");
+        JMenuItem startFinishActive = new JMenuItem("Start (Finish Active)");
+        JMenuItem stop = new JMenuItem("Stop");
+        JMenuItem finish = new JMenuItem("Finish");
+        JMenuItem openInNewWindow = new JMenuItem("Open in New List");
+        JMenuItem config = new JMenuItem("Configure...");
+
+        config.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+
+            if (selectedRow == -1) {
+                return;
+            }
+
+            Task task = (Task) ((DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(selectedRow)).getUserObject();
+
+            TaskConfig dialog = new TaskConfig(mainFrame, mainFrame, task);
+            dialog.setVisible(true);
+        });
+
+        start.addActionListener(e -> changeTaskState(PacketType.START_TASK));
+        startStopActive.addActionListener(e -> changeTaskState(PacketType.START_TASK));
+        startFinishActive.addActionListener(e -> {
+            finishActiveTask();
+            changeTaskState(PacketType.START_TASK);
+        });
+        stop.addActionListener(e -> changeTaskState(PacketType.STOP_TASK));
+        finish.addActionListener(e -> changeTaskState(PacketType.FINISH_TASK));
+
+        add.addActionListener(e -> new AddModifyTask(mainFrame, mainFrame, 0, false).setVisible(true));
+
+        addSubTask.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+
+            if (selectedRow == -1) {
+                return;
+            }
+
+            Task task = (Task) ((DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(selectedRow)).getUserObject();
+
+            new AddModifyTask(mainFrame, mainFrame, task.id, false).setVisible(true);
+        });
+
+        openInNewWindow.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+
+            if (selectedRow == -1) {
+                return;
+            }
+
+            Task task = (Task) ((DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(selectedRow)).getUserObject();
+
+            if (!Docking.isDockableRegistered("task-list-" + task.id)) {
+                TasksLists newList = new TasksLists(mainFrame, task);
+                Docking.dock(newList, AltTasksList.this, DockingRegion.CENTER);
+            }
+            else {
+                Docking.display("task-list-" + task.id);
+            }
+        });
+
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    int selectedRow = table.getSelectedRow();
+
+                    JPopupMenu contextMenu = new JPopupMenu();
+
+                    if (selectedRow == -1) {
+                        contextMenu.add(add);
+                        contextMenu.show(table, e.getX(), e.getY());
+                        return;
+                    }
+
+                    contextMenu.add(config);
+
+                    if (mainFrame.getTaskModel().getActiveTaskID().isPresent() &&
+                            !mainFrame.getTaskModel().taskHasNonFinishedChildren(mainFrame.getTaskModel().getActiveTaskID().get()) &&
+                            !mainFrame.getTaskModel().getTask(mainFrame.getTaskModel().getActiveTaskID().get()).locked) {
+                        contextMenu.add(startStopActive);
+                        contextMenu.add(startFinishActive);
+                    }
+                    else {
+                        contextMenu.add(start);
+                    }
+
+                    contextMenu.add(stop);
+                    contextMenu.add(finish);
+                    contextMenu.addSeparator();
+                    contextMenu.add(addSubTask);
+
+                    TreeNode node = treeTableModel.getNodeAtTableRow(selectedRow);
+                    Task task = (Task) ((DefaultMutableTreeNode) node).getUserObject();
+
+                    startStopActive.setEnabled(task.state == TaskState.PENDING);
+                    startFinishActive.setEnabled(task.state == TaskState.PENDING);
+                    stop.setEnabled(task.state == TaskState.ACTIVE);
+                    finish.setEnabled(task.state != TaskState.FINISHED && !mainFrame.getTaskModel().taskHasNonFinishedChildren(task.id) && !task.locked && !task.serverControlled);
+
+                    // task has subtasks, allow an option to open it in a new panel
+                    if (node.getChildCount() != 0) {
+                        contextMenu.addSeparator();
+                        contextMenu.add(openInNewWindow);
+                    }
+
+                    contextMenu.show(table, e.getX(), e.getY());
+                }
+                else if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                    config.doClick();
+                }
+            }
+        });
+
         setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        add(sTextField, gbc);
-
-        gbc.gridy++;
-        gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
 
-        add(new JScrollPane(table1), gbc);
+        add(new JScrollPane(table), gbc);
+        gbc.gridy++;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        add(sTextField, gbc);
     }
+
     class TaskTransferHandler extends TransferHandler {
-        private int[] rows;
+        private List<Integer> rows = new ArrayList<>();
 
         @Override
         public int getSourceActions(JComponent c) {
@@ -106,24 +254,12 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
 
         @Override
         protected Transferable createTransferable(JComponent c) {
-            rows = table1.getSelectedRows();
+            int[] selectedRows = table.getSelectedRows();
 
-            int parent = -1;
-
-            // all the rows must have the same parent
-            for (int row : rows) {
-//                TreePath pathForRow = table.getPathForRow(row);
-//                TaskTreeTableNode node = (TaskTreeTableNode) pathForRow.getLastPathComponent();
-//                Task task = (Task) node.getUserObject();
-                DefaultMutableTreeNode nodeAtTableRow = (DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(row);
-                Task task = (Task) nodeAtTableRow.getUserObject();
-
-                if (parent == -1) {
-                    parent = task.parentID;
-                }
-                else if (task.parentID != parent) {
-//                    return null;
-                }
+            rows = new ArrayList<>();
+            
+            for (int i = selectedRows.length - 1; i >= 0; i--) {
+                rows.add(selectedRows[i]);
             }
 
             return new StringSelection("");
@@ -149,7 +285,7 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
                 if (dropNode == null) {
                     System.out.println("insert as last task in root list");
 
-                    
+
                 }
                 else {
                     Task dropTask = (Task) dropNode.getUserObject();
@@ -192,11 +328,10 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
                 return true;
             }
         }
-        // if we made it this far, and we have children, return false
-        if (!obj.children.isEmpty()) {
-            return false;
+        if (obj.name.contains(text)) {
+            return true;
         }
-        return obj.name.contains(text);
+        return false;
     }
 
     private DefaultTreeModel createTreeModel(TreeNode rootNode) {
@@ -211,7 +346,7 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
         TreeTableHeaderRenderer renderer = new TreeTableHeaderRenderer();
         renderer.setShowNumber(true); // true is default, this code is just for testing the false option.
 
-        localTreeTableModel.bindTable(table1, renderer); //, new RowSorter.SortKey(0, SortOrder.ASCENDING));
+        localTreeTableModel.bindTable(table, renderer); //, new RowSorter.SortKey(0, SortOrder.ASCENDING));
         localTreeTableModel.addExpandCollapseListener(new TreeTableModel.ExpandCollapseListener() {
             @Override
             public boolean nodeExpanding(TreeNode node) {
@@ -241,54 +376,36 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
 
     @Override
     public void newTask(Task task) {
+        System.out.println("AltTasksList.newTask");
         DefaultMutableTreeNode parent = findTaskNode(rootNode, task.parentID);
         if (parent == null) {
             int breakpoint = 0;
             return;
         }
         MutableTreeNode newChild = new DefaultMutableTreeNode(task);
+
         parent.setAllowsChildren(true);
-//        int index = parent.getChildCount() - 1;
-//        parent.insert(newChild, index);
         parent.add(newChild);
         treeTableModel.treeNodeInserted(parent, parent.getChildCount() - 1);
 
+        if (task.parentID == 0 && parent.getChildCount() == 1) {
+            treeTableModel.expandTree();
+        }
     }
 
     @Override
     public void updatedTask(Task task) {
-        DefaultMutableTreeNode parent = findTaskNode(rootNode, task.parentID);
+        System.out.println("AltTasksList.updatedTask");
         DefaultMutableTreeNode node = findTaskNode(rootNode, task.id);
 
         if (node != null) {
             treeTableModel.treeNodeChanged(node);
-//            if (parent.getIndex(node) != task.indexInParent) {
-//                ArrayList<TreeNode> nodes = Collections.list(parent.children());
-//                List<Task> list = nodes.stream()
-//                        .map(treeNode -> (Task)((DefaultMutableTreeNode) treeNode).getUserObject())
-//                        .sorted(Comparator.comparingInt(o -> o.indexInParent))
-//                        .toList();
-//
-//                parent.removeAllChildren();
-//
-//                for (TreeNode removedNode : nodes) {
-//                    treeTableModel.treeNodeRemoved(parent, removedNode);
-//                }
-//
-//                nodes.sort(Comparator.comparingInt(o -> ((Task) ((DefaultMutableTreeNode) o).getUserObject()).indexInParent));
-//                for (TreeNode addNode : nodes) {
-//                    parent.add((MutableTreeNode) addNode);
-//                    treeTableModel.treeNodeInserted(parent, parent.getChildCount() - 1);
-//                }
-//            }
-//            else {
-//                treeTableModel.treeNodeChanged(node);
-//            }
         }
     }
 
     @Override
     public void reparentTask(Task task, int oldParent) {
+        System.out.println("AltTasksList.reparentTask");
         DefaultMutableTreeNode oldParentNode = findTaskNode(rootNode, oldParent);
         DefaultMutableTreeNode newParentNode = findTaskNode(rootNode, task.parentID);
 
@@ -299,16 +416,16 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
         }
 
         if (oldParentNode != null) {
-            oldParentNode.remove(node);
             if (oldParentNode.getChildCount() == 0) {
                 oldParentNode.setAllowsChildren(false);
             }
+            // also removes the node from the old parent for us
             treeTableModel.treeNodeRemoved(oldParentNode, node);
         }
 
         if (newParentNode != null) {
             newParentNode.setAllowsChildren(true);
-            newParentNode.add(node);//, task.indexInParent);
+            newParentNode.add(node);
             treeTableModel.treeNodeInserted(newParentNode, newParentNode.getChildCount() - 1);
         }
     }
