@@ -5,15 +5,16 @@
 * Database Versions for Reference
 * 
 * 1 = 0.3.3
+* 2 = 0.4.0
 */
-static constexpr std::int32_t CURRENT_DATABASE_VERSION = 1;
+static constexpr std::int32_t CURRENT_DATABASE_VERSION = 2;
 
 DatabaseImpl::DatabaseImpl(const std::string& file)
 	: m_database(file, SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE)
 {
 	try
 	{
-		m_database.exec("create table if not exists tasks (TaskID integer PRIMARY KEY, Name text, ParentID integer, State integer, CreateTime bigint, FinishTime bigint, Locked integer, ServerControlled integer, IndexInParent integer)");
+		m_database.exec("create table if not exists tasks (TaskID integer PRIMARY KEY, Name text, ParentID integer, State integer, CreateTime bigint, FinishTime bigint, Locked integer, ServerControlled integer, IndexInParent integer not null default 0)");
 		m_database.exec("create table if not exists timeEntryCategory (TimeCategoryID integer PRIMARY KEY, TimeCategoryName text)");
 		m_database.exec("create table if not exists timeEntryCode (TimeCategoryID integer, TimeCodeID integer, TimeCodeName text, PRIMARY KEY (TimeCategoryID, TimeCodeID))");
 		m_database.exec("create table if not exists timeEntryTask (TaskID integer, TimeCategoryID integer, TimeCodeID integer, PRIMARY KEY (TaskID, TimeCategoryID))");
@@ -28,6 +29,14 @@ DatabaseImpl::DatabaseImpl(const std::string& file)
 
 		int version = get_version.getColumn(0);
 
+		switch (version)
+		{
+		case 1: // 1 - 0.3.3
+		{
+			// introduced a IndexInParent column to the tasks table
+			break;
+		}
+		}
 		SQLite::Statement set_version(m_database, std::format("PRAGMA user_version={};", CURRENT_DATABASE_VERSION));
 		set_version.executeStep();
 	}
