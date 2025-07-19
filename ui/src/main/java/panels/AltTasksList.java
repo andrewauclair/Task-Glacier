@@ -399,9 +399,17 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
             rows = new ArrayList<>();
             
             for (int i = selectedRows.length - 1; i >= 0; i--) {
-                rows.add(selectedRows[i]);
+                DefaultMutableTreeNode nodeAtTableRow = (DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(selectedRows[i]);
+                Task task = (Task) nodeAtTableRow.getUserObject();
+
+                if (!task.serverControlled && !task.locked) {
+                    rows.add(selectedRows[i]);
+                }
             }
 
+            if (rows.isEmpty()) {
+                return null;
+            }
             return new StringSelection("");
         }
 

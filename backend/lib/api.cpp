@@ -209,6 +209,8 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 				{
 					child->indexInParent = expectedIndex;
 					send_task_info(*child, false, output);
+
+					m_database->write_task(*child);
 				}
 				++expectedIndex;
 			}
