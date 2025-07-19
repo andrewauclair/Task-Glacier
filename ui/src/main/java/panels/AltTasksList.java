@@ -223,20 +223,6 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
             public void changedUpdate(DocumentEvent e) {
                 updateFilter();
             }
-
-            private void updateFilter() {
-                if (sTextField.getText().isEmpty()) {
-                    treeTableModel.setNodeFilter(treeNode -> {
-                        Task obj = TreeUtils.getUserObject(treeNode);
-                        return obj.state == TaskState.FINISHED;
-                    });
-                } else {
-                    treeTableModel.setNodeFilter(treeNode -> {
-                        Task obj = TreeUtils.getUserObject(treeNode);
-                        return obj.state == TaskState.FINISHED || !childrenHaveMatch(obj, sTextField.getText());
-                    });
-                }
-            }
         });
 
         treeTableModel.setNodeFilter(treeNode -> {
@@ -376,6 +362,26 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         add(sTextField, gbc);
+    }
+
+    private void updateFilter() {
+        if (sTextField.getText().isEmpty()) {
+            treeTableModel.setNodeFilter(treeNode -> {
+                Task obj = TreeUtils.getUserObject(treeNode);
+                return obj.state == TaskState.FINISHED;
+            });
+        } else {
+            treeTableModel.setNodeFilter(treeNode -> {
+                Task obj = TreeUtils.getUserObject(treeNode);
+                boolean includeFinish = sTextField.getText().startsWith("finished: ");
+                String text = sTextField.getText();
+                if (includeFinish) {
+                    text = text.substring("finished: ".length());
+                    return !childrenHaveMatch(obj, text);
+                }
+                return obj.state == TaskState.FINISHED || !childrenHaveMatch(obj, text);
+            });
+        }
     }
 
     class TaskTransferHandler extends TransferHandler {
@@ -544,6 +550,20 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
 
         if (node != null) {
             treeTableModel.treeNodeChanged(node);
+
+            if (task.state == TaskState.FINISHED) {
+                updateFilter();
+
+                Task parent = mainFrame.getTaskModel().getTask(task.parentID);
+                DefaultMutableTreeNode parentNode = findTaskNode(rootNode, task.parentID);
+
+                if (parent != null && parentNode != null) {
+                    boolean active = parent.children.stream()
+                            .anyMatch(task1 -> task1.state != TaskState.FINISHED);
+
+                    parentNode.setAllowsChildren(active);
+                }
+            }
         }
     }
 

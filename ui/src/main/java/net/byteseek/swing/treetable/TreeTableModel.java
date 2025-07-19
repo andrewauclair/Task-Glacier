@@ -936,9 +936,13 @@ public abstract class TreeTableModel extends AbstractTableModel implements TreeM
      * @param nodeChanged The node that needs to be refreshed.
      */
     public void treeNodeChanged(final TreeNode nodeChanged) {
-        if (isVisible(nodeChanged)) {
+        if (displayedNodes.contains(nodeChanged)) {//isVisible(nodeChanged)) {
             final int modelIndex  = getModelIndexForTreeNode(nodeChanged);
             fireTableRowsUpdated(modelIndex, modelIndex);
+
+            if (!isVisible(nodeChanged)) {
+                rebuildVisibleChildren(nodeChanged.getParent());
+            }
         }
     }
 
