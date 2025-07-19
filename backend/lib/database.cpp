@@ -1,6 +1,8 @@
 #include "database.hpp"
 #include "api.hpp"
 
+#include <format>
+
 /*
 * Database Versions for Reference
 * 
@@ -14,7 +16,7 @@ DatabaseImpl::DatabaseImpl(const std::string& file)
 {
 	try
 	{
-		m_database.exec("create table if not exists tasks (TaskID integer PRIMARY KEY, Name text, ParentID integer, State integer, CreateTime bigint, FinishTime bigint, Locked integer, ServerControlled integer, IndexInParent integer not null default 0)");
+		m_database.exec("create table if not exists tasks (TaskID integer PRIMARY KEY, Name text, ParentID integer, State integer, CreateTime bigint, FinishTime bigint, Locked integer, ServerControlled integer, IndexInParent integer)");
 		m_database.exec("create table if not exists timeEntryCategory (TimeCategoryID integer PRIMARY KEY, TimeCategoryName text)");
 		m_database.exec("create table if not exists timeEntryCode (TimeCategoryID integer, TimeCodeID integer, TimeCodeName text, PRIMARY KEY (TimeCategoryID, TimeCodeID))");
 		m_database.exec("create table if not exists timeEntryTask (TaskID integer, TimeCategoryID integer, TimeCodeID integer, PRIMARY KEY (TaskID, TimeCategoryID))");
@@ -33,7 +35,24 @@ DatabaseImpl::DatabaseImpl(const std::string& file)
 		{
 		case 1: // 1 - 0.3.3
 		{
-			// introduced a IndexInParent column to the tasks table
+			// introduced a IndexInParent column to the tasks table. the values will be corrected when reordering in the UI
+			m_database.exec("alter table tasks add column IndexInParent integer");
+
+			std::map<int, int> nextIndex;
+
+			SQLite::Statement query(m_database, "select * from tasks");
+			query.executeStep();
+
+			while (query.hasRow())
+			{
+				int taskID = query.getColumn(0);
+				int parentID = query.getColumn(2);
+
+				m_database.exec(std::format("update tasks set IndexInParent = {} where TaskID = {}", nextIndex[parentID], taskID));
+				++nextIndex[parentID];
+
+				query.executeStep();
+			}
 			break;
 		}
 		}
