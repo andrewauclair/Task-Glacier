@@ -31,7 +31,9 @@
  */
 package panels;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import data.Task;
+import data.TaskState;
 import net.byteseek.demo.treetable.MyObject;
 import net.byteseek.swing.treetable.Comparators;
 import net.byteseek.swing.treetable.TableUtils;
@@ -43,20 +45,20 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
+import java.awt.*;
 import java.util.Comparator;
+import java.util.Objects;
 
 public final class TaskTreeTableModel extends TreeTableModel {
-
-    private Icon leafIcon;              // tree node that allows no children.
-    private Icon openIcon;              // tree node displaying children.
-    private Icon closedIcon;            // tree node not displaying children.
+    private FlatSVGIcon activeIcon = new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/activity-svgrepo-com.svg"))).derive(24, 24);
+    private FlatSVGIcon finishIcon = new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/checkmark-svgrepo-com.svg"))).derive(24, 24);
+    private FlatSVGIcon pendingIcon = new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/system-pending-line-svgrepo-com.svg"))).derive(24, 24);
 
     public TaskTreeTableModel(final TreeNode rootNode, final boolean showRoot) {
         super(rootNode, showRoot);
         setIcons();
 //        setGroupingComparator(Comparators.ALLOWS_CHILDREN_DESCENDING);
         setGroupingComparator(Comparator.comparingInt(o -> ((Task) ((DefaultMutableTreeNode) o).getUserObject()).indexInParent));
-        leafIcon = null;
     }
 
     @Override
@@ -110,38 +112,22 @@ public final class TaskTreeTableModel extends TreeTableModel {
     @Override
     public Icon getNodeIcon(TreeNode node) {
         if (node != null) {
-            if (node.getAllowsChildren()) {
-                return isExpanded(node) ? openIcon : closedIcon;
+            final Task obj = TreeUtils.getUserObject(node);
+
+            if (obj.state == TaskState.FINISHED) {
+                return finishIcon;
             }
-            return leafIcon;
+            else if (obj.state == TaskState.ACTIVE) {
+                return activeIcon;
+            }
+            return pendingIcon;
         }
         return null;
     }
 
     private void setIcons() {
-        if (UIManager.getLookAndFeel().getID().equals("GTK")) {
-            setLeafIcon(UIManager.getIcon("FileView.fileIcon"));
-            setOpenIcon(UIManager.getIcon("FileView.directoryIcon"));
-            setClosedIcon(UIManager.getIcon("FileView.directoryIcon"));
-        } else {
-            // Leaf, open and closed icons not available in all look and feels...not in GTK, but is in metal...
-            setLeafIcon(UIManager.getIcon("Tree.leafIcon"));
-            setOpenIcon(UIManager.getIcon("Tree.openIcon"));
-            setClosedIcon(UIManager.getIcon("Tree.closedIcon"));
-        }
+        activeIcon.setColorFilter( new FlatSVGIcon.ColorFilter(color -> Color.GREEN ) );
+        finishIcon.setColorFilter( new FlatSVGIcon.ColorFilter(color -> Color.MAGENTA ) );
+        pendingIcon.setColorFilter( new FlatSVGIcon.ColorFilter(color -> Color.YELLOW) );
     }
-
-    public void setLeafIcon(final Icon leafIcon) {
-        this.leafIcon = leafIcon;
-    }
-
-    public void setClosedIcon(final Icon closedIcon) {
-        this.closedIcon = closedIcon;
-    }
-
-    public void setOpenIcon(final Icon openIcon) {
-        this.openIcon = openIcon;
-    }
-
-
 }

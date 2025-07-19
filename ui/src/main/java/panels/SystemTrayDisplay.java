@@ -1,5 +1,6 @@
 package panels;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
@@ -16,9 +17,9 @@ public class SystemTrayDisplay extends JFrame {
     // https://www.flaticon.com/free-icon/clipboard_1527478?term=task&page=1&position=53&origin=search&related_id=1527478
     // https://www.flaticon.com/free-icon/share_8584964?term=open&page=1&position=3&origin=search&related_id=8584964
 
-    JButton openApp = new JButton(new ImageIcon(Objects.requireNonNull(getClass().getResource("/share.png"))));
-    JButton unspecifiedTask = new JButton(new ImageIcon(Objects.requireNonNull(getClass().getResource("/cognitive.png"))));
-    JButton dailyReport = new JButton(new ImageIcon(Objects.requireNonNull(getClass().getResource("/clipboard.png"))));
+    JButton openApp = new JButton(new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/export-2-svgrepo-com.svg"))).derive(32, 32));//new ImageIcon(Objects.requireNonNull(getClass().getResource("/share.png"))));
+    JButton unspecifiedTask = new JButton(new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/brain-illustration-1-svgrepo-com.svg"))).derive(32, 32));
+    JButton dailyReport = new JButton(new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/report-svgrepo-com.svg"))).derive(32, 32));
 
     Timer timer;
     MouseEvent e;
