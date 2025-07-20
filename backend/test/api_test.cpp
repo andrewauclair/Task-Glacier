@@ -1027,7 +1027,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request, helper.output);
 
-		auto report = DailyReportMessage(helper.prev_request_id());
+		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1737344039870));
 		report.report.month = 2;
 		report.report.day = 3;
 		report.report.year = 2025;
@@ -1048,16 +1048,16 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request, helper.output);
 
-		auto report = DailyReportMessage(helper.prev_request_id());
+		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738560600000));
 		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
 		report.report.year = 2025;
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(15);
 		report.report.times.emplace_back(TaskID(1), 0);
-		report.report.totalTime = std::chrono::minutes(15);
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(1), TimeCodeID(0) }, std::chrono::minutes(15));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(2), TimeCodeID(0) }, std::chrono::minutes(15));
+		report.report.totalTime = std::chrono::minutes(30);
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(1), TimeCodeID(0) }, std::chrono::minutes(30));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(2), TimeCodeID(0) }, std::chrono::minutes(30));
 
 		helper.required_messages({ &report });
 	}
@@ -1076,16 +1076,16 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request, helper.output);
 
-		auto report = DailyReportMessage(helper.prev_request_id());
+		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738647000000));
 		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
 		report.report.year = 2025;
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(15);
 		report.report.times.emplace_back(TaskID(1), 0);
-		report.report.totalTime = std::chrono::milliseconds(87300000);
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(1), TimeCodeID(0) }, std::chrono::milliseconds(87300000));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(2), TimeCodeID(0) }, std::chrono::milliseconds(87300000));
+		report.report.totalTime = std::chrono::milliseconds(88200000);
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(1), TimeCodeID(0) }, std::chrono::milliseconds(88200000));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(2), TimeCodeID(0) }, std::chrono::milliseconds(88200000));
 
 		helper.required_messages({ &report });
 	}
@@ -1103,7 +1103,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request, helper.output);
 
-		auto report = DailyReportMessage(helper.prev_request_id());
+		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738542600000));
 		report.report.month = 2;
 		report.report.day = 4;
 		report.report.year = 2025;
@@ -1124,16 +1124,16 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request, helper.output);
 
-		auto report = DailyReportMessage(helper.prev_request_id());
+		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738560600000));
 		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
 		report.report.year = 2025;
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(15);
 		report.report.times.emplace_back(TaskID(1), 0);
-		report.report.totalTime = std::chrono::minutes(15);
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(1), TimeCodeID(0) }, std::chrono::minutes(15));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(2), TimeCodeID(0) }, std::chrono::minutes(15));
+		report.report.totalTime = std::chrono::minutes(30);
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(1), TimeCodeID(0) }, std::chrono::minutes(30));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(2), TimeCodeID(0) }, std::chrono::minutes(30));
 
 		helper.required_messages({ &report });
 	}
@@ -1154,7 +1154,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request, helper.output);
 
-		auto report = DailyReportMessage(helper.prev_request_id());
+		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738566000000));
 		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
@@ -1184,7 +1184,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request, helper.output);
 
-		auto report = DailyReportMessage(helper.prev_request_id());
+		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738566000000));
 		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
@@ -1226,7 +1226,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request, helper.output);
 
-		auto report = DailyReportMessage(helper.prev_request_id());
+		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738652400000));
 		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
@@ -1303,7 +1303,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request, helper.output);
 
-		auto report = DailyReportMessage(helper.prev_request_id());
+		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738659600000));
 		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
@@ -1355,7 +1355,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request, helper.output);
 
-		auto report = DailyReportMessage(helper.prev_request_id());
+		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738569600000));
 		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
