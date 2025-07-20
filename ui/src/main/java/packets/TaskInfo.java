@@ -96,8 +96,20 @@ public class TaskInfo implements Packet {
 
             for (int j = 0; j < timeEntryCount; j++) {
                 TimeData.TimeEntry entry = new TimeData.TimeEntry();
+
                 entry.category = MainFrame.mainFrame.getTimeData().findTimeCategory(input.readInt());
+
+                if (entry.category == null) {
+                    entry.category = new TimeData.TimeCategory();
+                    entry.category.name = "Unknown";
+                }
+
                 entry.code = MainFrame.mainFrame.getTimeData().findTimeCode(input.readInt());
+
+                if (entry.code == null) {
+                    entry.code = new TimeData.TimeCode();
+                    entry.code.name = "Unknown";
+                }
 
                 time.timeEntry.add(entry);
             }

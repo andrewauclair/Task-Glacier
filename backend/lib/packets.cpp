@@ -690,6 +690,7 @@ std::vector<std::byte> DailyReportMessage::pack() const
 
 	builder.add(PacketType::DAILY_REPORT);
 	builder.add(requestID);
+	builder.add(reportTime);
 	builder.add(report.found);
 	builder.add<std::int8_t>(report.month);
 	builder.add<std::int8_t>(report.day);
@@ -728,6 +729,7 @@ std::expected<DailyReportMessage, UnpackError> DailyReportMessage::unpack(std::s
 
 	const auto packetType = parser.parse_next<PacketType>();
 	const auto requestID = parser.parse_next<RequestID>();
+	const auto reportTime = parser.parse_next<std::chrono::milliseconds>();
 	const auto reportFound = parser.parse_next<bool>();
 	
 
@@ -735,10 +737,10 @@ std::expected<DailyReportMessage, UnpackError> DailyReportMessage::unpack(std::s
 	{
 		if (!reportFound.value())
 		{
-			return DailyReportMessage(requestID.value());
+			return DailyReportMessage(requestID.value(), reportTime.value());
 		}
 
-		auto report = DailyReportMessage(requestID.value());
+		auto report = DailyReportMessage(requestID.value(), reportTime.value());
 
 		report.report.found = true;
 		report.report.month = parser.parse_next_immediate<std::int8_t>();

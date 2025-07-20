@@ -55,8 +55,20 @@ public class WeeklyReport implements Packet {
                     Instant time = Instant.ofEpochMilli(input.readLong());
 
                     TimeData.TimeEntry entry = new TimeData.TimeEntry();
+
                     entry.category = MainFrame.mainFrame.getTimeData().findTimeCategory(timeCategoryID);
+
+                    if (entry.category == null) {
+                        entry.category = new TimeData.TimeCategory();
+                        entry.category.name = "Unknown";
+                    }
+
                     entry.code = MainFrame.mainFrame.getTimeData().findTimeCode(timeCodeID);
+
+                    if (entry.code == null) {
+                        entry.code = new TimeData.TimeCode();
+                        entry.code.name = "Unknown";
+                    }
 
                     dailyReport.timesPerTimeEntry.put(entry, time);
                 }

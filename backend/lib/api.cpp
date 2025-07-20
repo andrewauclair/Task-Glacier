@@ -448,7 +448,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<st
 
 DailyReportMessage API::create_daily_report(RequestID requestID, int month, int day, int year)
 {
-	DailyReportMessage report(requestID);
+	DailyReportMessage report(requestID, m_clock->now());
 
 	// search for tasks on the given day
 

@@ -1012,9 +1012,11 @@ struct DailyReportMessage : Message
 {
 	RequestID requestID;
 
+	std::chrono::milliseconds reportTime;
+
 	DailyReport report;
 
-	DailyReportMessage(RequestID requestID) : Message(PacketType::DAILY_REPORT), requestID(requestID) {}
+	DailyReportMessage(RequestID requestID, std::chrono::milliseconds reportTime) : Message(PacketType::DAILY_REPORT), requestID(requestID), reportTime(reportTime) {}
 
 	bool operator==(const Message& message) const override
 	{
@@ -1027,7 +1029,7 @@ struct DailyReportMessage : Message
 
 	bool operator==(const DailyReportMessage& message) const
 	{
-		return requestID == message.requestID && report == message.report;
+		return requestID == message.requestID && reportTime == message.reportTime && report == message.report;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -1038,6 +1040,7 @@ struct DailyReportMessage : Message
 		out << "DailyReportMessage { ";
 		Message::print(out);
 		out << ", requestID: " << requestID._val;
+		out << ", reportTime: " << reportTime;
 		out << ", report: " << report;
 		out << "}";
 		return out;

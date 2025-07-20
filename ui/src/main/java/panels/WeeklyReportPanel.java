@@ -14,9 +14,11 @@ import taskglacier.MainFrame;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +52,14 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
 
         String[] dates = new String[7];
         double[] totals = new double[8];
+
+        public int getTotalRowStart() {
+            return rows.size();
+        }
+
+        public int getTotalColumnIndex() {
+            return 9;
+        }
 
         @Override
         public int getRowCount() {
@@ -115,10 +125,14 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
         public void addRow(Row value) {
             rows.add(value);
 
+            // sort the rows to display the most time at the top
+            rows.sort(Comparator.comparingDouble(o -> o.total));
+
             for (int i = 0; i < 7; i++) {
                 if (value.hours[i] != null) {
                     value.total += value.hours[i];
                     totals[i] += value.hours[i];
+                    totals[7] += value.hours[i];
                 }
             }
         }
@@ -173,7 +187,20 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
         gbc.gridx = 0;
         gbc.gridy = 0;
 
-        JTable table = new JTable(model);
+        JTable table = new JTable(model) {
+            @Override
+            public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+                JLabel label = (JLabel) super.prepareRenderer(renderer, row, column);
+
+                if (row == model.getTotalRowStart() || column == model.getTotalColumnIndex()) {
+                    int top = row == model.getTotalRowStart() ? 2 : 0;
+                    int left = column == model.getTotalColumnIndex() ? 1 : 0;
+                    label.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(top, left, 0, 0, Color.WHITE), label.getBorder()));
+                }
+
+                return label;
+            }
+        };
         table.setAutoCreateRowSorter(true);
 
         gbc.weightx = 1;
@@ -213,6 +240,13 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
 
                     Row row = rows.getOrDefault(timeEntry, new Row());
                     row.category = timeEntry.category;
+
+                    if (row.category == null) {
+                        row.category = new TimeData.TimeCategory();
+                        row.category.id = 0;
+                        row.category.name = "Unknown";
+                    }
+
                     row.code = timeEntry.code;
 
                     if (row.code == null) {

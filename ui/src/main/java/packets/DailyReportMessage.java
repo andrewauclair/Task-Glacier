@@ -29,6 +29,8 @@ public class DailyReportMessage implements Packet {
     public static class DailyReport {
         public boolean found;
 
+        public Instant time;
+
         public int month;
         public int day;
         public int year;
@@ -72,6 +74,7 @@ public class DailyReportMessage implements Packet {
         message.requestID = input.readInt();
 
         message.report = new DailyReport();
+        message.report.time = Instant.ofEpochMilli(input.readLong());
         message.report.found = input.readBoolean();
         message.report.month = input.readByte();
         message.report.day = input.readByte();
@@ -90,8 +93,20 @@ public class DailyReportMessage implements Packet {
                 Instant time = Instant.ofEpochMilli(input.readLong());
 
                 TimeData.TimeEntry entry = new TimeData.TimeEntry();
+
                 entry.category = MainFrame.mainFrame.getTimeData().findTimeCategory(timeCategoryID);
+
+                if (entry.category == null) {
+                    entry.category = new TimeData.TimeCategory();
+                    entry.category.name = "Unknown";
+                }
+
                 entry.code = MainFrame.mainFrame.getTimeData().findTimeCode(timeCodeID);
+
+                if (entry.code == null) {
+                    entry.code = new TimeData.TimeCode();
+                    entry.code.name = "Unknown";
+                }
 
                 message.report.timesPerTimeEntry.put(entry, time);
             }

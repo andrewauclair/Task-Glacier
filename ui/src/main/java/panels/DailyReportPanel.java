@@ -15,10 +15,12 @@ import taskglacier.MainFrame;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,14 +45,28 @@ public class DailyReportPanel extends JPanel implements Dockable {
         TimeData.TimeCategory category;
         TimeData.TimeCode code;
         double hours;
+
+        public Row(TimeData.TimeCategory category, TimeData.TimeCode code, double hours) {
+            this.category = category;
+            this.code = code;
+            this.hours = hours;
+        }
     }
 
     class TableModel extends AbstractTableModel {
-        List<Row> rows = new ArrayList<>();
+        private List<Row> rows = new ArrayList<>();
+        double totalHours = 0;
+
+        public int getTotalRowStart() {
+            return rows.size();
+        }
 
         @Override
         public int getRowCount() {
-            return rows.size();
+            if (rows.isEmpty()) {
+                return 0;
+            }
+            return rows.size() + 1;
         }
 
         @Override
@@ -81,15 +97,40 @@ public class DailyReportPanel extends JPanel implements Dockable {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            Row row = rows.get(rowIndex);
+            if (rowIndex < rows.size()) {
+                Row row = rows.get(rowIndex);
 
-            if (columnIndex == 0) {
-                return row.category.name;
+                if (columnIndex == 0) {
+                    return row.category.name;
+                }
+                else if (columnIndex == 1) {
+                    return row.code.name;
+                }
+                return row.hours;
             }
-            else if (columnIndex == 1) {
-                return row.code.name;
+            else {
+                if (columnIndex == 0) {
+                    return "Total";
+                }
+                else if (columnIndex == 2) {
+                    return totalHours;
+                }
             }
-            return row.hours;
+            return null;
+        }
+
+        void clear() {
+            rows.clear();
+            totalHours = 0;
+        }
+
+        void add(TimeData.TimeCategory category, TimeData.TimeCode code, double hours) {
+            rows.add(new Row(category, code, hours));
+
+            totalHours += hours;
+
+            // sort the rows to display the most time at the top
+            rows.sort(Comparator.comparingDouble(o -> o.hours));
         }
     }
 
@@ -226,7 +267,18 @@ public class DailyReportPanel extends JPanel implements Dockable {
         add(total, gbc);
         gbc.gridy++;
 
-        JTable table = new JTable(model);
+        JTable table = new JTable(model) {
+            @Override
+            public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+                JLabel label = (JLabel) super.prepareRenderer(renderer, row, column);
+
+                if (row == model.getTotalRowStart()) {
+                    label.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, Color.WHITE), label.getBorder()));
+                }
+
+                return label;
+            }
+        };
         table.setAutoCreateRowSorter(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
@@ -238,7 +290,7 @@ public class DailyReportPanel extends JPanel implements Dockable {
             taskModel.rows.clear();
             taskModel.fireTableDataChanged();
 
-            if (table.getSelectedRow() != -1) {
+            if (table.getSelectedRow() != -1 && table.getSelectedRow() < model.rows.size()) {
                 Row row = model.rows.get(table.getSelectedRow());
 
                 Map<Task, Double> taskRows = new HashMap<>();
@@ -251,15 +303,17 @@ public class DailyReportPanel extends JPanel implements Dockable {
                         if (timeEntry.category.equals(row.category) && timeEntry.code.equals(row.code)) {
                             double hours = taskRows.getOrDefault(task, 0.0);
 
-                            Instant instant = report.timesPerTimeEntry.get(timeEntry);
+                            Instant stopTime = session.stopTime.orElseGet(() -> report.time);
+
+                            Instant instant = stopTime.minusMillis(session.startTime.toEpochMilli());
 
                             long minutes = TimeUnit.MILLISECONDS.toMinutes(instant.toEpochMilli());
 
-                            minutes = Math.round(minutes / 15.0) * 15;
-
-                            if (instant.toEpochMilli() != 0 && minutes == 0) {
-                                minutes = 15;
-                            }
+//                            minutes = Math.round(minutes / 15.0) * 15;
+//
+//                            if (instant.toEpochMilli() != 0 && minutes == 0) {
+//                                minutes = 15;
+//                            }
 
                             hours += minutes / 60.0;
 
@@ -298,7 +352,7 @@ public class DailyReportPanel extends JPanel implements Dockable {
 
         date.setText(String.format("%d/%d/%d", report.month, report.day, report.year));
 
-        model.rows.clear();
+        model.clear();
         model.fireTableDataChanged();
 
         if (report.found) {
@@ -311,20 +365,27 @@ public class DailyReportPanel extends JPanel implements Dockable {
                     minutes = 15;
                 }
 
-                Row row = new Row();
-                row.category = timeEntry.category;
-                row.code = timeEntry.code;
+                TimeData.TimeCategory category = timeEntry.category;
 
-                if (row.code == null) {
-                    row.code = new TimeData.TimeCode();
-                    row.code.id = 0;
-                    row.code.name = "Unknown";
+                if (category == null) {
+                    category = new TimeData.TimeCategory();
+                    category.id = 0;
+                    category.name = "Unknown";
                 }
-                row.hours = minutes / 60.0;
-                model.rows.add(row);
-                model.fireTableRowsInserted(model.rows.size() - 1, model.rows.size() - 1);
+
+                TimeData.TimeCode code = timeEntry.code;
+
+                if (code == null) {
+                    code = new TimeData.TimeCode();
+                    code.id = 0;
+                    code.name = "Unknown";
+                }
+
+                model.add(category, code, minutes / 60.0);
             });
         }
+
+        model.fireTableDataChanged();
     }
 
     @Override

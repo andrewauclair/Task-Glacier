@@ -53,7 +53,7 @@ public class TimeData {
         public boolean equals(Object o) {
             if (o == null || getClass() != o.getClass()) return false;
             TimeEntry timeEntry = (TimeEntry) o;
-            return category == timeEntry.category && code == timeEntry.code;
+            return category.equals(timeEntry.category) && code.equals(timeEntry.code);
         }
 
         @Override
