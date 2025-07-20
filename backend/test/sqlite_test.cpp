@@ -448,6 +448,28 @@ TEST_CASE("Write Task to Database", "[database]")
 		query.executeStep();
 		CHECK(!query.hasRow());
 	}
+
+	SECTION("Lock")
+	{
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+
+		auto update = UpdateTaskMessage(RequestID(3), TaskID(1), NO_PARENT, "parent");
+		update.locked = 1;
+
+		api.process_packet(update, output);
+
+		SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 1");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		int locked = query.getColumn(6);
+
+		CHECK(locked == 1);
+
+		query.executeStep();
+		CHECK(!query.hasRow());
+	}
 }
 
 TEST_CASE("Write Task Session to Database", "[database]")
