@@ -161,11 +161,11 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 	bool parentChanged = task->parentID() != message.parentID;
 	TaskID currentParent = task->parentID();
 
-	// TODO test and persist
 	task->locked = message.locked;
 	task->indexInParent = message.indexInParent;
 
 	std::optional<std::string> result;
+
 	if (message.name != task->m_name)
 	{
 		result = m_app.rename_task(message.taskID, message.name);

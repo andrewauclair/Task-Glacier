@@ -396,7 +396,6 @@ void DatabaseImpl::write_sessions(const Task& task)
 			}
 		}
 
-		// TODO we don't write anything when we don't have time config data
 		for (const TimeEntry& entry : times.timeEntry)
 		{
 			SQLite::Statement insert(m_database, "insert or replace into timeEntrySession values(?, ?, ?, ?, ?, ?)");

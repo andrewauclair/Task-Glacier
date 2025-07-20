@@ -330,6 +330,34 @@ TEST_CASE("Write Task to Database", "[database]")
 
 		query.executeStep();
 		CHECK(!query.hasRow());
+
+		SECTION("Write Stop When Active")
+		{
+			api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+			api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(2), TaskID(2)), output);
+
+			query = SQLite::Statement(database.database(), "SELECT * FROM tasks WHERE TaskID == 1");
+			query.executeStep();
+
+			REQUIRE(query.hasRow());
+
+			id = query.getColumn(0);
+			name = query.getColumn(1).getString();
+			parentID = query.getColumn(2);
+			state = query.getColumn(3);
+			create_time = query.getColumn(4);
+			finish_time = query.getColumn(5);
+
+			CHECK(id == 1);
+			CHECK(name == "parent");
+			CHECK(parentID == 0);
+			CHECK(state == 0);
+			CHECK(create_time == 1737344039870);
+			CHECK(finish_time == 0);
+
+			query.executeStep();
+			CHECK(!query.hasRow());
+		}
 	}
 
 	SECTION("Stop")
@@ -466,6 +494,39 @@ TEST_CASE("Write Task to Database", "[database]")
 		int locked = query.getColumn(6);
 
 		CHECK(locked == 1);
+
+		query.executeStep();
+		CHECK(!query.hasRow());
+	}
+
+	SECTION("Index in Parent")
+	{
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+
+		SQLite::Statement query(database.database(), "SELECT * FROM tasks");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		int indexInParent = query.getColumn(8);
+
+		CHECK(indexInParent == 0);
+
+		query.executeStep();
+		CHECK(query.hasRow());
+
+		indexInParent = query.getColumn(8);
+
+		CHECK(indexInParent == 1);
+
+		query.executeStep();
+		CHECK(query.hasRow());
+
+		indexInParent = query.getColumn(8);
+
+		CHECK(indexInParent == 2);
 
 		query.executeStep();
 		CHECK(!query.hasRow());
