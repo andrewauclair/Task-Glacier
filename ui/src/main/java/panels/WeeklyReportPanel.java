@@ -126,7 +126,7 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
             rows.add(value);
 
             // sort the rows to display the most time at the top
-            rows.sort(Comparator.comparingDouble(o -> o.total));
+            rows.sort(Comparator.comparingDouble(o -> ((Row) o).total).reversed());
 
             for (int i = 0; i < 7; i++) {
                 if (value.hours[i] != null) {
