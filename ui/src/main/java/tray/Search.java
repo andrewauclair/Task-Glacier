@@ -87,10 +87,10 @@ class Search extends JPanel implements TaskModel.Listener {
     public void setSearchText(final String search) {
         treeTableModel.setNodeFilter(treeNode -> {
             Task obj = TreeUtils.getUserObject(treeNode);
-            boolean includeFinish = search.startsWith("finished: ");
+            boolean includeFinish = search.startsWith("finish: ");
             String text = search;
             if (includeFinish) {
-                text = text.substring("finished: ".length());
+                text = text.substring("finish: ".length());
                 return !childrenHaveMatch(obj, text);
             }
             return obj.state == TaskState.FINISHED || !childrenHaveMatch(obj, text);

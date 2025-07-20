@@ -373,10 +373,10 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
         } else {
             treeTableModel.setNodeFilter(treeNode -> {
                 Task obj = TreeUtils.getUserObject(treeNode);
-                boolean includeFinish = sTextField.getText().startsWith("finished: ");
+                boolean includeFinish = sTextField.getText().startsWith("finish: ");
                 String text = sTextField.getText();
                 if (includeFinish) {
-                    text = text.substring("finished: ".length());
+                    text = text.substring("finish: ".length());
                     return !childrenHaveMatch(obj, text);
                 }
                 return obj.state == TaskState.FINISHED || !childrenHaveMatch(obj, text);
