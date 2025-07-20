@@ -376,6 +376,26 @@ void DatabaseImpl::write_sessions(const Task& task)
 
 	for (const TaskTimes& times : task.m_times)
 	{
+		if (times.timeEntry.empty())
+		{
+			SQLite::Statement insert(m_database, "insert or replace into timeEntrySession values(?, ?, ?, ?, ?, ?)");
+			insert.bind(1, task.taskID()._val);
+			insert.bind(2, index);
+			insert.bind(3, 0);
+			insert.bind(4, 0);
+			insert.bind(5, times.start.count());
+			insert.bind(6, times.stop.value_or(std::chrono::milliseconds(0)).count());
+
+			try
+			{
+				insert.exec();
+			}
+			catch (const std::exception& e)
+			{
+				std::cerr << e.what() << std::endl;
+			}
+		}
+
 		// TODO we don't write anything when we don't have time config data
 		for (const TimeEntry& entry : times.timeEntry)
 		{
@@ -387,7 +407,6 @@ void DatabaseImpl::write_sessions(const Task& task)
 			insert.bind(5, times.start.count());
 			insert.bind(6, times.stop.value_or(std::chrono::milliseconds(0)).count());
 			
-
 			try
 			{
 				insert.exec();

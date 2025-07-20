@@ -115,7 +115,7 @@ public class BugzillaConfiguration extends JDialog {
         labelTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         instance.labelModel.addRow(new Object[] { "Priority", "priority" });
-        instance.labelModel.addRow(new Object[] { "Status", "status" });
+        instance.labelModel.addRow(new Object[] { "Status", "tray"});
         instance.labelModel.addRow(new Object[] { "Resolution", "resolution" });
         instance.labelModel.addRow(new Object[] { "Severity", "severity" });
         instance.labelModel.addRow(new Object[] { "Target", "target_milestone" });

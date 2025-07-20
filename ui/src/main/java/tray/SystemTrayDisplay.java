@@ -1,9 +1,14 @@
-package panels;
+package tray;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import panels.AltTasksList;
+import panels.TaskSearch;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
@@ -11,7 +16,8 @@ import java.util.Objects;
 
 public class SystemTrayDisplay extends JFrame {
     private final TrayIcon trayIcon;
-    private final TaskSearch search;
+    private final RecentActivity activity;
+    private final Search search;
 
     // https://www.flaticon.com/free-icon/cognitive_8920590?term=cognitive&related_id=8920590
     // https://www.flaticon.com/free-icon/clipboard_1527478?term=task&page=1&position=53&origin=search&related_id=1527478
@@ -20,6 +26,8 @@ public class SystemTrayDisplay extends JFrame {
     JButton openApp = new JButton(new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/export-2-svgrepo-com.svg"))).derive(32, 32));//new ImageIcon(Objects.requireNonNull(getClass().getResource("/share.png"))));
     JButton unspecifiedTask = new JButton(new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/brain-illustration-1-svgrepo-com.svg"))).derive(32, 32));
     JButton dailyReport = new JButton(new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/report-svgrepo-com.svg"))).derive(32, 32));
+
+    JTextField searchText = new JTextField(30);
 
     Timer timer;
     MouseEvent e;
@@ -50,7 +58,10 @@ public class SystemTrayDisplay extends JFrame {
 
     public SystemTrayDisplay(MainFrame mainFrame, TrayIcon trayIcon) {
         this.trayIcon = trayIcon;
-        search = new TaskSearch(mainFrame, this, false);
+        activity = new RecentActivity(mainFrame);
+        search = new Search(mainFrame);
+
+        searchText.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON, new FlatSVGIcon(getClass().getResource("/search-svgrepo-com.svg")).derive(16, 16));
 
 //        Timer test = new Timer(0, e2 -> {
 //            trayIcon.setToolTip("Multi\nline\ntool\ntip\n" + String.valueOf(System.currentTimeMillis()));
@@ -71,7 +82,7 @@ public class SystemTrayDisplay extends JFrame {
                         .getDefaultTransform()
                         .getScaleX();
 
-                search.updateTasks();
+//                search.updateTasks();
 
                 setVisible(true);
 
@@ -83,6 +94,22 @@ public class SystemTrayDisplay extends JFrame {
                 Point p = new Point(bounds.width - getWidth() - 10, (int) ((e.getLocationOnScreen().y / scale) - getHeight() - 40));
 
                 setLocation(p);
+
+                Dimension scrnSize = Toolkit.getDefaultToolkit().getScreenSize();
+                Rectangle winSize = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+
+                int taskBarHeight = scrnSize.height - winSize.height;
+                System.out.println("taskBarHeight = " + taskBarHeight);
+
+                // Get screen dimensions
+                Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+
+                // Calculate x and y coordinates for the lower-right corner
+                int x = screenSize.width - getWidth();
+                int y = screenSize.height - getHeight() - taskBarHeight;
+
+                // Set the frame's location
+                setLocation(x, y);
             }
         });
         timer.setRepeats(false);
@@ -118,26 +145,56 @@ public class SystemTrayDisplay extends JFrame {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        add(createButtonsPanel(), gbc);
+        gbc.gridy++;
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
 
-        add(search, gbc);
+        CardLayout layout = new CardLayout();
+        JPanel stack = new JPanel(layout);
+        stack.add(activity, "activity");
+        stack.add(search, "search");
+        layout.show(stack, "activity");
 
-        gbc.gridy++;
-        gbc.weightx = 0;
-        gbc.weighty = 0;
-        gbc.fill = GridBagConstraints.NONE;
-
-        add(createButtonsPanel(), gbc);
+        add(stack, gbc);
 
         setSize(400, 600);
+
+        searchText.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateFilter(layout, stack);
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateFilter(layout, stack);
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateFilter(layout, stack);
+            }
+        });
     }
 
+    private void updateFilter(CardLayout layout, JPanel stack) {
+        if (searchText.getText().isEmpty()) {
+            layout.show(stack, "activity");
+        }
+        else {
+            layout.show(stack, "search");
+            search.setSearchText(searchText.getText());
+        }
+    }
     private JPanel createButtonsPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridheight = 1;
@@ -148,10 +205,18 @@ public class SystemTrayDisplay extends JFrame {
 
         openApp.addActionListener(e -> MainFrame.mainFrame.setVisible(true));
 
-        panel.add(dailyReport, gbc);
-        gbc.gridx++;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
+
+        panel.add(searchText, gbc);
+        gbc.gridx++;
+
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        panel.add(dailyReport, gbc);
+        gbc.gridx++;
+
+
 
         panel.add(unspecifiedTask, gbc);
         gbc.gridx++;
