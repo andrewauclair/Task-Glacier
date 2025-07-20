@@ -141,20 +141,12 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
         gbc.gridx = 0;
         gbc.gridy = 0;
 
-        JLabel start = new JLabel();
-        JLabel end = new JLabel();
-        JLabel total = new JLabel();
-
-        add(start, gbc);
-        gbc.gridy++;
-        add(end, gbc);
-        gbc.gridy++;
-        add(total, gbc);
-        gbc.gridy++;
-
         JTable table = new JTable(model);
         table.setAutoCreateRowSorter(true);
 
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
         add(new JScrollPane(table), gbc);
         gbc.gridy++;
 
@@ -223,5 +215,10 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
     @Override
     public String getTabText() {
         return tabText;
+    }
+
+    @Override
+    public boolean isWrappableInScrollpane() {
+        return false;
     }
 }

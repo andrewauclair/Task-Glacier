@@ -341,4 +341,9 @@ public class DailyReportPanel extends JPanel implements Dockable {
     public String getTabText() {
         return tabText;
     }
+
+    @Override
+    public boolean isWrappableInScrollpane() {
+        return false;
+    }
 }
