@@ -1,6 +1,8 @@
 package config;
 
 import data.Task;
+import packets.RequestID;
+import packets.UpdateTask;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
@@ -53,7 +55,8 @@ public class TaskConfig extends JDialog {
         General general = new General(task);
         stack.add(general, "General");
         stack.add(new Labels(task), "Labels");
-        stack.add(new Sessions(task), "Sessions");
+        Sessions sessions = new Sessions(parent, task);
+        stack.add(sessions, "Sessions");
         TimeEntry timeEntry = new TimeEntry(this, mainFrame, task);
         stack.add(timeEntry, "Time Entry");
         split.setRightComponent(stack);
@@ -100,8 +103,13 @@ public class TaskConfig extends JDialog {
 
         save.addActionListener(e -> {
             // send any packets that are necessary
-            general.save(task, mainFrame.getConnection());
-            timeEntry.save(task, mainFrame.getConnection());
+            UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task.id, Integer.parseInt(general.parent.getText()), general.name.getText());
+            general.save(task, update);
+            timeEntry.save(task, update);
+            sessions.save(task,update);
+
+            mainFrame.getConnection().sendPacket(update);
+
             dispose();
         });
 

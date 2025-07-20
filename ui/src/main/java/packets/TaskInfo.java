@@ -95,23 +95,21 @@ public class TaskInfo implements Packet {
             int timeEntryCount = input.readInt();
 
             for (int j = 0; j < timeEntryCount; j++) {
-                TimeData.TimeEntry entry = new TimeData.TimeEntry();
+                TimeData.TimeCategory category = MainFrame.mainFrame.getTimeData().findTimeCategory(input.readInt());
 
-                entry.category = MainFrame.mainFrame.getTimeData().findTimeCategory(input.readInt());
-
-                if (entry.category == null) {
-                    entry.category = new TimeData.TimeCategory();
-                    entry.category.name = "Unknown";
+                if (category == null) {
+                    category = new TimeData.TimeCategory();
+                    category.name = "Unknown";
                 }
 
-                entry.code = MainFrame.mainFrame.getTimeData().findTimeCode(input.readInt());
+                TimeData.TimeCode code = MainFrame.mainFrame.getTimeData().findTimeCode(input.readInt());
 
-                if (entry.code == null) {
-                    entry.code = new TimeData.TimeCode();
-                    entry.code.name = "Unknown";
+                if (code == null) {
+                    code = new TimeData.TimeCode();
+                    code.name = "Unknown";
                 }
 
-                time.timeEntry.add(entry);
+                time.timeEntry.add(new TimeData.TimeEntry(category, code));
             }
             info.sessions.add(time);
         }
@@ -125,10 +123,7 @@ public class TaskInfo implements Packet {
         int timeEntryCount = input.readInt();
 
         for (int i = 0; i < timeEntryCount; i++) {
-            TimeData.TimeEntry e = new TimeData.TimeEntry();
-            e.category = MainFrame.mainFrame.getTimeData().findTimeCategory(input.readInt());
-            e.code = MainFrame.mainFrame.getTimeData().findTimeCode(input.readInt());
-            info.timeEntry.add(e);
+            info.timeEntry.add(new TimeData.TimeEntry(MainFrame.mainFrame.getTimeData().findTimeCategory(input.readInt()), MainFrame.mainFrame.getTimeData().findTimeCode(input.readInt())));
         }
 
         return info;

@@ -54,23 +54,21 @@ public class WeeklyReport implements Packet {
                     int timeCodeID = input.readInt();
                     Instant time = Instant.ofEpochMilli(input.readLong());
 
-                    TimeData.TimeEntry entry = new TimeData.TimeEntry();
+                    TimeData.TimeCategory category = MainFrame.mainFrame.getTimeData().findTimeCategory(timeCategoryID);
 
-                    entry.category = MainFrame.mainFrame.getTimeData().findTimeCategory(timeCategoryID);
-
-                    if (entry.category == null) {
-                        entry.category = new TimeData.TimeCategory();
-                        entry.category.name = "Unknown";
+                    if (category == null) {
+                        category = new TimeData.TimeCategory();
+                        category.name = "Unknown";
                     }
 
-                    entry.code = MainFrame.mainFrame.getTimeData().findTimeCode(timeCodeID);
+                    TimeData.TimeCode code = MainFrame.mainFrame.getTimeData().findTimeCode(timeCodeID);
 
-                    if (entry.code == null) {
-                        entry.code = new TimeData.TimeCode();
-                        entry.code.name = "Unknown";
+                    if (code == null) {
+                        code = new TimeData.TimeCode();
+                        code.name = "Unknown";
                     }
 
-                    dailyReport.timesPerTimeEntry.put(entry, time);
+                    dailyReport.timesPerTimeEntry.put(new TimeData.TimeEntry(category, code), time);
                 }
 
                 count = input.readInt();

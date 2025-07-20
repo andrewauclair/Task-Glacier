@@ -5,6 +5,7 @@ import data.TimeData;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +17,7 @@ public class UpdateTask implements Packet {
     public boolean serverControlled = false;
     public boolean locked = false;
     private final String name;
+    public List<TaskInfo.Session> sessions = new ArrayList<>();
     private List<String> labels = new ArrayList<>();
     public List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
 
@@ -49,6 +51,16 @@ public class UpdateTask implements Packet {
     public void writeToOutput(DataOutputStream output) throws IOException {
         size = 26; // size, packet type, request ID, task ID, parent ID, index in parent, server controlled, locked
         size += 2 + name.length();
+        size += 4; // times count
+        for (TaskInfo.Session session : sessions) {
+            size += 8 + 1 + 4; // start, stop present, time entry count
+            if (session.stopTime.isPresent()) {
+                size += 8; // stop
+            }
+            for (TimeData.TimeEntry entry : session.timeEntry) {
+                size += 8; // category id and code id
+            }
+        }
         size += 4 + (labels.size() * 2); // labels size, label string lengths
         for (String label : labels) {
             size += label.length();
@@ -65,6 +77,20 @@ public class UpdateTask implements Packet {
         output.writeByte(locked ? 1 : 0);
         Packet.writeString(output, name);
 
+        output.writeInt(sessions.size());
+
+        for (TaskInfo.Session session : sessions) {
+            output.writeLong(session.startTime.toEpochMilli());
+            output.writeByte(session.stopTime.isPresent() ? 1 : 0);
+            if (session.stopTime.isPresent()) {
+                output.writeLong(session.stopTime.orElse(Instant.ofEpochMilli(0)).toEpochMilli());
+            }
+            output.writeInt(session.timeEntry.size());
+            for (TimeData.TimeEntry entry : session.timeEntry) {
+                output.writeInt(entry.category.id);
+                output.writeInt(entry.code.id);
+            }
+        }
         output.writeInt(labels.size());
 
         for (String label : labels) {

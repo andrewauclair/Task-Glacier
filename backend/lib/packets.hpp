@@ -351,6 +351,7 @@ struct UpdateTaskMessage : RequestMessage
 	bool serverControlled = false;
 	bool locked = false;
 	std::string name;
+	std::vector<TaskTimes> times;
 	std::vector<std::string> labels;
 	std::vector<TimeEntry> timeEntry;
 
@@ -367,6 +368,32 @@ struct UpdateTaskMessage : RequestMessage
 
 	bool operator==(const UpdateTaskMessage& message) const
 	{
+		if (times.size() != message.times.size())
+		{
+			return false;
+		}
+
+		for (std::size_t i = 0; i < times.size(); i++)
+		{
+			if (times[i].start != message.times[i].start || times[i].stop != message.times[i].stop)
+			{
+				return false;
+			}
+
+			if (times[i].timeEntry.size() != message.times[i].timeEntry.size())
+			{
+				return false;
+			}
+
+			for (std::size_t j = 0; j < times[i].timeEntry.size(); j++)
+			{
+				if (times[i].timeEntry[j] != message.times[i].timeEntry[j])
+				{
+					return false;
+				}
+			}
+		}
+
 		return requestID == message.requestID && taskID == message.taskID && parentID == message.parentID && indexInParent == message.indexInParent && name == message.name && labels == message.labels && timeEntry == message.timeEntry;
 	}
 
@@ -378,6 +405,18 @@ struct UpdateTaskMessage : RequestMessage
 		out << "UpdateTaskMessage { ";
 		RequestMessage::print(out);
 		out << ", taskID: " << taskID._val << ", parentID: " << parentID._val << ", indexInParent: " << indexInParent << ", serverControlled: " << serverControlled << ", locked: " << locked << ", name: \"" << name << "\"";
+		for (auto&& time : times)
+		{
+			out << "{ start: " << time.start.count() << ", stop: " << (time.stop.has_value() ? std::to_string(time.stop.value().count()) : "nullopt");
+			out << ", time codes: [ ";
+			for (auto&& code : time.timeEntry)
+			{
+				out << std::format("[ {} {} ]", code.categoryID._val, code.codeID._val);
+				out << ", ";
+			}
+			out << "]";
+			out << " }, ";
+		}
 		out << ", labels { ";
 		for (auto&& label : labels)
 		{

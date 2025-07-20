@@ -6,7 +6,6 @@ import data.TimeData;
 import packets.RequestID;
 import packets.UpdateTask;
 import taskglacier.MainFrame;
-import util.LabeledComponent;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -31,6 +30,12 @@ class TimeEntry extends JPanel {
         TimeData.TimeCategory category;
         TimeData.TimeCode code;
         boolean inherited;
+
+        public Row(TimeData.TimeCategory category, TimeData.TimeCode code, boolean inherited) {
+            this.category = category;
+            this.code = code;
+            this.inherited = inherited;
+        }
     }
 
     class TableModel extends AbstractTableModel {
@@ -74,85 +79,6 @@ class TimeEntry extends JPanel {
         }
     }
 
-    class TimeEntryDialog extends JDialog {
-        TimeEntryDialog() {
-            super(taskConfig, true);
-
-            setLayout(new GridBagLayout());
-
-            JButton add = new JButton("Add");
-            add.setEnabled(false);
-
-            JComboBox<String> timeCategory = new JComboBox<>();
-            JComboBox<String> timeCode = new JComboBox<>();
-
-            timeCategory.addActionListener(e -> {
-                Optional<TimeData.TimeCategory> timeCategory2 = timeData.getTimeCategories().stream()
-                        .filter(timeCategory1 -> timeCategory1.name.equals(timeCategory.getSelectedItem()))
-                        .findFirst();
-
-                timeCode.removeAllItems();
-                add.setEnabled(false);
-
-                if (timeCategory2.isPresent()) {
-                    for (TimeData.TimeCode code : timeCategory2.get().timeCodes) {
-                        timeCode.addItem(code.name);
-                    }
-                    timeCode.setSelectedItem(null);
-                }
-            });
-
-            timeCode.addActionListener(e -> add.setEnabled(true));
-            for (TimeData.TimeCategory category : timeData.getTimeCategories()) {
-                timeCategory.addItem(category.name);
-            }
-
-            timeCategory.setSelectedItem(null);
-
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.anchor = GridBagConstraints.NORTHWEST;
-            gbc.insets = new Insets(5, 5, 5, 5);
-            gbc.gridx = 0;
-            gbc.gridy = 0;
-
-            add(new LabeledComponent("Time Category", timeCategory), gbc);
-            gbc.gridy++;
-            add(new LabeledComponent("Time Code", timeCode), gbc);
-            gbc.gridy++;
-            gbc.anchor = GridBagConstraints.CENTER;
-            add(add, gbc);
-
-            add.addActionListener(e -> {
-                Optional<TimeData.TimeCategory> timeCategory2 = timeData.getTimeCategories().stream()
-                        .filter(timeCategory1 -> timeCategory1.name.equals(timeCategory.getSelectedItem()))
-                        .findFirst();
-
-                Row row = new Row();
-                row.category = timeCategory2.get();
-                row.code = timeCategory2.get().timeCodes.stream()
-                        .filter(timeCode1 -> timeCode1.name.equals(timeCode.getSelectedItem()))
-                        .findFirst().get();
-
-                // if we already have a code from this category, remove it
-                for (int i = 0; i < model.data.size(); i++) {
-                    if (model.data.get(i).category == row.category) {
-                        model.data.remove(i);
-                        model.fireTableRowsDeleted(i, i);
-                        break;
-                    }
-                }
-                model.data.add(row);
-                model.fireTableRowsInserted(model.data.size() - 1, model.data.size() - 1);
-
-                dispose();
-            });
-
-            pack();
-
-            setLocationRelativeTo(taskConfig);
-        }
-    }
-
     TimeEntry(TaskConfig taskConfig, MainFrame mainFrame, Task task) {
         this.taskConfig = taskConfig;
         setLayout(new GridBagLayout());
@@ -167,8 +93,9 @@ class TimeEntry extends JPanel {
             model.data.remove(table.getSelectedRow());
             model.fireTableRowsDeleted(table.getSelectedRow(), table.getSelectedRow());
 
-            Row row = new Row();
-            row.category = existingRow.category;
+            TimeData.TimeCategory category = existingRow.category;
+            TimeData.TimeCode code = null;
+            boolean inherited = false;
 
             // try to find a code for the category in a parent
             Task parent = mainFrame.getTaskModel().getTask(task.parentID);
@@ -179,8 +106,8 @@ class TimeEntry extends JPanel {
                         .findFirst();
 
                 if (parentEntry.isPresent()) {
-                    row.code = parentEntry.get().code;
-                    row.inherited = true;
+                    code = parentEntry.get().code;
+                    inherited = true;
 
                     break;
                 } else {
@@ -190,13 +117,13 @@ class TimeEntry extends JPanel {
 
             // if we didn't find a code, show unknown
             if (parent == null) {
-                row.code = new TimeData.TimeCode();
-                row.code.name = "Unknown";
-                row.code.id = 0;
-                row.inherited = true;
+                code = new TimeData.TimeCode();
+                code.name = "Unknown";
+                code.id = 0;
+                inherited = true;
             }
 
-            model.data.add(row);
+            model.data.add(new Row(category, code, inherited));
             model.fireTableRowsInserted(model.data.size() - 1, model.data.size() - 1);
         });
 
@@ -224,9 +151,20 @@ class TimeEntry extends JPanel {
         });
 
         add.addActionListener(e -> {
-            TimeEntryDialog dialog = new TimeEntryDialog();
-            dialog.setVisible(true);
-            dialog.setLocationRelativeTo(mainFrame);
+            TimeData.TimeEntry entry = TimeEntryDialog.display(taskConfig, timeData);
+
+            if (entry != null) {
+                // if we already have a code from this category, remove it
+                for (int i = 0; i < model.data.size(); i++) {
+                    if (model.data.get(i).category == entry.category) {
+                        model.data.remove(i);
+                        model.fireTableRowsDeleted(i, i);
+                        break;
+                    }
+                }
+                model.data.add(new Row(entry.category, entry.code, false));
+                model.fireTableRowsInserted(model.data.size() - 1, model.data.size() - 1);
+            }
         });
 
         table.getColumnModel().removeColumn(table.getColumnModel().getColumn(2));
@@ -237,21 +175,21 @@ class TimeEntry extends JPanel {
         table.setDefaultRenderer(boolean.class, renderer);
 
         for (TimeData.TimeCategory category : timeData.getTimeCategories()) {
-            Row row = new Row();
-            row.category = category;
+            TimeData.TimeCode code = null;
+            boolean inherited = false;
 
             Optional<TimeData.TimeEntry> first = task.timeEntry.stream()
                     .filter(timeEntry -> timeEntry.category != null && timeEntry.category.equals(category))
                     .findFirst();
 
             if (first.isPresent()) {
-                row.code = first.get().code;
+                code = first.get().code;
 
-                if (row.code == null) {
-                    row.code = new TimeData.TimeCode();
-                    row.code.name = "Unknown";
-                    row.code.id = 0;
-                    row.inherited = true;
+                if (code == null) {
+                    code = new TimeData.TimeCode();
+                    code.name = "Unknown";
+                    code.id = 0;
+                    inherited = true;
                 }
             } else {
                 // try to find a code for the category in a parent
@@ -263,8 +201,8 @@ class TimeEntry extends JPanel {
                             .findFirst();
 
                     if (parentEntry.isPresent()) {
-                        row.code = parentEntry.get().code;
-                        row.inherited = true;
+                        code = parentEntry.get().code;
+                        inherited = true;
 
                         break;
                     } else {
@@ -274,14 +212,14 @@ class TimeEntry extends JPanel {
 
                 // if we didn't find a code, show unknown
                 if (parent == null) {
-                    row.code = new TimeData.TimeCode();
-                    row.code.name = "Unknown";
-                    row.code.id = 0;
-                    row.inherited = true;
+                    code = new TimeData.TimeCode();
+                    code.name = "Unknown";
+                    code.id = 0;
+                    inherited = true;
                 }
             }
 
-            model.data.add(row);
+            model.data.add(new Row(category, code, inherited));
             model.fireTableRowsInserted(model.data.size() - 1, model.data.size() - 1);
         }
     }
@@ -322,10 +260,8 @@ class TimeEntry extends JPanel {
         return false;
     }
 
-    public void save(Task task, ServerConnection connection) {
+    public void save(Task task, UpdateTask update) {
         if (hasChanges(task)) {
-            UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task);
-            update.locked = task.locked;
             update.timeEntry.clear();
 
             List<Row> data = model.data.stream()
@@ -333,12 +269,8 @@ class TimeEntry extends JPanel {
                     .toList();
 
             for (Row row : data) {
-                TimeData.TimeEntry entry = new TimeData.TimeEntry();
-                entry.category = row.category;
-                entry.code = row.code;
-                update.timeEntry.add(entry);
+                update.timeEntry.add(new TimeData.TimeEntry(row.category, row.code));
             }
-            connection.sendPacket(update);
         }
     }
 }

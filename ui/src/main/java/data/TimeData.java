@@ -49,6 +49,11 @@ public class TimeData {
         public TimeCategory category;
         public TimeCode code;
 
+        public TimeEntry(TimeCategory category, TimeCode code) {
+            this.category = category;
+            this.code = code;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (o == null || getClass() != o.getClass()) return false;

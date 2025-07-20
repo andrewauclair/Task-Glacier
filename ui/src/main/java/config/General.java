@@ -86,12 +86,9 @@ class General extends JPanel {
                 task.locked != locked.isSelected();
     }
 
-    public void save(Task task, ServerConnection connection) {
+    public void save(Task task, UpdateTask update) {
         if (hasChanges(task)) {
-            // send packet
-            UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task.id, Integer.parseInt(parent.getText()), name.getText());
             update.locked = locked.isSelected();
-            connection.sendPacket(update);
         }
     }
 }
