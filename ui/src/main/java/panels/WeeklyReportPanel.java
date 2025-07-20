@@ -42,21 +42,23 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
         TimeData.TimeCategory category;
         TimeData.TimeCode code;
         Double[] hours = new Double[7];
+        double total;
     }
 
-    class TableModel extends AbstractTableModel {
-        List<Row> rows = new ArrayList<>();
+    private static class TableModel extends AbstractTableModel {
+        private List<Row> rows = new ArrayList<>();
 
         String[] dates = new String[7];
+        double[] totals = new double[8];
 
         @Override
         public int getRowCount() {
-            return rows.size();
+            return rows.size() + 1;
         }
 
         @Override
         public int getColumnCount() {
-            return 9;
+            return 10;
         }
 
         @Override
@@ -66,6 +68,8 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
                     return "Category";
                 case 1:
                     return "Code";
+                case 9:
+                    return "Total";
             }
             return dates[column - 2];
         }
@@ -80,6 +84,15 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
+            if (rows.isEmpty()) {
+                return "";
+            }
+            if (rowIndex >= rows.size()) {
+                if (columnIndex < 2) {
+                    return "";
+                }
+                return totals[columnIndex - 2];
+            }
             Row row = rows.get(rowIndex);
 
             if (columnIndex == 0) {
@@ -88,7 +101,26 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
             else if (columnIndex == 1) {
                 return row.code.name;
             }
+            else if (columnIndex == 9) {
+                return row.total;
+            }
             return row.hours[columnIndex - 2];
+        }
+
+        public void clear() {
+            rows.clear();
+            totals = new double[8];
+        }
+
+        public void addRow(Row value) {
+            rows.add(value);
+
+            for (int i = 0; i < 7; i++) {
+                if (value.hours[i] != null) {
+                    value.total += value.hours[i];
+                    totals[i] += value.hours[i];
+                }
+            }
         }
     }
 
@@ -157,7 +189,7 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
     public void update(WeeklyReport message) {
         report = message;
 
-        model.rows.clear();
+        model.clear();
         model.fireTableDataChanged();
 
         Map<TimeData.TimeEntry, Row> rows = new HashMap<>();
@@ -197,7 +229,7 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
         model.fireTableStructureChanged();
 
         for (Row value : rows.values()) {
-            model.rows.add(value);
+            model.addRow(value);
             model.fireTableRowsInserted(model.rows.size() - 1, model.rows.size() - 1);
         }
     }
