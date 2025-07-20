@@ -126,6 +126,7 @@ TEST_CASE("Start Task", "[api][task]")
 		taskInfo2.times.emplace_back(std::chrono::milliseconds(1737347639870));
 		taskInfo2.state = TaskState::ACTIVE;
 		taskInfo2.newTask = false;
+		taskInfo2.indexInParent = 1;
 
 		helper.required_messages({ &taskInfo1, &taskInfo2 });
 	}
@@ -422,6 +423,7 @@ TEST_CASE("Stop Task", "[api][task]")
 		taskInfo.times.emplace_back(std::chrono::milliseconds(1737348539870));
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
+		taskInfo.indexInParent = 1;
 
 		helper.required_messages({ &taskInfo });
 
@@ -522,6 +524,7 @@ TEST_CASE("Finish Task", "[api][task]")
 			taskInfo.finishTime = std::chrono::milliseconds(1737346739870);
 			taskInfo.state = TaskState::FINISHED;
 			taskInfo.newTask = false;
+			taskInfo.indexInParent = 1;
 
 			helper.required_messages({ &taskInfo });
 
@@ -548,6 +551,7 @@ TEST_CASE("Finish Task", "[api][task]")
 			taskInfo.finishTime = std::chrono::milliseconds(1737345839870);
 			taskInfo.state = TaskState::FINISHED;
 			taskInfo.newTask = false;
+			taskInfo.indexInParent = 1;
 
 			helper.required_messages({ &taskInfo });
 		}
@@ -568,6 +572,7 @@ TEST_CASE("Finish Task", "[api][task]")
 		taskInfo.times.emplace_back(std::chrono::milliseconds(1737347639870));
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
+		taskInfo.indexInParent = 1;
 
 		helper.required_messages({ &taskInfo });
 
@@ -608,6 +613,7 @@ TEST_CASE("Finish Task", "[api][task]")
 		taskInfo3.times.emplace_back(std::chrono::milliseconds(1737349439870));
 		taskInfo3.state = TaskState::ACTIVE;
 		taskInfo3.newTask = false;
+		taskInfo3.indexInParent = 2;
 
 		helper.required_messages({ &taskInfo1, &taskInfo3 });
 
@@ -1447,7 +1453,9 @@ TEST_CASE("request configuration at startup", "[api]")
 	verify_message(TaskInfoMessage(TaskID(1), NO_PARENT, "task 1", std::chrono::milliseconds(1737344039870)), *output[1]);
 	verify_message(TaskInfoMessage(TaskID(2), TaskID(1), "task 2", std::chrono::milliseconds(1737344939870)), *output[2]);
 	verify_message(TaskInfoMessage(TaskID(3), TaskID(2), "task 3", std::chrono::milliseconds(1737345839870)), *output[3]);
-	verify_message(TaskInfoMessage(TaskID(4), TaskID(2), "task 4", std::chrono::milliseconds(1737346739870)), *output[4]);
+	auto task4 = TaskInfoMessage(TaskID(4), TaskID(2), "task 4", std::chrono::milliseconds(1737346739870));
+	task4.indexInParent = 1;
+	verify_message(task4, *output[4]);
 	verify_message(TaskInfoMessage(TaskID(5), TaskID(3), "task 5", std::chrono::milliseconds(1737347639870)), *output[5]);
 	verify_message(TaskInfoMessage(TaskID(6), TaskID(4), "task 6", std::chrono::milliseconds(1737348539870)), *output[6]);
 

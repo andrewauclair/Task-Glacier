@@ -173,7 +173,6 @@ public:
 				for (auto&& task : all_tasks)
 				{
 					next.push_back(task->taskID());
-					send_task_info(m_tasks.at(task->taskID()), false, output);
 				}
 			}
 			parents = next;

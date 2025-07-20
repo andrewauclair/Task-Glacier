@@ -394,6 +394,11 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 		auto taskInfo11 = TaskInfoMessage(TaskID(11), TaskID(10), "65 - bug 4");
 		auto taskInfo14 = TaskInfoMessage(TaskID(14), TaskID(13), "70 - bug 5");
 
+		taskInfo5.indexInParent = 1;
+		p1.indexInParent = 1;
+		p3.indexInParent = 2;
+		p4.indexInParent = 3;
+
 		setup_task_inactive(taskInfo4, 1737348539870ms);
 		setup_task_inactive(taskInfo5, 1737349439870ms);
 		setup_task_inactive(taskInfo8, 1737352139870ms);
@@ -466,6 +471,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			helper.expect_success(refresh);
 
 			auto taskInfo27 = TaskInfoMessage(TaskID(15), TaskID(13), "75 - bug 6");
+			taskInfo27.indexInParent = 1;
 
 			setup_task_inactive(taskInfo27, 1737359339870ms);
 
@@ -511,6 +517,9 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 				p4_nitpick.newTask = false;
 				p4.newTask = false;
+				p4.indexInParent = 3;
+
+				p5.indexInParent = 4;
 
 				helper.required_messages({ &p5, &p5_nitpick, &taskInfo14, &p4, &p4_nitpick });
 			}
@@ -532,6 +541,8 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 				taskInfo14.parentID = TaskID(15);
 
 				p4_nitpick.newTask = false;
+				
+				p4_minor2.indexInParent = 1;
 
 				helper.required_messages({ &p4_minor2, &taskInfo14, &p4_nitpick });
 			}
@@ -556,6 +567,8 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 				taskInfo14.newTask = false;
 				taskInfo14.parentID = TaskID(16);
 
+				p5.indexInParent = 4;
+
 				auto taskInfo29 = TaskInfoMessage(TaskID(17), TaskID(16), "75 - bug 6");
 
 				setup_task_inactive(taskInfo29, 1737361139870ms);
@@ -572,6 +585,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 				helper.expect_success(refresh);
 
 				auto p4_minor2 = TaskInfoMessage(TaskID(15), TaskID(12), "Minor2");
+				p4_minor2.indexInParent = 1;
 
 				setup_task_inactive(p4_minor2, 1737359339870ms);
 
@@ -602,6 +616,8 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			p1_critical.finishTime = 1737375539870ms;
 			
 			auto p2_critical = TaskInfoMessage(TaskID(15), TaskID(2), "Critical");
+			p2_critical.indexInParent = 1;
+			p1.indexInParent = 1;
 
 			setup_task_inactive(p2_critical, 1737359339870ms);
 
@@ -702,6 +718,12 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			p3_blocker.newTask = false;
 			p4_nitpick.newTask = false;
 
+			minor.indexInParent = 4;
+			taskInfo5.indexInParent = 1;
+			critical.indexInParent = 5;
+			blocker.indexInParent = 6;
+			nitpick.indexInParent = 7;
+
 			helper.required_messages(
 				{
 					&configure,
@@ -770,6 +792,11 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 		setup_task_inactive(p2_minor, 1737347639870ms);
 		setup_task_inactive(p3_blocker, 1737353939870ms);
 		setup_task_inactive(p4_nitpick, 1737356639870ms);
+
+		taskInfo5.indexInParent = 1;
+		p1.indexInParent = 1;
+		p3.indexInParent = 2;
+		p4.indexInParent = 3;
 
 		p1.newTask = p2.newTask = p3.newTask = p4.newTask = p1_critical.newTask = p2_minor.newTask = p3_blocker.newTask = p4_nitpick.newTask = true;
 

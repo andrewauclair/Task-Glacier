@@ -377,7 +377,7 @@ struct UpdateTaskMessage : RequestMessage
 	{
 		out << "UpdateTaskMessage { ";
 		RequestMessage::print(out);
-		out << ", taskID: " << taskID._val << ", parentID: " << parentID._val << ", indexInParent: " << indexInParent << ", serverControlled: " << serverControlled << ", locked : " << locked << ", name : \"" << name << "\"";
+		out << ", taskID: " << taskID._val << ", parentID: " << parentID._val << ", indexInParent: " << indexInParent << ", serverControlled: " << serverControlled << ", locked: " << locked << ", name: \"" << name << "\"";
 		out << ", labels { ";
 		for (auto&& label : labels)
 		{
