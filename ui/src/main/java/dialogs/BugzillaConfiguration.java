@@ -3,6 +3,7 @@ package dialogs;
 import data.Standards;
 import packets.BugzillaInfo;
 import taskglacier.MainFrame;
+import util.LabeledComponent;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;

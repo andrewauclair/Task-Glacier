@@ -4,7 +4,7 @@ import data.Task;
 import data.TaskModel;
 import data.TaskState;
 import dialogs.AddModifyTask;
-import dialogs.TaskConfig;
+import config.TaskConfig;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingProperty;
 import io.github.andrewauclair.moderndocking.DockingRegion;
@@ -13,7 +13,6 @@ import io.github.andrewauclair.moderndocking.app.Docking;
 import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
 import net.byteseek.swing.treetable.TreeTableModel;
 import net.byteseek.swing.treetable.TreeUtils;
-import org.jdesktop.swingx.JXTreeTable;
 import packets.PacketType;
 import packets.RequestID;
 import packets.TaskStateChange;
@@ -32,9 +31,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static taskglacier.MainFrame.mainFrame;
 
 public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener {
     @DockingProperty(name = "taskID", required = true)

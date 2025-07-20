@@ -1,10 +1,10 @@
-package dialogs;
+package util;
 
 import javax.swing.*;
 import java.awt.*;
 
-class LabeledComponent extends JPanel {
-    LabeledComponent(String label, JComponent component) {
+public class LabeledComponent extends JPanel {
+    public LabeledComponent(String label, JComponent component) {
         super(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();

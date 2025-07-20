@@ -4,7 +4,7 @@ import data.Task;
 import data.TaskModel;
 import data.TaskState;
 import dialogs.AddModifyTask;
-import dialogs.TaskConfig;
+import config.TaskConfig;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingProperty;
 import io.github.andrewauclair.moderndocking.DockingRegion;

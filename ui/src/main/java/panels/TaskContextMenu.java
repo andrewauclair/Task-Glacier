@@ -3,7 +3,7 @@ package panels;
 import data.Task;
 import data.TaskState;
 import dialogs.AddModifyTask;
-import dialogs.TaskConfig;
+import config.TaskConfig;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import packets.PacketType;
 import packets.TaskStateChange;
