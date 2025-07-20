@@ -27,12 +27,14 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
-public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener {
+public class TasksList extends JPanel implements Dockable, TaskModel.Listener {
     @DockingProperty(name = "taskID", required = true)
     private int taskID = 0;
 
@@ -49,7 +51,7 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
     private DefaultTreeModel treeModel;
 
     private JTable table;
-    public JTextField sTextField = new JTextField(20);
+    public JTextField search = new JTextField(20);
 
     private void finishActiveTask() {
         TaskStateChange change = new TaskStateChange();
@@ -73,11 +75,11 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
         mainFrame.getConnection().sendPacket(change);
     }
 
-    public AltTasksList(MainFrame mainFrame) {
+    public TasksList(MainFrame mainFrame) {
         allTasks = true;
 
         this.mainFrame = mainFrame;
-        this.persistentID = "alt-tasks";
+        this.persistentID = "tasks";
         this.titleText = "Tasks";
         this.tabText = "Tasks";
 
@@ -90,10 +92,10 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
         configure();
     }
 
-    public AltTasksList(MainFrame mainFrame, Task task) {
+    public TasksList(MainFrame mainFrame, Task task) {
         taskID = task.id;
         this.mainFrame = mainFrame;
-        persistentID = "alt-task-list-" + task.id;
+        persistentID = "task-list-" + task.id;
         titleText = "Tasks (" + task.name + ")";
         tabText = "Tasks (" + task.name + ")";
 
@@ -109,7 +111,7 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
         treeTableModel.expandChildren(rootNode);
     }
 
-    public AltTasksList(DynamicDockableParameters parameters) {
+    public TasksList(DynamicDockableParameters parameters) {
         super(new BorderLayout());
 
         this.persistentID = parameters.getPersistentID();
@@ -204,7 +206,7 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
         };
 
 
-        sTextField.getDocument().addDocumentListener(new DocumentListener() {
+        search.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 updateFilter();
@@ -218,6 +220,16 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
             @Override
             public void changedUpdate(DocumentEvent e) {
                 updateFilter();
+            }
+        });
+
+        // Register the keyboard shortcut
+        KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.CTRL_DOWN_MASK);
+        getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(keyStroke, "search");
+        getActionMap().put("search", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                search.requestFocus();
             }
         });
 
@@ -281,12 +293,12 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
 
             Task task = (Task) ((DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(selectedRow)).getUserObject();
 
-            if (!Docking.isDockableRegistered("alt-tasks-list-" + task.id)) {
-                AltTasksList newList = new AltTasksList(mainFrame, task);
-                Docking.dock(newList, AltTasksList.this, DockingRegion.CENTER);
+            if (!Docking.isDockableRegistered("tasks-list-" + task.id)) {
+                TasksList newList = new TasksList(mainFrame, task);
+                Docking.dock(newList, TasksList.this, DockingRegion.CENTER);
             }
             else {
-                Docking.display("alt-tasks-list-" + task.id);
+                Docking.display("tasks-list-" + task.id);
             }
         });
 
@@ -310,14 +322,17 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
                             !mainFrame.getTaskModel().taskHasNonFinishedChildren(mainFrame.getTaskModel().getActiveTaskID().get()) &&
                             !mainFrame.getTaskModel().getTask(mainFrame.getTaskModel().getActiveTaskID().get()).locked) {
                         contextMenu.add(startStopActive);
+                        contextMenu.add(stop);
                         contextMenu.add(startFinishActive);
+                        contextMenu.add(finish);
                     }
                     else {
                         contextMenu.add(start);
+                        contextMenu.add(stop);
+                        contextMenu.add(finish);
                     }
 
-                    contextMenu.add(stop);
-                    contextMenu.add(finish);
+
                     contextMenu.addSeparator();
                     contextMenu.add(addSubTask);
 
@@ -357,11 +372,11 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
         gbc.weighty = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        add(sTextField, gbc);
+        add(search, gbc);
     }
 
     private void updateFilter() {
-        if (sTextField.getText().isEmpty()) {
+        if (search.getText().isEmpty()) {
             treeTableModel.setNodeFilter(treeNode -> {
                 Task obj = TreeUtils.getUserObject(treeNode);
                 return obj.state == TaskState.FINISHED;
@@ -369,8 +384,8 @@ public class AltTasksList extends JPanel implements Dockable, TaskModel.Listener
         } else {
             treeTableModel.setNodeFilter(treeNode -> {
                 Task obj = TreeUtils.getUserObject(treeNode);
-                boolean includeFinish = sTextField.getText().startsWith("finish: ");
-                String text = sTextField.getText();
+                boolean includeFinish = search.getText().startsWith("finish: ");
+                String text = search.getText();
                 if (includeFinish) {
                     text = text.substring("finish: ".length());
                     return !childrenHaveMatch(obj, text);

@@ -1,18 +1,20 @@
 package taskglacier;
 
-import dialogs.*;
+import dialogs.AddModifyTask;
+import dialogs.BugzillaConfiguration;
+import dialogs.ConnectToServer;
+import dialogs.RequestDailyReportDialog;
+import dialogs.RequestWeeklyReportDialog;
+import dialogs.TimeEntryConfiguration;
 import io.github.andrewauclair.moderndocking.app.DockingState;
 import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
 import packets.BugzillaRefresh;
 import packets.CreateTask;
 import packets.RequestID;
-import panels.TaskSearch;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 public class MenuBar extends JMenuBar {
     private final JMenuItem add;
@@ -52,10 +54,6 @@ public class MenuBar extends JMenuBar {
         task.add(timeEntry);
 
         timeEntry.addActionListener(e -> new TimeEntryConfiguration(mainFrame).setVisible(true));
-
-        JMenuItem search = new JMenuItem("Search...");
-        search.addActionListener(e -> new SearchDialog(mainFrame).setVisible(true));
-        task.add(search);
 
         add(task);
 

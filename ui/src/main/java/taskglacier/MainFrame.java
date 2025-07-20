@@ -7,7 +7,6 @@ import data.ServerConnection;
 import data.TaskModel;
 import data.TimeData;
 import dialogs.ConnectToServer;
-import dialogs.SearchDialog;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.app.AppState;
 import io.github.andrewauclair.moderndocking.app.Docking;
@@ -20,7 +19,10 @@ import packets.BugzillaInfo;
 import packets.DailyReportMessage;
 import packets.RequestConfig;
 import packets.WeeklyReport;
-import panels.*;
+import panels.DailyReportPanel;
+import panels.StatusBar;
+import panels.TasksList;
+import panels.WeeklyReportPanel;
 import tray.SystemTrayDisplay;
 
 import javax.swing.*;
@@ -112,31 +114,16 @@ public class MainFrame extends JFrame {
         DockingUI.initialize();
         Docking.registerDockingPanel(root, this);
 
-        new TasksLists(this);
-        new AltTasksList(this);
+        new TasksList(this);
 
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
         WindowLayoutBuilder builder = new WindowLayoutBuilder("tasks");
-        builder.dock("alt-tasks", "tasks");
 
         AppState.setDefaultApplicationLayout(builder.buildApplicationLayout());
         DockingLayouts.addLayout("default", builder.buildApplicationLayout());
 
         setJMenuBar(new MenuBar(this));
-
-        Action action = new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.out.println("Test!");
-                new SearchDialog(MainFrame.this).setVisible(true);
-            }
-        };
-
-        // Register the keyboard shortcut
-        KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK);
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(keyStroke, "search");
-        getRootPane().getActionMap().put("search", action);
 
         // now that the main frame is set up with the defaults, we can restore the layout
         File layoutFile;
