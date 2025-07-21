@@ -29,7 +29,7 @@ class RecentActivity extends JPanel implements TaskModel.Listener {
     public void newTask(Task task) {
         for (TaskInfo.Session session : task.sessions) {
             LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
-            
+
             if (start.isAfter(MAX_AGE)) {
                 history.add(new History(task, session));
             }

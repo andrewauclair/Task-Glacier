@@ -50,9 +50,19 @@ public class DailyReportPanel extends JPanel implements Dockable {
         }
     }
 
+    class TotalRow {
+        TimeData.TimeCategory category;
+        double hours;
+
+        public TotalRow(TimeData.TimeCategory category, double hours) {
+            this.category = category;
+            this.hours = hours;
+        }
+    }
+
     class TableModel extends AbstractTableModel {
         private List<Row> rows = new ArrayList<>();
-        double totalHours = 0;
+        private List<TotalRow> totals = new ArrayList<>();
 
         public int getTotalRowStart() {
             return rows.size();
@@ -60,10 +70,7 @@ public class DailyReportPanel extends JPanel implements Dockable {
 
         @Override
         public int getRowCount() {
-            if (rows.isEmpty()) {
-                return 0;
-            }
-            return rows.size() + 1;
+            return rows.size() + totals.size();
         }
 
         @Override
@@ -106,11 +113,13 @@ public class DailyReportPanel extends JPanel implements Dockable {
                 return row.hours;
             }
             else {
+                TotalRow total = totals.get(rowIndex - rows.size());
+
                 if (columnIndex == 0) {
-                    return "Total";
+                    return total.category.name + " - Total";
                 }
                 else if (columnIndex == 2) {
-                    return totalHours;
+                    return total.hours;
                 }
             }
             return null;
@@ -118,13 +127,23 @@ public class DailyReportPanel extends JPanel implements Dockable {
 
         void clear() {
             rows.clear();
-            totalHours = 0;
+            totals.clear();
         }
 
         void add(TimeData.TimeCategory category, TimeData.TimeCode code, double hours) {
             rows.add(new Row(category, code, hours));
 
-            totalHours += hours;
+            Optional<TotalRow> totalOptional = totals.stream()
+                    .filter(totalRow -> totalRow.category.id == category.id)
+                    .findFirst();
+
+            if (totalOptional.isPresent()) {
+                totalOptional.get().hours += hours;
+            }
+            else {
+                TotalRow total = new TotalRow(category, hours);
+                totals.add(total);
+            }
 
             // sort the rows to display the most time at the top
             rows.sort(Comparator.comparingDouble(o -> ((Row) o).hours));
@@ -270,7 +289,7 @@ public class DailyReportPanel extends JPanel implements Dockable {
                 JLabel label = (JLabel) super.prepareRenderer(renderer, row, column);
 
                 if (row == model.getTotalRowStart()) {
-                    label.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, Color.WHITE), label.getBorder()));
+                    label.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UIManager.getColor("Component.borderColor")), label.getBorder()));
                 }
 
                 return label;

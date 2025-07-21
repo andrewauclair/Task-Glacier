@@ -188,7 +188,7 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
                 if (row == model.getTotalRowStart() || column == model.getTotalColumnIndex()) {
                     int top = row == model.getTotalRowStart() ? 2 : 0;
                     int left = column == model.getTotalColumnIndex() ? 1 : 0;
-                    label.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(top, left, 0, 0, Color.WHITE), label.getBorder()));
+                    label.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(top, left, 0, 0, UIManager.getColor("Component.borderColor")), label.getBorder()));
                 }
 
                 return label;
