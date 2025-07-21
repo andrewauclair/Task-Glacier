@@ -31,12 +31,14 @@
  */
 package net.byteseek.swing.treetable;
 
+import data.Task;
 import net.byteseek.utils.collections.BlockModifyArrayList;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.table.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.*;
@@ -919,13 +921,9 @@ public abstract class TreeTableModel extends AbstractTableModel implements TreeM
      * @param nodeChanged The node that needs to be refreshed.
      */
     public void treeNodeChanged(final TreeNode nodeChanged) {
-        if (displayedNodes.contains(nodeChanged)) {//isVisible(nodeChanged)) {
+        if (isVisible(nodeChanged)) {
             final int modelIndex  = getModelIndexForTreeNode(nodeChanged);
             fireTableRowsUpdated(modelIndex, modelIndex);
-
-            if (!isVisible(nodeChanged)) {
-                rebuildVisibleChildren(nodeChanged.getParent());
-            }
         }
     }
 
@@ -2117,9 +2115,16 @@ public abstract class TreeTableModel extends AbstractTableModel implements TreeM
         if (node == rootNode) {
             return showRoot && !isFiltered(node);
         }
+        System.out.println("TreeTableModel.isVisible");
         // We're visible if we're not null or filtered, and if all our parents are expanded and not filtered up to the root.
+        TreeNode furthestAncestor = TreeUtils.getFurthestAncestor(node, parent -> {
+            System.out.println("isExpanded(parent): " + ((Task) TreeUtils.getUserObject(parent)).name + " " + isExpanded(parent));
+            System.out.println("isFiltered(parent): " + ((Task) TreeUtils.getUserObject(parent)).name + " " + isFiltered(parent));
+            return isExpanded(parent) && !isFiltered(parent);
+        });
+        System.out.println("furtestAnchester == rootNode = " + (furthestAncestor == rootNode));
         return node != null && !isFiltered(node) &&
-               TreeUtils.getFurthestAncestor(node, parent -> isExpanded(parent) && !isFiltered(parent)) == rootNode;
+               furthestAncestor == rootNode;
     }
 
     /**

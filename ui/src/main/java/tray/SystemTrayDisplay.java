@@ -175,6 +175,7 @@ public class SystemTrayDisplay extends JFrame {
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentHidden(ComponentEvent e) {
+                searchText.setText("");
                 layout.show(stack, "activity");
             }
         });
@@ -210,6 +211,7 @@ public class SystemTrayDisplay extends JFrame {
             search.setSearchText(searchText.getText());
         }
     }
+
     private JPanel createButtonsPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
 

@@ -84,6 +84,10 @@ class Search extends JPanel implements TaskModel.Listener {
 
     public void setSearchText(final String search) {
         treeTableModel.setNodeFilter(treeNode -> {
+            // never filter the root. we keep it hidden
+            if (treeNode == rootNode) {
+                return false;
+            }
             Task obj = TreeUtils.getUserObject(treeNode);
             boolean includeFinish = search.startsWith("finish: ");
             String text = search;

@@ -235,6 +235,10 @@ public class TasksList extends JPanel implements Dockable, TaskModel.Listener {
         });
 
         treeTableModel.setNodeFilter(treeNode -> {
+            // never filter the root. we keep it hidden
+            if (treeNode == rootNode) {
+                return false;
+            }
             Task obj = TreeUtils.getUserObject(treeNode);
             return obj.state == TaskState.FINISHED;
         });
@@ -379,11 +383,19 @@ public class TasksList extends JPanel implements Dockable, TaskModel.Listener {
     private void updateFilter() {
         if (search.getText().isEmpty()) {
             treeTableModel.setNodeFilter(treeNode -> {
+                // never filter the root. we keep it hidden
+                if (treeNode == rootNode) {
+                    return false;
+                }
                 Task obj = TreeUtils.getUserObject(treeNode);
                 return obj.state == TaskState.FINISHED;
             });
         } else {
             treeTableModel.setNodeFilter(treeNode -> {
+                // never filter the root. we keep it hidden
+                if (treeNode == rootNode) {
+                    return false;
+                }
                 Task obj = TreeUtils.getUserObject(treeNode);
                 boolean includeFinish = search.getText().startsWith("finish: ");
                 String text = search.getText();
