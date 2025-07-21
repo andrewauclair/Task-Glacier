@@ -31,6 +31,7 @@
  */
 package panels;
 
+import com.formdev.flatlaf.FlatIconColors;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import data.Task;
 import data.TaskState;
@@ -68,7 +69,8 @@ public final class TaskTreeTableModel extends TreeTableModel {
     @Override
     public Class<?> getColumnClass(final int columnIndex) {
         switch (columnIndex) {
-            case 0: return String.class;
+            case 0:
+                return String.class;
 //            case 1: return Integer.class;
 //            case 2: return Boolean.class;
 //            case 3: return Integer.class;
@@ -80,11 +82,13 @@ public final class TaskTreeTableModel extends TreeTableModel {
     public Object getColumnValue(final TreeNode node, final int column) {
         final Task obj = TreeUtils.getUserObject(node);
         switch (column) {
-            case 0: return obj.name;
+            case 0:
+                return obj.name;
 //            case 1: return obj.indexInParent;
 //            case 2: return obj.isEnabled();
 //            case 3: return node.getChildCount();
-            default: return null;
+            default:
+                return null;
         }
 //        return obj.name;
     }
@@ -115,8 +119,7 @@ public final class TaskTreeTableModel extends TreeTableModel {
 
             if (obj.state == TaskState.FINISHED) {
                 return finishIcon;
-            }
-            else if (obj.state == TaskState.ACTIVE) {
+            } else if (obj.state == TaskState.ACTIVE) {
                 return activeIcon;
             }
             return pendingIcon;
@@ -125,8 +128,8 @@ public final class TaskTreeTableModel extends TreeTableModel {
     }
 
     private void setIcons() {
-        activeIcon.setColorFilter( new FlatSVGIcon.ColorFilter(color -> Color.GREEN ) );
-        finishIcon.setColorFilter( new FlatSVGIcon.ColorFilter(color -> Color.MAGENTA ) );
-        pendingIcon.setColorFilter( new FlatSVGIcon.ColorFilter(color -> Color.YELLOW) );
+        activeIcon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor(FlatIconColors.OBJECTS_GREEN.key)));
+        finishIcon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor(FlatIconColors.OBJECTS_PURPLE.key)));
+        pendingIcon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor(FlatIconColors.OBJECTS_YELLOW.key)));
     }
 }
