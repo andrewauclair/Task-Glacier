@@ -43,7 +43,8 @@ public class SystemTrayDisplay extends JFrame {
                 return;
             }
 
-            if (!timer.isRunning()) {
+
+            if (!isModalDialogShowing() && !timer.isRunning()) {
                 timer.start();
             }
         }
@@ -54,12 +55,25 @@ public class SystemTrayDisplay extends JFrame {
         }
     };
 
+    private static boolean isModalDialogShowing()
+    {
+        Window[] windows = Window.getWindows();
+        if( windows != null ) { // don't rely on current implementation, which at least returns [0].
+            for( Window w : windows ) {
+                if( w.isShowing() && w instanceof Dialog && ((Dialog)w).isModal() )
+                    return true;
+            }
+        }
+        return false;
+    }
     public SystemTrayDisplay(MainFrame mainFrame, TrayIcon trayIcon) {
         this.trayIcon = trayIcon;
         activity = new RecentActivity(mainFrame);
         search = new Search(mainFrame);
 
-        searchText.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON, new FlatSVGIcon(getClass().getResource("/search-svgrepo-com.svg")).derive(16, 16));
+        FlatSVGIcon searchIcon = new FlatSVGIcon(getClass().getResource("/search-svgrepo-com.svg")).derive(24, 24);
+
+        searchText.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON, searchIcon);
 
 //        Timer test = new Timer(0, e2 -> {
 //            trayIcon.setToolTip("Multi\nline\ntool\ntip\n" + String.valueOf(System.currentTimeMillis()));
@@ -121,6 +135,7 @@ public class SystemTrayDisplay extends JFrame {
         addWindowFocusListener(new WindowAdapter() {
             @Override
             public void windowLostFocus(WindowEvent e) {
+                System.out.println("SystemTrayDisplay.windowLostFocus");
                 if (!timer.isRunning()) {
                     timer.restart();
                 }
@@ -156,6 +171,13 @@ public class SystemTrayDisplay extends JFrame {
         stack.add(activity, "activity");
         stack.add(search, "search");
         layout.show(stack, "activity");
+
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentHidden(ComponentEvent e) {
+                layout.show(stack, "activity");
+            }
+        });
 
         add(stack, gbc);
 

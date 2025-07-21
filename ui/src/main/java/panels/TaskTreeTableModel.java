@@ -57,13 +57,12 @@ public final class TaskTreeTableModel extends TreeTableModel {
     public TaskTreeTableModel(final TreeNode rootNode, final boolean showRoot) {
         super(rootNode, showRoot);
         setIcons();
-//        setGroupingComparator(Comparators.ALLOWS_CHILDREN_DESCENDING);
         setGroupingComparator(Comparator.comparingInt(o -> ((Task) ((DefaultMutableTreeNode) o).getUserObject()).indexInParent));
     }
 
     @Override
     public boolean isCellEditable(final int rowIndex, final int columnIndex) {
-        return false;//columnIndex < 3; // can't edit the "num children" column as that is calculated, not stored.
+        return false;
     }
 
     @Override

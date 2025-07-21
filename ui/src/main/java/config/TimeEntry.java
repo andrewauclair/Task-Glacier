@@ -1,9 +1,7 @@
 package config;
 
-import data.ServerConnection;
 import data.Task;
 import data.TimeData;
-import packets.RequestID;
 import packets.UpdateTask;
 import taskglacier.MainFrame;
 
@@ -17,7 +15,6 @@ import java.util.List;
 import java.util.Optional;
 
 class TimeEntry extends JPanel {
-    private final TaskConfig taskConfig;
     private final TimeData timeData;
 
     JButton add = new JButton("+");
@@ -80,7 +77,6 @@ class TimeEntry extends JPanel {
     }
 
     TimeEntry(TaskConfig taskConfig, MainFrame mainFrame, Task task) {
-        this.taskConfig = taskConfig;
         setLayout(new GridBagLayout());
 
         this.timeData = mainFrame.getTimeData();

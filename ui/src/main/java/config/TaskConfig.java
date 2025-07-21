@@ -16,7 +16,7 @@ public class TaskConfig extends JDialog {
     public TaskConfig(MainFrame mainFrame, Window parent, Task task) {
         super(parent);
 
-        setModal(true);
+        setModalityType(ModalityType.APPLICATION_MODAL);
 
         KeyStroke ESCAPE_KEY = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
 

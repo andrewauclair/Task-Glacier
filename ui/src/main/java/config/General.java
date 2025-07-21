@@ -1,8 +1,6 @@
 package config;
 
-import data.ServerConnection;
 import data.Task;
-import packets.RequestID;
 import packets.UpdateTask;
 import util.LabeledComponent;
 

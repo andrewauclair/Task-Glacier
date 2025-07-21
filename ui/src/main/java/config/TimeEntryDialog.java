@@ -11,7 +11,7 @@ class TimeEntryDialog extends JDialog {
     TimeData.TimeCategory category = null;
     TimeData.TimeCode code = null;
 
-    TimeEntryDialog(Window parent, TimeData timeData, TimeEntry timeEntry) {
+    TimeEntryDialog(Window parent, TimeData timeData) {
         super(parent);
         setModal(true);
 
@@ -90,7 +90,7 @@ class TimeEntryDialog extends JDialog {
     }
 
     public static TimeData.TimeEntry display(Window parent, TimeData timeData) {
-        TimeEntryDialog dialog = new TimeEntryDialog(parent, timeData, null);
+        TimeEntryDialog dialog = new TimeEntryDialog(parent, timeData);
         dialog.setVisible(true);
         System.out.println("Done");
         if (dialog.category == null || dialog.code == null) {
