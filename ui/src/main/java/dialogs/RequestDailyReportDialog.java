@@ -3,7 +3,6 @@ package dialogs;
 import org.jdesktop.swingx.JXDatePicker;
 import packets.RequestDailyReport;
 import packets.RequestID;
-import packets.RequestWeeklyReport;
 import taskglacier.MainFrame;
 
 import javax.swing.*;

@@ -35,8 +35,6 @@ import com.formdev.flatlaf.FlatIconColors;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import data.Task;
 import data.TaskState;
-import net.byteseek.demo.treetable.MyObject;
-import net.byteseek.swing.treetable.Comparators;
 import net.byteseek.swing.treetable.TableUtils;
 import net.byteseek.swing.treetable.TreeTableModel;
 import net.byteseek.swing.treetable.TreeUtils;
@@ -46,7 +44,6 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.awt.*;
 import java.util.Comparator;
 import java.util.Objects;
 

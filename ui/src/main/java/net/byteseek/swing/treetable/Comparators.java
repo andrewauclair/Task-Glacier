@@ -31,8 +31,8 @@
  */
 package net.byteseek.swing.treetable;
 
-import java.util.Comparator;
 import javax.swing.tree.TreeNode;
+import java.util.Comparator;
 
 /**
  * Static utility class with useful comparators for tree nodes.

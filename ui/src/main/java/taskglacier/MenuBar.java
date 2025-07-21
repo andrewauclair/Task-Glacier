@@ -1,11 +1,6 @@
 package taskglacier;
 
-import dialogs.AddModifyTask;
-import dialogs.BugzillaConfiguration;
-import dialogs.ConnectToServer;
-import dialogs.RequestDailyReportDialog;
-import dialogs.RequestWeeklyReportDialog;
-import dialogs.TimeEntryConfiguration;
+import dialogs.*;
 import io.github.andrewauclair.moderndocking.app.DockingState;
 import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
 import packets.BugzillaRefresh;

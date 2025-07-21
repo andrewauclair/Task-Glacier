@@ -31,18 +31,11 @@
  */
 package net.byteseek.swing.treetable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.swing.ListSelectionModel;
-import javax.swing.RowSorter;
+import javax.swing.*;
 import javax.swing.tree.TreeNode;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import static net.byteseek.swing.treetable.TreeNodeComparator.EQUAL_VALUE;
 
 //TODO: examine whether having UNSORTED keys in the sort keys affects overall sorted status?

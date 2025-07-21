@@ -4,7 +4,6 @@ import net.byteseek.swing.treetable.TableUtils;
 import net.byteseek.swing.treetable.TreeTableModelObjectArray;
 import net.byteseek.swing.treetable.TreeUtils;
 
-import javax.swing.table.JTableHeader;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.event.MouseEvent;
 import java.io.BufferedReader;

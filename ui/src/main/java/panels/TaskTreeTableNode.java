@@ -4,9 +4,6 @@ import data.Task;
 import data.TaskState;
 import org.jdesktop.swingx.treetable.AbstractMutableTreeTableNode;
 
-import javax.swing.*;
-import java.util.Objects;
-
 public class TaskTreeTableNode extends AbstractMutableTreeTableNode {
 //    private final TaskTreeTableNode parent;
     private Task task;

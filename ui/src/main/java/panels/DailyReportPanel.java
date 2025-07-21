@@ -19,11 +19,8 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class DailyReportPanel extends JPanel implements Dockable {

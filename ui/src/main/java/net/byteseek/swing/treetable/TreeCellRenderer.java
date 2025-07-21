@@ -31,18 +31,13 @@
  */
 package net.byteseek.swing.treetable;
 
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import javax.swing.BorderFactory;
-import javax.swing.Icon;
-import javax.swing.JLabel;
-import javax.swing.JTable;
-import javax.swing.SwingConstants;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import javax.swing.tree.TreeNode;
+import java.awt.*;
+import java.awt.event.MouseEvent;
 
 /**
  * Renders a tree column, including collapse/expand handles, and an icon if supplied by the model.

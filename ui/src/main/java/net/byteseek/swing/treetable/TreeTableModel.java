@@ -31,35 +31,18 @@
  */
 package net.byteseek.swing.treetable;
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.WeakHashMap;
-import java.util.function.Predicate;
+import net.byteseek.utils.collections.BlockModifyArrayList;
+
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableColumnModel;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableModel;
+import javax.swing.table.*;
 import javax.swing.tree.TreeNode;
-import net.byteseek.utils.collections.BlockModifyArrayList;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.List;
+import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * A tree table model which binds to a JTable as a TableModel given a root tree node.

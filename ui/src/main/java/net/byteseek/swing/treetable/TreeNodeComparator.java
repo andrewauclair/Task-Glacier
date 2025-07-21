@@ -31,11 +31,10 @@
  */
 package net.byteseek.swing.treetable;
 
+import javax.swing.*;
+import javax.swing.tree.TreeNode;
 import java.util.Comparator;
 import java.util.List;
-import javax.swing.RowSorter;
-import javax.swing.SortOrder;
-import javax.swing.tree.TreeNode;
 
 /**
  * Compares two tree nodes to see if the first is smaller, equal or bigger than the second.

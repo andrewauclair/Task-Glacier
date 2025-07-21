@@ -31,19 +31,7 @@
  */
 package net.byteseek.swing.treetable;
 
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Insets;
-import java.util.List;
-import javax.swing.BorderFactory;
-import javax.swing.Icon;
-import javax.swing.JLabel;
-import javax.swing.JTable;
-import javax.swing.RowSorter;
-import javax.swing.SortOrder;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EtchedBorder;
@@ -51,6 +39,8 @@ import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.plaf.basic.BasicTableUI;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
+import java.awt.*;
+import java.util.List;
 
 /**
  * Renders a header for a JTable which shows multi-column sorting,

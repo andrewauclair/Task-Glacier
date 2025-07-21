@@ -7,11 +7,9 @@ import taskglacier.MainFrame;
 
 import javax.swing.*;
 import java.awt.*;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Calendar;
-import java.util.Date;
 
 public class RequestWeeklyReportDialog extends JDialog {
     public RequestWeeklyReportDialog(MainFrame mainFrame) {
