@@ -23,12 +23,16 @@ class RecentActivity extends JPanel implements TaskModel.Listener {
     private FlatSVGIcon finishIcon = new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/checkmark-svgrepo-com.svg"))).derive(24, 24);
     private FlatSVGIcon pendingIcon = new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/system-pending-line-svgrepo-com.svg"))).derive(24, 24);
 
-    private static final int MAX_HISTORY = 50;
+    private static final LocalDate MAX_AGE = LocalDate.now(ZoneId.systemDefault()).minusDays(14);
 
     @Override
     public void newTask(Task task) {
         for (TaskInfo.Session session : task.sessions) {
-            history.add(new History(task, session));
+            LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
+            
+            if (start.isAfter(MAX_AGE)) {
+                history.add(new History(task, session));
+            }
         }
         update();
     }
@@ -36,7 +40,11 @@ class RecentActivity extends JPanel implements TaskModel.Listener {
     @Override
     public void updatedTask(Task task) {
         for (TaskInfo.Session session : task.sessions) {
-            history.add(new History(task, session));
+            LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
+
+            if (start.isAfter(MAX_AGE)) {
+                history.add(new History(task, session));
+            }
         }
         update();
     }
@@ -44,7 +52,11 @@ class RecentActivity extends JPanel implements TaskModel.Listener {
     @Override
     public void reparentTask(Task task, int oldParent) {
         for (TaskInfo.Session session : task.sessions) {
-            history.add(new History(task, session));
+            LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
+
+            if (start.isAfter(MAX_AGE)) {
+                history.add(new History(task, session));
+            }
         }
         update();
     }
@@ -53,7 +65,11 @@ class RecentActivity extends JPanel implements TaskModel.Listener {
     public void configComplete() {
         for (Task task : mainFrame.getTaskModel().getTasks()) {
             for (TaskInfo.Session session : task.sessions) {
-                history.add(new History(task, session));
+                LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
+
+                if (start.isAfter(MAX_AGE)) {
+                    history.add(new History(task, session));
+                }
             }
         }
         update();

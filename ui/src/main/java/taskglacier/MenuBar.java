@@ -111,6 +111,14 @@ public class MenuBar extends JMenuBar {
         });
 
         window.add(restoreDefaultLayout);
+
+        JMenu theme = new JMenu("Theme");
+        window.add(theme);
+
+        theme.add(new ThemeItem("Arc", "com.formdev.flatlaf.intellijthemes.FlatArcIJTheme"));
+        theme.add(new ThemeItem("Solarized Dark", "com.formdev.flatlaf.intellijthemes.FlatSolarizedDarkIJTheme"));
+        theme.add(new ThemeItem("Solarized Light", "com.formdev.flatlaf.intellijthemes.FlatSolarizedLightIJTheme"));
+
         add(window);
 
         if (System.getenv("TASK_GLACIER_DEV_INSTANCE") != null) {
@@ -525,6 +533,18 @@ public class MenuBar extends JMenuBar {
         }
     }
 
+    class ThemeItem extends JCheckBoxMenuItem {
+        public ThemeItem(String name, String className) {
+            addActionListener(e -> {
+                try {
+                    UIManager.setLookAndFeel(className);
+                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
+                         UnsupportedLookAndFeelException ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
+        }
+    }
     public void connected() {
         add.setEnabled(true);
         connect.setEnabled(false);
