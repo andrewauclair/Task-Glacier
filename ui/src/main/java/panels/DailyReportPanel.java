@@ -147,6 +147,9 @@ public class DailyReportPanel extends JPanel implements Dockable {
 
             // sort the rows to display the most time at the top
             rows.sort(Comparator.comparingDouble(o -> ((Row) o).hours));
+
+            // sort the rows to display the most time at the top
+            totals.sort(Comparator.comparingDouble(o -> ((TotalRow) o).hours).reversed());
         }
     }
 

@@ -40,11 +40,17 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
         double total;
     }
 
+    static class TotalRow {
+        TimeData.TimeCategory category;
+        Double[] hours = new Double[7];
+        double total;
+    }
+
     private static class TableModel extends AbstractTableModel {
         private List<Row> rows = new ArrayList<>();
+        private List<TotalRow> totals = new ArrayList<>();
 
         String[] dates = new String[7];
-        double[] totals = new double[8];
 
         public int getTotalRowStart() {
             return rows.size();
@@ -56,7 +62,7 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
 
         @Override
         public int getRowCount() {
-            return rows.size() + 1;
+            return rows.size() + totals.size();
         }
 
         @Override
@@ -87,47 +93,84 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            if (rows.isEmpty()) {
-                return "";
-            }
-            if (rowIndex >= rows.size()) {
-                if (columnIndex < 2) {
-                    return "";
-                }
-                return totals[columnIndex - 2];
-            }
-            Row row = rows.get(rowIndex);
+            if (rowIndex < rows.size()) {
+                Row row = rows.get(rowIndex);
 
-            if (columnIndex == 0) {
-                return row.category.name;
+                switch (columnIndex) {
+                    case 0:
+                        return row.category.name;
+                    case 1:
+                        return row.code.name;
+                    case 9:
+                        return row.total;
+                }
+                return row.hours[columnIndex - 2];
             }
-            else if (columnIndex == 1) {
-                return row.code.name;
+            else {
+                TotalRow totalRow = totals.get(rowIndex - rows.size());
+
+                switch (columnIndex) {
+                    case 0:
+                        return totalRow.category.name + " - Total";
+                    case 1:
+                        return null;
+                    case 9:
+                        return totalRow.total;
+                }
+                return totalRow.hours[columnIndex - 2];
             }
-            else if (columnIndex == 9) {
-                return row.total;
-            }
-            return row.hours[columnIndex - 2];
         }
 
         public void clear() {
             rows.clear();
-            totals = new double[8];
+            totals.clear();
         }
 
         public void addRow(Row value) {
             rows.add(value);
 
-            // sort the rows to display the most time at the top
-            rows.sort(Comparator.comparingDouble(o -> ((Row) o).total).reversed());
-
             for (int i = 0; i < 7; i++) {
                 if (value.hours[i] != null) {
                     value.total += value.hours[i];
-                    totals[i] += value.hours[i];
-                    totals[7] += value.hours[i];
                 }
             }
+            // sort the rows to display the most time at the top
+            rows.sort(Comparator.comparingDouble(o -> ((Row) o).total).reversed());
+
+            Optional<TotalRow> totalOptional = totals.stream()
+                    .filter(totalRow -> totalRow.category.id == value.category.id)
+                    .findFirst();
+
+            if (totalOptional.isPresent()) {
+                for (int i = 0; i < 7; i++) {
+                    if (value.hours[i] == null) {
+                        continue;
+                    }
+                    if (totalOptional.get().hours[i] == null) {
+                        totalOptional.get().hours[i] = 0.0;
+                    }
+                    totalOptional.get().hours[i] += value.hours[i];
+                }
+                totalOptional.get().total += value.total;
+            }
+            else {
+                TotalRow total = new TotalRow();
+                total.category = value.category;
+                for (int i = 0; i < 7; i++) {
+                    if (value.hours[i] == null) {
+                        continue;
+                    }
+                    if (total.hours[i] == null) {
+                        total.hours[i] = 0.0;
+                    }
+                    total.hours[i] += value.hours[i];
+                }
+                total.total += value.total;
+                totals.add(total);
+            }
+
+            // sort the rows to display the most time at the top
+            totals.sort(Comparator.comparingDouble(o -> ((TotalRow) o).total).reversed());
         }
     }
 
