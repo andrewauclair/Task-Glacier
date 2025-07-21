@@ -31,16 +31,16 @@
  */
 package net.byteseek.demo.treetable;
 
-import java.util.Comparator;
-import javax.swing.Icon;
-import javax.swing.UIManager;
-import javax.swing.table.DefaultTableColumnModel;
-import javax.swing.table.TableColumnModel;
-import javax.swing.tree.TreeNode;
 import net.byteseek.swing.treetable.Comparators;
 import net.byteseek.swing.treetable.TableUtils;
 import net.byteseek.swing.treetable.TreeTableModel;
 import net.byteseek.swing.treetable.TreeUtils;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableColumnModel;
+import javax.swing.table.TableColumnModel;
+import javax.swing.tree.TreeNode;
+import java.util.Comparator;
 
 public final class MyObjectTreeTableModel extends TreeTableModel {
 

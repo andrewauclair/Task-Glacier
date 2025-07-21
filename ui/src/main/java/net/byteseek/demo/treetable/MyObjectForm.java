@@ -31,9 +31,17 @@
  */
 package net.byteseek.demo.treetable;
 
+import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
+import net.byteseek.swing.treetable.TreeTableModel;
+import net.byteseek.swing.treetable.TreeUtils;
+
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -42,15 +50,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Predicate;
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
-import net.byteseek.swing.treetable.TreeTableModel;
-import net.byteseek.swing.treetable.TreeUtils;
 
 //TODO: toggle button for group by.
 

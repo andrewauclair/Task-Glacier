@@ -6,7 +6,6 @@ import io.github.andrewauclair.moderndocking.DockingProperty;
 import io.github.andrewauclair.moderndocking.DynamicDockableParameters;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import packets.DailyReportMessage;
-import packets.RequestDailyReport;
 import packets.RequestID;
 import packets.RequestWeeklyReport;
 import packets.WeeklyReport;
@@ -17,15 +16,9 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
-
-import static taskglacier.MainFrame.mainFrame;
 
 public class WeeklyReportPanel extends JPanel implements Dockable {
     private MainFrame mainFrame;

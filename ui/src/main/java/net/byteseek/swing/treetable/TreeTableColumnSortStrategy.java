@@ -31,10 +31,9 @@
  */
 package net.byteseek.swing.treetable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.RowSorter;
-import javax.swing.SortOrder;
 
 /**
  * A class that decides what the next set of sort keys will be, given the current set, a request to sort on a column,
