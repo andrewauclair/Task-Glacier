@@ -298,11 +298,9 @@ public class DailyReportPanel extends JPanel implements Dockable {
                 return label;
             }
         };
-        table.setAutoCreateRowSorter(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         JTable taskTable = new JTable(taskModel);
-        taskTable.setAutoCreateRowSorter(true);
         taskTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         table.getSelectionModel().addListSelectionListener(e -> {

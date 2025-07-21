@@ -237,7 +237,6 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
                 return label;
             }
         };
-        table.setAutoCreateRowSorter(true);
 
         gbc.weightx = 1;
         gbc.weighty = 1;
