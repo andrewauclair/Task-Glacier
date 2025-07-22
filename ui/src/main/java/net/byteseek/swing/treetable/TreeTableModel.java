@@ -2115,14 +2115,10 @@ public abstract class TreeTableModel extends AbstractTableModel implements TreeM
         if (node == rootNode) {
             return showRoot && !isFiltered(node);
         }
-        System.out.println("TreeTableModel.isVisible");
         // We're visible if we're not null or filtered, and if all our parents are expanded and not filtered up to the root.
         TreeNode furthestAncestor = TreeUtils.getFurthestAncestor(node, parent -> {
-            System.out.println("isExpanded(parent): " + ((Task) TreeUtils.getUserObject(parent)).name + " " + isExpanded(parent));
-            System.out.println("isFiltered(parent): " + ((Task) TreeUtils.getUserObject(parent)).name + " " + isFiltered(parent));
             return isExpanded(parent) && !isFiltered(parent);
         });
-        System.out.println("furtestAnchester == rootNode = " + (furthestAncestor == rootNode));
         return node != null && !isFiltered(node) &&
                furthestAncestor == rootNode;
     }
