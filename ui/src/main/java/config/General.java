@@ -40,6 +40,12 @@ class General extends JPanel {
         gbc.gridy++;
         add(new LabeledComponent("Status", status), gbc);
 
+        switch (task.state) {
+            case PENDING -> status.setSelectedItem("Pending");
+            case ACTIVE -> status.setSelectedItem("Active");
+            case FINISHED -> status.setSelectedItem("Finished");
+        }
+
         parent.setText(String.valueOf(task.parentID));
 
         gbc.gridy++;
