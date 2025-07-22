@@ -468,7 +468,7 @@ TEST_CASE("Task", "[messages]")
 TEST_CASE("Time Categories Data", "[messages]")
 {
 	std::vector<TimeCategory> timeCategories;
-	timeCategories.emplace_back(TimeCategory{ TimeCategoryID(5), "one", "one", std::vector{TimeCode{TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}}});
+	timeCategories.emplace_back(TimeCategory{ TimeCategoryID(5), "one", "one", std::vector{TimeCode{TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2) }}});
 
 	const auto data = TimeEntryDataPacket(timeCategories);
 	CAPTURE(data);

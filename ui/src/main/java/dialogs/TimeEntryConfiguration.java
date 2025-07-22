@@ -41,6 +41,11 @@ public class TimeEntryConfiguration extends JDialog {
 
         JButton addCode = new JButton("+");
         JButton removeCode = new JButton("-");
+
+        public TimeEntryInstance() {
+            // hide ID column
+            codesTable.removeColumn(codesTable.getColumnModel().getColumn(1));
+        }
     }
     private final Map<String, TimeEntryInstance> instances = new HashMap<>();
 
@@ -116,7 +121,7 @@ public class TimeEntryConfiguration extends JDialog {
         split.setRightComponent(stack);
 
         categoryAdd.addActionListener(e -> {
-            String name = JOptionPane.showInputDialog(this, "New Bugzilla Instance Name");
+            String name = JOptionPane.showInputDialog(this, "New Time Category Name");
 
             TimeEntryInstance instance = new TimeEntryInstance();
             instances.put(name, instance);
@@ -154,6 +159,8 @@ public class TimeEntryConfiguration extends JDialog {
             }
         });
 
+        setLayout(new GridBagLayout());
+
         GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
@@ -181,35 +188,24 @@ public class TimeEntryConfiguration extends JDialog {
             TimeEntryConfiguration.this.dispose();
         });
 
-        for (BugzillaInfo info : MainFrame.bugzillaInfo.values()) {
+        for (TimeData.TimeCategory category : MainFrame.mainFrame.getTimeData().getTimeCategories()) {
             TimeEntryInstance instance = new TimeEntryInstance();
+            instances.put(category.name, instance);
 
-            instances.put(info.name, instance);
+            stack.add(createInstance(instance), category.name);
 
-            stack.add(createInstance(instance), info.name);
+            for (TimeData.TimeCode code : category.timeCodes) {
+                instance.codeTableModel.rows.add(code);
+            }
+            instance.codeTableModel.fireTableDataChanged();
 
-            categoriesModel.addRow(new Object[] { info.name });
+            categoriesModel.addRow(new Object[] { category.name });
             categoriesModel.fireTableRowsInserted(categoriesModel.getRowCount() - 1, categoriesModel.getRowCount() - 1);
 
             if (categoriesModel.getRowCount() == 1) {
                 categoriesTable.getSelectionModel().setSelectionInterval(categoriesModel.getRowCount() - 1, categoriesModel.getRowCount() - 1);
             }
-
-            for (String groupBy : info) {
-                instance.groupByModel.addRow(new Object[] { groupBy });
-                instance.groupByModel.fireTableRowsInserted(instance.groupByModel.getRowCount() - 1, instance.groupByModel.getRowCount() - 1);
-            }
-
-            instance.labelModel.setRowCount(0);
-            instance.labelModel.fireTableDataChanged();
-
-            info.labelToField.forEach((label, field) -> {
-                instance.labelModel.addRow(new Object[] { label, field });
-                instance.labelModel.fireTableRowsInserted(instance.labelModel.getRowCount() - 1, instance.labelModel.getRowCount() - 1);
-            });
         }
-
-
 
         pack();
 
@@ -220,7 +216,6 @@ public class TimeEntryConfiguration extends JDialog {
     }
 
     private JPanel buildCategories() {
-
         categoriesTable.setTableHeader(null);
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -257,28 +252,45 @@ public class TimeEntryConfiguration extends JDialog {
         GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.anchor = GridBagConstraints.NORTHWEST;
-//        gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
+        gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1;
 
-        instance.panel = panel;
+        instance.addCode.setEnabled(false);
+        instance.removeCode.setEnabled(false);
 
-        JButton groupByAdd = new JButton("+");
-        JButton groupByRemove = new JButton("-");
+        instance.addCode.addActionListener(e -> {
+            String name = JOptionPane.showInputDialog(this, "New Time Code Name");
 
-        groupByAdd.addActionListener(e -> {
-            String newCode = JOptionPane.showInputDialog(this, "New Time Code");
-
-            instance.codeTableModel.rows.add(new TimeData.TimeCode(0, newCode));
+            // TODO prevent duplicates
+            instance.codeTableModel.rows.add(new TimeData.TimeCode(0, name));
             instance.codeTableModel.fireTableRowsInserted(instance.codeTableModel.getRowCount() - 1, instance.codeTableModel.getRowCount() - 1);
         });
+        instance.removeCode.addActionListener(e -> {
 
-        groupByRemove.addActionListener(e -> {
-            instance.codeTableModel.rows.remove(instance.codesTable.getSelectedRow());
-            instance.codeTableModel.fireTableRowsInserted(instance.codesTable.getSelectedRow(), instance.codesTable.getSelectedRow());
         });
+        instance.codesTable.getSelectionModel().addListSelectionListener(e -> {
+            
+        });
+        JPanel buttons = new JPanel(new GridBagLayout());
+
+        buttons.add(instance.addCode, gbc);
+        gbc.gridy++;
+        buttons.add(instance.removeCode, gbc);
+
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        panel.add(new JScrollPane(instance.codesTable), gbc);
+
+        gbc.gridx++;
+        gbc.weightx = 0;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.NONE;
+        panel.add(buttons, gbc);
+
+        instance.panel = panel;
 
         return panel;
     }
@@ -294,139 +306,6 @@ public class TimeEntryConfiguration extends JDialog {
         gbc.fill = GridBagConstraints.BOTH;
 
         panel.add(new JLabel(), gbc);
-
-        return panel;
-    }
-
-    private JScrollPane setupTimeCategoriesTable() {
-//        categoriesModel = new DefaultTableModel(new Object[] { "Time Category", "Label", "In Use", "Count", "Archived" }, 0);
-
-        JTable categories = new JTable(categoriesModel);
-
-        JPopupMenu contextMenu = new JPopupMenu();
-        JMenuItem add = new JMenuItem("Add...");
-
-        contextMenu.add(add);
-
-        class CreateTimeCategory extends JDialog {
-            CreateTimeCategory() {
-                setModal(true);
-
-                JTextField category = new JTextField();
-                JTextField label = new JTextField();
-
-                JButton add = new JButton("Add");
-                add.addActionListener(e -> {
-//                    categoriesModel.addRow(new Object[] { category.getText(), label.getText(), "No", "0", "No" });
-                    TimeData.TimeCategory timeCategory = new TimeData.TimeCategory();
-                    timeCategory.name = category.getText();
-                    timeCategory.label = label.getText();
-                    categoriesModel.rows.add(timeCategory);
-                    categoriesModel.fireTableRowsInserted(categoriesModel.rows.size() - 1, categoriesModel.rows.size() - 1);
-
-                    timeCodeModels.put(category.getText(), new CodeTableModel());
-                    timeCategorySelection.addItem(category.getText());
-                    CreateTimeCategory.this.dispose();
-                });
-
-                setLayout(new FlowLayout());
-
-                add(new JLabel("Category"));
-                add(category);
-                add(new JLabel("Label"));
-                add(label);
-                add(add);
-
-                pack();
-
-                setLocationRelativeTo(TimeEntryConfiguration.this);
-            }
-        }
-        add.addActionListener(e -> new CreateTimeCategory().setVisible(true));
-
-        categories.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
-                    contextMenu.show(categories, e.getX(), e.getY());
-                }
-            }
-        });
-
-        categories.setFillsViewportHeight(true);
-
-        return new JScrollPane(categories);
-    }
-
-    private JPanel setupCodes() {
-        JPanel panel = new JPanel(new GridBagLayout());
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.NONE;
-
-        panel.add(timeCategorySelection, gbc);
-
-        JTable codes = new JTable(null);
-
-        timeCategorySelection.addItemListener(e -> {
-            currentTimeCodeModel = timeCodeModels.get((String) e.getItem());
-            codes.setModel(currentTimeCodeModel);
-        });
-
-        JPopupMenu contextMenu = new JPopupMenu();
-        JMenuItem add = new JMenuItem("Add...");
-
-        contextMenu.add(add);
-
-        class CreateTimeCode extends JDialog {
-            CreateTimeCode() {
-                setModal(true);
-
-                JTextField code = new JTextField();
-
-                JButton add = new JButton("Add");
-                add.addActionListener(e -> {
-//                    currentTimeCodeModel.addRow(new Object[] { code.getText(), "No", "0", "No" });
-                    TimeData.TimeCode timeCode = new TimeData.TimeCode();
-                    timeCode.name = code.getText();
-                    currentTimeCodeModel.rows.add(timeCode);
-                    currentTimeCodeModel.fireTableRowsInserted(currentTimeCodeModel.rows.size() - 1, currentTimeCodeModel.rows.size() - 1);
-                    CreateTimeCode.this.dispose();
-                });
-
-                setLayout(new FlowLayout());
-
-                add(new JLabel("Code"));
-                add(code);
-                add(add);
-
-                pack();
-
-                setLocationRelativeTo(TimeEntryConfiguration.this);
-            }
-        }
-        add.addActionListener(e -> new CreateTimeCode().setVisible(true));
-
-        codes.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
-                    contextMenu.show(codes, e.getX(), e.getY());
-                }
-            }
-        });
-
-        codes.setFillsViewportHeight(true);
-
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        gbc.gridy++;
-        panel.add(new JScrollPane(codes), gbc);
 
         return panel;
     }

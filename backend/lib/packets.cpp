@@ -244,7 +244,6 @@ std::vector<std::byte> TimeEntryDataPacket::pack() const
 	{
 		builder.add(timeCategory.id);
 		builder.add(timeCategory.name);
-		builder.add(timeCategory.label);
 		builder.add(timeCategory.inUse);
 		builder.add(timeCategory.taskCount);
 		builder.add(timeCategory.archived);
@@ -278,9 +277,7 @@ std::expected<TimeEntryDataPacket, UnpackError> TimeEntryDataPacket::unpack(std:
 		{
 			auto id = parser.parse_next_immediate<TimeCategoryID>();
 			auto name = parser.parse_next_immediate<std::string>();
-			auto label = parser.parse_next_immediate<std::string>();
 			TimeCategory timeCategory(id, name);
-			timeCategory.label = label;
 			timeCategory.inUse = parser.parse_next_immediate<bool>();
 			timeCategory.taskCount = parser.parse_next_immediate<std::int32_t>();
 			timeCategory.archived = parser.parse_next_immediate<bool>();
@@ -322,7 +319,6 @@ std::vector<std::byte> TimeEntryModifyPacket::pack() const
 	{
 		builder.add(category.id);
 		builder.add(category.name);
-		builder.add(category.label);
 		builder.add(category.archived);
 
 		builder.add<std::int32_t>(category.codes.size());
@@ -357,7 +353,6 @@ std::expected<TimeEntryModifyPacket, UnpackError> TimeEntryModifyPacket::unpack(
 			TimeCategory category(parser.parse_next_immediate<TimeCategoryID>());
 
 			category.name = parser.parse_next_immediate<std::string>();
-			category.label = parser.parse_next_immediate<std::string>();
 			category.archived = parser.parse_next_immediate<bool>();
 
 			const auto codeCount = parser.parse_next_immediate<std::int32_t>();
