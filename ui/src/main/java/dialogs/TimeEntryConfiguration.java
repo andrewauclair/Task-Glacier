@@ -1,15 +1,17 @@
 package dialogs;
 
+import data.Standards;
 import data.TimeData;
-import packets.PacketType;
-import packets.RequestID;
-import packets.TimeCategoriesMessage;
-import packets.TimeCategoryModType;
+import packets.*;
 import taskglacier.MainFrame;
+import util.LabeledComponent;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -17,88 +19,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// TODO rename this feature to "Time Entry"
 public class TimeEntryConfiguration extends JDialog {
     private final TimeData timeData;
-    JComboBox<String> timeCategorySelection = new JComboBox<>();
-    Map<String, CodeTableModel> timeCodeModels = new HashMap<>();
-    CodeTableModel currentTimeCodeModel = null;
-    private CategoriesTableModel categoriesModel = new CategoriesTableModel();
 
-    class Row {
+    private DefaultTableModel categoriesModel = new DefaultTableModel(0, 1);
+    private JTable categoriesTable = new JTable(categoriesModel);
+
+    private JButton categoryAdd = new JButton("+");
+    private JButton categoryRemove = new JButton("-");
+
+    private JButton save = new JButton("Save");
+
+    class TimeEntryInstance {
         TimeData.TimeCategory category;
-        TimeData.TimeCode code;
+        List<TimeData.TimeCode> codes;
+
+        CodeTableModel codeTableModel = new CodeTableModel();
+        JTable codesTable = new JTable(codeTableModel);
+
+        JPanel panel;
+
+        JButton addCode = new JButton("+");
+        JButton removeCode = new JButton("-");
     }
-
-    class CategoriesTableModel extends AbstractTableModel {
-        List<TimeData.TimeCategory> rows = new ArrayList<>();
-
-        @Override
-        public int getRowCount() {
-            return rows.size();
-        }
-
-        @Override
-        public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return columnIndex == 0 || columnIndex == 1;
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            if (columnIndex == 0 || columnIndex == 1) {
-                return String.class;
-            }
-            if (columnIndex == 3 || columnIndex == 5) {
-                return int.class;
-            }
-            return boolean.class;
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            switch (column) {
-                case 0:
-                    return "Time Category";
-                case 1:
-                    return "Label";
-                case 2:
-                    return "In Use";
-                case 3:
-                    return "Count";
-                case 4:
-                    return "Archived";
-                case 5:
-                    return "ID";
-            }
-            return null;
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 6;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            TimeData.TimeCategory row = rows.get(rowIndex);
-
-            switch (columnIndex) {
-                case 0:
-                    return row.name;
-                case 1:
-                    return row.label;
-                case 2:
-                    return false;
-                case 3:
-                    return 0;
-                case 4:
-                    return false;
-                case 5:
-                    return row.id;
-            }
-            return null;
-        }
-    }
+    private final Map<String, TimeEntryInstance> instances = new HashMap<>();
 
     class CodeTableModel extends AbstractTableModel {
         List<TimeData.TimeCode> rows = new ArrayList<>();
@@ -114,20 +58,9 @@ public class TimeEntryConfiguration extends JDialog {
                 case 0:
                     return "Time Code";
                 case 1:
-                    return "In Use";
-                case 2:
-                    return "Task Count";
-                case 3:
-                    return "Archived";
-                case 4:
                     return "ID";
             }
             return null;
-        }
-
-        @Override
-        public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return columnIndex == 0;
         }
 
         @Override
@@ -137,7 +70,7 @@ public class TimeEntryConfiguration extends JDialog {
 
         @Override
         public int getColumnCount() {
-            return 5;
+            return 2;
         }
 
         @Override
@@ -148,132 +81,221 @@ public class TimeEntryConfiguration extends JDialog {
                 case 0:
                     return row.name;
                 case 1:
-                    return false;
-                case 2:
-                    return 0;
-                case 3:
-                    return false;
-                case 4:
                     return row.id;
             }
             return null;
         }
     }
+
     public TimeEntryConfiguration(MainFrame mainFrame) {
         this.timeData = mainFrame.getTimeData();
-        setModal(true);
+        setModalityType(ModalityType.APPLICATION_MODAL);
         setTitle("Time Entry Configuration");
 
-        // Time Category - Label - In Use - Count - Archived
-        // Project Server - PS - Yes - 10 - No
-        // SAP - SAP - Yes - 12 - No
-        // Something - SO - No - 5 - Yes
+        KeyStroke ESCAPE_KEY = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
 
-        // Time Code - In Use - Task Count - Archived
-        // G101 - Yes - 100 - No
-        // G102 - No - 10 - Yes
+        InputMap inputMap = ((JComponent) getContentPane()).getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = ((JComponent) getContentPane()).getActionMap();
 
-        JTabbedPane tabs = new JTabbedPane();
-
-        tabs.add("Categories", setupTimeCategoriesTable());
-        tabs.add("Codes", setupCodes());
-
-        for (TimeData.TimeCategory timeCategory : timeData.getTimeCategories()) {
-//            categoriesModel.addRow(new Object[] { timeCategory.name, "", "No", "0", "No" });
-
-            categoriesModel.rows.add(timeCategory);
-
-            timeCodeModels.put(timeCategory.name, new CodeTableModel());
-            CodeTableModel timeCodeModel = timeCodeModels.get(timeCategory.name);
-
-            timeCategorySelection.addItem(timeCategory.name);
-
-            for (TimeData.TimeCode timeCode : timeCategory.timeCodes) {
-//                timeCodeModel.addRow(new Object[] { timeCode.name, "No", "0", "No" });
-                timeCodeModel.rows.add(timeCode);
+        inputMap.put(ESCAPE_KEY, "escape");
+        actionMap.put("escape", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                TimeEntryConfiguration.this.dispose();
             }
-        }
+        });
 
-        JButton save = new JButton("Save");
+        JSplitPane split = new JSplitPane();
+        split.setLeftComponent(buildCategories());
+
+        CardLayout layout = new CardLayout();
+        JPanel stack = new JPanel(layout);
+
+        stack.add(createBlankPanel(), "blank");
+
+        split.setRightComponent(stack);
+
+        categoryAdd.addActionListener(e -> {
+            String name = JOptionPane.showInputDialog(this, "New Bugzilla Instance Name");
+
+            TimeEntryInstance instance = new TimeEntryInstance();
+            instances.put(name, instance);
+
+            JPanel instancePanel = createInstance(instance);
+
+            stack.add(instancePanel, name);
+
+            categoriesModel.addRow(new String[] { name });
+            categoriesModel.fireTableRowsInserted(categoriesModel.getRowCount() - 1, categoriesModel.getRowCount() - 1);
+
+            categoriesTable.getSelectionModel().setSelectionInterval(categoriesModel.getRowCount() - 1, categoriesModel.getRowCount() - 1);
+        });
+
+        categoriesTable.getSelectionModel().addListSelectionListener(e -> {
+            categoryRemove.setEnabled(categoriesTable.getSelectedRow() != -1);
+
+            String name = categoriesTable.getSelectedRow() != -1 ? (String) categoriesModel.getValueAt(categoriesTable.getSelectedRow(), 0) : "blank";
+
+            layout.show(stack, name);
+        });
+
+        categoryRemove.setEnabled(false);
+
+        categoryRemove.addActionListener(e -> {
+            if (categoriesTable.getSelectedRow() != -1) {
+                String name = (String) categoriesModel.getValueAt(categoriesTable.getSelectedRow(), 0);
+
+                categoriesModel.removeRow(categoriesTable.getSelectedRow());
+                categoriesModel.fireTableRowsDeleted(categoriesTable.getSelectedRow(), categoriesTable.getSelectedRow());
+
+                instances.remove(name);
+
+                layout.show(stack, "blank");
+            }
+        });
+
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+
+        add(split, gbc);
+
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.SOUTHEAST;
+        gbc.gridy++;
+
+        add(save, gbc);
 
         save.addActionListener(e -> {
-            TimeCategoriesMessage addMessage = new TimeCategoriesMessage(PacketType.TIME_CATEGORIES_MODIFY);
-            addMessage.type = TimeCategoryModType.ADD;
+            for (TimeEntryInstance instance : instances.values()) {
 
-            TimeCategoriesMessage updateMessage = new TimeCategoriesMessage(PacketType.TIME_CATEGORIES_MODIFY);
-            updateMessage.type = TimeCategoryModType.UPDATE;
-
-            for (int i = 0; i < categoriesModel.getRowCount(); i++) {
-                TimeData.TimeCategory timeCategory = new TimeData.TimeCategory();
-                timeCategory.id = (int) categoriesModel.getValueAt(i, 5);
-                timeCategory.name = (String) categoriesModel.getValueAt(i, 0);
-                timeCategory.label = (String) categoriesModel.getValueAt(i, 1);
-
-                CodeTableModel timeCodeModel = timeCodeModels.get(timeCategory.name);
-
-                boolean newTimeCodes = false;
-
-                for (int j = 0; j < timeCodeModel.getRowCount(); j++) {
-                    TimeData.TimeCode timeCode = new TimeData.TimeCode();
-                    timeCode.id = (int) timeCodeModel.getValueAt(j, 4);
-                    timeCode.name = (String) timeCodeModel.getValueAt(j, 0);
-
-                    if (timeCode.id == 0) {
-                        newTimeCodes = true;
-                    }
-                    timeCategory.timeCodes.add(timeCode);
-                }
-
-                if (timeCategory.id == 0 || newTimeCodes) {
-                    addMessage.getTimeCategories().add(timeCategory);
-                }
-                else {
-                    TimeData.TimeCategory category = mainFrame.getTimeData().findTimeCategory(timeCategory.id);
-
-                    if (!category.name.equals(timeCategory.name) || !category.label.equals(timeCategory.label)) {
-                        updateMessage.getTimeCategories().add(timeCategory);
-//                        message.type = TimeCategoryModType.UPDATE;
-//                        message.requestID = RequestID.nextRequestID();
-//                        mainFrame.getConnection().sendPacket(message);
-                    }
-                }
-            }
-
-            if (!addMessage.getTimeCategories().isEmpty()) {
-                addMessage.requestID = RequestID.nextRequestID();
-                mainFrame.getConnection().sendPacket(addMessage);
-            }
-
-            if (!updateMessage.getTimeCategories().isEmpty()) {
-                updateMessage.requestID = RequestID.nextRequestID();
-                mainFrame.getConnection().sendPacket(updateMessage);
             }
 
             TimeEntryConfiguration.this.dispose();
         });
 
-        setLayout(new GridBagLayout());
+        for (BugzillaInfo info : MainFrame.bugzillaInfo.values()) {
+            TimeEntryInstance instance = new TimeEntryInstance();
+
+            instances.put(info.name, instance);
+
+            stack.add(createInstance(instance), info.name);
+
+            categoriesModel.addRow(new Object[] { info.name });
+            categoriesModel.fireTableRowsInserted(categoriesModel.getRowCount() - 1, categoriesModel.getRowCount() - 1);
+
+            if (categoriesModel.getRowCount() == 1) {
+                categoriesTable.getSelectionModel().setSelectionInterval(categoriesModel.getRowCount() - 1, categoriesModel.getRowCount() - 1);
+            }
+
+            for (String groupBy : info) {
+                instance.groupByModel.addRow(new Object[] { groupBy });
+                instance.groupByModel.fireTableRowsInserted(instance.groupByModel.getRowCount() - 1, instance.groupByModel.getRowCount() - 1);
+            }
+
+            instance.labelModel.setRowCount(0);
+            instance.labelModel.fireTableDataChanged();
+
+            info.labelToField.forEach((label, field) -> {
+                instance.labelModel.addRow(new Object[] { label, field });
+                instance.labelModel.fireTableRowsInserted(instance.labelModel.getRowCount() - 1, instance.labelModel.getRowCount() - 1);
+            });
+        }
+
+
+
+        pack();
+
+        setSize(400, 300);
+
+        // center on the main frame
+        setLocationRelativeTo(mainFrame);
+    }
+
+    private JPanel buildCategories() {
+
+        categoriesTable.setTableHeader(null);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
+        gbc.gridwidth = 1;
+
+        JPanel panel = new JPanel(new GridBagLayout());
+
+        panel.add(categoryAdd, gbc);
+        gbc.gridx++;
+        panel.add(categoryRemove, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 2;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+
+        categoriesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        panel.add(categoriesTable, gbc);
+
+        return panel;
+    }
+
+    private JPanel createInstance(TimeEntryInstance instance) {
+        JPanel panel = new JPanel(new GridBagLayout());
+
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+//        gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+
+        instance.panel = panel;
+
+        JButton groupByAdd = new JButton("+");
+        JButton groupByRemove = new JButton("-");
+
+        groupByAdd.addActionListener(e -> {
+            String newCode = JOptionPane.showInputDialog(this, "New Time Code");
+
+            instance.codeTableModel.rows.add(new TimeData.TimeCode(0, newCode));
+            instance.codeTableModel.fireTableRowsInserted(instance.codeTableModel.getRowCount() - 1, instance.codeTableModel.getRowCount() - 1);
+        });
+
+        groupByRemove.addActionListener(e -> {
+            instance.codeTableModel.rows.remove(instance.codesTable.getSelectedRow());
+            instance.codeTableModel.fireTableRowsInserted(instance.codesTable.getSelectedRow(), instance.codesTable.getSelectedRow());
+        });
+
+        return panel;
+    }
+
+    private JPanel createBlankPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         gbc.weighty = 1;
-        add(tabs, gbc);
-        gbc.weightx = 0;
-        gbc.weighty = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy++;
-        gbc.anchor = GridBagConstraints.CENTER;
-        add(save, gbc);
+        gbc.fill = GridBagConstraints.BOTH;
 
-        pack();
+        panel.add(new JLabel(), gbc);
 
-        // center on the main frame
-        setLocationRelativeTo(mainFrame);
+        return panel;
     }
 
     private JScrollPane setupTimeCategoriesTable() {
