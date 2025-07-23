@@ -39,6 +39,14 @@ public class TimeData {
 
         public List<TimeCode> timeCodes = new ArrayList<>();
 
+        public TimeCategory() {
+        }
+
+        public TimeCategory(String name, int id) {
+            this.name = name;
+            this.id = id;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (o == null || getClass() != o.getClass()) return false;
