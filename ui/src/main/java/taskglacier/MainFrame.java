@@ -15,9 +15,9 @@ import io.github.andrewauclair.moderndocking.app.WindowLayoutBuilder;
 import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
 import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
 import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
+import packets.Basic;
 import packets.BugzillaInfo;
 import packets.DailyReportMessage;
-import packets.RequestConfig;
 import packets.WeeklyReport;
 import panels.DailyReportPanel;
 import panels.StatusBar;
@@ -203,7 +203,7 @@ public class MainFrame extends JFrame {
 
         ((MenuBar) getJMenuBar()).connected();
 
-        RequestConfig requestConfig = new RequestConfig();
+        Basic requestConfig = Basic.RequestConfig();
         connection.sendPacket(requestConfig);
     }
 

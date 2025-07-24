@@ -211,8 +211,14 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 				if (child->indexInParent != expectedIndex)
 				{
 					child->indexInParent = expectedIndex;
-					send_task_info(*child, false, output);
-
+					if (!m_app.is_bulk_update())
+					{
+						send_task_info(*child, false, output);
+					}
+					else
+					{
+						m_app.add_update_task(child->taskID());
+					}
 					m_database->write_task(*child);
 				}
 				++expectedIndex;
@@ -221,7 +227,14 @@ void API::update_task(const UpdateTaskMessage& message, std::vector<std::unique_
 
 		output.push_back(std::make_unique<SuccessResponse>(message.requestID));
 
-		send_task_info(*task, false, output);
+		if (!m_app.is_bulk_update())
+		{
+			send_task_info(*task, false, output);
+		}
+		else
+		{
+			m_app.add_update_task(task->taskID());
+		}
 	}
 }
 
@@ -274,10 +287,12 @@ void API::handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<
 	{
 		// pause any task updates until we receive the finish
 		// this message will be followed by the task updates, all using the same request ID
+		m_app.start_bulk_update();
 	}
 	else if (message.packetType() == PacketType::BULK_TASK_UPDATE_FINISH)
 	{
 		// now send the task update for any tasks that changed
+		m_app.finish_bulk_update(output);
 	}
 }
 

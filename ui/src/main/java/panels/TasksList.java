@@ -13,10 +13,7 @@ import io.github.andrewauclair.moderndocking.app.Docking;
 import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
 import net.byteseek.swing.treetable.TreeTableModel;
 import net.byteseek.swing.treetable.TreeUtils;
-import packets.PacketType;
-import packets.RequestID;
-import packets.TaskStateChange;
-import packets.UpdateTask;
+import packets.*;
 import taskglacier.MainFrame;
 import tree.TaskTreeTableModel;
 
@@ -405,6 +402,9 @@ public class TasksList extends JPanel implements Dockable, TaskModel.Listener {
 
         @Override
         public boolean importData(TransferSupport support) {
+
+            mainFrame.getConnection().sendPacket(Basic.BulkUpdateStart());
+
             // send to server
             for (int row : rows) {
                 DefaultMutableTreeNode nodeAtTableRow = (DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(row);
@@ -451,6 +451,9 @@ public class TasksList extends JPanel implements Dockable, TaskModel.Listener {
 
                 }
             }
+
+            mainFrame.getConnection().sendPacket(Basic.BulkUpdateFinish());
+
             return true;
         }
     }

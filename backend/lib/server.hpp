@@ -208,6 +208,8 @@ public:
 		return std::nullopt;
 	}
 	
+	bool is_bulk_update() const { return m_bulk_update; }
+	void add_update_task(TaskID id) { m_changedTasksBulkUpdate.push_back(id); }
 	void start_bulk_update() { m_bulk_update = true; }
 	void finish_bulk_update(std::vector<std::unique_ptr<Message>>& output)
 	{
@@ -219,7 +221,7 @@ public:
 
 		for (TaskID task : m_changedTasksBulkUpdate)
 		{
-			send_task_info(m_tasks[task], false, output);
+			send_task_info(m_tasks.at(task), false, output);
 		}
 
 		output.push_back(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_FINISH));

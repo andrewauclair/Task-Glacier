@@ -59,19 +59,7 @@ public final class TaskTreeTableModel extends TreeTableModel {
     }
 
     @Override
-    public boolean isCellEditable(final int rowIndex, final int columnIndex) {
-        return false;
-    }
-
-    @Override
     public Class<?> getColumnClass(final int columnIndex) {
-        switch (columnIndex) {
-            case 0:
-                return String.class;
-//            case 1: return Integer.class;
-//            case 2: return Boolean.class;
-//            case 3: return Integer.class;
-        }
         return String.class;
     }
 
@@ -81,27 +69,16 @@ public final class TaskTreeTableModel extends TreeTableModel {
         switch (column) {
             case 0:
                 return obj.name;
-//            case 1: return obj.indexInParent;
-//            case 2: return obj.isEnabled();
-//            case 3: return node.getChildCount();
             default:
                 return null;
         }
-//        return obj.name;
     }
 
     @Override
     public TableColumnModel createTableColumnModel() {
         TableColumnModel result = new DefaultTableColumnModel();
-        result.addColumn(TableUtils.createColumn(0, "description"));
-//        result.addColumn(TableUtils.createColumn(1, "index"));
-//        result.addColumn(TableUtils.createColumn(2, "enabled"));
-//        result.addColumn(TableUtils.createColumn(3, "children"));
+        result.addColumn(TableUtils.createColumn(0, "Description"));
         return result;
-    }
-
-    @Override
-    public void setColumnValue(final TreeNode node, final int column, final Object value) {
     }
 
     @Override
