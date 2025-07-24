@@ -18,6 +18,7 @@ import packets.RequestID;
 import packets.TaskStateChange;
 import packets.UpdateTask;
 import taskglacier.MainFrame;
+import tree.TaskTreeTableModel;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -33,7 +34,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Objects;
 
 public class TasksList extends JPanel implements Dockable, TaskModel.Listener {
     @DockingProperty(name = "taskID", required = true)
@@ -136,19 +136,11 @@ public class TasksList extends JPanel implements Dockable, TaskModel.Listener {
         mainFrame = MainFrame.mainFrame;
 
         if (allTasks) {
-//            table.expandAll();
-//            Task rootObject = new Task(0, 0, "");
-//            rootNode = TreeUtils.buildTree(rootObject, Task::getChildren, parent -> false);
-//            treeTableModel.setRoot(rootNode);
-//            treeModel.setRoot(rootNode);
         }
         else {
             Task task = mainFrame.getTaskModel().getTask(taskID);
 
             if (task != null) {
-//                table.setRootVisible(false);
-//                treeTableModel.setRoot(new ParentTaskTreeTableNode(task));
-//                addTasks(task);
                 rootNode = TreeUtils.buildTree(task, Task::getChildren, parent -> false);
                 treeTableModel.setRoot(rootNode);
                 treeModel.setRoot(rootNode);
@@ -156,14 +148,8 @@ public class TasksList extends JPanel implements Dockable, TaskModel.Listener {
                 addTasks(task);
             }
             else {
-//                Task rootObject = new Task(0, 0, "");
-//                rootNode = TreeUtils.buildTree(rootObject, Task::getChildren, parent -> false);
-//                treeTableModel.setRoot(rootNode);
-//                treeModel.setRoot(rootNode);
             }
-//            table.expandAll();
         }
-//        treeTableModel.expandTree();
     }
 
     private void addTasks(Task task) {

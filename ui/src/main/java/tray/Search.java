@@ -6,7 +6,7 @@ import data.TaskState;
 import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
 import net.byteseek.swing.treetable.TreeTableModel;
 import net.byteseek.swing.treetable.TreeUtils;
-import panels.TaskTreeTableModel;
+import tree.TaskTreeTableModel;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
