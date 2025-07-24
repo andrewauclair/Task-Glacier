@@ -182,31 +182,6 @@ public class TasksList extends JPanel implements Dockable, TaskModel.Listener {
         treeTableModel = createTreeTableModel(rootNode);
         treeModel = createTreeModel(rootNode);
 
-        DefaultTreeCellRenderer  treeCellRenderer = new DefaultTreeCellRenderer () {
-            @Override
-            public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-                Component c = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-
-                TaskTreeTableNode node = (TaskTreeTableNode) value;
-
-                Task task = (Task) node.getUserObject();
-
-                if (task != null) {
-                    setText(task.name);
-                }
-
-                if (node.isActiveTask()) {
-                    setIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/active.png"))));
-                }
-                else if (node.hasActiveChildTask()) {
-                    setIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/activeChild.png"))));
-                }
-
-                return c;
-            }
-        };
-
-
         search.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
