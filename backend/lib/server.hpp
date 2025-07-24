@@ -208,6 +208,23 @@ public:
 		return std::nullopt;
 	}
 	
+	void start_bulk_update() { m_bulk_update = true; }
+	void finish_bulk_update(std::vector<std::unique_ptr<Message>>& output)
+	{
+		m_bulk_update = false;
+
+		std::sort(m_changedTasksBulkUpdate.begin(), m_changedTasksBulkUpdate.end());
+
+		output.push_back(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_START));
+
+		for (TaskID task : m_changedTasksBulkUpdate)
+		{
+			send_task_info(m_tasks[task], false, output);
+		}
+
+		output.push_back(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_FINISH));
+	}
+
 public:
 	TimeCategoryID m_nextTimeCategoryID = TimeCategoryID(1);
 	TimeCodeID m_nextTimeCodeID = TimeCodeID(1);
@@ -217,7 +234,8 @@ private:
 	std::unordered_map<TaskID, Task> m_tasks;
 	Task* m_activeTask = nullptr;
 
-	
+	bool m_bulk_update = false;
+	std::vector<TaskID> m_changedTasksBulkUpdate;
 
 	std::vector<TimeCategory> m_timeCategories;
 

@@ -26,6 +26,8 @@ void API::process_packet(const Message& message, std::vector<std::unique_ptr<Mes
 		request_task(static_cast<const TaskMessage&>(message), output);
 		break;
 	case PacketType::REQUEST_CONFIGURATION:
+	case PacketType::BULK_TASK_UPDATE_START:
+	case PacketType::BULK_TASK_UPDATE_FINISH:
 		handle_basic(static_cast<const BasicMessage&>(message), output);
 		break;
 	case PacketType::REQUEST_DAILY_REPORT:
@@ -267,6 +269,15 @@ void API::handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<
 		m_bugzilla.send_info(output);
 
 		output.push_back(std::make_unique<BasicMessage>(PacketType::REQUEST_CONFIGURATION_COMPLETE));
+	}
+	else if (message.packetType() == PacketType::BULK_TASK_UPDATE_START)
+	{
+		// pause any task updates until we receive the finish
+		// this message will be followed by the task updates, all using the same request ID
+	}
+	else if (message.packetType() == PacketType::BULK_TASK_UPDATE_FINISH)
+	{
+		// now send the task update for any tasks that changed
 	}
 }
 
