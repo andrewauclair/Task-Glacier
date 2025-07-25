@@ -1,13 +1,18 @@
 package tree;
 
+import net.byteseek.swing.treetable.TableUtils;
 import net.byteseek.swing.treetable.TreeTableModel;
 
+import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.tree.TreeNode;
 
 public class WeeklyReportTreeTableModel extends TreeTableModel {
-    public WeeklyReportTreeTableModel(TreeNode rootNode) {
+    String[] dates = new String[7];
+
+    public WeeklyReportTreeTableModel(TreeNode rootNode, String[] dates) {
         super(rootNode);
+
     }
 
     @Override
@@ -17,6 +22,11 @@ public class WeeklyReportTreeTableModel extends TreeTableModel {
 
     @Override
     protected TableColumnModel createTableColumnModel() {
-        return null;
+        TableColumnModel result = new DefaultTableColumnModel();
+        result.addColumn(TableUtils.createColumn(0, "Description"));
+        result.addColumn(TableUtils.createColumn(8, "Time"));
+
+
+        return result;
     }
 }

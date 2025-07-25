@@ -2,19 +2,21 @@ package tree;
 
 import data.Task;
 import data.TimeData;
+import net.byteseek.swing.treetable.TableUtils;
 import net.byteseek.swing.treetable.TreeTableModel;
 import net.byteseek.swing.treetable.TreeUtils;
 import org.jdesktop.swingx.treetable.DefaultMutableTreeTableNode;
 import org.jdesktop.swingx.treetable.MutableTreeTableNode;
 
+import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.tree.TreeNode;
 
 public class DailyReportTreeTableModel extends TreeTableModel {
-    private static class CategoryNode extends DefaultMutableTreeTableNode {
+    public static class CategoryNode extends DefaultMutableTreeTableNode {
         TimeData.TimeCategory category;
         TimeData.TimeCode code;
-        int minutes;
+        long minutes;
 
         @Override
         public void add(MutableTreeTableNode child) {
@@ -32,17 +34,21 @@ public class DailyReportTreeTableModel extends TreeTableModel {
         }
     }
 
-    private static class TaskNode extends DefaultMutableTreeTableNode {
+    public static class TaskNode extends DefaultMutableTreeTableNode {
         Task task;
-        int minutes;
+        long minutes;
     }
 
     public DailyReportTreeTableModel(TreeNode rootNode) {
         super(rootNode);
     }
 
+
     @Override
     public Class<?> getColumnClass(final int columnIndex) {
+        if (columnIndex == 1) {
+            return long.class;
+        }
         return String.class;
     }
 
@@ -51,16 +57,16 @@ public class DailyReportTreeTableModel extends TreeTableModel {
         if (node instanceof CategoryNode categoryNode) {
             switch (column) {
                 case 0:
-                    return categoryNode.category.name;
+                    return categoryNode.category.name + " - " + categoryNode.code.name;
                 case 1:
-                    return categoryNode.code.name;
-                case 2:
                     return categoryNode.minutes;
             }
         }
         else if (node instanceof TaskNode taskNode) {
             switch (column) {
-                case 2:
+                case 0:
+                    return taskNode.task.name;
+                case 1:
                     return taskNode.minutes;
             }
         }
@@ -69,6 +75,9 @@ public class DailyReportTreeTableModel extends TreeTableModel {
 
     @Override
     protected TableColumnModel createTableColumnModel() {
-        return null;
+        TableColumnModel result = new DefaultTableColumnModel();
+        result.addColumn(TableUtils.createColumn(0, "Description"));
+        result.addColumn(TableUtils.createColumn(1, "Time"));
+        return result;
     }
 }

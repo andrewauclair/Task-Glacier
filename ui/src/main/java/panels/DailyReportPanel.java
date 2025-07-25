@@ -7,15 +7,21 @@ import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingProperty;
 import io.github.andrewauclair.moderndocking.DynamicDockableParameters;
 import io.github.andrewauclair.moderndocking.app.Docking;
+import net.byteseek.swing.treetable.TreeTableModel;
 import packets.DailyReportMessage;
 import packets.RequestDailyReport;
 import packets.RequestID;
 import packets.TaskInfo;
 import taskglacier.MainFrame;
+import tree.DailyReportTreeTable;
+import tree.DailyReportTreeTableModel;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -227,8 +233,11 @@ public class DailyReportPanel extends JPanel implements Dockable {
 
     JLabel date = new JLabel();
 
-    TableModel model = new TableModel();
-    TaskTableModel taskModel = new TaskTableModel();
+//    TableModel model = new TableModel();
+//    TaskTableModel taskModel = new TaskTableModel();
+
+    DailyReportTreeTable newTable = new DailyReportTreeTable(null);
+    DailyReportTreeTableModel newModel = new DailyReportTreeTableModel(null);
 
     public DailyReportPanel(MainFrame mainFrame, LocalDate date) {
         this.mainFrame = mainFrame;
@@ -286,45 +295,45 @@ public class DailyReportPanel extends JPanel implements Dockable {
         add(total, gbc);
         gbc.gridy++;
 
-        JTable table = new JTable(model) {
-            @Override
-            public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
-                JLabel label = (JLabel) super.prepareRenderer(renderer, row, column);
-
-                if (row == model.getTotalRowStart()) {
-                    label.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UIManager.getColor("Component.borderColor")), label.getBorder()));
-                }
-
-                return label;
-            }
-        };
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-        JTable taskTable = new JTable(taskModel);
-        taskTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-        table.getSelectionModel().addListSelectionListener(e -> {
-            taskModel.rows.clear();
-            taskModel.fireTableDataChanged();
-
-            if (table.getSelectedRow() != -1 && table.getSelectedRow() < model.rows.size()) {
-                Row row = model.rows.get(table.getSelectedRow());
-
-                Map<Task, Double> taskRows = new HashMap<>();
-
-                for (DailyReportMessage.DailyReport.TimePair time : report.times) {
-                    Task task = mainFrame.getTaskModel().getTask(time.taskID);
-                    TaskInfo.Session session = task.sessions.get(time.index);
-
-                    for (TimeData.TimeEntry timeEntry : session.timeEntry) {
-                        if (timeEntry.category.equals(row.category) && timeEntry.code.equals(row.code)) {
-                            double hours = taskRows.getOrDefault(task, 0.0);
-
-                            Instant stopTime = session.stopTime.orElseGet(() -> report.time);
-
-                            Instant instant = stopTime.minusMillis(session.startTime.toEpochMilli());
-
-                            long minutes = TimeUnit.MILLISECONDS.toMinutes(instant.toEpochMilli());
+//        JTable table = new JTable(model) {
+//            @Override
+//            public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+//                JLabel label = (JLabel) super.prepareRenderer(renderer, row, column);
+//
+//                if (row == model.getTotalRowStart()) {
+//                    label.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UIManager.getColor("Component.borderColor")), label.getBorder()));
+//                }
+//
+//                return label;
+//            }
+//        };
+//        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+//
+// /        JTable taskTable = new JTable(taskModel);
+//        taskTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+//
+//        table.getSelectionModel().addListSelectionListener(e -> {
+//            taskModel.rows.clear();
+//            taskModel.fireTableDataChanged();
+//
+//            if (table.getSelectedRow() != -1 && table.getSelectedRow() < model.rows.size()) {
+//                Row row = model.rows.get(table.getSelectedRow());
+//
+//                Map<Task, Double> taskRows = new HashMap<>();
+//
+//                for (DailyReportMessage.DailyReport.TimePair time : report.times) {
+//                    Task task = mainFrame.getTaskModel().getTask(time.taskID);
+//                    TaskInfo.Session session = task.sessions.get(time.index);
+//
+//                    for (TimeData.TimeEntry timeEntry : session.timeEntry) {
+//                        if (timeEntry.category.equals(row.category) && timeEntry.code.equals(row.code)) {
+//                            double hours = taskRows.getOrDefault(task, 0.0);
+//
+//                            Instant stopTime = session.stopTime.orElseGet(() -> report.time);
+//
+//                            Instant instant = stopTime.minusMillis(session.startTime.toEpochMilli());
+//
+//                            long minutes = TimeUnit.MILLISECONDS.toMinutes(instant.toEpochMilli());
 
 //                            minutes = Math.round(minutes / 15.0) * 15;
 //
@@ -332,32 +341,32 @@ public class DailyReportPanel extends JPanel implements Dockable {
 //                                minutes = 15;
 //                            }
 
-                            hours += minutes / 60.0;
-
-                            taskRows.put(task, hours);
-                        }
-                    }
-                }
-
-                taskRows.forEach((task, aDouble) -> {
-                    TaskRow taskRow = new TaskRow();
-                    taskRow.task = task;
-                    taskRow.hours = aDouble;
-                    taskModel.rows.add(taskRow);
-                    taskModel.fireTableRowsInserted(taskModel.rows.size() - 1, taskModel.rows.size() - 1);
-                });
-            }
-        });
+//                            hours += minutes / 60.0;
+//
+//                            taskRows.put(task, hours);
+//                        }
+//                    }
+//                }
+//
+//                taskRows.forEach((task, aDouble) -> {
+//                    TaskRow taskRow = new TaskRow();
+//                    taskRow.task = task;
+//                    taskRow.hours = aDouble;
+//                    taskModel.rows.add(taskRow);
+//                    taskModel.fireTableRowsInserted(taskModel.rows.size() - 1, taskModel.rows.size() - 1);
+//                });
+//            }
+//        });
 
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
 
-        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        split.setTopComponent(new JScrollPane(table));
-        split.setBottomComponent(new JScrollPane(taskTable));
+//        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+//        split.setTopComponent(new JScrollPane(table));
+//        split.setBottomComponent(new JScrollPane(taskTable));
 
-        add(split, gbc);
+        add(new JScrollPane(newTable), gbc);
         gbc.gridy++;
 
         revalidate();
@@ -369,10 +378,14 @@ public class DailyReportPanel extends JPanel implements Dockable {
 
         date.setText(String.format("%d/%d/%d", report.month, report.day, report.year));
 
-        model.clear();
-        model.fireTableDataChanged();
+//        model.clear();
+//        model.fireTableDataChanged();
+
+        TreeNode root = new DefaultMutableTreeNode();
 
         if (report.found) {
+            newTable.update(report);
+
             report.timesPerTimeEntry.forEach((timeEntry, time) -> {
                 long minutes = TimeUnit.MILLISECONDS.toMinutes(time.toEpochMilli());
 
@@ -398,7 +411,8 @@ public class DailyReportPanel extends JPanel implements Dockable {
                     code.name = "Unknown";
                 }
 
-                model.add(category, code, minutes / 60.0);
+//                model.add(category, code, minutes / 60.0);
+
             });
         }
 
