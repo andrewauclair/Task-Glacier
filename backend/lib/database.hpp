@@ -41,6 +41,9 @@ struct Database
 
 	virtual void remove_time_category(const TimeCategory& entry) = 0;
 	virtual void remove_time_code(const TimeCategory& entry, const TimeCode& code) = 0;
+
+	virtual void start_transaction() = 0;
+	virtual void finish_transaction() = 0;
 };
 
 struct DatabaseImpl : Database
@@ -77,6 +80,8 @@ struct DatabaseImpl : Database
 	void remove_time_category(const TimeCategory& entry) override;
 	void remove_time_code(const TimeCategory& entry, const TimeCode& code) override;
 
+	void start_transaction() override;
+	void finish_transaction() override;
 private:
 	void load_time_entry(MicroTask& app);
 	void load_tasks(MicroTask& app);

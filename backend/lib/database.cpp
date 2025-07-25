@@ -526,6 +526,34 @@ void DatabaseImpl::remove_time_code(const TimeCategory& entry, const TimeCode& c
 	}
 }
 
+void DatabaseImpl::start_transaction()
+{
+	SQLite::Statement start(m_database, "BEGIN TRANSACTION;");
+
+	try
+	{
+		start.exec();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
+}
+
+void DatabaseImpl::finish_transaction()
+{
+	SQLite::Statement start(m_database, "COMMIT;");
+
+	try
+	{
+		start.exec();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
+}
+
 void DatabaseImpl::write_bugzilla_group_by(const BugzillaInstance& instance)
 {
 	SQLite::Statement insert(m_database, "insert or replace into bugzillaGroupBy values(?, ?)");

@@ -83,6 +83,9 @@ struct nullDatabase : Database
 
 	void remove_time_category(const TimeCategory& entry) override {}
 	void remove_time_code(const TimeCategory& entry, const TimeCode& code) override {}
+
+	void start_transaction() override {}
+	void finish_transaction() override {}
 };
 
 template<typename DatabaseType>

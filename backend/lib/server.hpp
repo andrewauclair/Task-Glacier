@@ -226,6 +226,7 @@ public:
 		{
 			send_task_info(m_tasks.at(task), false, output);
 		}
+		m_changedTasksBulkUpdate.clear();
 
 		output.push_back(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_FINISH));
 	}

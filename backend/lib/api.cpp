@@ -288,11 +288,13 @@ void API::handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<
 		// pause any task updates until we receive the finish
 		// this message will be followed by the task updates, all using the same request ID
 		m_app.start_bulk_update();
+		m_database->start_transaction();
 	}
 	else if (message.packetType() == PacketType::BULK_TASK_UPDATE_FINISH)
 	{
 		// now send the task update for any tasks that changed
 		m_app.finish_bulk_update(output);
+		m_database->finish_transaction();
 	}
 }
 

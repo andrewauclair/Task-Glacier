@@ -2,12 +2,14 @@ package tree;
 
 import config.TaskConfig;
 import data.Task;
+import data.TaskModel;
 import data.TaskState;
 import dialogs.AddModifyTask;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
 import net.byteseek.swing.treetable.TreeTableModel;
 import net.byteseek.swing.treetable.TreeUtils;
+import packets.Basic;
 import packets.PacketType;
 import packets.RequestID;
 import packets.TaskStateChange;
@@ -18,18 +20,20 @@ import taskglacier.MainFrame;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
 /**
  * A tree table that can hold tasks. Reusable for the tasks list, system tray search, reports, and task selector
  */
-public class TaskTreeTable extends JTable {
+public class TaskTreeTable extends JTable implements TaskModel.Listener {
     class TaskTransferHandler extends TransferHandler {
         private List<Integer> rows = new ArrayList<>();
 
@@ -66,6 +70,8 @@ public class TaskTreeTable extends JTable {
 
         @Override
         public boolean importData(TransferSupport support) {
+            mainFrame.getConnection().sendPacket(Basic.BulkUpdateStart());
+
             // send to server
             for (int row : rows) {
                 DefaultMutableTreeNode nodeAtTableRow = (DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(row);
@@ -112,22 +118,36 @@ public class TaskTreeTable extends JTable {
 
                 }
             }
+
+            mainFrame.getConnection().sendPacket(Basic.BulkUpdateFinish());
+
             return true;
         }
     }
+
+    private int taskID = 0;
 
     private MainFrame mainFrame;
     private DefaultMutableTreeNode rootNode;
     private TreeTableModel treeTableModel;
     private DefaultTreeModel treeModel;
 
-    public TaskTreeTable(Task root) {
+    public TaskTreeTable(MainFrame mainFrame, Task root, int taskID, boolean listenForUpdates) {
         rootNode = TreeUtils.buildTree(root, Task::getChildren, parent -> false);
+
+        this.mainFrame = mainFrame;
+
+        this.taskID = taskID;
+
+        mainFrame.getTaskModel().addListener(this);
 
         setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         setDragEnabled(true);
         setDropMode(DropMode.ON_OR_INSERT_ROWS);
         setTransferHandler(new TaskTransferHandler());
+
+        treeTableModel = createTreeTableModel(rootNode);
+        treeModel = createTreeModel(rootNode);
 
         treeTableModel.setNodeFilter(treeNode -> {
             // never filter the root. we keep it hidden
@@ -321,5 +341,93 @@ public class TaskTreeTable extends JTable {
             }
         });
         return localTreeTableModel;
+    }
+
+    @Override
+    public void newTask(Task task) {
+        DefaultMutableTreeNode parent = findTaskNode(rootNode, task.parentID);
+        if (parent == null) {
+            return;
+        }
+
+        MutableTreeNode newChild = new DefaultMutableTreeNode(task);
+
+        parent.setAllowsChildren(true);
+
+        treeModel.insertNodeInto(newChild, parent, parent.getChildCount());
+
+        if (task.parentID == 0 && parent.getChildCount() == 1) {
+            treeTableModel.expandTree();
+        }
+    }
+
+    @Override
+    public void updatedTask(Task task) {
+        DefaultMutableTreeNode node = findTaskNode(rootNode, task.id);
+
+        if (node != null) {
+            treeModel.nodeChanged(node);
+
+            if (task.state == TaskState.FINISHED) {
+//                updateFilter();
+
+                Task parent = mainFrame.getTaskModel().getTask(task.parentID);
+                DefaultMutableTreeNode parentNode = findTaskNode(rootNode, task.parentID);
+
+                if (parent != null && parentNode != null) {
+                    boolean active = parent.children.stream()
+                            .anyMatch(task1 -> task1.state != TaskState.FINISHED);
+
+                    parentNode.setAllowsChildren(active);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void reparentTask(Task task, int oldParent) {
+        DefaultMutableTreeNode newParentNode = findTaskNode(rootNode, task.parentID);
+
+        DefaultMutableTreeNode node = findTaskNode(rootNode, task.id);
+
+        treeModel.removeNodeFromParent(node);
+
+        if (newParentNode != null) {
+            newParentNode.setAllowsChildren(true);
+
+            treeModel.insertNodeInto(node, newParentNode, newParentNode.getChildCount());
+        }
+    }
+
+    @Override
+    public void configComplete() {
+        treeTableModel.expandTree();
+    }
+
+    private DefaultMutableTreeNode findTaskNode(DefaultMutableTreeNode currentParent, int parentID) {
+        if (parentID == taskID) {
+            return rootNode;
+        }
+        Enumeration<TreeNode> children = currentParent.children();
+
+        while (children.hasMoreElements()) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) children.nextElement();
+
+            Task task = (Task) node.getUserObject();
+
+            if (task.id == parentID) {
+                return node;
+            }
+
+            if (node.getChildCount() != 0) {
+                DefaultMutableTreeNode result = findTaskNode(node, parentID);
+
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+
+        return null;
     }
 }

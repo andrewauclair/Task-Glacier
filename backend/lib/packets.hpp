@@ -230,6 +230,9 @@ enum class PacketType : std::int32_t
 
 	BULK_TASK_INFO_START = 33,
 	BULK_TASK_INFO_FINISH = 34,
+
+	BULK_TASK_ADD_START = 35,
+	BULK_TASK_ADD_FINISH = 36,
 };
 
 struct Message
