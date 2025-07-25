@@ -156,29 +156,29 @@ class Search extends JPanel implements TaskModel.Listener {
 
     @Override
     public void reparentTask(Task task, int oldParent) {
-        System.out.println("AltTasksList.reparentTask");
-        DefaultMutableTreeNode oldParentNode = findTaskNode(rootNode, oldParent);
-        DefaultMutableTreeNode newParentNode = findTaskNode(rootNode, task.parentID);
-
-        DefaultMutableTreeNode node = findTaskNode(rootNode, task.id);
-
-        if (node == null) {
-            return;
-        }
-
-        if (oldParentNode != null) {
-            if (oldParentNode.getChildCount() == 0) {
-                oldParentNode.setAllowsChildren(false);
-            }
-            // also removes the node from the old parent for us
-            treeTableModel.treeNodeRemoved(oldParentNode, node);
-        }
-
-        if (newParentNode != null) {
-            newParentNode.setAllowsChildren(true);
-            newParentNode.add(node);
-            treeTableModel.treeNodeInserted(newParentNode, newParentNode.getChildCount() - 1);
-        }
+//        System.out.println("AltTasksList.reparentTask");
+//        DefaultMutableTreeNode oldParentNode = findTaskNode(rootNode, oldParent);
+//        DefaultMutableTreeNode newParentNode = findTaskNode(rootNode, task.parentID);
+//
+//        DefaultMutableTreeNode node = findTaskNode(rootNode, task.id);
+//
+//        if (node == null) {
+//            return;
+//        }
+//
+//        if (oldParentNode != null) {
+//            if (oldParentNode.getChildCount() == 0) {
+//                oldParentNode.setAllowsChildren(false);
+//            }
+//            // also removes the node from the old parent for us
+//            treeTableModel.treeNodeRemoved(oldParentNode, node);
+//        }
+//
+//        if (newParentNode != null) {
+//            newParentNode.setAllowsChildren(true);
+//            newParentNode.add(node);
+//            treeTableModel.treeNodeInserted(newParentNode, newParentNode.getChildCount() - 1);
+//        }
     }
 
     @Override

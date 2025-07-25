@@ -525,7 +525,12 @@ public class MenuBar extends JMenuBar {
                         "Organize garden hoses",
                         "Wipe down the garage door opener");
 
+                int i = 0;
                 for (String str : list) {
+                    i++;
+                    if (i > 20) {
+                        break;
+                    }
                     CreateTask create = new CreateTask(str, 0, RequestID.nextRequestID());
                     mainFrame.getConnection().sendPacket(create);
                 }

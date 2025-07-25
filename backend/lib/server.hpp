@@ -14,6 +14,7 @@
 #include <span>
 #include <bit>
 #include <algorithm>
+#include <set>
 
 #include <strong_type/strong_type.hpp>
 
@@ -153,6 +154,8 @@ public:
 
 	void send_all_tasks(std::vector<std::unique_ptr<Message>>& output)
 	{
+		output.push_back(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_START));
+
 		std::vector<TaskID> parents;
 
 		parents.push_back(NO_PARENT);
@@ -177,6 +180,8 @@ public:
 			}
 			parents = next;
 		}
+
+		output.push_back(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_FINISH));
 	}
 
 	std::vector<TimeCategory>& timeCategories() { return m_timeCategories; }
@@ -209,13 +214,11 @@ public:
 	}
 	
 	bool is_bulk_update() const { return m_bulk_update; }
-	void add_update_task(TaskID id) { m_changedTasksBulkUpdate.push_back(id); }
+	void add_update_task(TaskID id) { m_changedTasksBulkUpdate.insert(id); }
 	void start_bulk_update() { m_bulk_update = true; }
 	void finish_bulk_update(std::vector<std::unique_ptr<Message>>& output)
 	{
 		m_bulk_update = false;
-
-		std::sort(m_changedTasksBulkUpdate.begin(), m_changedTasksBulkUpdate.end());
 
 		output.push_back(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_START));
 
@@ -237,7 +240,7 @@ private:
 	Task* m_activeTask = nullptr;
 
 	bool m_bulk_update = false;
-	std::vector<TaskID> m_changedTasksBulkUpdate;
+	std::set<TaskID> m_changedTasksBulkUpdate;
 
 	std::vector<TimeCategory> m_timeCategories;
 

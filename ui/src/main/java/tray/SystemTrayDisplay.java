@@ -15,7 +15,7 @@ import java.util.Objects;
 public class SystemTrayDisplay extends JFrame {
     private final TrayIcon trayIcon;
     private final RecentActivity activity;
-    private final Search search;
+    private final Search search = null;
 
     // https://www.flaticon.com/free-icon/cognitive_8920590?term=cognitive&related_id=8920590
     // https://www.flaticon.com/free-icon/clipboard_1527478?term=task&page=1&position=53&origin=search&related_id=1527478
@@ -69,7 +69,7 @@ public class SystemTrayDisplay extends JFrame {
     public SystemTrayDisplay(MainFrame mainFrame, TrayIcon trayIcon) {
         this.trayIcon = trayIcon;
         activity = new RecentActivity(mainFrame);
-        search = new Search(mainFrame);
+//        search = new Search(mainFrame);
 
         FlatSVGIcon searchIcon = new FlatSVGIcon(getClass().getResource("/search-svgrepo-com.svg")).derive(24, 24);
 
@@ -169,7 +169,7 @@ public class SystemTrayDisplay extends JFrame {
         CardLayout layout = new CardLayout();
         JPanel stack = new JPanel(layout);
         stack.add(activity, "activity");
-        stack.add(search, "search");
+//        stack.add(search, "search");
         layout.show(stack, "activity");
 
         addComponentListener(new ComponentAdapter() {

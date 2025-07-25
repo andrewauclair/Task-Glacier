@@ -1173,7 +1173,11 @@ public abstract class TreeTableModel extends AbstractTableModel implements TreeM
     }
 
     protected int removeVisibleNode(final TreeNode removedNode) {
-        final int modelIndex = getModelIndexForTreeNode(removedNode);
+        int modelIndex = getModelIndexForTreeNode(removedNode);
+        // the tree scan can't find nodes that the tree model has already removed
+        if (displayedNodes.size() >= linearScanThreshold && modelIndex == -1)  {
+            modelIndex = getModelIndexLinearScan(removedNode);
+        }
         if (modelIndex >= 0) {
             final int numChildren = getLastKnownSubTreeCount(removedNode);
             final int lastIndex = modelIndex + numChildren;

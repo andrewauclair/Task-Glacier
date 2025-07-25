@@ -531,8 +531,10 @@ public class TasksList extends JPanel implements Dockable, TaskModel.Listener {
         MutableTreeNode newChild = new DefaultMutableTreeNode(task);
 
         parent.setAllowsChildren(true);
-        parent.add(newChild);
-        treeTableModel.treeNodeInserted(parent, parent.getChildCount() - 1);
+//        parent.add(newChild);
+//        treeTableModel.treeNodeInserted(parent, parent.getChildCount() - 1);
+
+        treeModel.insertNodeInto(newChild, parent, parent.getChildCount());
 
         if (task.parentID == 0 && parent.getChildCount() == 1) {
             treeTableModel.expandTree();
@@ -541,31 +543,33 @@ public class TasksList extends JPanel implements Dockable, TaskModel.Listener {
 
     @Override
     public void updatedTask(Task task) {
-        System.out.println("AltTasksList.updatedTask");
-        DefaultMutableTreeNode node = findTaskNode(rootNode, task.id);
-
-        if (node != null) {
-            treeTableModel.treeNodeChanged(node);
-
-            if (task.state == TaskState.FINISHED) {
-                updateFilter();
-
-                Task parent = mainFrame.getTaskModel().getTask(task.parentID);
-                DefaultMutableTreeNode parentNode = findTaskNode(rootNode, task.parentID);
-
-                if (parent != null && parentNode != null) {
-                    boolean active = parent.children.stream()
-                            .anyMatch(task1 -> task1.state != TaskState.FINISHED);
-
-                    parentNode.setAllowsChildren(active);
-                }
-            }
-        }
+//        System.out.println("AltTasksList.updatedTask");
+//        DefaultMutableTreeNode node = findTaskNode(rootNode, task.id);
+//
+//        if (node != null) {
+////            treeTableModel.treeNodeChanged(node);
+//
+//            treeModel.nodeChanged(node);
+//
+//            if (task.state == TaskState.FINISHED) {
+//                updateFilter();
+//
+//                Task parent = mainFrame.getTaskModel().getTask(task.parentID);
+//                DefaultMutableTreeNode parentNode = findTaskNode(rootNode, task.parentID);
+//
+//                if (parent != null && parentNode != null) {
+//                    boolean active = parent.children.stream()
+//                            .anyMatch(task1 -> task1.state != TaskState.FINISHED);
+//
+//                    parentNode.setAllowsChildren(active);
+//                }
+//            }
+//        }
     }
 
     @Override
     public void reparentTask(Task task, int oldParent) {
-        System.out.println("AltTasksList.reparentTask");
+        System.out.println("AltTasksList.reparentTask " + task.id + " from " + oldParent + " to " + task.parentID);
         DefaultMutableTreeNode oldParentNode = findTaskNode(rootNode, oldParent);
         DefaultMutableTreeNode newParentNode = findTaskNode(rootNode, task.parentID);
 
@@ -580,13 +584,15 @@ public class TasksList extends JPanel implements Dockable, TaskModel.Listener {
                 oldParentNode.setAllowsChildren(false);
             }
             // also removes the node from the old parent for us
-            treeTableModel.treeNodeRemoved(oldParentNode, node);
+//            treeTableModel.treeNodeRemoved(oldParentNode, node);
+            treeModel.removeNodeFromParent(node);
         }
 
         if (newParentNode != null) {
             newParentNode.setAllowsChildren(true);
-            newParentNode.add(node);
-            treeTableModel.treeNodeInserted(newParentNode, newParentNode.getChildCount() - 1);
+//            newParentNode.add(node);
+//            treeTableModel.treeNodeInserted(newParentNode, newParentNode.getChildCount() - 1);
+            treeModel.insertNodeInto(node, newParentNode, newParentNode.getChildCount());
         }
     }
 
