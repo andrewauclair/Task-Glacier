@@ -1,33 +1,18 @@
 package panels;
 
-import data.Task;
-import data.TaskModel;
-import data.TimeData;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingProperty;
 import io.github.andrewauclair.moderndocking.DynamicDockableParameters;
 import io.github.andrewauclair.moderndocking.app.Docking;
-import net.byteseek.swing.treetable.TreeTableModel;
 import packets.DailyReportMessage;
 import packets.RequestDailyReport;
 import packets.RequestID;
-import packets.TaskInfo;
 import taskglacier.MainFrame;
 import tree.DailyReportTreeTable;
-import tree.DailyReportTreeTableModel;
 
 import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.MutableTreeNode;
-import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 public class DailyReportPanel extends JPanel implements Dockable {
     private MainFrame mainFrame;
@@ -44,200 +29,9 @@ public class DailyReportPanel extends JPanel implements Dockable {
     private String titleText;
     private String tabText;
 
-    class Row {
-        TimeData.TimeCategory category;
-        TimeData.TimeCode code;
-        double hours;
-
-        public Row(TimeData.TimeCategory category, TimeData.TimeCode code, double hours) {
-            this.category = category;
-            this.code = code;
-            this.hours = hours;
-        }
-    }
-
-    class TotalRow {
-        TimeData.TimeCategory category;
-        double hours;
-
-        public TotalRow(TimeData.TimeCategory category, double hours) {
-            this.category = category;
-            this.hours = hours;
-        }
-    }
-
-    class TableModel extends AbstractTableModel {
-        private List<Row> rows = new ArrayList<>();
-        private List<TotalRow> totals = new ArrayList<>();
-
-        public int getTotalRowStart() {
-            return rows.size();
-        }
-
-        @Override
-        public int getRowCount() {
-            return rows.size() + totals.size();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 3;
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            switch (column) {
-                case 0:
-                    return "Category";
-                case 1:
-                    return "Code";
-                case 2:
-                    return "Hours";
-            }
-            return null;
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            if (columnIndex == 2) {
-                return double.class;
-            }
-            return String.class;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            if (rowIndex < rows.size()) {
-                Row row = rows.get(rowIndex);
-
-                if (columnIndex == 0) {
-                    return row.category.name;
-                }
-                else if (columnIndex == 1) {
-                    return row.code.name;
-                }
-                return row.hours;
-            }
-            else {
-                TotalRow total = totals.get(rowIndex - rows.size());
-
-                if (columnIndex == 0) {
-                    return total.category.name + " - Total";
-                }
-                else if (columnIndex == 2) {
-                    return total.hours;
-                }
-            }
-            return null;
-        }
-
-        void clear() {
-            rows.clear();
-            totals.clear();
-        }
-
-        void add(TimeData.TimeCategory category, TimeData.TimeCode code, double hours) {
-            rows.add(new Row(category, code, hours));
-
-            Optional<TotalRow> totalOptional = totals.stream()
-                    .filter(totalRow -> totalRow.category.id == category.id)
-                    .findFirst();
-
-            if (totalOptional.isPresent()) {
-                totalOptional.get().hours += hours;
-            }
-            else {
-                TotalRow total = new TotalRow(category, hours);
-                totals.add(total);
-            }
-
-            // sort the rows to display the most time at the top
-            rows.sort(Comparator.comparingDouble(o -> ((Row) o).hours));
-
-            // sort the rows to display the most time at the top
-            totals.sort(Comparator.comparingDouble(o -> ((TotalRow) o).hours).reversed());
-        }
-    }
-
-    class TaskRow {
-        Task task;
-        double hours;
-    }
-
-    class TaskTableModel extends AbstractTableModel {
-        List<TaskRow> rows = new ArrayList<>();
-
-        @Override
-        public int getRowCount() {
-            return rows.size();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 2;
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            switch (column) {
-                case 0:
-                    return "Task";
-                case 1:
-                    return "Hours";
-            }
-            return null;
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            if (columnIndex == 2) {
-                return double.class;
-            }
-            return String.class;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            TaskRow row = rows.get(rowIndex);
-
-            if (columnIndex == 0) {
-                TaskModel taskModel = mainFrame.getTaskModel();
-
-                List<String> parents = new ArrayList<>();
-
-                StringBuilder text = new StringBuilder();
-
-                int parentID = row.task.parentID;
-
-                while (parentID != 0) {
-                    Task task = taskModel.getTask(parentID);
-
-                    if (task == null) {
-                        break;
-                    }
-                    parents.add(0, task.name);
-
-                    parentID = task.parentID;
-                }
-                for (String parent : parents) {
-                    text.append(parent);
-                    text.append(" / ");
-                }
-                text.append(row.task.name);
-
-                return text.toString();
-            }
-            return row.hours;
-        }
-    }
-
     JLabel date = new JLabel();
 
-//    TableModel model = new TableModel();
-//    TaskTableModel taskModel = new TaskTableModel();
-
     DailyReportTreeTable newTable = new DailyReportTreeTable();
-//    DailyReportTreeTableModel newModel = new DailyReportTreeTableModel(null);
 
     public DailyReportPanel(MainFrame mainFrame, LocalDate date) {
         this.mainFrame = mainFrame;
@@ -295,76 +89,9 @@ public class DailyReportPanel extends JPanel implements Dockable {
         add(total, gbc);
         gbc.gridy++;
 
-//        JTable table = new JTable(model) {
-//            @Override
-//            public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
-//                JLabel label = (JLabel) super.prepareRenderer(renderer, row, column);
-//
-//                if (row == model.getTotalRowStart()) {
-//                    label.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UIManager.getColor("Component.borderColor")), label.getBorder()));
-//                }
-//
-//                return label;
-//            }
-//        };
-//        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-//
-// /        JTable taskTable = new JTable(taskModel);
-//        taskTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-//
-//        table.getSelectionModel().addListSelectionListener(e -> {
-//            taskModel.rows.clear();
-//            taskModel.fireTableDataChanged();
-//
-//            if (table.getSelectedRow() != -1 && table.getSelectedRow() < model.rows.size()) {
-//                Row row = model.rows.get(table.getSelectedRow());
-//
-//                Map<Task, Double> taskRows = new HashMap<>();
-//
-//                for (DailyReportMessage.DailyReport.TimePair time : report.times) {
-//                    Task task = mainFrame.getTaskModel().getTask(time.taskID);
-//                    TaskInfo.Session session = task.sessions.get(time.index);
-//
-//                    for (TimeData.TimeEntry timeEntry : session.timeEntry) {
-//                        if (timeEntry.category.equals(row.category) && timeEntry.code.equals(row.code)) {
-//                            double hours = taskRows.getOrDefault(task, 0.0);
-//
-//                            Instant stopTime = session.stopTime.orElseGet(() -> report.time);
-//
-//                            Instant instant = stopTime.minusMillis(session.startTime.toEpochMilli());
-//
-//                            long minutes = TimeUnit.MILLISECONDS.toMinutes(instant.toEpochMilli());
-
-//                            minutes = Math.round(minutes / 15.0) * 15;
-//
-//                            if (instant.toEpochMilli() != 0 && minutes == 0) {
-//                                minutes = 15;
-//                            }
-
-//                            hours += minutes / 60.0;
-//
-//                            taskRows.put(task, hours);
-//                        }
-//                    }
-//                }
-//
-//                taskRows.forEach((task, aDouble) -> {
-//                    TaskRow taskRow = new TaskRow();
-//                    taskRow.task = task;
-//                    taskRow.hours = aDouble;
-//                    taskModel.rows.add(taskRow);
-//                    taskModel.fireTableRowsInserted(taskModel.rows.size() - 1, taskModel.rows.size() - 1);
-//                });
-//            }
-//        });
-
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
-
-//        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-//        split.setTopComponent(new JScrollPane(table));
-//        split.setBottomComponent(new JScrollPane(taskTable));
 
         add(new JScrollPane(newTable), gbc);
         gbc.gridy++;
@@ -379,46 +106,6 @@ public class DailyReportPanel extends JPanel implements Dockable {
         newTable.update(report);
 
         date.setText(String.format("%d/%d/%d", report.month, report.day, report.year));
-
-//        model.clear();
-//        model.fireTableDataChanged();
-
-//        TreeNode root = new DefaultMutableTreeNode();
-//
-//        if (report.found) {
-////            newTable.update(report);
-//
-//            report.timesPerTimeEntry.forEach((timeEntry, time) -> {
-//                long minutes = TimeUnit.MILLISECONDS.toMinutes(time.toEpochMilli());
-//
-//                minutes = Math.round(minutes / 15.0) * 15;
-//
-//                if (time.toEpochMilli() != 0 && minutes == 0) {
-//                    minutes = 15;
-//                }
-//
-//                TimeData.TimeCategory category = timeEntry.category;
-//
-//                if (category == null) {
-//                    category = new TimeData.TimeCategory();
-//                    category.id = 0;
-//                    category.name = "Unknown";
-//                }
-//
-//                TimeData.TimeCode code = timeEntry.code;
-//
-//                if (code == null) {
-//                    code = new TimeData.TimeCode();
-//                    code.id = 0;
-//                    code.name = "Unknown";
-//                }
-//
-////                model.add(category, code, minutes / 60.0);
-//
-//            });
-//        }
-
-//        model.fireTableDataChanged();
     }
 
     @Override
