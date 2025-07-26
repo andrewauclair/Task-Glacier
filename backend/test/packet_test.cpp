@@ -339,7 +339,7 @@ TEST_CASE("Update Task", "[message]")
 
 		verifier
 			.verify_value<std::uint32_t>(80, "packet length")
-			.verify_value<std::uint32_t>(16, "packet ID")
+			.verify_value<std::uint32_t>(15, "packet ID")
 			.verify_value<std::uint32_t>(10, "request ID")
 			.verify_value<std::uint32_t>(5, "task ID")
 			.verify_value<std::uint32_t>(1, "parent ID")
