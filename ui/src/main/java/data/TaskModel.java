@@ -85,6 +85,7 @@ public class TaskModel {
             newTask = true;
         }
 
+
         task.indexInParent = info.indexInParent;
         task.serverControlled = info.serverControlled;
         task.locked = info.locked;
@@ -104,6 +105,7 @@ public class TaskModel {
 
             if (optionalParent.isPresent()) {
                 optionalParent.get().children.add(task);
+                task.parent = optionalParent.get();
             }
             listeners.forEach(listener -> listener.newTask(task));
         }
@@ -118,10 +120,12 @@ public class TaskModel {
 
             if (optionalOldParent.isPresent()) {
                 optionalOldParent.get().children.remove(task);
+                task.parent = null;
             }
 
             if (optionalNewParent.isPresent()) {
                 optionalNewParent.get().children.add(task);
+                task.parent = optionalNewParent.get();
             }
 
             int oldParent = task.parentID;

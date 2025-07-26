@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Objects;
 
 public class Task {
+    public Task parent = null;
+
     public final int id;
     public int parentID;
     public TaskState state = TaskState.PENDING;
