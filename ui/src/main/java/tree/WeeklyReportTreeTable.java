@@ -23,7 +23,7 @@ public class WeeklyReportTreeTable extends JTable {
     }
 
     private TreeTableModel createTreeTableModel(TreeNode rootNode) {
-        TreeTableModel localTreeTableModel = new WeeklyReportTreeTableModel(rootNode);
+        TreeTableModel localTreeTableModel = new WeeklyReportTreeTableModel(rootNode, null);
 
         TreeTableHeaderRenderer renderer = new TreeTableHeaderRenderer();
 //        renderer.setShowNumber(true); // true is default, this code is just for testing the false option.

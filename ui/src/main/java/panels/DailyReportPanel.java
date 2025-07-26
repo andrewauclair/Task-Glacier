@@ -236,8 +236,8 @@ public class DailyReportPanel extends JPanel implements Dockable {
 //    TableModel model = new TableModel();
 //    TaskTableModel taskModel = new TaskTableModel();
 
-    DailyReportTreeTable newTable = new DailyReportTreeTable(null);
-    DailyReportTreeTableModel newModel = new DailyReportTreeTableModel(null);
+    DailyReportTreeTable newTable = new DailyReportTreeTable();
+//    DailyReportTreeTableModel newModel = new DailyReportTreeTableModel(null);
 
     public DailyReportPanel(MainFrame mainFrame, LocalDate date) {
         this.mainFrame = mainFrame;
@@ -376,47 +376,49 @@ public class DailyReportPanel extends JPanel implements Dockable {
     public void update(DailyReportMessage message) {
         report = message.getReport();
 
+        newTable.update(report);
+
         date.setText(String.format("%d/%d/%d", report.month, report.day, report.year));
 
 //        model.clear();
 //        model.fireTableDataChanged();
 
-        TreeNode root = new DefaultMutableTreeNode();
+//        TreeNode root = new DefaultMutableTreeNode();
+//
+//        if (report.found) {
+////            newTable.update(report);
+//
+//            report.timesPerTimeEntry.forEach((timeEntry, time) -> {
+//                long minutes = TimeUnit.MILLISECONDS.toMinutes(time.toEpochMilli());
+//
+//                minutes = Math.round(minutes / 15.0) * 15;
+//
+//                if (time.toEpochMilli() != 0 && minutes == 0) {
+//                    minutes = 15;
+//                }
+//
+//                TimeData.TimeCategory category = timeEntry.category;
+//
+//                if (category == null) {
+//                    category = new TimeData.TimeCategory();
+//                    category.id = 0;
+//                    category.name = "Unknown";
+//                }
+//
+//                TimeData.TimeCode code = timeEntry.code;
+//
+//                if (code == null) {
+//                    code = new TimeData.TimeCode();
+//                    code.id = 0;
+//                    code.name = "Unknown";
+//                }
+//
+////                model.add(category, code, minutes / 60.0);
+//
+//            });
+//        }
 
-        if (report.found) {
-            newTable.update(report);
-
-            report.timesPerTimeEntry.forEach((timeEntry, time) -> {
-                long minutes = TimeUnit.MILLISECONDS.toMinutes(time.toEpochMilli());
-
-                minutes = Math.round(minutes / 15.0) * 15;
-
-                if (time.toEpochMilli() != 0 && minutes == 0) {
-                    minutes = 15;
-                }
-
-                TimeData.TimeCategory category = timeEntry.category;
-
-                if (category == null) {
-                    category = new TimeData.TimeCategory();
-                    category.id = 0;
-                    category.name = "Unknown";
-                }
-
-                TimeData.TimeCode code = timeEntry.code;
-
-                if (code == null) {
-                    code = new TimeData.TimeCode();
-                    code.id = 0;
-                    code.name = "Unknown";
-                }
-
-//                model.add(category, code, minutes / 60.0);
-
-            });
-        }
-
-        model.fireTableDataChanged();
+//        model.fireTableDataChanged();
     }
 
     @Override

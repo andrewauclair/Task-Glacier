@@ -10,16 +10,18 @@ import org.jdesktop.swingx.treetable.MutableTreeTableNode;
 
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumnModel;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 
 public class DailyReportTreeTableModel extends TreeTableModel {
-    public static class CategoryNode extends DefaultMutableTreeTableNode {
+    public static class CategoryNode extends DefaultMutableTreeNode {
         TimeData.TimeCategory category;
         TimeData.TimeCode code;
         long minutes;
 
         @Override
-        public void add(MutableTreeTableNode child) {
+        public void add(MutableTreeNode child) {
             super.add(child);
 
             // add minutes
@@ -27,20 +29,20 @@ public class DailyReportTreeTableModel extends TreeTableModel {
         }
 
         @Override
-        public void remove(MutableTreeTableNode node) {
+        public void remove(MutableTreeNode node) {
             super.remove(node);
 
             minutes -= ((TaskNode) node).minutes;
         }
     }
 
-    public static class TaskNode extends DefaultMutableTreeTableNode {
+    public static class TaskNode extends DefaultMutableTreeNode {
         Task task;
         long minutes;
     }
 
     public DailyReportTreeTableModel(TreeNode rootNode) {
-        super(rootNode);
+        super(rootNode, false);
     }
 
 

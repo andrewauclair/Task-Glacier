@@ -11,7 +11,7 @@ public class WeeklyReportTreeTableModel extends TreeTableModel {
     String[] dates = new String[7];
 
     public WeeklyReportTreeTableModel(TreeNode rootNode, String[] dates) {
-        super(rootNode);
+        super(rootNode, false);
 
     }
 

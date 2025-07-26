@@ -1,6 +1,7 @@
 package tree;
 
 import data.Task;
+import data.TimeData;
 import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
 import net.byteseek.swing.treetable.TreeTableModel;
 import packets.DailyReportMessage;
@@ -11,35 +12,38 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import java.awt.*;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-public class DailyReportTreeTable extends JTable {
-    private MainFrame mainFrame;
-    private DefaultMutableTreeNode rootNode;
-    private TreeTableModel treeTableModel;
-    private DefaultTreeModel treeModel;
+import static taskglacier.MainFrame.mainFrame;
 
-    public DailyReportTreeTable(DailyReportMessage.DailyReport report) {
-        update(report);
+public class DailyReportTreeTable extends JTable {
+    private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
+    private final TreeTableModel treeTableModel;
+    private final DefaultTreeModel treeModel;
+
+    private Map<TimeData.TimeEntry, DailyReportTreeTableModel.CategoryNode> categoryNodes = new HashMap<>();
+
+    public DailyReportTreeTable() {
+        treeModel = createTreeModel(rootNode);
+        treeTableModel = createTreeTableModel(rootNode);
+
+        getColumnModel().getColumn(1).setCellRenderer(new ElapsedTimeCellRenderer());
+
+        setIntercellSpacing(new Dimension(0, 0));
     }
 
     public void update(DailyReportMessage.DailyReport report) {
-        rootNode = new DefaultMutableTreeNode();
-
-        List<DailyReportTreeTableModel.CategoryNode> categoryNodes = new ArrayList<>();
-
-        report.timesPerTimeEntry.forEach((timeEntry, time) -> {
-            long minutes = TimeUnit.MILLISECONDS.toMinutes(time.toEpochMilli());
-
-            DailyReportTreeTableModel.CategoryNode categoryNode = new DailyReportTreeTableModel.CategoryNode();
-            categoryNode.category = timeEntry.category;
-            categoryNode.code = timeEntry.code;
-            categoryNode.minutes = minutes;
-
-            categoryNodes.add(categoryNode);
-        });
+        addNewCategoryNodes(report);
+        removeUnusedCategoryNodes(report);
 
         List<Integer> taskIDs = report.times.stream()
                 .map(timePair -> timePair.taskID)
@@ -55,14 +59,53 @@ public class DailyReportTreeTable extends JTable {
             for (DailyReportMessage.DailyReport.TimePair pair : pairs) {
                 TaskInfo.Session session = task.sessions.get(pair.index);
 
-                // find the node for this session
-                categoryNodes.stream()
-                        .filter(categoryNode -> categoryNode.category.equals(session.timeEntry))
+                Instant stopTime = session.stopTime.orElseGet(() -> report.time);
+                Instant instant = stopTime.minusMillis(session.startTime.toEpochMilli());
+                long minutes = TimeUnit.MILLISECONDS.toMinutes(instant.toEpochMilli());
+
+                for (TimeData.TimeEntry timeEntry : session.timeEntry) {
+                    Optional<DailyReportTreeTableModel.CategoryNode> list = categoryNodes.values().stream()
+                            .filter(categoryNode -> categoryNode.category.equals(timeEntry.category) && categoryNode.code.equals(timeEntry.code))
+                            .findFirst();
+
+                    if (list.isPresent()) {
+                        DailyReportTreeTableModel.TaskNode child = new DailyReportTreeTableModel.TaskNode();
+                        child.task = task;
+                        child.minutes = minutes;
+                        list.get().add(child);
+                    }
+                }
             }
-
         }
-        for (DailyReportMessage.DailyReport.TimePair time : report.times) {
+    }
 
+    private void addNewCategoryNodes(DailyReportMessage.DailyReport report) {
+        report.timesPerTimeEntry.forEach((timeEntry, time) -> {
+            long minutes = TimeUnit.MILLISECONDS.toMinutes(time.toEpochMilli());
+
+            // search for it first
+            if (!categoryNodes.containsKey(timeEntry)) {
+                DailyReportTreeTableModel.CategoryNode categoryNode = new DailyReportTreeTableModel.CategoryNode();
+                categoryNode.category = timeEntry.category;
+                categoryNode.code = timeEntry.code;
+                categoryNode.minutes = minutes;
+
+                categoryNodes.put(timeEntry, categoryNode);
+                rootNode.add(categoryNode);
+            }
+        });
+    }
+
+    private void removeUnusedCategoryNodes(DailyReportMessage.DailyReport report) {
+        var iterator = categoryNodes.entrySet().iterator();
+
+        while (iterator.hasNext()) {
+            var next = iterator.next();
+
+            if (!report.timesPerTimeEntry.keySet().contains(next.getKey())) {
+                rootNode.remove(next.getValue());
+                iterator.remove();
+            }
         }
     }
 
