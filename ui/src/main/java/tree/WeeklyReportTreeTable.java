@@ -7,9 +7,51 @@ import taskglacier.MainFrame;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 
 public class WeeklyReportTreeTable extends JTable {
+    public static class WeeklyCategoryNode extends DailyReportTreeTableModel.CategoryNode {
+        Long[] minutesPerDay = new Long[7];
+        int[] childrenPerDay = new int[7];
+
+        @Override
+        public void add(MutableTreeNode child) {
+            super.add(child);
+
+            for (int i = 0; i < 7; i++) {
+                WeeklyTaskNode taskNode = (WeeklyTaskNode) child;
+
+                if (taskNode.minutesPerDay[i] != null) {
+                    minutesPerDay[i] += taskNode.minutesPerDay[i];
+                    childrenPerDay[i]++;
+                }
+            }
+        }
+
+        @Override
+        public void remove(MutableTreeNode node) {
+            super.remove(node);
+
+            for (int i = 0; i < 7; i++) {
+                WeeklyTaskNode taskNode = (WeeklyTaskNode) node;
+
+                childrenPerDay[i]--;
+
+                if (childrenPerDay[i] <= 0) {
+                    minutesPerDay[i] = null;
+                }
+                else if (taskNode.minutesPerDay[i] != null) {
+                    minutesPerDay[i] -= taskNode.minutesPerDay[i];
+                }
+            }
+        }
+    }
+
+    public static class WeeklyTaskNode extends DailyReportTreeTableModel.TaskNode {
+        Long[] minutesPerDay = new Long[7];
+    }
+
     private MainFrame mainFrame;
     private DefaultMutableTreeNode rootNode;
     private TreeTableModel treeTableModel;
