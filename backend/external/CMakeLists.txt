@@ -31,11 +31,11 @@ FetchContent_Declare(
 )
 
 FetchContent_Declare(
-    libassert
+    cpptrace
     GIT_SHALLOW     FALSE
-    GIT_REPOSITORY  https://github.com/jeremy-rifkin/libassert.git
- #   GIT_TAG         v2.0.0-alpha
-    GIT_TAG         e7e3c35b415761e11c268436e6d1659d5a3fdbf5
+    GIT_REPOSITORY  https://github.com/jeremy-rifkin/cpptrace.git
+ #   GIT_TAG         v1.0.3
+    GIT_TAG         babec9647d3107ec988824bd3535dd049dce84fe
 )
 
 FetchContent_Declare(
@@ -52,4 +52,4 @@ FetchContent_Declare(
     GIT_TAG         3.3.3
 )
 
-FetchContent_MakeAvailable(Catch2 sockpp strong_type libassert simdjson SQLiteCpp)
+FetchContent_MakeAvailable(Catch2 sockpp strong_type cpptrace simdjson SQLiteCpp)
