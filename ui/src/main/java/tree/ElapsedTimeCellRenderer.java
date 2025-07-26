@@ -7,7 +7,7 @@ import java.awt.*;
 public class ElapsedTimeCellRenderer implements TableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        long minutes = (long) value;
+        Long minutes = (Long) value;
 
         JLabel label = new JLabel();
         label.setOpaque(true);
@@ -18,11 +18,12 @@ public class ElapsedTimeCellRenderer implements TableCellRenderer {
         label.setBackground(isSelected ? table.getSelectionBackground() :
                 table.getBackground());
 
-        if (minutes >= 60) {
-            label.setText(String.format("%02dh %02dm", minutes / 60, minutes - ((minutes / 60) * 60)));
-        }
-        else {
-            label.setText(String.format("%02dm", minutes));
+        if (minutes != null) {
+            if (minutes >= 60) {
+                label.setText(String.format("%02dh %02dm", minutes / 60, minutes - ((minutes / 60) * 60)));
+            } else {
+                label.setText(String.format("%02dm", minutes));
+            }
         }
 
         return label;

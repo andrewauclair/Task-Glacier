@@ -4,6 +4,7 @@ import data.Task;
 import data.TimeData;
 import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
 import net.byteseek.swing.treetable.TreeTableModel;
+import net.byteseek.swing.treetable.TreeUtils;
 import packets.DailyReportMessage;
 import packets.TaskInfo;
 import taskglacier.MainFrame;
@@ -11,6 +12,7 @@ import taskglacier.MainFrame;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.time.Instant;
@@ -22,39 +24,74 @@ import java.util.function.Predicate;
 import static taskglacier.MainFrame.mainFrame;
 
 public class DailyReportTreeTable extends JTable {
-    private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
+    private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(new Task(0, 0, ""), true);
     private final TreeTableModel treeTableModel;
     private final DefaultTreeModel treeModel;
 
     private Map<TimeData.TimeEntry, DailyReportTreeTableModel.CategoryNode> categoryNodes = new HashMap<>();
 
+    // we'll use this to decide which nodes to delete, if any, later
+    Map<TimeData.TimeEntry, Set<Task>> tasks = new HashMap<>();
+
+    Map<Integer, Integer> parents = new HashMap<>();
+
     public DailyReportTreeTable() {
-        rootNode.setAllowsChildren(true);
 
-        treeModel = createTreeModel(rootNode);
         treeTableModel = createTreeTableModel(rootNode);
+        treeModel = createTreeModel(rootNode);
 
-        treeTableModel.setNodeFilter(new Predicate<TreeNode>() {
-            @Override
-            public boolean test(TreeNode treeNode) {
-                return false;
-            }
-        });
+        treeTableModel.setNodeFilter(treeNode -> false);
+
         getColumnModel().getColumn(1).setCellRenderer(new ElapsedTimeCellRenderer());
 
         setIntercellSpacing(new Dimension(0, 0));
     }
 
     public void update(DailyReportMessage.DailyReport report) {
-        addNewCategoryNodes(report);
-        removeUnusedCategoryNodes(report);
+
 
         List<Integer> taskIDs = report.times.stream()
                 .map(timePair -> timePair.taskID)
                 .toList();
 
+        boolean parentsChanged = false;
+
+        for (int taskID : taskIDs) {
+            Task task = mainFrame.getTaskModel().getTask(taskID);
+
+            Integer parent = parents.get(task.id);
+
+            if (parent != null && parent.intValue() != task.parentID) {
+                parentsChanged = true;
+                break;
+            }
+        }
+
+        // if parents have changed, let's throw out all the task nodes and start over
+        if (parentsChanged) {
+            System.out.println("Parents changed, delete all tasks from display");
+            for (DailyReportTreeTableModel.CategoryNode value : categoryNodes.values()) {
+                Enumeration<TreeNode> children = value.children();
+                while (children.hasMoreElements()) {
+                    treeModel.removeNodeFromParent((MutableTreeNode) children.nextElement());
+                }
+            }
+            tasks.clear();
+        }
+
+        parents.clear();
+
+        for (int taskID : taskIDs) {
+            Task task = mainFrame.getTaskModel().getTask(taskID);
+            parents.put(task.id, task.parentID);
+            System.out.printf("task %d parent %d%n", task.id, task.parentID);
+        }
+
+        addNewCategoryNodes(report);
+        removeUnusedCategoryNodes(report);
+
         // we'll use this to decide which nodes to delete, if any, later
-        Map<TimeData.TimeEntry, Set<Task>> tasks = new HashMap<>();
+        Map<TimeData.TimeEntry, Set<Task>> tasksThisUpdate = new HashMap<>();
 
         for (Integer taskID : taskIDs) {
             List<DailyReportMessage.DailyReport.TimePair> pairs = report.times.stream()
@@ -77,27 +114,32 @@ public class DailyReportTreeTable extends JTable {
 
                     if (list.isPresent()) {
                         Set<Task> orDefault = tasks.getOrDefault(timeEntry, new HashSet<>());
-                        tasks.put(timeEntry, orDefault);
+                        tasksThisUpdate.put(timeEntry, orDefault);
                         orDefault.add(task);
 
                         DailyReportTreeTableModel.TaskNode taskNode = findOrCreateTaskNode(list.get(), task);
                         taskNode.minutes = minutes;
-
-
-//                        DailyReportTreeTableModel.TaskNode child = new DailyReportTreeTableModel.TaskNode();
-//                        child.task = task;
-//                        child.minutes = minutes;
-//                        list.get().add(child);
                     }
                 }
             }
         }
 
-//        treeModel.setRoot(rootNode);
-//        treeTableModel.setRoot(rootNode);
-        treeModel.nodeChanged(rootNode);
-        treeTableModel.fireTableDataChanged();
-        treeTableModel.expandTree();
+        tasks.forEach((timeEntry, tasks1) -> {
+            Set<Task> thisUpdate = tasksThisUpdate.get(timeEntry);
+
+            if (thisUpdate != null) {
+                DailyReportTreeTableModel.CategoryNode categoryNode = categoryNodes.get(timeEntry);
+
+                for (Task task : tasks1) {
+                    if (!thisUpdate.contains(task)) {
+                        // remove
+                        treeModel.removeNodeFromParent(findOrCreateTaskNode(categoryNode, task));
+                    }
+                }
+            }
+        });
+
+        this.tasks = tasksThisUpdate;
     }
 
     private DailyReportTreeTableModel.TaskNode findOrCreateTaskNode(DailyReportTreeTableModel.CategoryNode categoryNode, Task task) {
@@ -132,7 +174,7 @@ public class DailyReportTreeTable extends JTable {
                 // didn't find it. create it
                 DailyReportTreeTableModel.TaskNode newNode = new DailyReportTreeTableModel.TaskNode();
                 newNode.task = task1;
-                node.add(newNode);
+                treeModel.insertNodeInto(newNode, node, 0);
                 node = newNode;
             }
         }
@@ -166,7 +208,7 @@ public class DailyReportTreeTable extends JTable {
             var next = iterator.next();
 
             if (!report.timesPerTimeEntry.keySet().contains(next.getKey())) {
-                rootNode.remove(next.getValue());
+                treeModel.removeNodeFromParent(next.getValue());
                 iterator.remove();
             }
         }

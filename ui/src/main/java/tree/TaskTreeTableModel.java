@@ -82,11 +82,6 @@ public final class TaskTreeTableModel extends TreeTableModel {
     }
 
     @Override
-    public Comparator<?> getColumnComparator(int column) {
-        return null; //TODO: test return special comparator for column values to enable sorting with that comparator.
-    }
-
-    @Override
     public Icon getNodeIcon(TreeNode node) {
         if (node != null) {
             final Task obj = TreeUtils.getUserObject(node);

@@ -25,20 +25,24 @@ public class DailyReportTreeTableModel extends TreeTableModel {
             super.add(child);
 
             // add minutes
-            minutes += ((TaskNode) child).minutes;
+            if (((TaskNode) child).minutes != null) {
+                minutes += ((TaskNode) child).minutes;
+            }
         }
 
         @Override
         public void remove(MutableTreeNode node) {
             super.remove(node);
 
-            minutes -= ((TaskNode) node).minutes;
+            if (((TaskNode) node).minutes != null) {
+                minutes -= ((TaskNode) node).minutes;
+            }
         }
     }
 
     public static class TaskNode extends DefaultMutableTreeNode {
         Task task;
-        long minutes;
+        Long minutes = null;
     }
 
     public DailyReportTreeTableModel(TreeNode rootNode) {
