@@ -804,6 +804,7 @@ std::vector<std::byte> WeeklyReportMessage::pack() const
 
 	builder.add(PacketType::WEEKLY_REPORT);
 	builder.add(requestID);
+	builder.add(reportTime);
 
 	for (auto&& report : dailyReports)
 	{

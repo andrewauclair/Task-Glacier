@@ -2,61 +2,44 @@ package tree;
 
 import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
 import net.byteseek.swing.treetable.TreeTableModel;
+import packets.WeeklyReport;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
+import java.awt.*;
 
 public class WeeklyReportTreeTable extends JTable {
-    public static class WeeklyCategoryNode extends DailyReportTreeTableModel.CategoryNode {
-        Long[] minutesPerDay = new Long[7];
-        int[] childrenPerDay = new int[7];
-
-        @Override
-        public void add(MutableTreeNode child) {
-            super.add(child);
-
-            for (int i = 0; i < 7; i++) {
-                WeeklyTaskNode taskNode = (WeeklyTaskNode) child;
-
-                if (taskNode.minutesPerDay[i] != null) {
-                    minutesPerDay[i] += taskNode.minutesPerDay[i];
-                    childrenPerDay[i]++;
-                }
-            }
-        }
-
-        @Override
-        public void remove(MutableTreeNode node) {
-            super.remove(node);
-
-            for (int i = 0; i < 7; i++) {
-                WeeklyTaskNode taskNode = (WeeklyTaskNode) node;
-
-                childrenPerDay[i]--;
-
-                if (childrenPerDay[i] <= 0) {
-                    minutesPerDay[i] = null;
-                }
-                else if (taskNode.minutesPerDay[i] != null) {
-                    minutesPerDay[i] -= taskNode.minutesPerDay[i];
-                }
-            }
-        }
-    }
-
-    public static class WeeklyTaskNode extends DailyReportTreeTableModel.TaskNode {
-        Long[] minutesPerDay = new Long[7];
-    }
-
     private MainFrame mainFrame;
-    private DefaultMutableTreeNode rootNode;
+    private DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
     private TreeTableModel treeTableModel;
     private DefaultTreeModel treeModel;
 
+    private final ReportBuilder reportBuilder;
+
+    public WeeklyReportTreeTable() {
+        treeTableModel = createTreeTableModel(rootNode);
+        treeModel = createTreeModel(rootNode);
+
+        reportBuilder = new ReportBuilder(rootNode, treeTableModel, treeModel);
+
+        getColumnModel().getColumn(1).setCellRenderer(new ElapsedTimeCellRenderer());
+        getColumnModel().getColumn(2).setCellRenderer(new ElapsedTimeCellRenderer());
+        getColumnModel().getColumn(3).setCellRenderer(new ElapsedTimeCellRenderer());
+        getColumnModel().getColumn(4).setCellRenderer(new ElapsedTimeCellRenderer());
+        getColumnModel().getColumn(5).setCellRenderer(new ElapsedTimeCellRenderer());
+        getColumnModel().getColumn(6).setCellRenderer(new ElapsedTimeCellRenderer());
+        getColumnModel().getColumn(7).setCellRenderer(new ElapsedTimeCellRenderer());
+        getColumnModel().getColumn(8).setCellRenderer(new ElapsedTimeCellRenderer());
+
+        setIntercellSpacing(new Dimension(0, 0));
+    }
+
+    public void update(WeeklyReport report) {
+        reportBuilder.updateForWeeklyReport(report);
+    }
 
     private DefaultTreeModel createTreeModel(TreeNode rootNode) {
         DefaultTreeModel model = new DefaultTreeModel(rootNode);
@@ -65,7 +48,7 @@ public class WeeklyReportTreeTable extends JTable {
     }
 
     private TreeTableModel createTreeTableModel(TreeNode rootNode) {
-        TreeTableModel localTreeTableModel = new WeeklyReportTreeTableModel(rootNode, null);
+        TreeTableModel localTreeTableModel = new WeeklyReportTreeTableModel(rootNode);
 
         TreeTableHeaderRenderer renderer = new TreeTableHeaderRenderer();
 //        renderer.setShowNumber(true); // true is default, this code is just for testing the false option.

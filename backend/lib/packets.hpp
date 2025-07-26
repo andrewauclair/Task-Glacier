@@ -1105,6 +1105,8 @@ struct WeeklyReportMessage : Message
 {
 	RequestID requestID;
 
+	std::chrono::milliseconds reportTime;
+
 	std::array<DailyReport, 7> dailyReports;
 
 	std::chrono::milliseconds totalTime = std::chrono::milliseconds(0);

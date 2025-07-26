@@ -10,6 +10,7 @@ import packets.RequestID;
 import packets.RequestWeeklyReport;
 import packets.WeeklyReport;
 import taskglacier.MainFrame;
+import tree.WeeklyReportTreeTable;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -178,6 +179,8 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
 
     TableModel model = new TableModel();
 
+    WeeklyReportTreeTable newTable = new WeeklyReportTreeTable();
+
     public WeeklyReportPanel(MainFrame mainFrame, LocalDate date) {
         this.mainFrame = mainFrame;
         month = date.getMonthValue();
@@ -241,7 +244,7 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        add(new JScrollPane(table), gbc);
+        add(new JScrollPane(newTable), gbc);
         gbc.gridy++;
 
         revalidate();
@@ -250,6 +253,8 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
 
     public void update(WeeklyReport message) {
         report = message;
+
+        newTable.update(message);
 
         model.clear();
         model.fireTableDataChanged();

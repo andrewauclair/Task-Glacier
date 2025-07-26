@@ -31,6 +31,7 @@ public class WeeklyReport implements Packet {
 
         input.readInt(); // packet type
         message.requestID = input.readInt();
+        Instant reportTime = Instant.ofEpochMilli(input.readLong());
 
         for (int i = 0; i < 7; i++)
         {
@@ -38,6 +39,7 @@ public class WeeklyReport implements Packet {
             message.reports[i] = dailyReport;
 
             dailyReport.found = input.readBoolean();
+            dailyReport.time = reportTime;
             dailyReport.month = input.readByte();
             dailyReport.day = input.readByte();
             dailyReport.year = input.readShort();

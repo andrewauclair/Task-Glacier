@@ -24,7 +24,7 @@ import java.util.function.Predicate;
 import static taskglacier.MainFrame.mainFrame;
 
 public class DailyReportTreeTable extends JTable {
-    private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(new Task(0, 0, ""), true);
+    private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
     private final TreeTableModel treeTableModel;
     private final DefaultTreeModel treeModel;
 
@@ -35,12 +35,14 @@ public class DailyReportTreeTable extends JTable {
 
     Map<Integer, Integer> parents = new HashMap<>();
 
+    private final ReportBuilder reportBuilder;
+
     public DailyReportTreeTable() {
 
         treeTableModel = createTreeTableModel(rootNode);
         treeModel = createTreeModel(rootNode);
 
-        treeTableModel.setNodeFilter(treeNode -> false);
+        reportBuilder = new ReportBuilder(rootNode, treeTableModel, treeModel);
 
         getColumnModel().getColumn(1).setCellRenderer(new ElapsedTimeCellRenderer());
 
@@ -48,98 +50,98 @@ public class DailyReportTreeTable extends JTable {
     }
 
     public void update(DailyReportMessage.DailyReport report) {
+reportBuilder.updateForDailyReport(report);
 
-
-        List<Integer> taskIDs = report.times.stream()
-                .map(timePair -> timePair.taskID)
-                .toList();
-
-        boolean parentsChanged = false;
-
-        for (int taskID : taskIDs) {
-            Task task = mainFrame.getTaskModel().getTask(taskID);
-
-            Integer parent = parents.get(task.id);
-
-            if (parent != null && parent.intValue() != task.parentID) {
-                parentsChanged = true;
-                break;
-            }
-        }
-
-        // if parents have changed, let's throw out all the task nodes and start over
-        if (parentsChanged) {
-            System.out.println("Parents changed, delete all tasks from display");
-            for (DailyReportTreeTableModel.CategoryNode value : categoryNodes.values()) {
-                Enumeration<TreeNode> children = value.children();
-                while (children.hasMoreElements()) {
-                    treeModel.removeNodeFromParent((MutableTreeNode) children.nextElement());
-                }
-            }
-            tasks.clear();
-        }
-
-        parents.clear();
-
-        for (int taskID : taskIDs) {
-            Task task = mainFrame.getTaskModel().getTask(taskID);
-            parents.put(task.id, task.parentID);
-            System.out.printf("task %d parent %d%n", task.id, task.parentID);
-        }
-
-        addNewCategoryNodes(report);
-        removeUnusedCategoryNodes(report);
-
-        // we'll use this to decide which nodes to delete, if any, later
-        Map<TimeData.TimeEntry, Set<Task>> tasksThisUpdate = new HashMap<>();
-
-        for (Integer taskID : taskIDs) {
-            List<DailyReportMessage.DailyReport.TimePair> pairs = report.times.stream()
-                    .filter(timePair -> timePair.taskID == taskID)
-                    .toList();
-
-            Task task = mainFrame.getTaskModel().getTask(taskID);
-
-            for (DailyReportMessage.DailyReport.TimePair pair : pairs) {
-                TaskInfo.Session session = task.sessions.get(pair.index);
-
-                Instant stopTime = session.stopTime.orElseGet(() -> report.time);
-                Instant instant = stopTime.minusMillis(session.startTime.toEpochMilli());
-                long minutes = TimeUnit.MILLISECONDS.toMinutes(instant.toEpochMilli());
-
-                for (TimeData.TimeEntry timeEntry : session.timeEntry) {
-                    Optional<DailyReportTreeTableModel.CategoryNode> list = categoryNodes.values().stream()
-                            .filter(categoryNode -> categoryNode.category.equals(timeEntry.category) && categoryNode.code.equals(timeEntry.code))
-                            .findFirst();
-
-                    if (list.isPresent()) {
-                        Set<Task> orDefault = tasks.getOrDefault(timeEntry, new HashSet<>());
-                        tasksThisUpdate.put(timeEntry, orDefault);
-                        orDefault.add(task);
-
-                        DailyReportTreeTableModel.TaskNode taskNode = findOrCreateTaskNode(list.get(), task);
-                        taskNode.minutes = minutes;
-                    }
-                }
-            }
-        }
-
-        tasks.forEach((timeEntry, tasks1) -> {
-            Set<Task> thisUpdate = tasksThisUpdate.get(timeEntry);
-
-            if (thisUpdate != null) {
-                DailyReportTreeTableModel.CategoryNode categoryNode = categoryNodes.get(timeEntry);
-
-                for (Task task : tasks1) {
-                    if (!thisUpdate.contains(task)) {
-                        // remove
-                        treeModel.removeNodeFromParent(findOrCreateTaskNode(categoryNode, task));
-                    }
-                }
-            }
-        });
-
-        this.tasks = tasksThisUpdate;
+//        List<Integer> taskIDs = report.times.stream()
+//                .map(timePair -> timePair.taskID)
+//                .toList();
+//
+//        boolean parentsChanged = false;
+//
+//        for (int taskID : taskIDs) {
+//            Task task = mainFrame.getTaskModel().getTask(taskID);
+//
+//            Integer parent = parents.get(task.id);
+//
+//            if (parent != null && parent.intValue() != task.parentID) {
+//                parentsChanged = true;
+//                break;
+//            }
+//        }
+//
+//        // if parents have changed, let's throw out all the task nodes and start over
+//        if (parentsChanged) {
+//            System.out.println("Parents changed, delete all tasks from display");
+//            for (DailyReportTreeTableModel.CategoryNode value : categoryNodes.values()) {
+//                Enumeration<TreeNode> children = value.children();
+//                while (children.hasMoreElements()) {
+//                    treeModel.removeNodeFromParent((MutableTreeNode) children.nextElement());
+//                }
+//            }
+//            tasks.clear();
+//        }
+//
+//        parents.clear();
+//
+//        for (int taskID : taskIDs) {
+//            Task task = mainFrame.getTaskModel().getTask(taskID);
+//            parents.put(task.id, task.parentID);
+//            System.out.printf("task %d parent %d%n", task.id, task.parentID);
+//        }
+//
+//        addNewCategoryNodes(report);
+//        removeUnusedCategoryNodes(report);
+//
+//        // we'll use this to decide which nodes to delete, if any, later
+//        Map<TimeData.TimeEntry, Set<Task>> tasksThisUpdate = new HashMap<>();
+//
+//        for (Integer taskID : taskIDs) {
+//            List<DailyReportMessage.DailyReport.TimePair> pairs = report.times.stream()
+//                    .filter(timePair -> timePair.taskID == taskID)
+//                    .toList();
+//
+//            Task task = mainFrame.getTaskModel().getTask(taskID);
+//
+//            for (DailyReportMessage.DailyReport.TimePair pair : pairs) {
+//                TaskInfo.Session session = task.sessions.get(pair.index);
+//
+//                Instant stopTime = session.stopTime.orElseGet(() -> report.time);
+//                Instant instant = stopTime.minusMillis(session.startTime.toEpochMilli());
+//                long minutes = TimeUnit.MILLISECONDS.toMinutes(instant.toEpochMilli());
+//
+//                for (TimeData.TimeEntry timeEntry : session.timeEntry) {
+//                    Optional<DailyReportTreeTableModel.CategoryNode> list = categoryNodes.values().stream()
+//                            .filter(categoryNode -> categoryNode.category.equals(timeEntry.category) && categoryNode.code.equals(timeEntry.code))
+//                            .findFirst();
+//
+//                    if (list.isPresent()) {
+//                        Set<Task> orDefault = tasks.getOrDefault(timeEntry, new HashSet<>());
+//                        tasksThisUpdate.put(timeEntry, orDefault);
+//                        orDefault.add(task);
+//
+//                        DailyReportTreeTableModel.TaskNode taskNode = findOrCreateTaskNode(list.get(), task);
+//                        taskNode.minutes = minutes;
+//                    }
+//                }
+//            }
+//        }
+//
+//        tasks.forEach((timeEntry, tasks1) -> {
+//            Set<Task> thisUpdate = tasksThisUpdate.get(timeEntry);
+//
+//            if (thisUpdate != null) {
+//                DailyReportTreeTableModel.CategoryNode categoryNode = categoryNodes.get(timeEntry);
+//
+//                for (Task task : tasks1) {
+//                    if (!thisUpdate.contains(task)) {
+//                        // remove
+//                        treeModel.removeNodeFromParent(findOrCreateTaskNode(categoryNode, task));
+//                    }
+//                }
+//            }
+//        });
+//
+//        this.tasks = tasksThisUpdate;
     }
 
     private DailyReportTreeTableModel.TaskNode findOrCreateTaskNode(DailyReportTreeTableModel.CategoryNode categoryNode, Task task) {
