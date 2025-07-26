@@ -847,10 +847,11 @@ std::expected<WeeklyReportMessage, UnpackError> WeeklyReportMessage::unpack(std:
 
 	const auto packetType = parser.parse_next<PacketType>();
 	const auto requestID = parser.parse_next<RequestID>();
+	const auto reportTime = parser.parse_next<std::chrono::milliseconds>();
 
 	try
 	{
-		return WeeklyReportMessage(requestID.value());
+		return WeeklyReportMessage(requestID.value(), reportTime.value());
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{

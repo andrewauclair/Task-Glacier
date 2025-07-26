@@ -42,7 +42,15 @@ public class DailyReportTreeTableModel extends TreeTableModel {
 
     public static class TaskNode extends DefaultMutableTreeNode {
         Task task;
-        Long minutes = null;
+        private Long minutes = null;
+
+        public void setMinutes(long minutes) {
+            this.minutes = minutes;
+        }
+
+        public Long getMinutes() {
+            return minutes;
+        }
     }
 
     public DailyReportTreeTableModel(TreeNode rootNode) {

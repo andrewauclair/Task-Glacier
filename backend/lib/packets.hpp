@@ -1112,7 +1112,7 @@ struct WeeklyReportMessage : Message
 	std::chrono::milliseconds totalTime = std::chrono::milliseconds(0);
 	std::map<TimeCodeID, std::chrono::milliseconds> timePerTimeCode;
 
-	WeeklyReportMessage(RequestID requestID) : Message(PacketType::WEEKLY_REPORT), requestID(requestID) {}
+	WeeklyReportMessage(RequestID requestID, std::chrono::milliseconds reportTime) : Message(PacketType::WEEKLY_REPORT), requestID(requestID), reportTime(reportTime) {}
 
 	bool operator==(const Message& message) const override
 	{

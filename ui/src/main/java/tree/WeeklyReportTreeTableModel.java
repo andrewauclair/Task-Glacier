@@ -7,6 +7,7 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
+import java.util.Arrays;
 
 public class WeeklyReportTreeTableModel extends TreeTableModel {
     public static class WeeklyCategoryNode extends DailyReportTreeTableModel.CategoryNode {
@@ -48,6 +49,21 @@ public class WeeklyReportTreeTableModel extends TreeTableModel {
 
     public static class WeeklyTaskNode extends DailyReportTreeTableModel.TaskNode {
         Long[] minutesPerDay = new Long[7];
+
+        public Long getMinutes() {
+            boolean anyExist = Arrays.stream(minutesPerDay).anyMatch(aLong -> aLong != null);
+
+            if (!anyExist) {
+                return null;
+            }
+            long total = 0;
+            for (int i = 0; i < 7; i++) {
+                if (minutesPerDay[i] != null) {
+                    total += minutesPerDay[i];
+                }
+            }
+            return total;
+        }
     }
 
     String[] dates = new String[7];
@@ -80,7 +96,7 @@ public class WeeklyReportTreeTableModel extends TreeTableModel {
                 case 0:
                     return taskNode.task.name;
                 case 8:
-                    return taskNode.minutes;
+                    return taskNode.getMinutes();
             }
             return taskNode.minutesPerDay[column - 1];
         }
@@ -92,11 +108,12 @@ public class WeeklyReportTreeTableModel extends TreeTableModel {
         TableColumnModel result = new DefaultTableColumnModel();
         result.addColumn(TableUtils.createColumn(0, "Description"));
 
-
         for (int i = 0; i < 7; i++) {
             result.addColumn(TableUtils.createColumn(i + 1, ""));
         }
+
         result.addColumn(TableUtils.createColumn(8, "Time"));
+
         return result;
     }
 

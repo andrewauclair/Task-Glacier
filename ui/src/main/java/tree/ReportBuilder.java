@@ -122,7 +122,6 @@ public class ReportBuilder {
         for (int taskID : taskIDs) {
             Task task = mainFrame.getTaskModel().getTask(taskID);
             parents.put(task.id, task.parentID);
-            System.out.printf("task %d parent %d%n", task.id, task.parentID);
         }
 
         addNewCategoryNodes(reports);
@@ -181,17 +180,10 @@ public class ReportBuilder {
 
                         TaskNode taskNode = findOrCreateTaskNode(list.get(), task);
                         if (taskNode instanceof WeeklyTaskNode weeklyTask) {
-                            if (weeklyTask.minutesPerDay[index] == null) {
-                                weeklyTask.minutesPerDay[index] = 0L;
-                            }
-                            weeklyTask.minutesPerDay[index] += minutes;
-                            if (taskNode.minutes == null) {
-                                taskNode.minutes = 0L;
-                            }
-                            taskNode.minutes += minutes;
+                            weeklyTask.minutesPerDay[index] = minutes;
                         }
                         else {
-                            taskNode.minutes = minutes;
+                            taskNode.setMinutes(minutes);
                         }
                     }
                 }

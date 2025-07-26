@@ -550,7 +550,7 @@ DailyReportMessage API::create_daily_report(RequestID requestID, int month, int 
 
 void API::create_weekly_report(RequestID requestID, int month, int day, int year, std::vector<std::unique_ptr<Message>>& output)
 {
-	WeeklyReportMessage report(requestID);
+	WeeklyReportMessage report(requestID, m_clock->now());
 
 	report.dailyReports[0] = create_daily_report(requestID, month, day, year).report;
 
