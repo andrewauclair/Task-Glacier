@@ -16,7 +16,6 @@ import tree.WeeklyReportTreeTableModel.WeeklyTotalCategoryNode;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
-import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -26,12 +25,29 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static taskglacier.MainFrame.mainFrame;
 
+/*
+
+TODO this works pretty well, but there's a big issue with it: task sessions changing category/code.
+
+Right now I don't know how to handle this, or even to properly detect it. I'm just doing way too much mapping
+already and I don't want more. I need to find a way to flatten this out. The goal is to not replace notes if I don't have to.
+If the only thing that has changed since the last report update is more time passing, then the nodes should stay whwere they
+are and expanded how they are. If tasks change parents, we can already detect that and handle it. But it's dealing with
+session changes that's a nightmare.
+
+I guess what I could do here is have the server track this instead, per task. Then when it generates a new report for the UI
+it can notify the UI to expect session changes and rebuild the tree tables. That sounds much nicer than what I'm doing here
+currently.
+
+Perhaps there's also a way to flatten all of this out by restructuring the report packets to provide more context to build
+the proper nodes. Instead of looking all of the information up and creating all these maps.
+
+ */
 public class ReportBuilder {
     private final DefaultMutableTreeNode rootNode;
     private final TreeTableModel treeTableModel;
@@ -82,11 +98,14 @@ public class ReportBuilder {
         }
 
         pre(reports);
+
         int index = 0;
+
         for (DailyReportMessage.DailyReport dailyReport : reports) {
             update(dailyReport, index);
             index++;
         }
+
         post(reports);
     }
 
