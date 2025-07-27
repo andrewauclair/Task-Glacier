@@ -1381,7 +1381,7 @@ TEST_CASE("Request Weekly Report", "[api][task]")
 
 		helper.api.process_packet(request, helper.output);
 
-		auto report = WeeklyReportMessage(helper.prev_request_id());
+		auto report = WeeklyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1737344039870));
 		report.dailyReports[0].day = 29;
 		report.dailyReports[1].day = 30;
 		report.dailyReports[2].day = 1;
@@ -1444,20 +1444,20 @@ TEST_CASE("request configuration at startup", "[api]")
 	// now that we're setup, request the configuration and check the output
 	api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, output);
 
-	REQUIRE(output.size() == 8);
+	REQUIRE(output.size() == 10);
 
 	auto timeCategoriesData = TimeEntryDataPacket({});
 
 	verify_message(timeCategoriesData, *output[0]);
 
-	verify_message(TaskInfoMessage(TaskID(1), NO_PARENT, "task 1", std::chrono::milliseconds(1737344039870)), *output[1]);
-	verify_message(TaskInfoMessage(TaskID(2), TaskID(1), "task 2", std::chrono::milliseconds(1737344939870)), *output[2]);
-	verify_message(TaskInfoMessage(TaskID(3), TaskID(2), "task 3", std::chrono::milliseconds(1737345839870)), *output[3]);
+	verify_message(TaskInfoMessage(TaskID(1), NO_PARENT, "task 1", std::chrono::milliseconds(1737344039870)), *output[2]);
+	verify_message(TaskInfoMessage(TaskID(2), TaskID(1), "task 2", std::chrono::milliseconds(1737344939870)), *output[3]);
+	verify_message(TaskInfoMessage(TaskID(3), TaskID(2), "task 3", std::chrono::milliseconds(1737345839870)), *output[4]);
 	auto task4 = TaskInfoMessage(TaskID(4), TaskID(2), "task 4", std::chrono::milliseconds(1737346739870));
 	task4.indexInParent = 1;
-	verify_message(task4, *output[4]);
-	verify_message(TaskInfoMessage(TaskID(5), TaskID(3), "task 5", std::chrono::milliseconds(1737347639870)), *output[5]);
-	verify_message(TaskInfoMessage(TaskID(6), TaskID(4), "task 6", std::chrono::milliseconds(1737348539870)), *output[6]);
+	verify_message(task4, *output[5]);
+	verify_message(TaskInfoMessage(TaskID(5), TaskID(3), "task 5", std::chrono::milliseconds(1737347639870)), *output[6]);
+	verify_message(TaskInfoMessage(TaskID(6), TaskID(4), "task 6", std::chrono::milliseconds(1737348539870)), *output[7]);
 
-	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[7]);
+	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[9]);
 }

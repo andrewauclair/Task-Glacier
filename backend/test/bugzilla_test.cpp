@@ -72,7 +72,10 @@ TEST_CASE("Request Bugzilla Information", "[bugzilla][api]")
 
 	configure.instanceID = BugzillaInstanceID(1);
 
-	helper.required_messages({ &timeCategories, &root, &configure, &complete });
+	auto bulk_start = BasicMessage(PacketType::BULK_TASK_INFO_START);
+	auto bulk_finish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
+	helper.required_messages({ &timeCategories, &bulk_start, &root, &bulk_finish, &configure, &complete });
 }
 
 TEST_CASE("Configuring Multiple Bugzilla Instances", "[bugzilla][api]")
@@ -209,7 +212,10 @@ TEST_CASE("Configuring Multiple Bugzilla Instances", "[bugzilla][api]")
 		configure.instanceID = BugzillaInstanceID(1);
 		configure2.instanceID = BugzillaInstanceID(2);
 
-		helper.required_messages({ &timeCategories, &root, &configure, &configure2, &complete });
+		auto bulk_start = BasicMessage(PacketType::BULK_TASK_INFO_START);
+		auto bulk_finish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
+		helper.required_messages({ &timeCategories, &bulk_start, &root, &bulk_finish, &configure, &configure2, &complete });
 	}
 }
 

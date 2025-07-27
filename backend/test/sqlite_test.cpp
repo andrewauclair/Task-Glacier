@@ -210,7 +210,7 @@ TEST_CASE("Load Database", "[database]")
 
 		helper.api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, helper.output);
 
-		REQUIRE(helper.output.size() == 20);
+		REQUIRE(helper.output.size() == 22);
 
 
 
