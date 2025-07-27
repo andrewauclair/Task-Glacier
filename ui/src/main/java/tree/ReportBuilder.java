@@ -240,12 +240,13 @@ public class ReportBuilder {
         for (TotalCategoryNode value : totals.values()) {
             treeModel.removeNodeFromParent(value);
         }
+        totals.clear();
 
         reports.stream().forEach(report -> {
             report.timesPerTimeEntry.forEach((timeEntry, time) -> {
                 long minutes = TimeUnit.MILLISECONDS.toMinutes(time.toEpochMilli());
 
-                if (!totals.containsKey(timeEntry)) {
+                if (!totals.containsKey(timeEntry.category)) {
                     TotalCategoryNode total = treeTableModel instanceof DailyReportTreeTableModel ? new TotalCategoryNode() : new WeeklyTotalCategoryNode();
                     total.category = timeEntry.category;
                     totals.put(timeEntry.category, total);
