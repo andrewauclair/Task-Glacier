@@ -29,6 +29,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * A tree table that can hold tasks. Reusable for the tasks list, system tray search, reports, and task selector
@@ -132,7 +133,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
     private TreeTableModel treeTableModel;
     private DefaultTreeModel treeModel;
 
-    public TaskTreeTable(MainFrame mainFrame, Task root, int taskID, boolean listenForUpdates) {
+    public TaskTreeTable(MainFrame mainFrame, Task root, int taskID, boolean allowEdit) {
         rootNode = TreeUtils.buildTree(root, Task::getChildren, parent -> false);
 
         this.mainFrame = mainFrame;
@@ -177,6 +178,9 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
 
             Task task = (Task) ((DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(selectedRow)).getUserObject();
 
+            if (!mainFrame.isVisible()) {
+                mainFrame.setVisible(true);
+            }
             TaskConfig dialog = new TaskConfig(mainFrame, mainFrame, task);
             dialog.setVisible(true);
         });
@@ -238,36 +242,38 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
 
                     contextMenu.add(config);
 
-                    if (mainFrame.getTaskModel().getActiveTaskID().isPresent() &&
-                            !mainFrame.getTaskModel().taskHasNonFinishedChildren(mainFrame.getTaskModel().getActiveTaskID().get()) &&
-                            !mainFrame.getTaskModel().getTask(mainFrame.getTaskModel().getActiveTaskID().get()).locked) {
-                        contextMenu.add(startStopActive);
-                        contextMenu.add(stop);
-                        contextMenu.add(startFinishActive);
-                        contextMenu.add(finish);
-                    }
-                    else {
-                        contextMenu.add(start);
-                        contextMenu.add(stop);
-                        contextMenu.add(finish);
-                    }
+                    if (allowEdit) {
+                        if (mainFrame.getTaskModel().getActiveTaskID().isPresent() &&
+                                !mainFrame.getTaskModel().taskHasNonFinishedChildren(mainFrame.getTaskModel().getActiveTaskID().get()) &&
+                                !mainFrame.getTaskModel().getTask(mainFrame.getTaskModel().getActiveTaskID().get()).locked) {
+                            contextMenu.add(startStopActive);
+                            contextMenu.add(stop);
+                            contextMenu.add(startFinishActive);
+                            contextMenu.add(finish);
+                        }
+                        else {
+                            contextMenu.add(start);
+                            contextMenu.add(stop);
+                            contextMenu.add(finish);
+                        }
 
 
-                    contextMenu.addSeparator();
-                    contextMenu.add(addSubTask);
-
-                    TreeNode node = treeTableModel.getNodeAtTableRow(selectedRow);
-                    Task task = (Task) ((DefaultMutableTreeNode) node).getUserObject();
-
-                    startStopActive.setEnabled(task.state == TaskState.PENDING);
-                    startFinishActive.setEnabled(task.state == TaskState.PENDING);
-                    stop.setEnabled(task.state == TaskState.ACTIVE);
-                    finish.setEnabled(task.state != TaskState.FINISHED && !mainFrame.getTaskModel().taskHasNonFinishedChildren(task.id) && !task.locked && !task.serverControlled);
-
-                    // task has subtasks, allow an option to open it in a new panel
-                    if (node.getChildCount() != 0) {
                         contextMenu.addSeparator();
-                        contextMenu.add(openInNewWindow);
+                        contextMenu.add(addSubTask);
+
+                        TreeNode node = treeTableModel.getNodeAtTableRow(selectedRow);
+                        Task task = (Task) ((DefaultMutableTreeNode) node).getUserObject();
+
+                        startStopActive.setEnabled(task.state == TaskState.PENDING);
+                        startFinishActive.setEnabled(task.state == TaskState.PENDING);
+                        stop.setEnabled(task.state == TaskState.ACTIVE);
+                        finish.setEnabled(task.state != TaskState.FINISHED && !mainFrame.getTaskModel().taskHasNonFinishedChildren(task.id) && !task.locked && !task.serverControlled);
+
+                        // task has subtasks, allow an option to open it in a new panel
+                        if (node.getChildCount() != 0) {
+                            contextMenu.addSeparator();
+                            contextMenu.add(openInNewWindow);
+                        }
                     }
 
                     contextMenu.show(TaskTreeTable.this, e.getX(), e.getY());
@@ -276,6 +282,16 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
                     config.doClick();
                 }
             }
+        });
+    }
+
+    public void setNodeFilter(final Predicate<TreeNode> filterPredicate) {
+        treeTableModel.setNodeFilter(treeNode -> {
+            // never filter the root. we keep it hidden
+            if (treeNode == rootNode) {
+                return false;
+            }
+            return filterPredicate.test(treeNode);
         });
     }
 

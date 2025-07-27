@@ -15,7 +15,7 @@ import java.util.Objects;
 public class SystemTrayDisplay extends JFrame {
     private final TrayIcon trayIcon;
     private final RecentActivity activity;
-    private final Search search = null;
+    private final Search search;
 
     // https://www.flaticon.com/free-icon/cognitive_8920590?term=cognitive&related_id=8920590
     // https://www.flaticon.com/free-icon/clipboard_1527478?term=task&page=1&position=53&origin=search&related_id=1527478
@@ -66,10 +66,20 @@ public class SystemTrayDisplay extends JFrame {
         }
         return false;
     }
+
     public SystemTrayDisplay(MainFrame mainFrame, TrayIcon trayIcon) {
         this.trayIcon = trayIcon;
         activity = new RecentActivity(mainFrame);
-//        search = new Search(mainFrame);
+        search = new Search(mainFrame);
+
+        addComponentListener(new ComponentAdapter() {
+            // Give the window an elliptical shape.
+            // If the window is resized, the shape is recalculated here.
+            @Override
+            public void componentResized(ComponentEvent e) {
+                setShape(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 25, 25));
+            }
+        });
 
         FlatSVGIcon searchIcon = new FlatSVGIcon(getClass().getResource("/search-svgrepo-com.svg")).derive(24, 24);
 
@@ -98,14 +108,9 @@ public class SystemTrayDisplay extends JFrame {
 
                 setVisible(true);
 
-                Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment()
-                        .getDefaultScreenDevice()
-                        .getDefaultConfiguration()
-                        .getBounds();
+                SwingUtilities.invokeLater(() -> {
 
-                Point p = new Point(bounds.width - getWidth() - 10, (int) ((e.getLocationOnScreen().y / scale) - getHeight() - 40));
-
-                setLocation(p);
+                });
 
                 Dimension scrnSize = Toolkit.getDefaultToolkit().getScreenSize();
                 Rectangle winSize = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
@@ -130,7 +135,8 @@ public class SystemTrayDisplay extends JFrame {
         trayIcon.addMouseListener(listener);
 
         setUndecorated(true);
-        setShape(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 25, 25));
+        setType(Type.UTILITY);
+
 
         addWindowFocusListener(new WindowAdapter() {
             @Override
@@ -169,7 +175,7 @@ public class SystemTrayDisplay extends JFrame {
         CardLayout layout = new CardLayout();
         JPanel stack = new JPanel(layout);
         stack.add(activity, "activity");
-//        stack.add(search, "search");
+        stack.add(search, "search");
         layout.show(stack, "activity");
 
         addComponentListener(new ComponentAdapter() {
@@ -237,8 +243,6 @@ public class SystemTrayDisplay extends JFrame {
         gbc.weightx = 0;
         panel.add(dailyReport, gbc);
         gbc.gridx++;
-
-
 
         panel.add(unspecifiedTask, gbc);
         gbc.gridx++;
