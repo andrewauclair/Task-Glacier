@@ -8,8 +8,10 @@ import packets.TaskInfo;
 import packets.WeeklyReport;
 import tree.DailyReportTreeTableModel.CategoryNode;
 import tree.DailyReportTreeTableModel.TaskNode;
+import tree.DailyReportTreeTableModel.TotalCategoryNode;
 import tree.WeeklyReportTreeTableModel.WeeklyCategoryNode;
 import tree.WeeklyReportTreeTableModel.WeeklyTaskNode;
+import tree.WeeklyReportTreeTableModel.WeeklyTotalCategoryNode;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -44,6 +46,8 @@ public class ReportBuilder {
     Map<TimeData.TimeEntry, Set<Task>> tasksThisUpdate = new HashMap<>();
 
     Map<Integer, Integer> parents = new HashMap<>();
+
+    Map<TimeData.TimeCategory, TotalCategoryNode> totals = new HashMap<>();
 
     public ReportBuilder(DefaultMutableTreeNode rootNode, TreeTableModel treeTableModel, DefaultTreeModel treeModel) {
         this.rootNode = rootNode;
@@ -169,23 +173,27 @@ public class ReportBuilder {
                 long minutes = TimeUnit.MILLISECONDS.toMinutes(instant.toEpochMilli());
 
                 for (TimeData.TimeEntry timeEntry : session.timeEntry) {
-                    Optional<CategoryNode> list = categoryNodes.values().stream()
-                            .filter(categoryNode -> categoryNode.category.equals(timeEntry.category) && categoryNode.code.equals(timeEntry.code))
-                            .findFirst();
+//                    Optional<CategoryNode> list = categoryNodes.values().stream()
+//                            .filter(categoryNode -> categoryNode.category.equals(timeEntry.category) && categoryNode.code.equals(timeEntry.code))
+//                            .findFirst();
+//
+                    CategoryNode categoryNode = categoryNodes.get(timeEntry);
 
-                    if (list.isPresent()) {
+//                    if (list.isPresent()) {
                         Set<Task> orDefault = tasks.getOrDefault(timeEntry, new HashSet<>());
                         tasksThisUpdate.put(timeEntry, orDefault);
                         orDefault.add(task);
 
-                        TaskNode taskNode = findOrCreateTaskNode(list.get(), task);
+                        TaskNode taskNode = findOrCreateTaskNode(categoryNode, task);
                         if (taskNode instanceof WeeklyTaskNode weeklyTask) {
                             weeklyTask.minutesPerDay[index] = minutes;
                         }
                         else {
                             taskNode.setMinutes(minutes);
                         }
-                    }
+
+                        totals.get(timeEntry.category).minutes += minutes;
+//                    }
                 }
             }
         }
@@ -231,9 +239,20 @@ public class ReportBuilder {
     }
 
     private void addNewCategoryNodes(List<DailyReportMessage.DailyReport> reports) {
+        for (TotalCategoryNode value : totals.values()) {
+            treeModel.removeNodeFromParent(value);
+        }
+
         reports.stream().forEach(report -> {
             report.timesPerTimeEntry.forEach((timeEntry, time) -> {
                 long minutes = TimeUnit.MILLISECONDS.toMinutes(time.toEpochMilli());
+
+                if (!totals.containsKey(timeEntry)) {
+                    TotalCategoryNode total = treeTableModel instanceof DailyReportTreeTableModel ? new TotalCategoryNode() : new WeeklyTotalCategoryNode();
+                    total.category = timeEntry.category;
+                    totals.put(timeEntry.category, total);
+                    treeModel.insertNodeInto(total, rootNode, 0);
+                }
 
                 // search for it first
                 if (!categoryNodes.containsKey(timeEntry)) {
@@ -245,7 +264,7 @@ public class ReportBuilder {
                     categoryNode.setAllowsChildren(true);
 
                     categoryNodes.put(timeEntry, categoryNode);
-//                rootNode.add(categoryNode);
+
                     treeModel.insertNodeInto(categoryNode, rootNode, 0);
                 }
             });

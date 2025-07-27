@@ -13,6 +13,10 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.List;
 
 public class DailyReportTreeTableModel extends TreeTableModel {
     public static class CategoryNode extends DefaultMutableTreeNode {
@@ -53,10 +57,64 @@ public class DailyReportTreeTableModel extends TreeTableModel {
         }
     }
 
-    public DailyReportTreeTableModel(TreeNode rootNode) {
-        super(rootNode, false);
+    public static class TotalCategoryNode extends DefaultMutableTreeNode {
+        TimeData.TimeCategory category;
+        long minutes;
     }
 
+    public DailyReportTreeTableModel(TreeNode rootNode) {
+        super(rootNode, false);
+
+        setGroupingComparator((o1, o2) -> {
+            // totals nodes are always less than
+            if (o1 instanceof TotalCategoryNode) {
+                if (o2 instanceof TotalCategoryNode) {
+                    return 0;
+                } else {
+                    return 1;
+                }
+            } else if (o2 instanceof TotalCategoryNode) {
+                return -1;
+            }
+
+            long minutes1 = 0;
+            long minutes2 = 0;
+
+            if (o1 instanceof CategoryNode categoryNode) {
+                minutes1 = categoryNode.minutes;
+            } else if (o1 instanceof TaskNode taskNode) {
+                minutes1 = taskNode.minutes;
+            }
+
+            if (o2 instanceof CategoryNode categoryNode) {
+                minutes2 = categoryNode.minutes;
+            } else if (o2 instanceof TaskNode taskNode) {
+                minutes2 = taskNode.minutes;
+            }
+
+            return Long.compare(minutes2, minutes1);
+        });
+    }
+
+    public int getFirstTotalsRowIndex() {
+        Enumeration<? extends TreeNode> child = rootNode.children();
+
+        List<Integer> rows = new ArrayList<>();
+
+        while (child.hasMoreElements()) {
+            TreeNode node = child.nextElement();
+
+            if (node instanceof TotalCategoryNode) {
+                rows.add(getTable().convertRowIndexToView(getModelIndexForTreeNode(node)));
+            }
+        }
+
+        rows.sort(Integer::compare);
+        if (rows.isEmpty()) {
+            return 0;
+        }
+        return rows.get(0);
+    }
 
     @Override
     public Class<?> getColumnClass(final int columnIndex) {
@@ -82,6 +140,14 @@ public class DailyReportTreeTableModel extends TreeTableModel {
                     return taskNode.task.name;
                 case 1:
                     return taskNode.minutes;
+            }
+        }
+        else if (node instanceof TotalCategoryNode total) {
+            switch (column) {
+                case 0:
+                    return total.category.name;
+                case 1:
+                    return total.minutes;
             }
         }
         return null;

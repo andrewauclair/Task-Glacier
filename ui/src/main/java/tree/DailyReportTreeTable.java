@@ -10,6 +10,7 @@ import packets.TaskInfo;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
@@ -47,6 +48,20 @@ public class DailyReportTreeTable extends JTable {
         getColumnModel().getColumn(1).setCellRenderer(new ElapsedTimeCellRenderer());
 
         setIntercellSpacing(new Dimension(0, 0));
+    }
+
+    @Override
+    public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+        JLabel label = (JLabel) super.prepareRenderer(renderer, row, column);
+
+        int totalsRowIndex = ((DailyReportTreeTableModel) treeTableModel).getFirstTotalsRowIndex();
+
+        if (totalsRowIndex != 0 && totalsRowIndex == row) {
+            label.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UIManager.getColor("Component.borderColor")), label.getBorder()));
+//            label.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UIManager.getColor("Component.borderColor")));
+        }
+
+        return label;
     }
 
     public void update(DailyReportMessage.DailyReport report) {

@@ -68,6 +68,7 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
      * The left inset is set to indent the tree nodes.
      */
     protected final Insets insets = new Insets(0, 0, 0, 0);
+    private final ExpandHandleBorder border = new ExpandHandleBorder();
 
     /**
      * The number of pixels to indent per level of tree node.
@@ -122,7 +123,6 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
         expandCollapseIconRenderer.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, PADDING));
         setExpandedIcon(UIManager.getIcon("Tree.expandedIcon"));
         setCollapsedIcon(UIManager.getIcon("Tree.collapsedIcon"));
-        setBorder(new ExpandHandleBorder()); // The border paints the expand/collapse handles and handles the indentation of the node from the left.
     }
 
     /**
@@ -149,6 +149,7 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
         setNodeIndent( calculateNodeIndent(currentNode, table, value, isSelected, hasFocus, row, column));
         setIcon( getNodeIcon(currentNode, table, value, isSelected, hasFocus, row, column));
         setAdditionalProperties(currentNode, table, value, isSelected, hasFocus, row, column);
+        setBorder(border); // The border paints the expand/collapse handles and handles the indentation of the node from the left.
         return this;
     }
 

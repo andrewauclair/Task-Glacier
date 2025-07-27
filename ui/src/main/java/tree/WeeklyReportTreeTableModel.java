@@ -66,6 +66,10 @@ public class WeeklyReportTreeTableModel extends TreeTableModel {
         }
     }
 
+    public static class WeeklyTotalCategoryNode extends DailyReportTreeTableModel.TotalCategoryNode {
+        Long[] minutesPerDay = new Long[7];
+    }
+
     String[] dates = new String[7];
 
     public WeeklyReportTreeTableModel(TreeNode rootNode) {
