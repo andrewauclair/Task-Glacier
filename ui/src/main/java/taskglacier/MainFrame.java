@@ -10,10 +10,14 @@ import dialogs.ConnectToServer;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.app.AppState;
 import io.github.andrewauclair.moderndocking.app.Docking;
+import io.github.andrewauclair.moderndocking.app.DockingState;
 import io.github.andrewauclair.moderndocking.app.RootDockingPanel;
 import io.github.andrewauclair.moderndocking.app.WindowLayoutBuilder;
+import io.github.andrewauclair.moderndocking.event.DockingEvent;
+import io.github.andrewauclair.moderndocking.event.DockingListener;
 import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
 import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
+import io.github.andrewauclair.moderndocking.floating.Floating;
 import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
 import packets.Basic;
 import packets.BugzillaInfo;
@@ -112,6 +116,16 @@ public class MainFrame extends JFrame {
         DockingUI.initialize();
         Docking.registerDockingPanel(root, this);
 
+//        Docking.addDockingListener(new DockingListener() {
+//            @Override
+//            public void dockingChange(DockingEvent dockingEvent) {
+//                if ((dockingEvent.getDockable() instanceof DailyReportPanel || dockingEvent.getDockable() instanceof WeeklyReportPanel) &&
+//                    dockingEvent.getID() == DockingEvent.ID.UNDOCKED &&
+//                    !Floating.isFloating()) {
+//                    SwingUtilities.invokeLater(() -> Docking.deregisterDockable(dockingEvent.getDockable()));
+//                }
+//            }
+//        });
         new TasksList(this);
 
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
