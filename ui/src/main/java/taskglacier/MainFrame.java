@@ -35,6 +35,9 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.HashMap;
@@ -71,6 +74,13 @@ public class MainFrame extends JFrame {
 
     public MainFrame() throws IOException {
         mainFrame = this;
+
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            JOptionPane.showMessageDialog(MainFrame.this, sw.toString());
+        });
 
         setLayout(new GridBagLayout());
 
