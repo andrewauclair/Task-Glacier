@@ -133,7 +133,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
     private TreeTableModel treeTableModel;
     private DefaultTreeModel treeModel;
 
-    public TaskTreeTable(MainFrame mainFrame, Task root, int taskID, boolean allowEdit) {
+    public TaskTreeTable(MainFrame mainFrame, Task root, int taskID, boolean onlyStateConfigure) {
         rootNode = TreeUtils.buildTree(root, Task::getChildren, parent -> false);
 
         this.mainFrame = mainFrame;
@@ -242,22 +242,22 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
 
                     contextMenu.add(config);
 
-                    if (allowEdit) {
-                        if (mainFrame.getTaskModel().getActiveTaskID().isPresent() &&
-                                !mainFrame.getTaskModel().taskHasNonFinishedChildren(mainFrame.getTaskModel().getActiveTaskID().get()) &&
-                                !mainFrame.getTaskModel().getTask(mainFrame.getTaskModel().getActiveTaskID().get()).locked) {
-                            contextMenu.add(startStopActive);
-                            contextMenu.add(stop);
-                            contextMenu.add(startFinishActive);
-                            contextMenu.add(finish);
-                        }
-                        else {
-                            contextMenu.add(start);
-                            contextMenu.add(stop);
-                            contextMenu.add(finish);
-                        }
 
+                    if (mainFrame.getTaskModel().getActiveTaskID().isPresent() &&
+                            !mainFrame.getTaskModel().taskHasNonFinishedChildren(mainFrame.getTaskModel().getActiveTaskID().get()) &&
+                            !mainFrame.getTaskModel().getTask(mainFrame.getTaskModel().getActiveTaskID().get()).locked) {
+                        contextMenu.add(startStopActive);
+                        contextMenu.add(stop);
+                        contextMenu.add(startFinishActive);
+                        contextMenu.add(finish);
+                    }
+                    else {
+                        contextMenu.add(start);
+                        contextMenu.add(stop);
+                        contextMenu.add(finish);
+                    }
 
+                    if (!onlyStateConfigure) {
                         contextMenu.addSeparator();
                         contextMenu.add(addSubTask);
 
