@@ -18,6 +18,8 @@ public class ElapsedTimeCellRenderer implements TableCellRenderer {
         label.setBackground(isSelected ? table.getSelectionBackground() :
                 table.getBackground());
 
+        label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        
         if (minutes != null) {
             if (minutes >= 60) {
                 label.setText(String.format("%02dh %02dm", minutes / 60, minutes - ((minutes / 60) * 60)));

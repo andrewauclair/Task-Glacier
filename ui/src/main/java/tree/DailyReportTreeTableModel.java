@@ -110,6 +110,7 @@ public class DailyReportTreeTableModel extends TreeTableModel {
         }
 
         rows.sort(Integer::compare);
+
         if (rows.isEmpty()) {
             return 0;
         }

@@ -6,6 +6,7 @@ import packets.WeeklyReport;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -35,6 +36,19 @@ public class WeeklyReportTreeTable extends JTable {
         getColumnModel().getColumn(8).setCellRenderer(new ElapsedTimeCellRenderer());
 
         setIntercellSpacing(new Dimension(0, 0));
+    }
+
+    @Override
+    public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+        JLabel label = (JLabel) super.prepareRenderer(renderer, row, column);
+
+        int totalsRowIndex = ((WeeklyReportTreeTableModel) treeTableModel).getFirstTotalsRowIndex();
+
+        if (totalsRowIndex != 0 && totalsRowIndex == row) {
+            label.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UIManager.getColor("Component.borderColor")), label.getBorder()));
+        }
+
+        return label;
     }
 
     public void update(WeeklyReport report) {

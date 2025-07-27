@@ -7,7 +7,10 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.List;
 
 public class WeeklyReportTreeTableModel extends TreeTableModel {
     public static class WeeklyCategoryNode extends DailyReportTreeTableModel.CategoryNode {
@@ -74,6 +77,57 @@ public class WeeklyReportTreeTableModel extends TreeTableModel {
 
     public WeeklyReportTreeTableModel(TreeNode rootNode) {
         super(rootNode, false);
+
+        setGroupingComparator((o1, o2) -> {
+            // totals nodes are always less than
+            if (o1 instanceof WeeklyTotalCategoryNode) {
+                if (o2 instanceof WeeklyTotalCategoryNode) {
+                    return 0;
+                } else {
+                    return 1;
+                }
+            } else if (o2 instanceof WeeklyTotalCategoryNode) {
+                return -1;
+            }
+
+            long minutes1 = 0;
+            long minutes2 = 0;
+
+            if (o1 instanceof WeeklyCategoryNode categoryNode) {
+                minutes1 = categoryNode.minutes;
+            } else if (o1 instanceof WeeklyTaskNode taskNode) {
+                minutes1 = taskNode.getMinutes();
+            }
+
+            if (o2 instanceof WeeklyCategoryNode categoryNode) {
+                minutes2 = categoryNode.minutes;
+            } else if (o2 instanceof WeeklyTaskNode taskNode) {
+                minutes2 = taskNode.getMinutes();
+            }
+
+            return Long.compare(minutes2, minutes1);
+        });
+    }
+
+    public int getFirstTotalsRowIndex() {
+        Enumeration<? extends TreeNode> child = rootNode.children();
+
+        List<Integer> rows = new ArrayList<>();
+
+        while (child.hasMoreElements()) {
+            TreeNode node = child.nextElement();
+
+            if (node instanceof WeeklyTotalCategoryNode) {
+                rows.add(getTable().convertRowIndexToView(getModelIndexForTreeNode(node)));
+            }
+        }
+
+        rows.sort(Integer::compare);
+
+        if (rows.isEmpty()) {
+            return 0;
+        }
+        return rows.get(0);
     }
 
     @Override
@@ -103,6 +157,15 @@ public class WeeklyReportTreeTableModel extends TreeTableModel {
                     return taskNode.getMinutes();
             }
             return taskNode.minutesPerDay[column - 1];
+        }
+        else if (node instanceof WeeklyTotalCategoryNode totalNode) {
+            switch (column) {
+                case 0:
+                    return totalNode.category.name;
+                case 8:
+                    return totalNode.minutes;
+            }
+            return totalNode.minutesPerDay[column - 1];
         }
         return null;
     }

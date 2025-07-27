@@ -173,27 +173,25 @@ public class ReportBuilder {
                 long minutes = TimeUnit.MILLISECONDS.toMinutes(instant.toEpochMilli());
 
                 for (TimeData.TimeEntry timeEntry : session.timeEntry) {
-//                    Optional<CategoryNode> list = categoryNodes.values().stream()
-//                            .filter(categoryNode -> categoryNode.category.equals(timeEntry.category) && categoryNode.code.equals(timeEntry.code))
-//                            .findFirst();
-//
                     CategoryNode categoryNode = categoryNodes.get(timeEntry);
 
-//                    if (list.isPresent()) {
-                        Set<Task> orDefault = tasks.getOrDefault(timeEntry, new HashSet<>());
-                        tasksThisUpdate.put(timeEntry, orDefault);
-                        orDefault.add(task);
+                    Set<Task> orDefault = tasks.getOrDefault(timeEntry, new HashSet<>());
+                    tasksThisUpdate.put(timeEntry, orDefault);
+                    orDefault.add(task);
 
-                        TaskNode taskNode = findOrCreateTaskNode(categoryNode, task);
-                        if (taskNode instanceof WeeklyTaskNode weeklyTask) {
-                            weeklyTask.minutesPerDay[index] = minutes;
+                    TaskNode taskNode = findOrCreateTaskNode(categoryNode, task);
+                    if (taskNode instanceof WeeklyTaskNode weeklyTask) {
+                        weeklyTask.minutesPerDay[index] = minutes;
+                        WeeklyTotalCategoryNode total = (WeeklyTotalCategoryNode) totals.get(timeEntry.category);
+                        if (total.minutesPerDay[index] == null) {
+                            total.minutesPerDay[index] = 0L;
                         }
-                        else {
-                            taskNode.setMinutes(minutes);
-                        }
-
-                        totals.get(timeEntry.category).minutes += minutes;
-//                    }
+                        total.minutesPerDay[index] += minutes;
+                    }
+                    else {
+                        taskNode.setMinutes(minutes);
+                    }
+                    totals.get(timeEntry.category).minutes += minutes;
                 }
             }
         }
