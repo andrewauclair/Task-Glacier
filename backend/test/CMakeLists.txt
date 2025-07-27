@@ -13,6 +13,6 @@ set_target_properties(task-glacier-tests PROPERTIES CXX_STANDARD 23)
 
 target_link_libraries(task-glacier-tests PRIVATE
  	task-glacier-server-lib
-	libassert::assert
+	cpptrace::cpptrace
 	Catch2::Catch2WithMain
 )

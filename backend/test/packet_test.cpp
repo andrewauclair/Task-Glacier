@@ -1,14 +1,12 @@
 #include <catch2/catch_all.hpp>
 #include <catch2/matchers/catch_matchers_all.hpp>
 
-#include <libassert/assert.hpp>
-
 #include "server.hpp"
 #include "packets.hpp"
 #include "api.hpp"
 #include "utils.h"
 
-#include <source_location>
+#include <cpptrace/cpptrace.hpp>
 
 std::vector<std::byte> bytes(auto... a)
 {
@@ -38,19 +36,19 @@ public:
 	}
 
 	template<typename T>
-	PacketVerifier& verify_value(T expected, std::string_view field_name, std::source_location location = std::source_location::current())
+	PacketVerifier& verify_value(T expected, std::string_view field_name)
 	{
 		INFO("field: " << field_name << ", expected value: " << expected);
 
 		INFO("");
-		INFO(location.file_name() << ":" << location.line());
+		INFO(cpptrace::generate_trace().to_string());
 
 		CHECK_THAT(std::span(m_bytes).subspan(m_current_pos, sizeof(T)), Catch::Matchers::RangeEquals(convert_to_bytes(std::byteswap(expected))));
 		m_current_pos += sizeof(T);
 		return *this;
 	}
 
-	PacketVerifier& verify_string(const std::string& string, std::string_view field_name, std::source_location location = std::source_location::current())
+	PacketVerifier& verify_string(const std::string& string, std::string_view field_name)
 	{
 		INFO("field: " << field_name << ", expected value: " << string);
 
@@ -60,13 +58,13 @@ public:
 		if (m_current_pos + size >= m_bytes.size())
 		{
 			INFO("");
-			INFO(location.file_name() << ":" << location.line());
+			INFO(cpptrace::generate_trace().to_string());
 
 			FAIL("not enough bytes");
 		}
 
 		INFO("");
-		INFO(location.file_name() << ":" << location.line());
+		INFO(cpptrace::generate_trace().to_string());
 
 		CHECK_THAT(std::span(m_bytes).subspan(m_current_pos, size_type_length), Catch::Matchers::RangeEquals(bytes((size & 0xFF00) >> 8, size & 0xFF)));
 		
@@ -96,12 +94,12 @@ struct PacketTestHelper
 	MicroTask app = MicroTask(api, clock, db);
 
 	template<typename T>
-	void expect_packet(const Message& message, std::size_t size, std::source_location location = std::source_location::current())
+	void expect_packet(const Message& message, std::size_t size)
 	{
 		const auto result = parse_packet(message.pack());
 
 		INFO("");
-		INFO(location.file_name() << ":" << location.line());
+		INFO(cpptrace::generate_trace().to_string());
 
 		REQUIRE(result.packet);
 

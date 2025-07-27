@@ -1,8 +1,6 @@
 #include <catch2/catch_all.hpp>
 #include <catch2/matchers/catch_matchers_all.hpp>
 
-#include <libassert/assert.hpp>
-
 #include "api.hpp"
 #include "server.hpp"
 #include "packets.hpp"
