@@ -12,6 +12,14 @@ public class TimeData {
         public int id;
         public String name;
 
+        public TimeCode() {
+        }
+
+        public TimeCode(int id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (o == null || getClass() != o.getClass()) return false;
@@ -28,9 +36,16 @@ public class TimeData {
     public static class TimeCategory {
         public int id;
         public String name = "";
-        public String label = "";
 
         public List<TimeCode> timeCodes = new ArrayList<>();
+
+        public TimeCategory() {
+        }
+
+        public TimeCategory(String name, int id) {
+            this.name = name;
+            this.id = id;
+        }
 
         @Override
         public boolean equals(Object o) {

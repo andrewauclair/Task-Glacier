@@ -262,7 +262,7 @@ void API::handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<
 
 		for (auto&& category : m_app.timeCategories())
 		{
-			TimeCategory packet = TimeCategory(category.id, category.name, category.label);
+			TimeCategory packet = TimeCategory(category.id, category.name);
 
 			for (auto&& code : category.codes)
 			{
@@ -333,7 +333,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<st
 				return;
 			}
 
-			TimeCategory newCategory{ m_app.m_nextTimeCategoryID, category.name, category.label };
+			TimeCategory newCategory{ m_app.m_nextTimeCategoryID, category.name };
 
 			m_app.m_nextTimeCategoryID++;
 
@@ -368,7 +368,6 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<st
 		{
 			// update names
 			timeCategory->name = category.name;
-			timeCategory->label = category.label;
 
 			for (auto&& code : category.codes)
 			{
@@ -462,7 +461,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message, std::vector<st
 
 	for (auto&& category : m_app.timeCategories())
 	{
-		TimeCategory packet = TimeCategory(category.id, category.name, category.label);
+		TimeCategory packet = TimeCategory(category.id, category.name);
 
 		for (auto&& code : category.codes)
 		{

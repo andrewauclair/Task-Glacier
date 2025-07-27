@@ -63,11 +63,11 @@ TEST_CASE("Load Database", "[database]")
 		TestHelper<DatabaseImpl> helper{ DatabaseImpl("database_load_test.db3") };
 
 		auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
-		auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A", "A");
+		auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
 		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
 		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
 
-		auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B", "B");
+		auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B");
 		newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
 		newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
 
@@ -244,7 +244,7 @@ TEST_CASE("Load Database", "[database]")
 		// test next time category ID
 		// test next time code ID
 		auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
-		auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "C", "C");
+		auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "C");
 		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 5");
 
 		helper.output.clear();
@@ -545,11 +545,11 @@ TEST_CASE("Write Task Session to Database", "[database]")
 	std::vector<std::unique_ptr<Message>> output;
 
 	auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
-	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A", "A");
+	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
 	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
 	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
 
-	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B", "B");
+	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B");
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
 
@@ -654,11 +654,11 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 	std::vector<std::unique_ptr<Message>> output;
 
 	auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
-	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A", "A");
+	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
 	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
 	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
 
-	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B", "B");
+	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B");
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
 
@@ -749,7 +749,6 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 	{
 		auto cat = TimeCategory(TimeCategoryID(1));
 		cat.name = "Test er";
-		cat.label = "TST R";
 		cat.codes.clear();
 		cat.codes.push_back(TimeCode{ TimeCodeID(1), "Fo o" });
 		cat.codes.push_back(TimeCode{ TimeCodeID(2), "Bar s" });
@@ -951,11 +950,11 @@ TEST_CASE("Write Task Time Entry to Database", "[database]")
 	std::vector<std::unique_ptr<Message>> output;
 
 	auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
-	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A", "A");
+	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
 	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
 	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
 
-	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B", "B");
+	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B");
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
 

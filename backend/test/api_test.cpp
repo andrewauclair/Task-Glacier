@@ -180,11 +180,11 @@ TEST_CASE("Start Task - Time Entry", "[api][task]")
 	TestHelper<nullDatabase> helper;
 
 	auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
-	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A", "A");
+	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
 	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
 	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
 
-	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B", "B");
+	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B");
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
 
@@ -313,7 +313,7 @@ TEST_CASE("Start Task - Time Entry", "[api][task]")
 	{
 		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
 		
-		auto& newCategory3 = modify.timeCategories.emplace_back(TimeCategoryID(0), "C", "C");
+		auto& newCategory3 = modify.timeCategories.emplace_back(TimeCategoryID(0), "C");
 		newCategory3.codes.emplace_back(TimeCodeID(0), "Code 5");
 		newCategory3.codes.emplace_back(TimeCodeID(0), "Code 6");
 
@@ -726,13 +726,13 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 	SECTION("Success - Add Time Category")
 	{
 		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
-		auto& newCategory = modify.timeCategories.emplace_back(TimeCategoryID(0), "New", "NEW");
+		auto& newCategory = modify.timeCategories.emplace_back(TimeCategoryID(0), "New");
 		newCategory.codes.emplace_back(TimeCodeID(0), "Code 1");
 
 		helper.expect_success(modify);
 
 		auto data = TimeEntryDataPacket({});
-		auto& verifyCategory = data.timeCategories.emplace_back(TimeCategoryID(1), "New", "NEW");
+		auto& verifyCategory = data.timeCategories.emplace_back(TimeCategoryID(1), "New");
 		verifyCategory.codes.emplace_back(TimeCodeID(1), "Code 1");
 
 		helper.required_messages({ &data });
@@ -1006,11 +1006,11 @@ TEST_CASE("Request Daily Report", "[api][task]")
 	TestHelper<nullDatabase> helper;
 
 	auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
-	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A", "A");
+	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
 	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
 	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
 
-	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B", "B");
+	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B");
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 5");
@@ -1241,11 +1241,11 @@ TEST_CASE("Request Daily Report", "[api][task]")
 	SECTION("Totals Per Time Entry")
 	{
 		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
-		auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "C", "C");
+		auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "C");
 		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 6");
 		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 7");
 
-		auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "D", "D");
+		auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "D");
 		newCategory2.codes.emplace_back(TimeCodeID(0), "Code 8");
 		newCategory2.codes.emplace_back(TimeCodeID(0), "Code 9");
 
@@ -1429,11 +1429,11 @@ TEST_CASE("request configuration at startup", "[api]")
 	api.process_packet(create_task_6, output);
 
 	auto timeCategories = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
-	auto& category1 = timeCategories.timeCategories.emplace_back(TimeCategoryID(0), "Foo", "F");
+	auto& category1 = timeCategories.timeCategories.emplace_back(TimeCategoryID(0), "Foo");
 	category1.codes.emplace_back(TimeCodeID(0), "Fizz");
 	category1.codes.emplace_back(TimeCodeID(0), "Buzz");
 
-	auto& category2 = timeCategories.timeCategories.emplace_back(TimeCategoryID(0), "Bar", "B");
+	auto& category2 = timeCategories.timeCategories.emplace_back(TimeCategoryID(0), "Bar");
 	category2.codes.emplace_back(TimeCodeID(0), "Bing");
 	category2.codes.emplace_back(TimeCodeID(0), "Bong");
 

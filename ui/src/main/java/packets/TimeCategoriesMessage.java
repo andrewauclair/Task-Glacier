@@ -52,11 +52,6 @@ public class TimeCategoriesMessage implements Packet {
                 byte[] bytes = input.readNBytes(chars);
                 timeCategory.name = new String(bytes);
             }
-            {
-                int chars = input.readShort(); // string length
-                byte[] bytes = input.readNBytes(chars);
-                timeCategory.label = new String(bytes);
-            }
 
             input.readByte();
             input.readInt();
@@ -92,7 +87,7 @@ public class TimeCategoriesMessage implements Packet {
     public void writeToOutput(DataOutputStream output) throws IOException {
         int size = 20;
         for (TimeData.TimeCategory timeCategory : timeCategories) {
-            size += 13 + timeCategory.name.length() + timeCategory.label.length();
+            size += 11 + timeCategory.name.length();
             for (TimeData.TimeCode timeCode : timeCategory.timeCodes) {
                 size += 7 + timeCode.name.length();
             }
@@ -107,8 +102,6 @@ public class TimeCategoriesMessage implements Packet {
             output.writeInt(timeCategory.id);
             output.writeShort(timeCategory.name.length());
             output.write(timeCategory.name.getBytes());
-            output.writeShort(timeCategory.label.length());
-            output.write(timeCategory.label.getBytes());
             output.writeByte(0); // archived
             output.writeInt(timeCategory.timeCodes.size());
             for (TimeData.TimeCode timeCode : timeCategory.timeCodes) {

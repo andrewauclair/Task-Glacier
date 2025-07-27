@@ -466,7 +466,7 @@ TEST_CASE("Task", "[messages]")
 TEST_CASE("Time Categories Data", "[messages]")
 {
 	std::vector<TimeCategory> timeCategories;
-	timeCategories.emplace_back(TimeCategory{ TimeCategoryID(5), "one", "one", std::vector{TimeCode{TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}}});
+	timeCategories.emplace_back(TimeCategory{ TimeCategoryID(5), "one", std::vector{TimeCode{TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b" }}});
 
 	const auto data = TimeEntryDataPacket(timeCategories);
 	CAPTURE(data);
@@ -505,7 +505,7 @@ TEST_CASE("Time Categories Data", "[messages]")
 	SECTION("Compare Messages That Do Not Match")
 	{
 		std::vector<TimeCategory> timeCategories2;
-		timeCategories2.emplace_back(TimeCategory{ TimeCategoryID(5), "two", "two", std::vector{TimeCode{TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}}});
+		timeCategories2.emplace_back(TimeCategory{ TimeCategoryID(5), "two", std::vector{TimeCode{TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}}});
 		auto data2 = TimeEntryDataPacket(timeCategories2);
 		CAPTURE(data2);
 
@@ -518,7 +518,7 @@ TEST_CASE("Time Categories Data", "[messages]")
 
 		data.print(ss);
 
-		auto expected_text = "TimeEntryDataPacket { packetType: 27, TimeCategory { id: 5, name: one, label: one, inUse: 0, taskCount: 0, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
+		auto expected_text = "TimeEntryDataPacket { packetType: 27, TimeCategory { id: 5, name: one, inUse: 0, taskCount: 0, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -539,24 +539,24 @@ TEST_CASE("Time Categories Data", "[messages]")
 
 	SECTION("Pack")
 	{
-		auto verifier = PacketVerifier(data.pack(), 62);
+		auto verifier = PacketVerifier(data.pack(), 57);
 
 		verifier
-			.verify_value<std::uint32_t>(62, "packet length")
+			.verify_value<std::uint32_t>(57, "packet length")
 			.verify_value(static_cast<std::int32_t>(PacketType::TIME_ENTRY_DATA), "packet ID");
 	}
 
 	SECTION("Unpack")
 	{
 		PacketTestHelper helper;
-		helper.expect_packet<TimeEntryDataPacket>(data, 62);
+		helper.expect_packet<TimeEntryDataPacket>(data, 57);
 	}
 }
 
 TEST_CASE("Time Categories Modify", "[messages]")
 {
 	std::vector<TimeCategory> timeCategories;
-	timeCategories.emplace_back(TimeCategory{ TimeCategoryID(5), "one", "one", std::vector{TimeCode{TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}}});
+	timeCategories.emplace_back(TimeCategory{ TimeCategoryID(5), "one", std::vector{TimeCode{TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}}});
 
 	const auto modify = TimeEntryModifyPacket(RequestID(10), TimeCategoryModType::ADD, timeCategories);
 	CAPTURE(modify);
@@ -595,7 +595,7 @@ TEST_CASE("Time Categories Modify", "[messages]")
 	SECTION("Compare Messages That Do Not Match")
 	{
 		std::vector<TimeCategory> timeCategories2;
-		timeCategories2.emplace_back(TimeCategory{ TimeCategoryID(5), "two", "two", std::vector{TimeCode{TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}}});
+		timeCategories2.emplace_back(TimeCategory{ TimeCategoryID(5), "two", std::vector{TimeCode{TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}}});
 		auto modify2 = TimeEntryModifyPacket(RequestID(15), TimeCategoryModType::ADD, timeCategories2);
 		CAPTURE(modify2);
 
@@ -608,7 +608,7 @@ TEST_CASE("Time Categories Modify", "[messages]")
 
 		modify.print(ss);
 
-		auto expected_text = "TimeEntryModifyPacket { packetType: 28, requestID: 10, type: 0, TimeCategory { id: 5, name: one, label: one, inUse: 0, taskCount: 0, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
+		auto expected_text = "TimeEntryModifyPacket { packetType: 28, requestID: 10, type: 0, TimeCategory { id: 5, name: one, inUse: 0, taskCount: 0, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -629,10 +629,10 @@ TEST_CASE("Time Categories Modify", "[messages]")
 
 	SECTION("Pack")
 	{
-		auto verifier = PacketVerifier(modify.pack(), 55);
+		auto verifier = PacketVerifier(modify.pack(), 50);
 
 		verifier
-			.verify_value<std::uint32_t>(55, "packet length")
+			.verify_value<std::uint32_t>(50, "packet length")
 			.verify_value(static_cast<std::int32_t>(PacketType::TIME_ENTRY_MODIFY), "packet ID")
 			.verify_value<std::uint32_t>(10, "request ID");
 	}
@@ -640,7 +640,7 @@ TEST_CASE("Time Categories Modify", "[messages]")
 	SECTION("Unpack")
 	{
 		PacketTestHelper helper;
-		helper.expect_packet<TimeEntryModifyPacket>(modify, 55);
+		helper.expect_packet<TimeEntryModifyPacket>(modify, 50);
 	}
 }
 
