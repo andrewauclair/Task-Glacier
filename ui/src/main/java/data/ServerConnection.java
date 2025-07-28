@@ -1,6 +1,6 @@
 package data;
 
-import dialogs.AddModifyTask;
+import dialogs.AddTask;
 import packets.*;
 import taskglacier.MainFrame;
 
@@ -95,8 +95,8 @@ public class ServerConnection {
                     FailureResponse failure = FailureResponse.parse(new DataInputStream((new ByteArrayInputStream(bytes))), packetLength);
 
                     SwingUtilities.invokeLater(() -> {
-                        if (AddModifyTask.openInstance != null) {
-                            AddModifyTask.openInstance.failureResponse(failure.message);
+                        if (AddTask.openInstance != null) {
+                            AddTask.openInstance.failureResponse(failure.message);
                         }
                         else {
                              JOptionPane.showMessageDialog(mainFrame, failure.message, "Failure", JOptionPane.ERROR_MESSAGE);
@@ -105,8 +105,8 @@ public class ServerConnection {
                 }
                 else if (packetType == PacketType.SUCCESS_RESPONSE) {
                     SwingUtilities.invokeLater(() -> {
-                        if (AddModifyTask.openInstance != null) {
-                            AddModifyTask.openInstance.close();
+                        if (AddTask.openInstance != null) {
+                            AddTask.openInstance.close();
                         }
                     });
                 }

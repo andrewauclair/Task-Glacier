@@ -1,37 +1,17 @@
 package panels;
 
-import config.TaskConfig;
 import data.Task;
-import data.TaskModel;
-import data.TaskState;
-import dialogs.AddModifyTask;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingProperty;
-import io.github.andrewauclair.moderndocking.DockingRegion;
 import io.github.andrewauclair.moderndocking.DynamicDockableParameters;
 import io.github.andrewauclair.moderndocking.app.Docking;
-import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
-import net.byteseek.swing.treetable.TreeTableModel;
-import net.byteseek.swing.treetable.TreeUtils;
-import packets.*;
 import taskglacier.MainFrame;
 import tree.TaskTreeTable;
-import tree.TaskTreeTableModel;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
 
 public class TasksList extends JPanel implements Dockable {
     @DockingProperty(name = "taskID", required = true)

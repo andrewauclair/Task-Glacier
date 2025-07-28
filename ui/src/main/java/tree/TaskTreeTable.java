@@ -4,7 +4,7 @@ import config.TaskConfig;
 import data.Task;
 import data.TaskModel;
 import data.TaskState;
-import dialogs.AddModifyTask;
+import dialogs.AddTask;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
 import net.byteseek.swing.treetable.TreeTableModel;
@@ -194,7 +194,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
         stop.addActionListener(e -> changeTaskState(PacketType.STOP_TASK));
         finish.addActionListener(e -> changeTaskState(PacketType.FINISH_TASK));
 
-        add.addActionListener(e -> new AddModifyTask(mainFrame, mainFrame, 0, false).setVisible(true));
+        add.addActionListener(e -> new AddTask(mainFrame, mainFrame).setVisible(true));
 
         addSubTask.addActionListener(e -> {
             int selectedRow = getSelectedRow();
@@ -205,7 +205,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
 
             Task task = (Task) ((DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(selectedRow)).getUserObject();
 
-            new AddModifyTask(mainFrame, mainFrame, task.id, false).setVisible(true);
+            new AddTask(mainFrame, mainFrame).setVisible(true);
         });
 
         openInNewWindow.addActionListener(e -> {
