@@ -25,6 +25,9 @@ public class WeeklyReportTreeTableModel extends TreeTableModel {
                 WeeklyTaskNode taskNode = (WeeklyTaskNode) child;
 
                 if (taskNode.minutesPerDay[i] != null) {
+                    if (minutesPerDay[i] == null) {
+                        minutesPerDay[i] = 0L;
+                    }
                     minutesPerDay[i] += taskNode.minutesPerDay[i];
                     childrenPerDay[i]++;
                 }
@@ -80,14 +83,19 @@ public class WeeklyReportTreeTableModel extends TreeTableModel {
 
         setGroupingComparator((o1, o2) -> {
             // totals nodes are always less than
-            if (o1 instanceof WeeklyTotalCategoryNode) {
-                if (o2 instanceof WeeklyTotalCategoryNode) {
-                    return 0;
+            if (o1 instanceof WeeklyTotalCategoryNode a) {
+                if (o2 instanceof WeeklyTotalCategoryNode b) {
+                    return Integer.compare(a.category.id, b.category.id);
                 } else {
                     return 1;
                 }
             } else if (o2 instanceof WeeklyTotalCategoryNode) {
                 return -1;
+            }
+
+            if (o1 instanceof WeeklyCategoryNode categoryNode1 &&
+                    o2 instanceof WeeklyCategoryNode categoryNode2 && categoryNode1.category.id != categoryNode2.category.id) {
+                return Integer.compare(categoryNode1.category.id, categoryNode2.category.id);
             }
 
             long minutes1 = 0;

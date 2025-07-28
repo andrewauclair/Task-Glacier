@@ -48,7 +48,7 @@ public class DailyReportTreeTableModel extends TreeTableModel {
         Task task;
         private Long minutes = null;
 
-        public void setMinutes(long minutes) {
+        public void setMinutes(Long minutes) {
             this.minutes = minutes;
         }
 
@@ -67,14 +67,19 @@ public class DailyReportTreeTableModel extends TreeTableModel {
 
         setGroupingComparator((o1, o2) -> {
             // totals nodes are always less than
-            if (o1 instanceof TotalCategoryNode) {
-                if (o2 instanceof TotalCategoryNode) {
-                    return 0;
+            if (o1 instanceof TotalCategoryNode a) {
+                if (o2 instanceof TotalCategoryNode b) {
+                    return Integer.compare(a.category.id, b.category.id);
                 } else {
                     return 1;
                 }
             } else if (o2 instanceof TotalCategoryNode) {
                 return -1;
+            }
+
+            if (o1 instanceof CategoryNode categoryNode1 &&
+                    o2 instanceof CategoryNode categoryNode2 && categoryNode1.category.id != categoryNode2.category.id) {
+                return Integer.compare(categoryNode1.category.id, categoryNode2.category.id);
             }
 
             long minutes1 = 0;

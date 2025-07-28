@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static taskglacier.MainFrame.mainFrame;
 
@@ -150,7 +151,46 @@ public class ReportBuilder {
         addNewCategoryNodes(reports);
         removeUnusedCategoryNodes(reports);
 
+        // walk the entire tree and clear the times
+        for (CategoryNode categoryNode : categoryNodes.values()) {
+            categoryNode.minutes = 0;
+
+            if (categoryNode instanceof WeeklyCategoryNode weeklyCategoryNode) {
+                weeklyCategoryNode.minutesPerDay = new Long[7];
+            }
+
+            Enumeration<TreeNode> children = categoryNode.children();
+
+            while (children.hasMoreElements()) {
+                TaskNode taskNode = (TaskNode) children.nextElement();
+
+                resetTaskTimes(taskNode);
+            }
+        }
+
+        for (TotalCategoryNode totalCategoryNode : totals.values()) {
+            totalCategoryNode.minutes = 0;
+
+            if (totalCategoryNode instanceof WeeklyTotalCategoryNode weeklyTotalNode) {
+                weeklyTotalNode.minutesPerDay = new Long[7];
+                weeklyTotalNode.minutes = 0;
+            }
+        }
         tasksThisUpdate.clear();
+    }
+
+    private void resetTaskTimes(TaskNode node) {
+        node.setMinutes(null);
+
+        if (node instanceof WeeklyTaskNode weeklyTaskNode) {
+            weeklyTaskNode.minutesPerDay = new Long[7];
+        }
+
+        Enumeration<TreeNode> children = node.children();
+
+        while (children.hasMoreElements()) {
+            resetTaskTimes((TaskNode) children.nextElement());
+        }
     }
 
     private void post(List<DailyReportMessage.DailyReport> reports) {
@@ -173,9 +213,9 @@ public class ReportBuilder {
     }
 
     private void update(DailyReportMessage.DailyReport report, int index) {
-        List<Integer> taskIDs = report.times.stream()
+        Set<Integer> taskIDs = report.times.stream()
                 .map(timePair -> timePair.taskID)
-                .toList();
+                .collect(Collectors.toSet());
 
         for (Integer taskID : taskIDs) {
             List<DailyReportMessage.DailyReport.TimePair> pairs = report.times.stream()
@@ -193,14 +233,24 @@ public class ReportBuilder {
 
                 for (TimeData.TimeEntry timeEntry : session.timeEntry) {
                     CategoryNode categoryNode = categoryNodes.get(timeEntry);
+                    categoryNode.minutes += minutes;
 
+                    if (categoryNode instanceof WeeklyCategoryNode weeklyCategoryNode) {
+                        if (weeklyCategoryNode.minutesPerDay[index] == null) {
+                            weeklyCategoryNode.minutesPerDay[index] = 0L;
+                        }
+                        weeklyCategoryNode.minutesPerDay[index] += minutes;
+                    }
                     Set<Task> orDefault = tasks.getOrDefault(timeEntry, new HashSet<>());
                     tasksThisUpdate.put(timeEntry, orDefault);
                     orDefault.add(task);
 
                     TaskNode taskNode = findOrCreateTaskNode(categoryNode, task);
                     if (taskNode instanceof WeeklyTaskNode weeklyTask) {
-                        weeklyTask.minutesPerDay[index] = minutes;
+                        if (weeklyTask.minutesPerDay[index] == null) {
+                            weeklyTask.minutesPerDay[index] = 0L;
+                        }
+                        weeklyTask.minutesPerDay[index] += minutes;
                         WeeklyTotalCategoryNode total = (WeeklyTotalCategoryNode) totals.get(timeEntry.category);
                         if (total.minutesPerDay[index] == null) {
                             total.minutesPerDay[index] = 0L;
@@ -210,6 +260,7 @@ public class ReportBuilder {
                     else {
                         taskNode.setMinutes(minutes);
                     }
+
                     totals.get(timeEntry.category).minutes += minutes;
                 }
             }
