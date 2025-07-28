@@ -387,7 +387,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
             treeModel.nodeChanged(node);
 
             if (task.state == TaskState.FINISHED) {
-                treeModel.reload(node);
+                treeTableModel.refreshTree();
 
                 Task parent = mainFrame.getTaskModel().getTask(task.parentID);
                 DefaultMutableTreeNode parentNode = findTaskNode(rootNode, task.parentID);
