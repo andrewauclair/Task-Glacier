@@ -1222,7 +1222,14 @@ public abstract class TreeTableModel extends AbstractTableModel implements TreeM
             final TreeNode previousChild = parentNode.getChildAt(childIndex - 1); // previous last child is the one before the first inserted.
             modelIndexToInsertAt = getModelIndexForTreeNode(previousChild) + getLastKnownSubTreeCount(previousChild) + 1; // insert one after last previous child and all its visible children.
         }  else { // Inserting before the end of existing children, possibly at the start, or somewhere in the middle.
-            modelIndexToInsertAt = getModelIndexForTreeNode(parentNode.getChildAt(afterInsertionIndex)); // insert at the index in the current model of the child the last inserted node displaced.
+            int attempt = getModelIndexForTreeNode(parentNode.getChildAt(afterInsertionIndex)); // insert at the index in the current model of the child the last inserted node displaced.
+            // the node that we chose was not visible, insert at 0
+            if (attempt == -1) {
+                modelIndexToInsertAt = 0;
+            }
+            else {
+                modelIndexToInsertAt = attempt;
+            }
         }
         return modelIndexToInsertAt;
     }

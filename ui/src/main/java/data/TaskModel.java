@@ -2,6 +2,7 @@ package data;
 
 import packets.TaskInfo;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -60,6 +61,32 @@ public class TaskModel {
 
     public void addListener(Listener listener) {
         listeners.add(listener);
+
+        // send all tasks to new listeners
+        SwingUtilities.invokeLater(() -> {
+            List<Task> tasks = new ArrayList<>();
+
+            for (Task task : this.tasks) {
+                if (task.parentID == 0) {
+                    tasks.add(task);
+                }
+            }
+
+            while (!tasks.isEmpty()) {
+                List<Task> next = new ArrayList<>();
+
+                for (Task task : tasks) {
+                    listener.newTask(task);
+
+                    for (Task task1 : this.tasks) {
+                        if (task1.parentID == task.id) {
+                            next.add(task1);
+                        }
+                    }
+                }
+                tasks = next;
+            }
+        });
     }
 
     public void removeListener(Listener listener) {
@@ -139,34 +166,6 @@ public class TaskModel {
                 listeners.forEach(listener -> listener.updatedTask(first.get()));
             }
         }
-//
-//        if (hasTask(info.taskID)) {
-//
-//                first.get().name = info.name;
-//                first.get().state = info.state;
-//
-//                boolean parentChanged = first.get().parentID != info.parentID;
-//                first.get().parentID = info.parentID;
-//
-//                listeners.forEach(listener -> listener.updatedTask(first.get(), parentChanged));
-//            }
-//        }
-//        else {
-//            Task task = new Task(info.taskID, info.parentID, info.name);
-//            task.state = info.state;
-//            task.createTime = info.createTime;
-//            tasks.add(task);
-//
-//            Optional<Task> first = tasks.stream().filter(parent -> parent.id == info.parentID)
-//                    .findFirst();
-//
-//            if (first.isPresent()) {
-//                first.get().children.add(task);
-//                listeners.forEach(listener -> listener.updatedTask(first.get(), false));
-//            }
-//
-//            listeners.forEach(listener -> listener.newTask(task));
-//        }
     }
 
     // it's possible that we receive data out-of-order the first time. for updates for everything

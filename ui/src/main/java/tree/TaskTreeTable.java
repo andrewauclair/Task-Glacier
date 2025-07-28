@@ -374,7 +374,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
 
         treeModel.insertNodeInto(newChild, parent, 0);
 
-        if (task.parentID == 0 && parent.getChildCount() == 1) {
+        if (task.parentID == taskID && parent.getChildCount() == 1) {
             treeTableModel.expandTree();
         }
     }
