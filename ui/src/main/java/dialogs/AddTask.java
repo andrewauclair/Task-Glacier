@@ -29,7 +29,7 @@ public class AddTask extends JDialog {
         return panel;
     }
 
-    public AddTask(MainFrame mainFrame, Window parentWindow) {
+    public AddTask(MainFrame mainFrame, Window parentWindow, int defaultParentID) {
         super(parentWindow);
         openInstance = this;
 
@@ -43,12 +43,13 @@ public class AddTask extends JDialog {
         bulkAdd.setVisible(false);
 
         JTextField parent = new JTextField();
-        parent.setText("0");
+        parent.setText(String.valueOf(defaultParentID));
 
         JButton bulkSwitch = new JButton("^");
         JPanel flow = createFlow("Name: ", name);
         bulkSwitch.addActionListener(e -> {
             if (bulkSwitch.getText().equals("^")) {
+                bulkSwitch.setText("v");
                 flow.setVisible(false);
                 bulkAdd.setVisible(true);
             }
@@ -60,7 +61,7 @@ public class AddTask extends JDialog {
 
         add.addActionListener(e -> {
             int parentID = Integer.parseInt(parent.getText());
-            if (bulkSwitch.getText().equals("^")) {
+            if (bulkSwitch.getText().equals("v")) {
                 String[] names = bulkAdd.getText().split(System.getProperty("line.separator"));
 
                 for (String s : names) {

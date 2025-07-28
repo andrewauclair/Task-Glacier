@@ -76,6 +76,8 @@ public class MainFrame extends JFrame {
         mainFrame = this;
 
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            e.printStackTrace();
+
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);

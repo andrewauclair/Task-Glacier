@@ -1,14 +1,18 @@
 package panels;
 
 import data.Task;
+import data.TaskState;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingProperty;
 import io.github.andrewauclair.moderndocking.DynamicDockableParameters;
 import io.github.andrewauclair.moderndocking.app.Docking;
+import net.byteseek.swing.treetable.TreeUtils;
 import taskglacier.MainFrame;
 import tree.TaskTreeTable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -89,7 +93,7 @@ public class TasksList extends JPanel implements Dockable {
     }
 
     private void configure(Task rootObject) {
-        taskTable = new TaskTreeTable(mainFrame, rootObject, taskID, true);
+        taskTable = new TaskTreeTable(mainFrame, rootObject, taskID, false);
 
         // Register the keyboard shortcut
         KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.CTRL_DOWN_MASK);
@@ -116,6 +120,46 @@ public class TasksList extends JPanel implements Dockable {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         add(search, gbc);
+
+        search.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                setSearchText(search.getText());
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                setSearchText(search.getText());
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                setSearchText(search.getText());
+            }
+        });
+    }
+
+    public void setSearchText(final String search) {
+        taskTable.setNodeFilter(treeNode -> {
+            Task obj = TreeUtils.getUserObject(treeNode);
+            boolean includeFinish = search.startsWith("finish: ");
+            String text = search;
+
+            if (includeFinish) {
+                text = text.substring("finish: ".length());
+                return !childrenHaveMatch(obj, text);
+            }
+            return obj.state == TaskState.FINISHED || !childrenHaveMatch(obj, text);
+        });
+    }
+
+    private boolean childrenHaveMatch(Task obj, String text) {
+        for (Task child : obj.children) {
+            if (childrenHaveMatch(child, text)) {
+                return true;
+            }
+        }
+        return obj.name.toLowerCase().contains(text.toLowerCase());
     }
 
     @Override
@@ -136,5 +180,10 @@ public class TasksList extends JPanel implements Dockable {
     @Override
     public boolean isWrappableInScrollpane() {
         return false;
+    }
+
+    @Override
+    public boolean isClosable() {
+        return !persistentID.equals("tasks");
     }
 }

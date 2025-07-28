@@ -5,6 +5,7 @@ import data.Task;
 import data.TaskModel;
 import data.TaskState;
 import dialogs.AddTask;
+import io.github.andrewauclair.moderndocking.DockingRegion;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
 import net.byteseek.swing.treetable.TreeTableModel;
@@ -194,7 +195,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
         stop.addActionListener(e -> changeTaskState(PacketType.STOP_TASK));
         finish.addActionListener(e -> changeTaskState(PacketType.FINISH_TASK));
 
-        add.addActionListener(e -> new AddTask(mainFrame, mainFrame).setVisible(true));
+        add.addActionListener(e -> new AddTask(mainFrame, mainFrame, 0).setVisible(true));
 
         addSubTask.addActionListener(e -> {
             int selectedRow = getSelectedRow();
@@ -205,7 +206,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
 
             Task task = (Task) ((DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(selectedRow)).getUserObject();
 
-            new AddTask(mainFrame, mainFrame).setVisible(true);
+            new AddTask(mainFrame, mainFrame, task.id).setVisible(true);
         });
 
         openInNewWindow.addActionListener(e -> {
@@ -217,9 +218,10 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
 
             Task task = (Task) ((DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(selectedRow)).getUserObject();
 
-            if (!Docking.isDockableRegistered("tasks-list-" + task.id)) {
+            if (!Docking.isDockableRegistered("task-list-" + task.id)) {
                 TasksList newList = new TasksList(mainFrame, task);
 //                Docking.dock(newList, TasksList.this, DockingRegion.CENTER);
+                Docking.dock(newList, "tasks", DockingRegion.CENTER);
             }
             else {
                 Docking.display("tasks-list-" + task.id);
@@ -385,7 +387,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
             treeModel.nodeChanged(node);
 
             if (task.state == TaskState.FINISHED) {
-//                updateFilter();
+                treeModel.reload(node);
 
                 Task parent = mainFrame.getTaskModel().getTask(task.parentID);
                 DefaultMutableTreeNode parentNode = findTaskNode(rootNode, task.parentID);
