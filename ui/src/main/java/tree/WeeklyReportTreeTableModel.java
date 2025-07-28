@@ -96,13 +96,15 @@ public class WeeklyReportTreeTableModel extends TreeTableModel {
             if (o1 instanceof WeeklyCategoryNode categoryNode) {
                 minutes1 = categoryNode.minutes;
             } else if (o1 instanceof WeeklyTaskNode taskNode) {
-                minutes1 = taskNode.getMinutes();
+                Long minutes = taskNode.getMinutes();
+                minutes1 = minutes == null ? 0 : minutes;
             }
 
             if (o2 instanceof WeeklyCategoryNode categoryNode) {
                 minutes2 = categoryNode.minutes;
             } else if (o2 instanceof WeeklyTaskNode taskNode) {
-                minutes2 = taskNode.getMinutes();
+                Long minutes = taskNode.getMinutes();
+                minutes2 = minutes == null ? 0 : minutes;
             }
 
             return Long.compare(minutes2, minutes1);

@@ -83,13 +83,13 @@ public class DailyReportTreeTableModel extends TreeTableModel {
             if (o1 instanceof CategoryNode categoryNode) {
                 minutes1 = categoryNode.minutes;
             } else if (o1 instanceof TaskNode taskNode) {
-                minutes1 = taskNode.minutes;
+                minutes1 = taskNode.minutes == null ? 0 : taskNode.minutes;
             }
 
             if (o2 instanceof CategoryNode categoryNode) {
                 minutes2 = categoryNode.minutes;
             } else if (o2 instanceof TaskNode taskNode) {
-                minutes2 = taskNode.minutes;
+                minutes2 = taskNode.minutes == null ? 0 : taskNode.minutes;
             }
 
             return Long.compare(minutes2, minutes1);
