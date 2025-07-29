@@ -46,7 +46,7 @@ public class AddTask extends JDialog {
         add.addActionListener(e -> {
             int parentID = Integer.parseInt(parent.getText());
             if (bulkSwitch.getText().equals("v")) {
-                String[] names = bulkAdd.getText().split(System.getProperty("line.separator"));
+                String[] names = bulkAdd.getText().split(System.lineSeparator());
 
                 for (String s : names) {
                     CreateTask create = new CreateTask(s, parentID, RequestID.nextRequestID());

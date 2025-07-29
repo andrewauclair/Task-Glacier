@@ -307,7 +307,7 @@ public class ReportBuilder {
         }
         totals.clear();
 
-        reports.stream().forEach(report -> {
+        reports.forEach(report -> {
             report.timesPerTimeEntry.forEach((timeEntry, time) -> {
                 long minutes = TimeUnit.MILLISECONDS.toMinutes(time.toEpochMilli());
 

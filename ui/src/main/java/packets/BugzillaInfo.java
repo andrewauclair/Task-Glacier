@@ -105,7 +105,7 @@ public class BugzillaInfo implements Packet {
             Packet.writeString(output, groupBy);
         }
 
-        output.writeInt(labelToField.keySet().size());
+        output.writeInt(labelToField.size());
 
         for (String label : labelToField.keySet()) {
             String field = labelToField.get(label);

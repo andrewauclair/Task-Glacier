@@ -175,10 +175,7 @@ class Sessions extends JPanel {
             if (columnIndex == 0) {
                 return row.startTime;
             }
-            if (!row.stopTime.isPresent()) {
-                return null;
-            }
-            return row.stopTime.get();
+            return row.stopTime.orElse(null);
         }
     }
 
