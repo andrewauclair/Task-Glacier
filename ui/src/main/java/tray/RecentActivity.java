@@ -97,7 +97,7 @@ class RecentActivity extends JPanel implements TaskModel.Listener {
     }
 
     @Override
-    public void newTask(Task task) {
+    public void addTask(Task task) {
         for (TaskInfo.Session session : task.sessions) {
             LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
 
@@ -106,22 +106,15 @@ class RecentActivity extends JPanel implements TaskModel.Listener {
             }
         }
         update();
+    }
+
+    @Override
+    public void removeTask(Task task) {
+        // TODO we'll have to manage the history better and sort it
     }
 
     @Override
     public void updatedTask(Task task) {
-        for (TaskInfo.Session session : task.sessions) {
-            LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
-
-            if (start.isAfter(MAX_AGE)) {
-                history.add(new History(task, session));
-            }
-        }
-        update();
-    }
-
-    @Override
-    public void reparentTask(Task task, int oldParent) {
         for (TaskInfo.Session session : task.sessions) {
             LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
 

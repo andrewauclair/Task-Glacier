@@ -269,7 +269,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
     }
 
     @Override
-    public void newTask(Task task) {
+    public void addTask(Task task) {
         DefaultMutableTreeNode parent = findTaskNode(rootNode, task.parentID);
         if (parent == null) {
             return;
@@ -283,6 +283,15 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
 
         if (task.parentID == taskID && parent.getChildCount() == 1) {
             treeTableModel.expandTree();
+        }
+    }
+
+    @Override
+    public void removeTask(Task task) {
+        DefaultMutableTreeNode node = findTaskNode(rootNode, task.id);
+
+        if (node != null) {
+            treeModel.removeNodeFromParent(node);
         }
     }
 
@@ -306,21 +315,6 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
                     parentNode.setAllowsChildren(active);
                 }
             }
-        }
-    }
-
-    @Override
-    public void reparentTask(Task task, int oldParent) {
-        DefaultMutableTreeNode newParentNode = findTaskNode(rootNode, task.parentID);
-
-        DefaultMutableTreeNode node = findTaskNode(rootNode, task.id);
-
-        treeModel.removeNodeFromParent(node);
-
-        if (newParentNode != null) {
-            newParentNode.setAllowsChildren(true);
-
-            treeModel.insertNodeInto(node, newParentNode, 0);
         }
     }
 

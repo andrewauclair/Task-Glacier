@@ -57,12 +57,17 @@ public class StatusBar extends JPanel implements TaskModel.Listener {
     }
 
     @Override
-    public void newTask(Task task) {
+    public void addTask(Task task) {
         // a new task could be the active task, if I decide to implement it that way
         if (task.state == TaskState.ACTIVE) {
             activeTask = task;
             updateDisplay(mainFrame.getTaskModel());
         }
+    }
+
+    @Override
+    public void removeTask(Task task) {
+        // don't care here. we don't maintain a tree
     }
 
     @Override
@@ -76,12 +81,7 @@ public class StatusBar extends JPanel implements TaskModel.Listener {
             updateDisplay(mainFrame.getTaskModel());
         }
     }
-
-    @Override
-    public void reparentTask(Task task, int oldParent) {
-
-    }
-
+    
     @Override
     public void configComplete() {
     }

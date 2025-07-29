@@ -69,7 +69,7 @@ public class TaskModel {
                 List<Task> next = new ArrayList<>();
 
                 for (Task task : tasks) {
-                    listener.newTask(task);
+                    listener.addTask(task);
 
                     for (Task task1 : this.tasks) {
                         if (task1.parentID == task.id) {
@@ -127,10 +127,14 @@ public class TaskModel {
                 optionalParent.get().children.add(task);
                 task.parent = optionalParent.get();
             }
-            listeners.forEach(listener -> listener.newTask(task));
+            listeners.forEach(listener -> listener.addTask(task));
         }
         else {
             boolean parentChanged = first.get().parentID != info.parentID;
+
+            if (parentChanged) {
+                listeners.forEach(listener -> listener.removeTask(task));
+            }
 
             Optional<Task> optionalOldParent = tasks.stream().filter(parent -> parent.id == task.parentID)
                     .findFirst();
@@ -153,7 +157,7 @@ public class TaskModel {
             task.parentID = info.parentID;
 
             if (parentChanged) {
-                listeners.forEach(listener -> listener.reparentTask(task, oldParent));
+                listeners.forEach(listener -> listener.addTask(task));
             }
             else {
                 listeners.forEach(listener -> listener.updatedTask(first.get()));
@@ -181,12 +185,9 @@ public class TaskModel {
     }
 
     public interface Listener {
-        void newTask(Task task);
-
+        void addTask(Task task);
         void updatedTask(Task task);
-
-        void reparentTask(Task task, int oldParent);
-
+        void removeTask(Task task);
         void configComplete();
     }
 }
