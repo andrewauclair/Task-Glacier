@@ -1,11 +1,22 @@
 package data;
 
 import dialogs.AddTask;
-import packets.*;
+import packets.BugzillaInfo;
+import packets.DailyReportMessage;
+import packets.FailureResponse;
+import packets.Packet;
+import packets.PacketType;
+import packets.TaskInfo;
+import packets.TimeCategoriesMessage;
+import packets.WeeklyReport;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,7 +110,7 @@ public class ServerConnection {
                             AddTask.openInstance.failureResponse(failure.message);
                         }
                         else {
-                             JOptionPane.showMessageDialog(mainFrame, failure.message, "Failure", JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(mainFrame, failure.message, "Failure", JOptionPane.ERROR_MESSAGE);
                         }
                     });
                 }
@@ -111,7 +122,8 @@ public class ServerConnection {
                     });
                 }
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -131,7 +143,8 @@ public class ServerConnection {
                 packet.writeToOutput(this.output);
                 System.out.println("Sent packet with size: " + packet.size() + ", type: " + packet.type());
                 return true;
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }

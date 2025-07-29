@@ -68,22 +68,19 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
      * The left inset is set to indent the tree nodes.
      */
     protected final Insets insets = new Insets(0, 0, 0, 0);
-    private final ExpandHandleBorder border = new ExpandHandleBorder();
-
-    /**
-     * The number of pixels to indent per level of tree node.
-     */
-    protected int pixelsPerLevel = DEFAULT_PIXELS_PER_LEVEL;
-
     /**
      * The label used to render expand or collapse handle icons.
-     *
+     * <p>
      * We use a JLabel to render the expand and collapse icons,
      * because for some reason GTK icons won't paint on Graphic objects.
      * When embedded in a JLabel they paint fine.  They seem to be using some kind of Icon proxy object...
      */
     protected final JLabel expandCollapseIconRenderer;
-
+    private final ExpandHandleBorder border = new ExpandHandleBorder();
+    /**
+     * The number of pixels to indent per level of tree node.
+     */
+    protected int pixelsPerLevel = DEFAULT_PIXELS_PER_LEVEL;
     /**
      * The expand icon, dependent on the look and feel theme.
      * You can set your own icon using {@link #setExpandedIcon(Icon)}
@@ -139,15 +136,15 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
     public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected,
                                                    final boolean hasFocus, final int row, final int column) {
         setNode(treeTableModel.getNodeAtTableRow(row)); // Ensure current node is set before anything else.
-        setForeground( isSelected? getSelectedForegroundColor(table, value, hasFocus, row, column)
-                                 : getUnselectedForegroundColor(table, value, hasFocus, row, column));
-        setBackground( isSelected? getSelectedBackgroundColor(table, value, hasFocus, row, column)
-                                 : getUnselectedBackgroundColor(table, value, hasFocus, row, column));
-        setFont( getFont(table, value, isSelected, hasFocus, row, column));
-        setValue( getValue(table, value, isSelected, hasFocus, row, column));
-        setToolTipText( getToolTipText(table, value, isSelected, hasFocus, row, column));
-        setNodeIndent( calculateNodeIndent(currentNode, table, value, isSelected, hasFocus, row, column));
-        setIcon( getNodeIcon(currentNode, table, value, isSelected, hasFocus, row, column));
+        setForeground(isSelected ? getSelectedForegroundColor(table, value, hasFocus, row, column)
+                : getUnselectedForegroundColor(table, value, hasFocus, row, column));
+        setBackground(isSelected ? getSelectedBackgroundColor(table, value, hasFocus, row, column)
+                : getUnselectedBackgroundColor(table, value, hasFocus, row, column));
+        setFont(getFont(table, value, isSelected, hasFocus, row, column));
+        setValue(getValue(table, value, isSelected, hasFocus, row, column));
+        setToolTipText(getToolTipText(table, value, isSelected, hasFocus, row, column));
+        setNodeIndent(calculateNodeIndent(currentNode, table, value, isSelected, hasFocus, row, column));
+        setIcon(getNodeIcon(currentNode, table, value, isSelected, hasFocus, row, column));
         setAdditionalProperties(currentNode, table, value, isSelected, hasFocus, row, column);
         setBorder(border); // The border paints the expand/collapse handles and handles the indentation of the node from the left.
         return this;
@@ -156,7 +153,7 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
     @Override
     public Dimension getPreferredSize() {
         Dimension value = super.getPreferredSize();
-        if(value != null) {
+        if (value != null) {
             value = new Dimension(value.width + insets.left, value.height);
         }
         return value;
@@ -184,6 +181,7 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
 
     /**
      * Sets the number of pixels per level of tree indent.
+     *
      * @param pixelsPerLevel the number of pixels per level of tree indent.
      */
     public void setPixelsPerLevel(final int pixelsPerLevel) {
@@ -192,6 +190,7 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
 
     /**
      * Sets the icon to use to indicate an expanded tree node.
+     *
      * @param expandedIcon the icon to use to indicate an expanded tree node.
      */
     public void setExpandedIcon(final Icon expandedIcon) {
@@ -201,6 +200,7 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
 
     /**
      * Sets the icon to use to indicate a collapsed tree node.
+     *
      * @param collapsedIcon the icon to use to indicate a collapsed tree node.
      */
     public void setCollapsedIcon(final Icon collapsedIcon) {
@@ -210,17 +210,17 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + '('+ treeTableModel + ')';
+        return getClass().getSimpleName() + '(' + treeTableModel + ')';
     }
 
     /**
      * @param currentNode The current node to be rendered.
-     * @param table The JTable it is rendered in.
-     * @param value The value of the cell (e.g. name or other column value).
-     * @param isSelected Whether the cell is selected.
-     * @param hasFocus Whether the cell has focus.
-     * @param row The row of the cell being rendered.
-     * @param column The column of the cell being rendered.
+     * @param table       The JTable it is rendered in.
+     * @param value       The value of the cell (e.g. name or other column value).
+     * @param isSelected  Whether the cell is selected.
+     * @param hasFocus    Whether the cell has focus.
+     * @param row         The row of the cell being rendered.
+     * @param column      The column of the cell being rendered.
      * @return How many pixels to indent a tree node.
      */
     protected int calculateNodeIndent(final TreeNode currentNode, final JTable table, final Object value,
@@ -237,6 +237,7 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
 
     /**
      * Sets the indent for the current node.
+     *
      * @param indent The ident to set.
      */
     protected void setNodeIndent(final int indent) {
@@ -244,12 +245,11 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
     }
 
     /**
-     * @param table The table
-     * @param value The value of the current cell.
-     * @param hasFocus   Whether it has focus.
-     * @param row        The row of the table
-     * @param column     The column of the table.
-     *
+     * @param table    The table
+     * @param value    The value of the current cell.
+     * @param hasFocus Whether it has focus.
+     * @param row      The row of the table
+     * @param column   The column of the table.
      * @return The foreground color to use for a selected cell.
      */
     protected Color getSelectedForegroundColor(final JTable table, final Object value,
@@ -258,12 +258,11 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
     }
 
     /**
-     * @param table The table
-     * @param value The value of the current cell.
-     * @param hasFocus   Whether it has focus.
-     * @param row        The row of the table
-     * @param column     The column of the table.
-     *
+     * @param table    The table
+     * @param value    The value of the current cell.
+     * @param hasFocus Whether it has focus.
+     * @param row      The row of the table
+     * @param column   The column of the table.
      * @return The foreground color to use for an unselected cell.
      */
     protected Color getUnselectedForegroundColor(final JTable table, final Object value,
@@ -272,12 +271,11 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
     }
 
     /**
-     * @param table The table
-     * @param value The value of the current cell.
-     * @param hasFocus   Whether it has focus.
-     * @param row        The row of the table
-     * @param column     The column of the table.
-     *
+     * @param table    The table
+     * @param value    The value of the current cell.
+     * @param hasFocus Whether it has focus.
+     * @param row      The row of the table
+     * @param column   The column of the table.
      * @return The background color to use for a selected cell.
      */
     protected Color getSelectedBackgroundColor(final JTable table, final Object value,
@@ -286,12 +284,11 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
     }
 
     /**
-     * @param table The table
-     * @param value The value of the current cell.
-     * @param hasFocus   Whether it has focus.
-     * @param row        The row of the table
-     * @param column     The column of the table.
-     *
+     * @param table    The table
+     * @param value    The value of the current cell.
+     * @param hasFocus Whether it has focus.
+     * @param row      The row of the table
+     * @param column   The column of the table.
      * @return The background color to use for an unselected cell.
      */
     protected Color getUnselectedBackgroundColor(final JTable table, final Object value,
@@ -300,13 +297,12 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
     }
 
     /**
-     * @param table The table
-     * @param value The value of the current cell.
+     * @param table      The table
+     * @param value      The value of the current cell.
      * @param isSelected Whether it is selected.
      * @param hasFocus   Whether it has focus.
      * @param row        The row of the table
      * @param column     The column of the table.
-     *
      * @return The text to use for a tooltip for this cell.
      */
     protected String getToolTipText(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -314,13 +310,12 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
     }
 
     /**
-     * @param table The table
-     * @param value The value of the current cell.
+     * @param table      The table
+     * @param value      The value of the current cell.
      * @param isSelected Whether it is selected.
      * @param hasFocus   Whether it has focus.
      * @param row        The row of the table
      * @param column     The column of the table.
-     *
      * @return The value to render for this cell.
      */
     protected Object getValue(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -328,13 +323,12 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
     }
 
     /**
-     * @param table The table
-     * @param value The value of the current cell.
+     * @param table      The table
+     * @param value      The value of the current cell.
      * @param isSelected Whether it is selected.
      * @param hasFocus   Whether it has focus.
      * @param row        The row of the table
      * @param column     The column of the table.
-     *
      * @return The font to use to render the cell.
      */
     protected Font getFont(final JTable table, final Object value, final boolean isSelected,
@@ -346,9 +340,9 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
      * Override this method to set any additional properties on the label before it is rendered.
      * This is a blank implementation that does nothing.
      *
-     * @param treeNode the tree node to be rendered.
-     * @param table The table
-     * @param value The value of the current cell.
+     * @param treeNode   the tree node to be rendered.
+     * @param table      The table
+     * @param value      The value of the current cell.
      * @param isSelected Whether it is selected.
      * @param hasFocus   Whether it has focus.
      * @param row        The row of the table
@@ -368,6 +362,7 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
 
     /**
      * Sets the current node in the tree being rendered.
+     *
      * @param node The node to set.
      */
     protected final void setNode(final TreeNode node) {
@@ -387,9 +382,9 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
     }
 
     /**
-     * @param node the tree node to be rendered.
-     * @param table The table
-     * @param value The value of the current cell.
+     * @param node       the tree node to be rendered.
+     * @param table      The table
+     * @param value      The value of the current cell.
      * @param isSelected Whether it is selected.
      * @param hasFocus   Whether it has focus.
      * @param row        The row of the table
@@ -405,8 +400,8 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
      * Sets the maximum icon width to be the biggest of the expand icon and the collapse icon.
      */
     protected final void setMaxIconWidth() {
-        int expandedWidth = expandedIcon == null? 0 : expandedIcon.getIconWidth();
-        int collapsedWidth = collapsedIcon == null? 0 : collapsedIcon.getIconWidth();
+        int expandedWidth = expandedIcon == null ? 0 : expandedIcon.getIconWidth();
+        int collapsedWidth = collapsedIcon == null ? 0 : collapsedIcon.getIconWidth();
         maxIconWidth = Math.max(expandedWidth, collapsedWidth);
     }
 
@@ -414,7 +409,7 @@ public class TreeCellRenderer extends DefaultTableCellRenderer implements TreeTa
      * @return The number of pixels to indent for a node.
      */
     protected int calculateNodeIndent(final TreeNode node) {
-        final int adjustShowRoot = treeTableModel.getShowRoot()? 0 : 1;
+        final int adjustShowRoot = treeTableModel.getShowRoot() ? 0 : 1;
         return PADDING + maxIconWidth + ((TreeUtils.getLevel(node) - adjustShowRoot) * pixelsPerLevel);
     }
 

@@ -8,7 +8,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CreateTask implements Packet {
+    private final int requestID;
+    private final String name;
+    private final int parentID;
     private int size = 0;
+    private List<String> labels = new ArrayList<>();
+    private List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
+    public CreateTask(String name, int parentID, int requestID) {
+        this.name = name;
+        this.parentID = parentID;
+        this.requestID = requestID;
+    }
 
     @Override
     public int size() {
@@ -18,19 +28,6 @@ public class CreateTask implements Packet {
     @Override
     public PacketType type() {
         return PacketType.CREATE_TASK;
-    }
-
-    private final int requestID;
-
-    private final String name;
-    private final int parentID;
-    private List<String> labels = new ArrayList<>();
-    private List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
-
-    public CreateTask(String name, int parentID, int requestID) {
-        this.name = name;
-        this.parentID = parentID;
-        this.requestID = requestID;
     }
 
     public void writeToOutput(DataOutputStream output) throws IOException {

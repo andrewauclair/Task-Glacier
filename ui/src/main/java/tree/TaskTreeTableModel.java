@@ -88,7 +88,8 @@ public final class TaskTreeTableModel extends TreeTableModel {
 
             if (obj.state == TaskState.FINISHED) {
                 return finishIcon;
-            } else if (obj.state == TaskState.ACTIVE) {
+            }
+            else if (obj.state == TaskState.ACTIVE) {
                 return activeIcon;
             }
             return pendingIcon;

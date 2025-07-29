@@ -1,28 +1,15 @@
 package tree;
 
-import data.Task;
-import data.TimeData;
 import net.byteseek.swing.treetable.TreeTableHeaderRenderer;
 import net.byteseek.swing.treetable.TreeTableModel;
-import net.byteseek.swing.treetable.TreeUtils;
 import packets.DailyReportMessage;
-import packets.TaskInfo;
-import taskglacier.MainFrame;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.time.Instant;
-import java.util.*;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
-
-import static taskglacier.MainFrame.mainFrame;
 
 public class DailyReportTreeTable extends JTable {
     private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();

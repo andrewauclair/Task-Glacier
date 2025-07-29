@@ -13,7 +13,7 @@ public class ConnectToServer extends JDialog {
         setLayout(new GridBagLayout());
         setTitle("Connect");
         setModal(true);
-        
+
         GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
@@ -72,7 +72,8 @@ public class ConnectToServer extends JDialog {
                     preferences.remove("IP-Address");
                     preferences.remove("Port");
                 }
-            } catch (IOException ex) {
+            }
+            catch (IOException ex) {
                 JOptionPane.showMessageDialog(ConnectToServer.this, "Connection to " + IP.getText() + ":" + port.getText() + " Failed", "Failed to Connect", JOptionPane.ERROR_MESSAGE);
             }
 

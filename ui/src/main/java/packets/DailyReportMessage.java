@@ -15,56 +15,7 @@ import java.util.Map;
 
 public class DailyReportMessage implements Packet {
     private int size = 0;
-
-    @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
-    public PacketType type() {
-        return PacketType.DAILY_REPORT;
-    }
-
-    public static class DailyReport {
-        public boolean found;
-
-        public Instant time;
-
-        public int month;
-        public int day;
-        public int year;
-
-        public List<Integer> tasksCreated;
-        public List<Integer> tasksFinished;
-
-        public Instant startTime;
-        public Instant endTime;
-        public Instant totalTime;
-
-        public Map<TimeData.TimeEntry, Instant> timesPerTimeEntry = new HashMap<>();
-
-        public static class TimePair {
-            public int taskID;
-            public int index;
-        }
-        public List<TimePair> times = new ArrayList<>();
-
-        public LocalDate getDate() {
-            return LocalDate.of(year, month, day);
-        }
-    }
-
     private int requestID;
-
-    public DailyReport getReport() {
-        return report;
-    }
-
-    public boolean isReportFound() {
-        return report.found;
-    }
-
     private DailyReport report = null;
 
     public static DailyReportMessage parse(DataInputStream input, int size) throws IOException {
@@ -124,6 +75,53 @@ public class DailyReportMessage implements Packet {
     }
 
     @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public PacketType type() {
+        return PacketType.DAILY_REPORT;
+    }
+
+    public DailyReport getReport() {
+        return report;
+    }
+
+    public boolean isReportFound() {
+        return report.found;
+    }
+
+    @Override
     public void writeToOutput(DataOutputStream output) throws IOException {
+    }
+
+    public static class DailyReport {
+        public boolean found;
+
+        public Instant time;
+
+        public int month;
+        public int day;
+        public int year;
+
+        public List<Integer> tasksCreated;
+        public List<Integer> tasksFinished;
+
+        public Instant startTime;
+        public Instant endTime;
+        public Instant totalTime;
+
+        public Map<TimeData.TimeEntry, Instant> timesPerTimeEntry = new HashMap<>();
+        public List<TimePair> times = new ArrayList<>();
+
+        public LocalDate getDate() {
+            return LocalDate.of(year, month, day);
+        }
+
+        public static class TimePair {
+            public int taskID;
+            public int index;
+        }
     }
 }

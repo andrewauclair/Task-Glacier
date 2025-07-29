@@ -1,6 +1,11 @@
 package taskglacier;
 
-import dialogs.*;
+import dialogs.AddTask;
+import dialogs.BugzillaConfiguration;
+import dialogs.ConnectToServer;
+import dialogs.RequestDailyReportDialog;
+import dialogs.RequestWeeklyReportDialog;
+import dialogs.TimeEntryConfiguration;
 import io.github.andrewauclair.moderndocking.app.DockingState;
 import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
 import packets.BugzillaRefresh;
@@ -533,18 +538,6 @@ public class MenuBar extends JMenuBar {
         }
     }
 
-    class ThemeItem extends JCheckBoxMenuItem {
-        public ThemeItem(String name, String className) {
-            addActionListener(e -> {
-                try {
-                    UIManager.setLookAndFeel(className);
-                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
-                         UnsupportedLookAndFeelException ex) {
-                    throw new RuntimeException(ex);
-                }
-            });
-        }
-    }
     public void connected() {
         add.setEnabled(true);
         connect.setEnabled(false);
@@ -559,5 +552,19 @@ public class MenuBar extends JMenuBar {
         disconnect.setEnabled(false);
         requestDailyReport.setEnabled(false);
         bugzilla.setEnabled(false);
+    }
+
+    class ThemeItem extends JCheckBoxMenuItem {
+        public ThemeItem(String name, String className) {
+            addActionListener(e -> {
+                try {
+                    UIManager.setLookAndFeel(className);
+                }
+                catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
+                       UnsupportedLookAndFeelException ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
+        }
     }
 }

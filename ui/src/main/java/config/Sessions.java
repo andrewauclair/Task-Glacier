@@ -18,93 +18,10 @@ import java.util.List;
 import static taskglacier.MainFrame.mainFrame;
 
 class Sessions extends JPanel {
-    class SessionTableModel extends AbstractTableModel {
-        public List<TaskInfo.Session> data = new ArrayList<>();
-
-        @Override
-        public int getRowCount() {
-            return data.size();
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            if (column == 0) {
-                return "Start";
-            }
-            return "Stop";
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            return Instant.class;
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 2;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            TaskInfo.Session row = data.get(rowIndex);
-            if (columnIndex == 0) {
-                return row.startTime;
-            }
-            if (!row.stopTime.isPresent()) {
-                return null;
-            }
-            return row.stopTime.get();
-        }
-    }
-
-    class TimeEntryTableModel extends AbstractTableModel {
-        public List<TimeData.TimeEntry> data = new ArrayList<>();
-
-        @Override
-        public int getRowCount() {
-            return data.size();
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            if (column == 0) {
-                return "Category";
-            }
-            return "Code";
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            return String.class;
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 2;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            TimeData.TimeEntry row = data.get(rowIndex);
-            if (columnIndex == 0) {
-                if (row.category == null) {
-                    return null;
-                }
-                return row.category.name;
-            }
-            if (row.code == null) {
-                return null;
-            }
-            return row.code.name;
-        }
-    }
-
     SessionTableModel sessionModel = new SessionTableModel();
     JTable sessionTable = new JTable(sessionModel);
-
     TimeEntryTableModel timeEntryModel = new TimeEntryTableModel();
     JTable timeEntryTable = new JTable(timeEntryModel);
-
     JButton add = new JButton("+");
     JButton remove = new JButton("-");
 
@@ -119,7 +36,7 @@ class Sessions extends JPanel {
         gbc.fill = GridBagConstraints.BOTH;
 
         JPanel right = new JPanel(new GridBagLayout());
-        gbc.gridheight =2;
+        gbc.gridheight = 2;
         right.add(new JScrollPane(timeEntryTable), gbc);
         gbc.gridx++;
         gbc.gridheight = 1;
@@ -224,5 +141,86 @@ class Sessions extends JPanel {
 
     public void save(Task task, UpdateTask update) {
         update.sessions = sessionModel.data;
+    }
+
+    class SessionTableModel extends AbstractTableModel {
+        public List<TaskInfo.Session> data = new ArrayList<>();
+
+        @Override
+        public int getRowCount() {
+            return data.size();
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            if (column == 0) {
+                return "Start";
+            }
+            return "Stop";
+        }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            return Instant.class;
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 2;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            TaskInfo.Session row = data.get(rowIndex);
+            if (columnIndex == 0) {
+                return row.startTime;
+            }
+            if (!row.stopTime.isPresent()) {
+                return null;
+            }
+            return row.stopTime.get();
+        }
+    }
+
+    class TimeEntryTableModel extends AbstractTableModel {
+        public List<TimeData.TimeEntry> data = new ArrayList<>();
+
+        @Override
+        public int getRowCount() {
+            return data.size();
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            if (column == 0) {
+                return "Category";
+            }
+            return "Code";
+        }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            return String.class;
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 2;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            TimeData.TimeEntry row = data.get(rowIndex);
+            if (columnIndex == 0) {
+                if (row.category == null) {
+                    return null;
+                }
+                return row.category.name;
+            }
+            if (row.code == null) {
+                return null;
+            }
+            return row.code.name;
+        }
     }
 }

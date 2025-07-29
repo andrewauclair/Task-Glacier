@@ -7,6 +7,10 @@ public class Basic implements Packet {
     private final PacketType packetType;
     private int size = 0;
 
+    public Basic(PacketType packetType) {
+        this.packetType = packetType;
+    }
+
     public static Basic RequestConfig() {
         return new Basic(PacketType.REQUEST_CONFIGURATION);
     }
@@ -17,10 +21,6 @@ public class Basic implements Packet {
 
     public static Basic BulkUpdateFinish() {
         return new Basic(PacketType.BULK_TASK_UPDATE_FINISH);
-    }
-
-    public Basic(PacketType packetType) {
-        this.packetType = packetType;
     }
 
     @Override

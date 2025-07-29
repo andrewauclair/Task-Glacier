@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Optional;
 
 public class TaskModel {
+    private List<Task> tasks = new ArrayList<>();
+    private List<Listener> listeners = new ArrayList<>();
+
     public List<Task> getTasks() {
         return Collections.unmodifiableList(tasks);
     }
@@ -48,16 +51,6 @@ public class TaskModel {
         return optional.map(value -> value.children.stream()
                 .anyMatch(task -> task.state != TaskState.FINISHED)).orElse(false);
     }
-
-    public interface Listener {
-        void newTask(Task task);
-        void updatedTask(Task task);
-        void reparentTask(Task task, int oldParent);
-        void configComplete();
-    }
-
-    private List<Task> tasks = new ArrayList<>();
-    private List<Listener> listeners = new ArrayList<>();
 
     public void addListener(Listener listener) {
         listeners.add(listener);
@@ -128,7 +121,7 @@ public class TaskModel {
             tasks.add(task);
 
             Optional<Task> optionalParent = tasks.stream().filter(parent -> parent.id == info.parentID)
-                            .findFirst();
+                    .findFirst();
 
             if (optionalParent.isPresent()) {
                 optionalParent.get().children.add(task);
@@ -185,5 +178,15 @@ public class TaskModel {
                 listeners.forEach(listener -> listener.updatedTask(task1));
             }
         }
+    }
+
+    public interface Listener {
+        void newTask(Task task);
+
+        void updatedTask(Task task);
+
+        void reparentTask(Task task, int oldParent);
+
+        void configComplete();
     }
 }

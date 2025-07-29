@@ -52,23 +52,23 @@ import java.util.List;
  * If the values were not comparable, or they compare to equal, then
  * a string comparison of the object values will be used.
  * <p>
- *     <b>Null Warning</b>
+ * <b>Null Warning</b>
  * It does not compare null TreeNodes, and will probably throw a NullPointerException if any are compared.
  * It can compare null column values of the TreeNodes.
  * This is an entirely selfish optimisation, as when this class is used in byteseek, we already know that the tree nodes
  * are not null, so the null checks would be wasted in every case.  If you want a null check version of this comparator,
  * create a subclass that does the null check in the overridden compare method, then delegate to super.compare().
  * <p>
- *     <b>Tree Sorting</b>
+ * <b>Tree Sorting</b>
  * Note: to obtain an ordering of tree nodes in a tree, you must only compare nodes which are siblings.
  * To compare nodes which are not siblings, you must find the node or ancestors of those nodes which share a common
  * parent, and then compare those nodes.  This will give the relative ordering of the two original nodes.
  */
 public class TreeNodeComparator implements Comparator<TreeNode> {
 
-    protected static final int LESS_THAN    = -1;
-    protected static final int EQUAL_VALUE  =  0;
-    protected static final int GREATER_THAN =  1;
+    protected static final int LESS_THAN = -1;
+    protected static final int EQUAL_VALUE = 0;
+    protected static final int GREATER_THAN = 1;
 
     protected final TreeTableModel model;
 
@@ -130,8 +130,8 @@ public class TreeNodeComparator implements Comparator<TreeNode> {
     /**
      * Compares the values of two nodes with a given SortKey.
      *
-     * @param node1 the first node to compare
-     * @param node2 the second node to compare
+     * @param node1   the first node to compare
+     * @param node2   the second node to compare
      * @param sortKey the SortKey which defines the comparison.
      * @return the result of comparing the two nodes.
      */
@@ -143,7 +143,7 @@ public class TreeNodeComparator implements Comparator<TreeNode> {
 
         // Null value comparisons giving a total order.  null is "smaller" than not null, two nulls are equal.
         if (value1 == null || value2 == null) {
-            return value1 == value2 ? EQUAL_VALUE : value1 == null? LESS_THAN : GREATER_THAN;
+            return value1 == value2 ? EQUAL_VALUE : value1 == null ? LESS_THAN : GREATER_THAN;
         }
 
         // Compare values using the best comparator we can find for them:
@@ -151,9 +151,11 @@ public class TreeNodeComparator implements Comparator<TreeNode> {
         final Comparator<?> columnComparator = localModel.getColumnComparator(sortedColumn);
         if (columnComparator != null) { // use defined comparator:
             result = ((Comparator) columnComparator).compare(value1, value2);
-        } else if ((value1 instanceof Comparable) && (value2.getClass().equals(value1.getClass()))) { // compare values
+        }
+        else if ((value1 instanceof Comparable) && (value2.getClass().equals(value1.getClass()))) { // compare values
             result = ((Comparable) value1).compareTo(value2);
-        } else { // Compare them on a simple string comparison.
+        }
+        else { // Compare them on a simple string comparison.
             result = value1.toString().compareTo(value2.toString());
         }
         return result;

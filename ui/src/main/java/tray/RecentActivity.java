@@ -19,94 +19,10 @@ import java.util.TreeSet;
 import static taskglacier.MainFrame.mainFrame;
 
 class RecentActivity extends JPanel implements TaskModel.Listener {
+    private static final LocalDate MAX_AGE = LocalDate.now(ZoneId.systemDefault()).minusDays(14);
     private FlatSVGIcon activeIcon = new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/activity-svgrepo-com.svg"))).derive(24, 24);
     private FlatSVGIcon finishIcon = new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/checkmark-svgrepo-com.svg"))).derive(24, 24);
     private FlatSVGIcon pendingIcon = new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/system-pending-line-svgrepo-com.svg"))).derive(24, 24);
-
-    private static final LocalDate MAX_AGE = LocalDate.now(ZoneId.systemDefault()).minusDays(14);
-
-    @Override
-    public void newTask(Task task) {
-        for (TaskInfo.Session session : task.sessions) {
-            LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
-
-            if (start.isAfter(MAX_AGE)) {
-                history.add(new History(task, session));
-            }
-        }
-        update();
-    }
-
-    @Override
-    public void updatedTask(Task task) {
-        for (TaskInfo.Session session : task.sessions) {
-            LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
-
-            if (start.isAfter(MAX_AGE)) {
-                history.add(new History(task, session));
-            }
-        }
-        update();
-    }
-
-    @Override
-    public void reparentTask(Task task, int oldParent) {
-        for (TaskInfo.Session session : task.sessions) {
-            LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
-
-            if (start.isAfter(MAX_AGE)) {
-                history.add(new History(task, session));
-            }
-        }
-        update();
-    }
-
-    @Override
-    public void configComplete() {
-        for (Task task : mainFrame.getTaskModel().getTasks()) {
-            for (TaskInfo.Session session : task.sessions) {
-                LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
-
-                if (start.isAfter(MAX_AGE)) {
-                    history.add(new History(task, session));
-                }
-            }
-        }
-        update();
-    }
-
-    private void update() {
-        model.setRowCount(0);
-
-        for (History history1 : history) {
-            model.addRow(new Object[] { history1 });
-        }
-
-        model.fireTableDataChanged();
-    }
-
-    private class History {
-        Task task;
-        TaskInfo.Session session;
-
-        public History(Task task, TaskInfo.Session session) {
-            this.task = task;
-            this.session = session;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (o == null || getClass() != o.getClass()) return false;
-            History history = (History) o;
-            return Objects.equals(task, history.task) && Objects.equals(session, history.session);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(task, session);
-        }
-    }
-
     private TreeSet<History> history = new TreeSet<>(Comparator.comparing(o -> ((History) o).session.startTime).reversed());
     private DefaultTableModel model = new DefaultTableModel(0, 1) {
         @Override
@@ -178,5 +94,89 @@ class RecentActivity extends JPanel implements TaskModel.Listener {
 
             return panel;
         });
+    }
+
+    @Override
+    public void newTask(Task task) {
+        for (TaskInfo.Session session : task.sessions) {
+            LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
+
+            if (start.isAfter(MAX_AGE)) {
+                history.add(new History(task, session));
+            }
+        }
+        update();
+    }
+
+    @Override
+    public void updatedTask(Task task) {
+        for (TaskInfo.Session session : task.sessions) {
+            LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
+
+            if (start.isAfter(MAX_AGE)) {
+                history.add(new History(task, session));
+            }
+        }
+        update();
+    }
+
+    @Override
+    public void reparentTask(Task task, int oldParent) {
+        for (TaskInfo.Session session : task.sessions) {
+            LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
+
+            if (start.isAfter(MAX_AGE)) {
+                history.add(new History(task, session));
+            }
+        }
+        update();
+    }
+
+    @Override
+    public void configComplete() {
+        for (Task task : mainFrame.getTaskModel().getTasks()) {
+            for (TaskInfo.Session session : task.sessions) {
+                LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
+
+                if (start.isAfter(MAX_AGE)) {
+                    history.add(new History(task, session));
+                }
+            }
+        }
+        update();
+    }
+
+    private void update() {
+        model.setRowCount(0);
+
+        for (History history1 : history) {
+            model.addRow(new Object[]{history1});
+        }
+
+        model.fireTableDataChanged();
+    }
+
+    private class History {
+        Task task;
+        TaskInfo.Session session;
+
+        public History(Task task, TaskInfo.Session session) {
+            this.task = task;
+            this.session = session;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            History history = (History) o;
+            return Objects.equals(task, history.task) && Objects.equals(session, history.session);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(task, session);
+        }
     }
 }

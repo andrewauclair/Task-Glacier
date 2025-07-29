@@ -9,28 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TimeCategoriesMessage implements Packet {
-    private int size = 0;
-
-    @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
-    public PacketType type() {
-        return packetType;
-    }
-
     private final PacketType packetType;
     public int requestID;
     public TimeCategoryModType type = TimeCategoryModType.UPDATE;
-
-    public List<TimeData.TimeCategory> getTimeCategories() {
-        return timeCategories;
-    }
-
     List<TimeData.TimeCategory> timeCategories = new ArrayList<>();
-
+    private int size = 0;
     public TimeCategoriesMessage(PacketType packetType) {
         this.packetType = packetType;
     }
@@ -81,6 +64,20 @@ public class TimeCategoriesMessage implements Packet {
         }
 
         return data;
+    }
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public PacketType type() {
+        return packetType;
+    }
+
+    public List<TimeData.TimeCategory> getTimeCategories() {
+        return timeCategories;
     }
 
     @Override

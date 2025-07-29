@@ -39,7 +39,7 @@ public class MyObject {
     private final List<MyObject> children;
 
     private String description;
-    private long   size;
+    private long size;
     private boolean enabled;
 
     public MyObject(String description, long size, boolean enabled) {

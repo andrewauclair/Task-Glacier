@@ -31,7 +31,7 @@ public class CSVTree {
      * @param parentIdColumnName The name of the column representing the parent identifier for each row.
      * @param separatorChar      The character used to separate columns in the data.
      */
-    public static void readAndDisplayTree(BufferedReader reader, String idColumnName, String parentIdColumnName, char separatorChar) throws IOException{
+    public static void readAndDisplayTree(BufferedReader reader, String idColumnName, String parentIdColumnName, char separatorChar) throws IOException {
         // Get the CSV headers and the indexes of the id and parent id columns:
         TreeUtils.CSVTableHeaderInfo headerInfo =
                 TreeUtils.processCSVHeaders(reader, idColumnName, parentIdColumnName, separatorChar);
@@ -87,7 +87,7 @@ public class CSVTree {
             frame.setVisible(true);
         });
     }
-    
+
     /**
      * The entry point of the CSVTree program. This method reads a CSV file, parses the data,
      * and builds a tree structure based on the specified ID and parent ID columns.
@@ -97,7 +97,7 @@ public class CSVTree {
      *             args[1] - The name of the column representing the unique ID for each row.
      *             args[2] - The name of the column representing the parent ID for each row.
      *             args[3] - The character to use as a separator, or the 2-digit hex value of the character to use.
-     *                       If nothing is provided, it will default to a comma.
+     *             If nothing is provided, it will default to a comma.
      */
     public static void main(String[] args) {
         if (args.length < 3 || args.length > 4) {
@@ -107,7 +107,8 @@ public class CSVTree {
         char separatorChar = args.length == 3 ? ',' : args[3].length() == 1 ? args[3].charAt(0) : (char) Integer.parseInt(args[3], 16);
         try (BufferedReader reader = new BufferedReader(new FileReader(args[0]))) {
             readAndDisplayTree(reader, args[1], args[2], separatorChar);
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

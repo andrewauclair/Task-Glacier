@@ -4,6 +4,10 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class RequestDailyReport implements Packet {
+    public int requestID;
+    public int month;
+    public int day;
+    public int year;
     private int size = 0;
 
     @Override
@@ -15,11 +19,6 @@ public class RequestDailyReport implements Packet {
     public PacketType type() {
         return PacketType.REQUEST_DAILY_REPORT;
     }
-
-    public int requestID;
-    public int month;
-    public int day;
-    public int year;
 
     @Override
     public void writeToOutput(DataOutputStream output) throws IOException {

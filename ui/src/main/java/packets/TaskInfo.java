@@ -13,18 +13,6 @@ import java.util.List;
 import java.util.Optional;
 
 public class TaskInfo implements Packet {
-    private int size = 0;
-
-    @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
-    public PacketType type() {
-        return PacketType.TASK_INFO;
-    }
-
     public int taskID = 0;
     public int parentID = 0;
     public TaskState state = TaskState.PENDING;
@@ -32,22 +20,13 @@ public class TaskInfo implements Packet {
     public int indexInParent = 0;
     public boolean serverControlled = false;
     public boolean locked = false;
-
     public String name = "";
-
     public Instant createTime;
     public Optional<Instant> finishTime;
-
-    public static class Session {
-        public Instant startTime;
-        public Optional<Instant> stopTime;
-        public List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
-    }
     public List<Session> sessions = new ArrayList<>();
-
     public List<String> labels = new ArrayList<>();
-
     public List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
+    private int size = 0;
 
     public static TaskInfo parse(DataInputStream input, int size) throws IOException {
         TaskInfo info = new TaskInfo();
@@ -129,6 +108,16 @@ public class TaskInfo implements Packet {
         return info;
     }
 
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public PacketType type() {
+        return PacketType.TASK_INFO;
+    }
+
     public void writeToOutput(DataOutputStream output) throws IOException {
         output.writeInt(PacketType.TASK_INFO.value());
         output.writeInt(taskID);
@@ -137,5 +126,11 @@ public class TaskInfo implements Packet {
         output.writeByte(newTask ? 1 : 0);
         output.writeShort(name.length());
         output.write(name.getBytes());
+    }
+
+    public static class Session {
+        public Instant startTime;
+        public Optional<Instant> stopTime;
+        public List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
     }
 }

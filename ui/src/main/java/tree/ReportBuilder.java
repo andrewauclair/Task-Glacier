@@ -53,18 +53,13 @@ public class ReportBuilder {
     private final DefaultMutableTreeNode rootNode;
     private final TreeTableModel treeTableModel;
     private final DefaultTreeModel treeModel;
-
-    private Map<TimeData.TimeEntry, CategoryNode> categoryNodes = new HashMap<>();
-
     // we'll use this to decide which nodes to delete, if any, later
     Map<TimeData.TimeEntry, Set<Task>> tasks = new HashMap<>();
-
     // we'll use this to decide which nodes to delete, if any, later
     Map<TimeData.TimeEntry, Set<Task>> tasksThisUpdate = new HashMap<>();
-
     Map<Integer, Integer> parents = new HashMap<>();
-
     Map<TimeData.TimeCategory, TotalCategoryNode> totals = new HashMap<>();
+    private Map<TimeData.TimeEntry, CategoryNode> categoryNodes = new HashMap<>();
 
     public ReportBuilder(DefaultMutableTreeNode rootNode, TreeTableModel treeTableModel, DefaultTreeModel treeModel) {
         this.rootNode = rootNode;

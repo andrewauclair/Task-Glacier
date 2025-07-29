@@ -21,16 +21,6 @@ public class BugzillaInfo implements Packet {
 
     private int size = 0;
 
-    @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
-    public PacketType type() {
-        return PacketType.BUGZILLA_INFO;
-    }
-
     public BugzillaInfo(int instanceID, String name, String url, String apiKey, String username) {
         this.instanceID = instanceID;
         this.name = name;
@@ -67,6 +57,16 @@ public class BugzillaInfo implements Packet {
         }
 
         return message;
+    }
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public PacketType type() {
+        return PacketType.BUGZILLA_INFO;
     }
 
     @Override

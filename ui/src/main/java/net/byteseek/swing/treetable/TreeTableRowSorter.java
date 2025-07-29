@@ -33,7 +33,14 @@ package net.byteseek.swing.treetable;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static net.byteseek.swing.treetable.TreeNodeComparator.EQUAL_VALUE;
@@ -129,7 +136,7 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
      * Our own arrays can be bigger than the number of rows, so this assumption doesn't hold.
      * By the time we need this, the model has already changed, but the new sort indexes have not yet been
      * defined.  So we can't get the row count from the model - we have to cache the last count that was built.
-     *
+     * <p>
      * DefaultRowSorter doesn't need this, because it always re-creates its arrays to be exactly the size of the row count.
      * We hold on to arrays and re-use them as far as we can, so we need to know how many rows were placed into it
      * when it was last built.
@@ -149,6 +156,7 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
 
     /**
      * Constructs a TreeTableRowSorter given a TreeTableModel.
+     *
      * @param model The TreeTableModel to sort.
      * @throws IllegalArgumentException if the model passed in is null.
      */
@@ -166,7 +174,7 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
      * To set an initial set of sort keys while having empty default sort keys, call {@link #setSortKeys(List)} after
      * construction.
      *
-     * @param model The tree table model to sort.
+     * @param model           The tree table model to sort.
      * @param defaultSortKeys The default sort if no other sort is defined.
      * @throws IllegalArgumentException if the model passed in is null.
      */
@@ -185,7 +193,7 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
      * To set an initial set of sort keys while having empty default sort keys, call {@link #setSortKeys(List)} after
      * construction.
      *
-     * @param model The TreeTableModel to sort.
+     * @param model           The TreeTableModel to sort.
      * @param defaultSortKeys The default sort if no other sort is defined.  Can be empty or null if not defined.
      * @throws IllegalArgumentException if the model passed in is null.
      */
@@ -232,22 +240,6 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
         return isSorting() ? modelToViewIndex[index] : index;
     }
 
-    @Override
-    public void setSortKeys(final List<? extends SortKey> keys) {
-        final List<? extends SortKey> newKeys = keys == null || keys.isEmpty() ? defaultSortKeys : keys;
-        if (!sortKeys.equals(newKeys)) {
-            this.sortKeys = getSortableKeys(newKeys);
-            /* Note on event ordering:
-             * Sort order changed is fired before the sort indices are rebuilt, as is done for DefaultRowSorter.
-             * The documentation for RowSorterEvent states that this message is fired first and is typically
-             * followed by a SORTED message that indicates the sort order of the contents has actually been modified,
-             * which will be sent when the sort indices are rebuilt.
-             */
-            fireSortOrderChanged();
-            buildSortIndices();
-        }
-    }
-
     /**
      * @param keys The list of keys, which may contain columns that are not sortable.
      * @return A new list of keys that only has sortable columns in it.
@@ -265,6 +257,22 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
     @Override
     public List<? extends SortKey> getSortKeys() {
         return sortKeys;
+    }
+
+    @Override
+    public void setSortKeys(final List<? extends SortKey> keys) {
+        final List<? extends SortKey> newKeys = keys == null || keys.isEmpty() ? defaultSortKeys : keys;
+        if (!sortKeys.equals(newKeys)) {
+            this.sortKeys = getSortableKeys(newKeys);
+            /* Note on event ordering:
+             * Sort order changed is fired before the sort indices are rebuilt, as is done for DefaultRowSorter.
+             * The documentation for RowSorterEvent states that this message is fired first and is typically
+             * followed by a SORTED message that indicates the sort order of the contents has actually been modified,
+             * which will be sent when the sort indices are rebuilt.
+             */
+            fireSortOrderChanged();
+            buildSortIndices();
+        }
     }
 
     @Override
@@ -306,7 +314,8 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
         checkRangeIndices(firstModelIndex, endModelIndex);
         if (rebuildIndices) {
             buildSortIndices();
-        } else {
+        }
+        else {
             insertSortIndices(firstModelIndex, endModelIndex);
         }
     }
@@ -316,7 +325,8 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
         //checkRangeIndices(firstModelIndex, endModelIndex); // can only check indices *before* the change, not after.
         if (rebuildIndices) {
             buildSortIndices();
-        } else {
+        }
+        else {
             removeSortIndices(firstModelIndex, endModelIndex);
         }
     }
@@ -336,7 +346,8 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
                  * which happens when a column value is set on a node.
                  */
                 buildSortIndices();
-            } else {
+            }
+            else {
                 updateSortIndices(firstModelIndex);
             }
         }
@@ -375,13 +386,15 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
 
     /**
      * Sets whether a column is sortable or not sortable.
-     * @param column The model index of the column
+     *
+     * @param column     The model index of the column
      * @param isSortable Whether the column is sortable or not.
      */
     public void setSortable(final int column, final boolean isSortable) {
         if (isSortable) {
             unsortableColumns.remove(Integer.valueOf(column));
-        } else {
+        }
+        else {
             unsortableColumns.add(Integer.valueOf(column));
         }
     }
@@ -422,18 +435,21 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
     /**
      * Sets the TreeTableColumnSortStrategy for this RowSorter.
      * If set to null, it will revert to a default TreeTableColumnSortStrategy.
+     *
      * @param sortStrategy The TreeTableColumnSortStrategy to use, or null if the default should be used.
      */
     public void setSortStrategy(final ColumnSortStrategy sortStrategy) {
         if (sortStrategy == null) {
             this.sortStrategy = new TreeTableColumnSortStrategy();
-        } else {
+        }
+        else {
             this.sortStrategy = sortStrategy;
         }
     }
 
     /**
      * Gets the list of sort keys to use if no other sort is defined.
+     *
      * @return The list of sort keys to use if no other sort is defined.
      */
     public List<? extends SortKey> getDefaultSortKeys() {
@@ -442,13 +458,15 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
 
     /**
      * Sets the default sort keys to use if no other sort is defined.  Ensures will never set to null.
+     *
      * @param newDefaults The new default sort keys to use.
      */
     public void setDefaultSortKeys(final List<? extends SortKey> newDefaults) {
         // Set the default sort keys to an unmodifiable list.
         if (newDefaults == null) {
             this.defaultSortKeys = Collections.emptyList();
-        } else {
+        }
+        else {
             List<? extends SortKey> noNullElementList = newDefaults.stream().filter(Objects::nonNull).collect(Collectors.toList());
             this.defaultSortKeys = noNullElementList.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(noNullElementList);
         }
@@ -491,8 +509,9 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
             final int secondLevel = TreeUtils.getLevel(secondNode);
             if (firstLevel < secondLevel) {
                 secondNode = TreeUtils.getAncestor(secondNode, secondLevel - firstLevel);
-            } else if (secondLevel < firstLevel) {
-                firstNode =  TreeUtils.getAncestor(firstNode, firstLevel - secondLevel);
+            }
+            else if (secondLevel < firstLevel) {
+                firstNode = TreeUtils.getAncestor(firstNode, firstLevel - secondLevel);
             }
 
             // If they now both the same node at the same level, this means we are comparing a node with one of its children, sub-children
@@ -522,7 +541,8 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
     protected void buildSortIndices() {
         if (needToSort()) {
             sort();
-        } else {
+        }
+        else {
             clearSortIndices();
         }
     }
@@ -540,7 +560,7 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
      */
     protected void clearSortIndices() {
         final boolean wasSorting = isSorting();
-        final int[] previousViewToModelIndex = wasSorting? buildViewToModelAsInts() : null;
+        final int[] previousViewToModelIndex = wasSorting ? buildViewToModelAsInts() : null;
         viewToModelIndex = null;
         modelToViewIndex = null;
         if (wasSorting) {
@@ -626,38 +646,39 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
         for (int index = 0; index < numRows; index++) {
             if (sortRows[index] == null) {
                 sortRows[index] = new SortRow(this, index);
-            } else {
+            }
+            else {
                 sortRows[index].setModelIndex(index);
             }
         }
     }
 
 
-   /* *****************************************************************************************************************
-    *                                       Index patching methods
-    *
-    * These methods take the existing sort indices and patch them with new items inserted, updated or removed.
-    * This is more efficient than re-sorting the entire tree on every change.
-    *
-    * In practical terms, there isn't much difference in perceived speed until over 100,000 visible rows,
-    * assuming the TreeNode sort comparison operators are not horribly inefficient.
-    * Re-sorting on each change when there are 500,000 visible nodes starts to become un-usable,
-    * while patching remains fast.
-    *
-    * Most trees will not be this big, so it's arguable this won't make much difference for most applications.
-    * Nevertheless, in most cases it still takes less processing power and generates less garbage to patch the
-    * existing indexes, and we can support extremely large trees if required.
-    */
+    /* *****************************************************************************************************************
+     *                                       Index patching methods
+     *
+     * These methods take the existing sort indices and patch them with new items inserted, updated or removed.
+     * This is more efficient than re-sorting the entire tree on every change.
+     *
+     * In practical terms, there isn't much difference in perceived speed until over 100,000 visible rows,
+     * assuming the TreeNode sort comparison operators are not horribly inefficient.
+     * Re-sorting on each change when there are 500,000 visible nodes starts to become un-usable,
+     * while patching remains fast.
+     *
+     * Most trees will not be this big, so it's arguable this won't make much difference for most applications.
+     * Nevertheless, in most cases it still takes less processing power and generates less garbage to patch the
+     * existing indexes, and we can support extremely large trees if required.
+     */
 
     /**
      * True if the sorter is set to rebuild the sort indices completely on any update.
      * Rebuilding entirely is the simplest method, but it can be a lot slower for very large trees.
      * If rebuild indices is set to false, then the sorter will patch the existing sort indices on insertion, deletion
      * or update of tree nodes, only changing the parts which need updating.  This is a lot faster on very large trees.
-     *
+     * <p>
      * It defaults to true as performance is fine even for quite large trees of over 100,000 nodes.
      * Set to false if you want to improve sort performance for very large trees - but the code is more complex and
-     *      * could have subtle bugs, although it appears to work fine in all tests.
+     * * could have subtle bugs, although it appears to work fine in all tests.
      *
      * @return true if the sorter is set to rebuild the sort indices completely on any update.
      */
@@ -667,11 +688,11 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
 
     /**
      * Sets the flag to indicate whether indices should be rebuilt.
-     *
+     * <p>
      * Rebuilding entirely is the simplest method, but it can be a lot slower for very large trees.
      * If rebuild indices is set to false, then the sorter will patch the existing sort indices on insertion, deletion
      * or update of tree nodes, only changing the parts which need updating.  This is a lot faster on very large trees.
-     *
+     * <p>
      * It defaults to true as performance is about the same as patching, even for quite large trees of over 100,000 nodes.
      * Set to false if you want to improve sort performance for very large trees - but the code is more complex and
      * could have subtle bugs, although it appears to work fine in all tests.
@@ -688,7 +709,7 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
      * and notifies listeners of any change, passing in a copy of the old index as required by the event.
      *
      * @param firstModelIndex The first model index changing.
-     * @param endModelIndex The end model index changing.
+     * @param endModelIndex   The end model index changing.
      */
     protected void insertSortIndices(final int firstModelIndex, final int endModelIndex) {
         //TODO: check assumption that we throw exception if all of the inserts are not within the last row count?
@@ -706,7 +727,8 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
             try {
                 insertSortedRowsToIndices(firstModelIndex, endModelIndex);
                 fireRowSorterChanged(null); // no prior index supplied.
-            } finally {
+            }
+            finally {
                 restoreSelectedRows(selectedIndices);
             }
         }
@@ -786,8 +808,8 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
      * Forward scan is faster than looking behind, as we can skip all sub-child nodes since we know
      * how many children and sub-children they have.
      *
-     * @param updatingNode the node which is updating
-     * @param updatedNodeViewIndex the view index of the updating node
+     * @param updatingNode           the node which is updating
+     * @param updatedNodeViewIndex   the view index of the updating node
      * @param updatingNodeModelIndex the model index of the updating node.
      */
     protected int findNextInsertionViewIndex(TreeNode updatingNode, int updatedNodeViewIndex, int updatingNodeModelIndex) {
@@ -900,19 +922,24 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
         System.arraycopy(localViewToModelIndex, nodeViewIndex, nodeRows, 0, numNodes);
 
         // Calculate positions of move depending on whether it's moving up or down in the view:
-        final int blockFrom; final int blockTo; final int blockNumToMove; final int moveToPos; final int lastViewIndex;
+        final int blockFrom;
+        final int blockTo;
+        final int blockNumToMove;
+        final int moveToPos;
+        final int lastViewIndex;
         if (siblingViewIndex < nodeViewIndex) {    // Node is moving up in the view index - shift the other nodes down.
-            blockFrom      = siblingViewIndex;                  // start at the position of the nodes to move to
-            blockTo        = siblingViewIndex + numNodes;       // move them down by the number of nodes we're moving into its current position.
+            blockFrom = siblingViewIndex;                  // start at the position of the nodes to move to
+            blockTo = siblingViewIndex + numNodes;       // move them down by the number of nodes we're moving into its current position.
             blockNumToMove = nodeViewIndex - siblingViewIndex;  // number of nodes to move is the difference between their start points.
-            moveToPos      = siblingViewIndex;                  // The moving node moves to the start of the sibling to move to.
-            lastViewIndex  = nodeViewIndex + numNodes - 1;
-        } else {                                    // Node is moving down in the view index - shift the other nodes up.
-            blockFrom      = nodeViewIndex + numNodes;          // start just after the end of the moving node.
-            blockTo        = nodeViewIndex;                     // move up to where the moving node starts.
+            moveToPos = siblingViewIndex;                  // The moving node moves to the start of the sibling to move to.
+            lastViewIndex = nodeViewIndex + numNodes - 1;
+        }
+        else {                                    // Node is moving down in the view index - shift the other nodes up.
+            blockFrom = nodeViewIndex + numNodes;          // start just after the end of the moving node.
+            blockTo = nodeViewIndex;                     // move up to where the moving node starts.
             blockNumToMove = getViewIndexOfLastChild(siblingViewIndex) - blockFrom; // number of nodes is difference between block start and last child of node moving up.
-            moveToPos      = nodeViewIndex + blockNumToMove;    // The moving node moves to after the nodes moving up.
-            lastViewIndex  = blockFrom + blockNumToMove - 1;
+            moveToPos = nodeViewIndex + blockNumToMove;    // The moving node moves to after the nodes moving up.
+            lastViewIndex = blockFrom + blockNumToMove - 1;
         }
 
         // Move the other nodes up or down to make room for the moving node.
@@ -937,7 +964,7 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
     /**
      * Returns the index of a child in a parent, removing any filtered nodes if filtering is active, or -1 if not found.
      *
-     * @param parent The parent node to scan.
+     * @param parent      The parent node to scan.
      * @param childToFind The child node to find.
      * @return the index of a child in a parent, removing any filtered nodes if filtering is active, or -1 if not found.
      */
@@ -965,7 +992,7 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
      * Patches the existing index to accommodate new rows inserted between first and end index inclusive.
      *
      * @param firstModelIndex The model index of first row inserted.
-     * @param endModelIndex The model index of the end row inserted.
+     * @param endModelIndex   The model index of the end row inserted.
      */
     protected void insertSortedRowsToIndices(final int firstModelIndex, final int endModelIndex) {
         // Use local references to avoid repeated field access:
@@ -1102,7 +1129,7 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
      * will be much more efficient than a tree sort, and isn't the entire tree.
      *
      * @param firstModelIndex The first model index of the nodes being deleted.
-     * @param endModelIndex The end model index of the nodes being deleted.
+     * @param endModelIndex   The end model index of the nodes being deleted.
      */
     protected void removeSortedRowsFromIndices(final int firstModelIndex, final int endModelIndex) {
         // Initialize useful constants:
@@ -1112,10 +1139,10 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
         final int numToRemove = endModelIndex - firstModelIndex + 1;
 
         /*
-          * 0. Optimisation:
-          *
-          * Before we alter the indices, build a sorted list of view indexes affected by removing rows from the model.
-          * This will let us identify consecutive blocks of nodes in the view, so we can remove them in a single operation later.
+         * 0. Optimisation:
+         *
+         * Before we alter the indices, build a sorted list of view indexes affected by removing rows from the model.
+         * This will let us identify consecutive blocks of nodes in the view, so we can remove them in a single operation later.
          */
         final int[] removedViewRows = new int[numToRemove];
         if (numToRemove > 0) {
@@ -1154,7 +1181,7 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
          * We do both of these in step, using the sorted list of view indexes we built in step 0  to let us identify
          * contiguous blocks of view rows to remove in each step.  Since the list is sorted in order of view index,
          * all changes later will not affect anything earlier in the view, so we alter both the indexes in "view" order of change:
-        */
+         */
         int startRemoveIndex = 0;
         int viewRowDeleteStart = removedViewRows.length > 0 ? removedViewRows[0] : -1; //TODO: why set -1 as copy position if there are NO removed view rows?
         while (startRemoveIndex < removedViewRows.length) {
@@ -1202,12 +1229,12 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
         }
 
         /*
-          * Since we have copied SortRow objects over to new positions, the ones left on the end are
-          * now duplicate objects of the ones in the rest of the index.  They must be distinct objects
-          * that can have independent model indexes or future sorting will fail horribly.
-          * We just set them to null here; they will be recreated with new SortRows when rebuilding
-          * the model to view indices if the number of rows increases again.
-          */
+         * Since we have copied SortRow objects over to new positions, the ones left on the end are
+         * now duplicate objects of the ones in the rest of the index.  They must be distinct objects
+         * that can have independent model indexes or future sorting will fail horribly.
+         * We just set them to null here; they will be recreated with new SortRows when rebuilding
+         * the model to view indices if the number of rows increases again.
+         */
         for (int i = localLastRowCount - numToRemove; i < localLastRowCount; i++) {
             localViewToModelIndex[i] = null;
         }
@@ -1220,13 +1247,14 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
 
     /**
      * Checks that the indices have sufficient space for
+     *
      * @param increase - the number of new rows to add to the indices.
      */
     protected void ensureIndicesHaveSpaceForIncrease(final int increase) {
         if (lastRowCount + increase > viewToModelIndex.length) {
             final int newSize = lastRowCount + increase + EXPAND_SORTROW_SIZE;
 
-             // Increase ModelToViewIndex size and copy over old elements:
+            // Increase ModelToViewIndex size and copy over old elements:
             final int[] newModelToViewIndex = new int[newSize];
             System.arraycopy(modelToViewIndex, 0, newModelToViewIndex, 0, lastRowCount);
             modelToViewIndex = newModelToViewIndex;
@@ -1244,6 +1272,7 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
 
     /**
      * Throws an IndexOutOfBoundsException if the column is not valid.
+     *
      * @param column The column index to check.
      */
     protected void checkValidColumn(final int column) {
@@ -1259,7 +1288,7 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
      * check is performed.
      *
      * @param firstModelIndex the first model index to check
-     * @param endModelIndex the second model index to check.
+     * @param endModelIndex   the second model index to check.
      * @throws IndexOutOfBoundsException if either index is invalid or the first is bigger than the end.
      */
     protected void checkValidLastKnownIndices(final int firstModelIndex, final int endModelIndex) {
@@ -1303,8 +1332,9 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
      * The new SortRow with the inserted model index should not appear in the ViewToModelIndex at all,
      * since we have adjusted all model indexes in the ViewToModelIndex that used to point to those indexes upwards.
      * Put in a sanity check here that we never find a new row in the existing index.
+     *
      * @param insertRowModelIndex the row in the model index being inserted.
-     * @param insertionPoint the point in the view where the new row is being inserted.
+     * @param insertionPoint      the point in the view where the new row is being inserted.
      */
     protected void checkInsertionPoint(final int insertRowModelIndex, final int insertionPoint) {
         if (insertionPoint < 0) { // This should never happen - it means we already found the new thing we want to insert.
@@ -1319,6 +1349,19 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
      */
 
     /**
+     * A strategy interface to build a list of new sort keys, passing in the current set of sort keys and the column to sort.
+     */
+    public interface ColumnSortStrategy {
+        /**
+         * Builds a list of sort keys given a column to sort and the existing list of sort keys.
+         *
+         * @param columnToSort The column which should be sorted.
+         * @param sortKeys     The current state of sorting.
+         */
+        List<RowSorter.SortKey> buildNewSortKeys(int columnToSort, List<? extends SortKey> sortKeys);
+    }
+
+    /**
      * A class carrying a model index, which can be placed into an array to sort using the SortRow.compare method,
      * which delegates the comparison to the TreeTableRowSorter.compare() method.
      */
@@ -1330,7 +1373,7 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
         /**
          * Constructs a SortRow given a TreeTableRowSorter and the model index of the item.
          *
-         * @param sorter The TreeTableRowSorter to use to sort the rows.
+         * @param sorter     The TreeTableRowSorter to use to sort the rows.
          * @param modelIndex The model index of this sort row.
          */
         public SortRow(final TreeTableRowSorter sorter, final int modelIndex) {
@@ -1357,19 +1400,6 @@ public class TreeTableRowSorter extends RowSorter<TreeTableModel> {
         public void setModelIndex(final int modelIndex) {
             this.modelIndex = modelIndex;
         }
-    }
-
-    /**
-     * A strategy interface to build a list of new sort keys, passing in the current set of sort keys and the column to sort.
-     */
-    public interface ColumnSortStrategy {
-        /**
-         * Builds a list of sort keys given a column to sort and the existing list of sort keys.
-         *
-         * @param columnToSort The column which should be sorted.
-         * @param sortKeys The current state of sorting.
-         */
-        List<RowSorter.SortKey> buildNewSortKeys(int columnToSort, List<? extends SortKey> sortKeys);
     }
 
 }

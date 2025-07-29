@@ -10,28 +10,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UpdateTask implements Packet {
-    private int requestID;
-    private int taskID;
-    private int parentID;
+    private final String name;
     public int indexInParent = 0;
     public boolean serverControlled = false;
     public boolean locked = false;
-    private final String name;
     public List<TaskInfo.Session> sessions = new ArrayList<>();
-    private List<String> labels = new ArrayList<>();
     public List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
-
+    private int requestID;
+    private int taskID;
+    private int parentID;
+    private List<String> labels = new ArrayList<>();
     private int size = 0;
-
-    @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
-    public PacketType type() {
-        return PacketType.UPDATE_TASK;
-    }
 
     public UpdateTask(int requestID, Task task) {
         this.requestID = requestID;
@@ -46,6 +35,16 @@ public class UpdateTask implements Packet {
         this.taskID = taskID;
         this.parentID = parentID;
         this.name = name;
+    }
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public PacketType type() {
+        return PacketType.UPDATE_TASK;
     }
 
     public void writeToOutput(DataOutputStream output) throws IOException {

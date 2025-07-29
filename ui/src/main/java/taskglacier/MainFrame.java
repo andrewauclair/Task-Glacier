@@ -10,14 +10,10 @@ import dialogs.ConnectToServer;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.app.AppState;
 import io.github.andrewauclair.moderndocking.app.Docking;
-import io.github.andrewauclair.moderndocking.app.DockingState;
 import io.github.andrewauclair.moderndocking.app.RootDockingPanel;
 import io.github.andrewauclair.moderndocking.app.WindowLayoutBuilder;
-import io.github.andrewauclair.moderndocking.event.DockingEvent;
-import io.github.andrewauclair.moderndocking.event.DockingListener;
 import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
 import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
-import io.github.andrewauclair.moderndocking.floating.Floating;
 import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
 import packets.Basic;
 import packets.BugzillaInfo;
@@ -35,7 +31,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
@@ -46,31 +41,16 @@ import java.util.Objects;
 import java.util.prefs.Preferences;
 
 public class MainFrame extends JFrame {
-    private Thread listen;
-    private Socket socket;
-
-    private ServerConnection connection = null;
-    private TaskModel taskModel = new TaskModel();
+    public static Map<String, BugzillaInfo> bugzillaInfo = new HashMap<>();
+    public static MainFrame mainFrame = null;
     ImageIcon appIcon16 = new ImageIcon(Objects.requireNonNull(System.getenv("TASK_GLACIER_DEV_INSTANCE") != null ? getClass().getResource("/work-in-progress (1).png") : getClass().getResource("/app-icon-16.png")));
     TrayIcon trayIcon = new TrayIcon(appIcon16.getImage(), "");
-
-    TimeData timeData = new TimeData();
-
-    public static Map<String, BugzillaInfo> bugzillaInfo = new HashMap<>();
-
     private SystemTrayDisplay systemTrayDisplay = new SystemTrayDisplay(this, trayIcon);
-
-    public boolean isConnected() {
-        return connection != null;
-    }
-
-    public ServerConnection getConnection() {
-        return connection;
-    }
-
-    public TaskModel getTaskModel() {
-        return taskModel;
-    }
+    TimeData timeData = new TimeData();
+    private Thread listen;
+    private Socket socket;
+    private ServerConnection connection = null;
+    private TaskModel taskModel = new TaskModel();
 
     public MainFrame() throws IOException {
         mainFrame = this;
@@ -115,7 +95,8 @@ public class MainFrame extends JFrame {
 
             try {
                 tray.add(trayIcon);
-            } catch (IllegalArgumentException | AWTException e) {
+            }
+            catch (IllegalArgumentException | AWTException e) {
 //                throw new RuntimeException(e);
             }
         }
@@ -179,12 +160,76 @@ public class MainFrame extends JFrame {
     public static void restoreLayout() {
         try {
             AppState.restore();
-        } catch (DockingLayoutException e) {
+        }
+        catch (DockingLayoutException e) {
             // something happened trying to load the layout file, record it here
             e.printStackTrace();
         }
 
         AppState.setAutoPersist(true);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            configureLookAndFeel();
+            try {
+                new MainFrame();
+                mainFrame.setVisible(true);
+            }
+            catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private static void configureLookAndFeel() {
+        try {
+            FlatLaf.registerCustomDefaultsSource("docking");
+
+            String lookAndFeel = "dark";
+            switch (lookAndFeel) {
+                case "light":
+                    UIManager.setLookAndFeel(new FlatLightLaf());
+                    break;
+                case "dark":
+                    UIManager.setLookAndFeel(new FlatDarkLaf());
+                    break;
+                default:
+                    try {
+                        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                    }
+                    catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
+                           UnsupportedLookAndFeelException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                    break;
+            }
+            FlatLaf.updateUI();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            }
+            catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
+                   UnsupportedLookAndFeelException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+        UIManager.getDefaults().put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
+        UIManager.getDefaults().put("TabbedPane.tabsOverlapBorder", true);
+    }
+
+    public boolean isConnected() {
+        return connection != null;
+    }
+
+    public ServerConnection getConnection() {
+        return connection;
+    }
+
+    public TaskModel getTaskModel() {
+        return taskModel;
     }
 
     public void disconnect() {
@@ -233,57 +278,6 @@ public class MainFrame extends JFrame {
         connection.sendPacket(requestConfig);
     }
 
-    public static MainFrame mainFrame = null;
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            configureLookAndFeel();
-            try {
-               new MainFrame();
-               mainFrame.setVisible(true);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
-    private static void configureLookAndFeel() {
-        try {
-            FlatLaf.registerCustomDefaultsSource( "docking" );
-
-            String lookAndFeel = "dark";
-            switch (lookAndFeel) {
-                case "light":
-                    UIManager.setLookAndFeel(new FlatLightLaf());
-                    break;
-                case "dark":
-                    UIManager.setLookAndFeel(new FlatDarkLaf());
-                    break;
-                default:
-                    try {
-                        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
-                             UnsupportedLookAndFeelException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                    break;
-            }
-            FlatLaf.updateUI();
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            }
-            catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
-                   UnsupportedLookAndFeelException ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-        UIManager.getDefaults().put("TabbedPane.contentBorderInsets", new Insets(0,0,0,0));
-        UIManager.getDefaults().put("TabbedPane.tabsOverlapBorder", true);
-    }
-
     public void receivedDailyReport(DailyReportMessage dailyReport) {
         if (!dailyReport.isReportFound()) {
             return;
@@ -294,7 +288,7 @@ public class MainFrame extends JFrame {
 
         if (Docking.isDockableRegistered(persistentID)) {
             for (Dockable dockable : Docking.getDockables()) {
-                if (dockable.getPersistentID().equals(persistentID)){
+                if (dockable.getPersistentID().equals(persistentID)) {
                     panel = (DailyReportPanel) dockable;
                     break;
                 }
@@ -319,7 +313,7 @@ public class MainFrame extends JFrame {
 
         if (Docking.isDockableRegistered(persistentID)) {
             for (Dockable dockable : Docking.getDockables()) {
-                if (dockable.getPersistentID().equals(persistentID)){
+                if (dockable.getPersistentID().equals(persistentID)) {
                     panel = (WeeklyReportPanel) dockable;
                     break;
                 }

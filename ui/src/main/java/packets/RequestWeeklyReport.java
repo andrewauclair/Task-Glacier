@@ -3,7 +3,11 @@ package packets;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class RequestWeeklyReport implements Packet {public int requestID;
+public class RequestWeeklyReport implements Packet {
+    public int requestID;
+    public int month;
+    public int day;
+    public int year;
     private int size = 0;
 
     @Override
@@ -15,10 +19,6 @@ public class RequestWeeklyReport implements Packet {public int requestID;
     public PacketType type() {
         return PacketType.REQUEST_WEEKLY_REPORT;
     }
-
-    public int month;
-    public int day;
-    public int year;
 
     @Override
     public void writeToOutput(DataOutputStream output) throws IOException {

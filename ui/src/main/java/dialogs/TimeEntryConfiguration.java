@@ -2,18 +2,17 @@ package dialogs;
 
 import data.Standards;
 import data.TimeData;
-import packets.*;
+import packets.PacketType;
+import packets.RequestID;
+import packets.TimeCategoriesMessage;
+import packets.TimeCategoryModType;
 import taskglacier.MainFrame;
-import util.LabeledComponent;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,49 +20,7 @@ import java.util.Map;
 
 public class TimeEntryConfiguration extends JDialog {
     private final TimeData timeData;
-
-    class CategoryTableModel extends AbstractTableModel {
-        List<TimeData.TimeCategory> rows = new ArrayList<>();
-
-        @Override
-        public int getRowCount() {
-            return rows.size();
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            switch (column) {
-                case 0:
-                    return "Time Category";
-                case 1:
-                    return "ID";
-            }
-            return null;
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            return super.getColumnClass(columnIndex);
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 2;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            TimeData.TimeCategory row = rows.get(rowIndex);
-
-            switch (columnIndex) {
-                case 0:
-                    return row.name;
-                case 1:
-                    return row.id;
-            }
-            return null;
-        }
-    }
+    private final Map<String, TimeEntryInstance> instances = new HashMap<>();
     private CategoryTableModel categoriesModel = new CategoryTableModel();
     private JTable categoriesTable = new JTable(categoriesModel);
 
@@ -71,68 +28,6 @@ public class TimeEntryConfiguration extends JDialog {
     private JButton categoryRemove = new JButton("-");
 
     private JButton save = new JButton("Save");
-
-    class TimeEntryInstance {
-        TimeData.TimeCategory category;
-        List<TimeData.TimeCode> codes;
-
-        CodeTableModel codeTableModel = new CodeTableModel();
-        JTable codesTable = new JTable(codeTableModel);
-
-        JPanel panel;
-
-        JButton addCode = new JButton("+");
-        JButton removeCode = new JButton("-");
-
-        public TimeEntryInstance() {
-            // hide ID column
-            codesTable.removeColumn(codesTable.getColumnModel().getColumn(1));
-        }
-    }
-    private final Map<String, TimeEntryInstance> instances = new HashMap<>();
-
-    class CodeTableModel extends AbstractTableModel {
-        List<TimeData.TimeCode> rows = new ArrayList<>();
-
-        @Override
-        public int getRowCount() {
-            return rows.size();
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            switch (column) {
-                case 0:
-                    return "Time Code";
-                case 1:
-                    return "ID";
-            }
-            return null;
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            return super.getColumnClass(columnIndex);
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 2;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            TimeData.TimeCode row = rows.get(rowIndex);
-
-            switch (columnIndex) {
-                case 0:
-                    return row.name;
-                case 1:
-                    return row.id;
-            }
-            return null;
-        }
-    }
 
     public TimeEntryConfiguration(MainFrame mainFrame) {
         this.timeData = mainFrame.getTimeData();
@@ -303,7 +198,7 @@ public class TimeEntryConfiguration extends JDialog {
     private JPanel buildCategories() {
         categoriesTable.setTableHeader(null);
         categoriesTable.removeColumn(categoriesTable.getColumnModel().getColumn(1));
-        
+
         GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
@@ -394,5 +289,109 @@ public class TimeEntryConfiguration extends JDialog {
         panel.add(new JLabel(), gbc);
 
         return panel;
+    }
+
+    class CategoryTableModel extends AbstractTableModel {
+        List<TimeData.TimeCategory> rows = new ArrayList<>();
+
+        @Override
+        public int getRowCount() {
+            return rows.size();
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            switch (column) {
+                case 0:
+                    return "Time Category";
+                case 1:
+                    return "ID";
+            }
+            return null;
+        }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            return super.getColumnClass(columnIndex);
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 2;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            TimeData.TimeCategory row = rows.get(rowIndex);
+
+            switch (columnIndex) {
+                case 0:
+                    return row.name;
+                case 1:
+                    return row.id;
+            }
+            return null;
+        }
+    }
+
+    class TimeEntryInstance {
+        TimeData.TimeCategory category;
+        List<TimeData.TimeCode> codes;
+
+        CodeTableModel codeTableModel = new CodeTableModel();
+        JTable codesTable = new JTable(codeTableModel);
+
+        JPanel panel;
+
+        JButton addCode = new JButton("+");
+        JButton removeCode = new JButton("-");
+
+        public TimeEntryInstance() {
+            // hide ID column
+            codesTable.removeColumn(codesTable.getColumnModel().getColumn(1));
+        }
+    }
+
+    class CodeTableModel extends AbstractTableModel {
+        List<TimeData.TimeCode> rows = new ArrayList<>();
+
+        @Override
+        public int getRowCount() {
+            return rows.size();
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            switch (column) {
+                case 0:
+                    return "Time Code";
+                case 1:
+                    return "ID";
+            }
+            return null;
+        }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            return super.getColumnClass(columnIndex);
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 2;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            TimeData.TimeCode row = rows.get(rowIndex);
+
+            switch (columnIndex) {
+                case 0:
+                    return row.name;
+                case 1:
+                    return row.id;
+            }
+            return null;
+        }
     }
 }

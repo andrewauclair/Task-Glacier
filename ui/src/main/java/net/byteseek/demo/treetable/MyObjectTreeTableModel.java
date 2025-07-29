@@ -63,10 +63,14 @@ public final class MyObjectTreeTableModel extends TreeTableModel {
     @Override
     public Class<?> getColumnClass(final int columnIndex) {
         switch (columnIndex) {
-            case 0: return String.class;
-            case 1: return Long.class;
-            case 2: return Boolean.class;
-            case 3: return Integer.class;
+            case 0:
+                return String.class;
+            case 1:
+                return Long.class;
+            case 2:
+                return Boolean.class;
+            case 3:
+                return Integer.class;
         }
         return Object.class;
     }
@@ -75,11 +79,16 @@ public final class MyObjectTreeTableModel extends TreeTableModel {
     public Object getColumnValue(final TreeNode node, final int column) {
         final MyObject obj = TreeUtils.getUserObject(node);
         switch (column) {
-            case 0: return obj.getDescription();
-            case 1: return obj.getSize();
-            case 2: return obj.isEnabled();
-            case 3: return node.getChildCount();
-            default: return null;
+            case 0:
+                return obj.getDescription();
+            case 1:
+                return obj.getSize();
+            case 2:
+                return obj.isEnabled();
+            case 3:
+                return node.getChildCount();
+            default:
+                return null;
         }
 
     }
@@ -137,7 +146,8 @@ public final class MyObjectTreeTableModel extends TreeTableModel {
             setLeafIcon(UIManager.getIcon("FileView.fileIcon"));
             setOpenIcon(UIManager.getIcon("FileView.directoryIcon"));
             setClosedIcon(UIManager.getIcon("FileView.directoryIcon"));
-        } else {
+        }
+        else {
             // Leaf, open and closed icons not available in all look and feels...not in GTK, but is in metal...
             setLeafIcon(UIManager.getIcon("Tree.leafIcon"));
             setOpenIcon(UIManager.getIcon("Tree.openIcon"));

@@ -5,20 +5,9 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class FailureResponse implements Packet {
-    private int size = 0;
-
-    @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
-    public PacketType type() {
-        return PacketType.FAILURE_RESPONSE;
-    }
-
     public int requestID = 0;
     public String message;
+    private int size = 0;
 
     public static FailureResponse parse(DataInputStream input, int size) throws IOException {
         FailureResponse response = new FailureResponse();
@@ -29,6 +18,16 @@ public class FailureResponse implements Packet {
         response.message = new String(input.readNBytes(input.readShort()));
 
         return response;
+    }
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public PacketType type() {
+        return PacketType.FAILURE_RESPONSE;
     }
 
     @Override

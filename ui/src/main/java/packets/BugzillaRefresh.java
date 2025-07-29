@@ -4,7 +4,12 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class BugzillaRefresh implements Packet {
+    private final int requestID;
     private int size = 0;
+
+    public BugzillaRefresh(int requestID) {
+        this.requestID = requestID;
+    }
 
     @Override
     public int size() {
@@ -14,12 +19,6 @@ public class BugzillaRefresh implements Packet {
     @Override
     public PacketType type() {
         return PacketType.BUGZILLA_REFRESH;
-    }
-
-    private final int requestID;
-
-    public BugzillaRefresh(int requestID) {
-        this.requestID = requestID;
     }
 
     public void writeToOutput(DataOutputStream output) throws IOException {

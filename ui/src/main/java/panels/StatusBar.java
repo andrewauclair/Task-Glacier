@@ -48,7 +48,7 @@ public class StatusBar extends JPanel implements TaskModel.Listener {
                 text.append(" / ");
             }
             text.append(activeTask.name);
-            
+
             activeTaskDisplay.setText(text.toString());
         }
         else {

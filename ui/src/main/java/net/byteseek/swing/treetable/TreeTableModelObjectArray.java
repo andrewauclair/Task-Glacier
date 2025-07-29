@@ -26,11 +26,11 @@ public class TreeTableModelObjectArray extends TreeTableModel {
      * and configuration of the columns in the table. The column model determines column-related properties,
      * such as column count, column headers, and column width, and is essential for mapping Object array indices
      * from TreeTable nodes to corresponding table columns.
-     *
+     * <p>
      * This model is critical for the TreeTableModelObjectArray to correctly interpret the array of objects
      * associated with tree nodes as rows in the table, aligning each object to its respective column with the
      * guidance of the TableColumnModel.
-     *
+     * <p>
      * The columnModel is provided as a required argument during construction of the TreeTableModelObjectArray
      * and cannot be null. It enables the consistent translation of tree node data into a tabular form.
      */
@@ -41,7 +41,7 @@ public class TreeTableModelObjectArray extends TreeTableModel {
      * This implementation assumes individual nodes contain arrays of objects representing
      * the column values and uses the provided TableColumnModel to define the table's structure.
      *
-     * @param rootNode The root node of the tree structure. Must not be null.
+     * @param rootNode    The root node of the tree structure. Must not be null.
      * @param columnModel The TableColumnModel that defines the table's column configuration. Must not be null.
      * @throws IllegalArgumentException if columnModel is null.
      */
@@ -54,7 +54,7 @@ public class TreeTableModelObjectArray extends TreeTableModel {
     @Override
     public Object getColumnValue(TreeNode node, int column) {
         final Object[] objects = TreeUtils.getUserObject(node);
-        return objects == null? null : objects[column];
+        return objects == null ? null : objects[column];
     }
 
     @Override

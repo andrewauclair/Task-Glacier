@@ -1,9 +1,19 @@
 package net.byteseek.swing.treetable;
 
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.DefaultTableColumnModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.AWTEventListener;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.List;
 
 public final class TableUtils {
@@ -13,12 +23,14 @@ public final class TableUtils {
      */
     private static final int DEFAULT_COLUMN_WIDTH = 75;
 
-    private TableUtils() {}
+    private TableUtils() {
+    }
 
     /**
      * Utility method to simplify creating columns for subclasses.
      * Defaults to having no cell renderer or cell editor specified - JTable has default renderers and editors for simple data types.
-     * @param modelIndex The model index of the column.  0 is always the tree rendering column.
+     *
+     * @param modelIndex  The model index of the column.  0 is always the tree rendering column.
      * @param headerValue The header value
      * @return a TableColumn with the values provided and defaults for the others.
      */
@@ -29,9 +41,10 @@ public final class TableUtils {
     /**
      * Utility method to simplify creating columns for subclasses.
      * Defaults to having no cell renderer or cell editor specified - JTable has default renderers and editors for simple data types.
-     * @param modelIndex The model index of the column.  0 is always the tree rendering column.
+     *
+     * @param modelIndex  The model index of the column.  0 is always the tree rendering column.
      * @param headerValue The header value
-     * @param width The width of the column.
+     * @param width       The width of the column.
      * @return a TableColumn with the values provided and defaults for the others.
      */
     public static TableColumn createColumn(final int modelIndex, final Object headerValue, final int width) {
@@ -42,13 +55,14 @@ public final class TableUtils {
      * Utility method to simplify creating columns for subclasses.
      * Defaults to having no cell editor specified - JTable has default editors for simple data types.
      * If specifying a cell renderer for model index 0, it must be capable of rendering the tree structure.
-     * @param modelIndex The model index of the column.  0 is always the tree rendering column.
-     * @param headerValue The header value
+     *
+     * @param modelIndex   The model index of the column.  0 is always the tree rendering column.
+     * @param headerValue  The header value
      * @param cellRenderer The TableCellRenderer to use with the data types in that column.
      * @return a TableColumn with the values provided and defaults for the others.
      */
     public static TableColumn createColumn(final int modelIndex, final Object headerValue,
-                                       final TableCellRenderer cellRenderer) {
+                                           final TableCellRenderer cellRenderer) {
         return createColumn(modelIndex, headerValue, DEFAULT_COLUMN_WIDTH, cellRenderer, null);
     }
 
@@ -56,43 +70,44 @@ public final class TableUtils {
      * Utility method to simplify creating columns for subclasses.
      * Defaults to having no cell editor specified - JTable has default editors for simple data types.
      * If specifying a cell renderer for model index 0, it must be capable of rendering the tree structure.     *
-     * @param modelIndex The model index of the column.  0 is always the tree rendering column.
-     * @param headerValue The header value
-     * @param width The width of the column.
+     *
+     * @param modelIndex   The model index of the column.  0 is always the tree rendering column.
+     * @param headerValue  The header value
+     * @param width        The width of the column.
      * @param cellRenderer The TableCellRenderer to use with the data types in that column.
      * @return a TableColumn with the values provided and defaults for the others.
      */
     public static TableColumn createColumn(final int modelIndex, final Object headerValue, final int width,
-                                       final TableCellRenderer cellRenderer) {
+                                           final TableCellRenderer cellRenderer) {
         return createColumn(modelIndex, headerValue, width, cellRenderer, null);
     }
 
     /**
      * Utility method to simplify creating columns for subclasses.
      *
-     * @param modelIndex The model index of the column.  0 is always the tree rendering column.
-     * @param headerValue The header value
+     * @param modelIndex   The model index of the column.  0 is always the tree rendering column.
+     * @param headerValue  The header value
      * @param cellRenderer The TableCellRenderer to use with the data types in that column.
-     * @param cellEditor The TableCellEditor to use with the data types in that column.
+     * @param cellEditor   The TableCellEditor to use with the data types in that column.
      * @return a TableColumn with the values provided, and a default width.
      */
     public static TableColumn createColumn(final int modelIndex, final Object headerValue,
-                                       final TableCellRenderer cellRenderer, final TableCellEditor cellEditor) {
+                                           final TableCellRenderer cellRenderer, final TableCellEditor cellEditor) {
         return createColumn(modelIndex, headerValue, DEFAULT_COLUMN_WIDTH, cellRenderer, cellEditor);
     }
 
     /**
      * Utility method to simplify creating columns for subclasses.
      *
-     * @param modelIndex The model index of the column.  0 is always the tree rendering column.
-     * @param headerValue The header value
-     * @param width The width of the column.
+     * @param modelIndex   The model index of the column.  0 is always the tree rendering column.
+     * @param headerValue  The header value
+     * @param width        The width of the column.
      * @param cellRenderer The TableCellRenderer to use with the data types in that column.
-     * @param cellEditor The TableCellEditor to use with the data types in that column.
+     * @param cellEditor   The TableCellEditor to use with the data types in that column.
      * @return a TableColumn with the values provided.
      */
-    public static  TableColumn createColumn(final int modelIndex,  final Object headerValue, final int width,
-                                       final TableCellRenderer cellRenderer, final TableCellEditor cellEditor) {
+    public static TableColumn createColumn(final int modelIndex, final Object headerValue, final int width,
+                                           final TableCellRenderer cellRenderer, final TableCellEditor cellEditor) {
         final TableColumn column = new TableColumn(modelIndex, width, cellRenderer, cellEditor);
         column.setHeaderValue(headerValue);
         return column;
@@ -117,7 +132,7 @@ public final class TableUtils {
      * Calculates the space taken up by columns to the left of a column in the TableColumnModel.
      *
      * @param columnModel The table column model
-     * @param colIndex The column index of the column in the table column model (not the model index of the column).
+     * @param colIndex    The column index of the column in the table column model (not the model index of the column).
      * @return the space taken up by columns to the left of the column with colIndex in the TableColumnModel.
      */
     public static int calculateWidthToLeftOfColumn(final TableColumnModel columnModel, final int colIndex) {
@@ -131,8 +146,9 @@ public final class TableUtils {
     /**
      * Returns the TableColumn in the TableColumnModel with the given model index, or null if no such column exists.
      * The column index of a column may not match the model index if they have been re-ordered.
+     *
      * @param columnModel The TableColumnModel to search.
-     * @param modelIndex The model index of the TableColumn requested.
+     * @param modelIndex  The model index of the TableColumn requested.
      * @return the TableColumn in the TableColumnModel with the given model index, or null if no such column exists.
      */
     public static TableColumn getColumnWithModelIndex(final TableColumnModel columnModel, final int modelIndex) {
@@ -146,7 +162,7 @@ public final class TableUtils {
     }
 
     /**
-     * @param sortKeys The sort keys to check.
+     * @param sortKeys   The sort keys to check.
      * @param modelIndex The model index of the column to check.
      * @return true if a column with the column model index exists in the list of sort keys.
      */
@@ -156,7 +172,8 @@ public final class TableUtils {
 
     /**
      * Returns the index of the sort key for a column in a table, or -1 if that column doesn't have a sort key for it.
-     * @param sortKeys The list of sort keys to look in.
+     *
+     * @param sortKeys   The list of sort keys to look in.
      * @param modelIndex The model index of the column to find a sort key for.
      * @return The index of the sort key for a column, or -1 if that column doesn't have a sort key for it.
      */
@@ -175,12 +192,12 @@ public final class TableUtils {
     /**
      * Toggles the sort order of a JTable column, if the table is sorted.
      *
-     * @param table The table the column is in.
+     * @param table       The table the column is in.
      * @param columnIndex The column index to toggle the sort state of.
      */
     public static void toggleSortColumn(JTable table, int columnIndex) {
         if (columnIndex >= 0) {
-            RowSorter<?> sorter = table == null? null : table.getRowSorter();
+            RowSorter<?> sorter = table == null ? null : table.getRowSorter();
             if (sorter != null) {
                 sorter.toggleSortOrder(table.convertColumnIndexToModel(columnIndex));
             }
@@ -191,7 +208,7 @@ public final class TableUtils {
      * Resizes a table column to fit the contents, but no smaller than the column min width or larger
      * than the column max width.
      *
-     * @param table The table the column is in.
+     * @param table       The table the column is in.
      * @param columnIndex The index of the column to resize to fit contents.
      */
     public static void resizeColumnToFitContents(JTable table, int columnIndex) {
@@ -208,7 +225,7 @@ public final class TableUtils {
      * It takes into account the header width as well as the data in the rows and the table intercell spacing.
      * The width returned will be between the column min Width and the column maxWidth.
      *
-     * @param table The table the column is in.
+     * @param table       The table the column is in.
      * @param columnIndex The index of the column.
      * @return The preferred width of the column sized to fit its contents, between the min and max widths defined for the column.
      */
@@ -259,7 +276,6 @@ public final class TableUtils {
      *   JTableHeader header = table.getTableHeader();
      *   header.addMouseListener(new TableUtils.HeaderDoubleClickSortMouseListener(header));
      * </pre>
-     *
      */
     public static class HeaderSortMouseDoubleClickListener extends MouseAdapter {
 
@@ -271,7 +287,7 @@ public final class TableUtils {
 
         @Override
         public void mouseClicked(MouseEvent e) {
-            if (e.getClickCount() %2 == 0 && SwingUtilities.isLeftMouseButton(e) && header.isEnabled()) {
+            if (e.getClickCount() % 2 == 0 && SwingUtilities.isLeftMouseButton(e) && header.isEnabled()) {
                 toggleSortColumn(header.getTable(), header.columnAtPoint(e.getPoint()));
             }
         }
@@ -292,7 +308,8 @@ public final class TableUtils {
                 if (header != null && header.isEnabled()) {
                     if (!isResizeCursor(header.getCursor())) {
                         toggleSortColumn(header.getTable(), header.columnAtPoint(e.getPoint()));
-                    } else if (e.getClickCount() == 2) {
+                    }
+                    else if (e.getClickCount() == 2) {
                         resizeColumnToFitContents(header.getTable(), header.columnAtPoint(e.getPoint()));
                     }
                 }
@@ -319,22 +336,31 @@ public final class TableUtils {
     public static class AWTMouseListenerReplacer implements AWTEventListener {
 
         /**
-         * The component to monitor AWTEvents for.
-         */
-        protected JComponent component;
-
-        /**
          * The id of the mouse event we want to replace.
          */
         protected final int eventReplacementId;
-
         /**
          * The mouse listener which implements the new behaviour.
          * If null, then no replacement listener will be invoked, but the original listener for that event will not run.
          */
         protected final MouseListener replacementListener;
+        /**
+         * The component to monitor AWTEvents for.
+         */
+        protected JComponent component;
 
         /**
+         * Constructs an AWTMouseListenerReplacer.  You must call activate() after construction to make it active.
+         *
+         * @param replacementListener The mouse listener we want to replace the default behaviour with.
+         * @param eventReplacementId  The id of the mouse event we want to replace.
+         * @param component           The component to monitor mouse events for.
+         */
+        public AWTMouseListenerReplacer(MouseListener replacementListener, int eventReplacementId, JComponent component) {
+            this.eventReplacementId = eventReplacementId;
+            this.replacementListener = replacementListener;
+            this.component = component;
+        }        /**
          * A HierarchyListener which watches to see if the component we are monitoring becomes
          * un-displayable, and unregisters this class and itself as listeners if so.
          */
@@ -348,19 +374,6 @@ public final class TableUtils {
                 }
             }
         };
-
-        /**
-         * Constructs an AWTMouseListenerReplacer.  You must call activate() after construction to make it active.
-         *
-         * @param replacementListener The mouse listener we want to replace the default behaviour with.
-         * @param eventReplacementId The id of the mouse event we want to replace.
-         * @param component The component to monitor mouse events for.
-         */
-        public AWTMouseListenerReplacer(MouseListener replacementListener, int eventReplacementId, JComponent component) {
-            this.eventReplacementId = eventReplacementId;
-            this.replacementListener = replacementListener;
-            this.component = component;
-        }
 
         /**
          * Makes the replacement listener active, intercepting AWTEvents.
@@ -426,6 +439,8 @@ public final class TableUtils {
                 }
             }
         }
+
+
     }
 
 

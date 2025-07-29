@@ -31,7 +31,11 @@
  */
 package net.byteseek.utils.collections;
 
-import java.util.*;
+import java.util.AbstractList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.List;
 
 /**
  * A List which provides efficient block operations for insert and remove of objects backed by an array.
@@ -69,7 +73,8 @@ public class BlockModifyArrayList<E> extends AbstractList<E> {
     public void add(final int index, final E element) {
         if (index == size) {
             add(element);
-        } else {
+        }
+        else {
             checkIndex(index);
             checkResize(1);
             // Shift the others along one:
@@ -100,12 +105,13 @@ public class BlockModifyArrayList<E> extends AbstractList<E> {
      * Inserts a list of elements at the given index.
      *
      * @param elements the list of elements to insert.
-     * @param index the index to insert them at.
+     * @param index    the index to insert them at.
      */
     public void addAll(final int index, final List<? extends E> elements) {
         if (index == size) {
             addAll(elements);
-        } else {
+        }
+        else {
             checkIndex(index);
             final int numToAdd = elements.size();
             checkResize(numToAdd);
@@ -168,18 +174,21 @@ public class BlockModifyArrayList<E> extends AbstractList<E> {
 
 
     //TODO: examine use of *inclusive* from and to.  most other interfaces use exclusive to.
+
     /**
      * Removes a block of elements between the from and to index (inclusive).
+     *
      * @param from the first index of the block to remove.
-     * @param to the last index of the block to remove (inclusive).
+     * @param to   the last index of the block to remove (inclusive).
      */
     public void remove(final int from, final int to) {
         checkIndex(from);
         checkToNotSmallerThanFrom(from, to);
-        if (to >= size -1) { // If we're removing everything up to or past the end, just set the size down.
+        if (to >= size - 1) { // If we're removing everything up to or past the end, just set the size down.
             Arrays.fill(elements, from, size, null);
             size = from;
-        } else { // got some stuff at the end we have to move over to cover the gap:
+        }
+        else { // got some stuff at the end we have to move over to cover the gap:
             final int rowAfterRemoved = to + 1;
             final int numToRemove = rowAfterRemoved - from;
             final int numToMove = size - rowAfterRemoved;
@@ -197,8 +206,8 @@ public class BlockModifyArrayList<E> extends AbstractList<E> {
      * If the range is bigger than the replacing list, then the rest of the array will be moved down to close the gap.
      * If the range is smaller than the replacing list, then the rest of the array will be moved up to make room.
      *
-     * @param from The starting index to replace elements
-     * @param to The ending index to replace elements (must be at least from).
+     * @param from      The starting index to replace elements
+     * @param to        The ending index to replace elements (must be at least from).
      * @param newValues A list of new values to overwrite the range with.
      */
     public void replace(final int from, final int to, final List<? extends E> newValues) {
@@ -219,9 +228,9 @@ public class BlockModifyArrayList<E> extends AbstractList<E> {
      * If the range is larger than the number of new values, the remaining elements will be shifted down to close the gap.
      * If the range is smaller, elements will be shifted up to make space for the new values.
      *
-     * @param from The starting index of the range to replace (inclusive).
-     * @param to The ending index of the range to replace (inclusive).
-     * @param newValues An Enumeration providing the new values to overwrite the range.
+     * @param from         The starting index of the range to replace (inclusive).
+     * @param to           The ending index of the range to replace (inclusive).
+     * @param newValues    An Enumeration providing the new values to overwrite the range.
      * @param numNewValues The number of new values to insert into the range.
      *                     The Enumeration must have at least this number of elements.
      */
@@ -245,7 +254,8 @@ public class BlockModifyArrayList<E> extends AbstractList<E> {
             if (safeTo < size - 1) { // If there are any elements after the range which are not being replaced, move them over.
                 System.arraycopy(localElements, safeTo + 1, localElements, safeTo + delta + 1, size - safeTo - 1);
             }
-        } else if (delta < 0) { // fewer new values than existing values - shift the elements after to over to fill the gap and null dangling ones.
+        }
+        else if (delta < 0) { // fewer new values than existing values - shift the elements after to over to fill the gap and null dangling ones.
             // Note: delta is negative here, so we add it in order to perform subtraction.
             if (safeTo < size - 1) { // If there are any elements after the range which are not being replaced, move them over.
                 System.arraycopy(localElements, safeTo + 1 + delta, localElements, safeTo + 1, size - safeTo - 1);
@@ -265,7 +275,8 @@ public class BlockModifyArrayList<E> extends AbstractList<E> {
                     return i;
                 }
             }
-        } else {
+        }
+        else {
             for (int i = 0; i < localSize; i++) {
                 if (localElements[i].equals(o)) {
                     return i;
@@ -280,13 +291,14 @@ public class BlockModifyArrayList<E> extends AbstractList<E> {
         final E[] localElements = elements;
         final int localSize = size;
         if (o == null) {
-            for (int i = localSize - 1; i >=0; i--) {
+            for (int i = localSize - 1; i >= 0; i--) {
                 if (localElements[i] == null) {
                     return i;
                 }
             }
-        } else {
-            for (int i = localSize - 1; i >=0; i--) {
+        }
+        else {
+            for (int i = localSize - 1; i >= 0; i--) {
                 if (localElements[i].equals(o)) {
                     return i;
                 }
@@ -309,6 +321,7 @@ public class BlockModifyArrayList<E> extends AbstractList<E> {
 
     /**
      * Checks the index is within bounds.
+     *
      * @param index the index to check.
      */
     private void checkIndex(final int index) {
@@ -319,6 +332,7 @@ public class BlockModifyArrayList<E> extends AbstractList<E> {
 
     /**
      * Checks whether the backing array needs to resize if we add more elements.
+     *
      * @param numToAdd then number of elements to add.
      */
     private void checkResize(final int numToAdd) {
@@ -341,6 +355,7 @@ public class BlockModifyArrayList<E> extends AbstractList<E> {
 
     /**
      * Returns the amount to grow to.  Grows faster initially, then slows down growth as we get a lot larger.
+     *
      * @return A new size for the array.
      */
     private int getGrowSize(final int numToAdd) {

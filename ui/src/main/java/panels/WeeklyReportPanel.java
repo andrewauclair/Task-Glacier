@@ -17,11 +17,17 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public class WeeklyReportPanel extends JPanel implements Dockable {
+    TableModel model = new TableModel();
+    WeeklyReportTreeTable newTable = new WeeklyReportTreeTable();
     private MainFrame mainFrame;
     @DockingProperty(name = "month", required = true)
     private int month;
@@ -29,157 +35,10 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
     private int day;
     @DockingProperty(name = "year", required = true)
     private int year;
-
     private String persistentID;
     private String titleText;
     private String tabText;
-
-    class Row {
-        TimeData.TimeCategory category;
-        TimeData.TimeCode code;
-        Double[] hours = new Double[7];
-        double total;
-    }
-
-    static class TotalRow {
-        TimeData.TimeCategory category;
-        Double[] hours = new Double[7];
-        double total;
-    }
-
-    private static class TableModel extends AbstractTableModel {
-        private List<Row> rows = new ArrayList<>();
-        private List<TotalRow> totals = new ArrayList<>();
-
-        String[] dates = new String[7];
-
-        public int getTotalRowStart() {
-            return rows.size();
-        }
-
-        public int getTotalColumnIndex() {
-            return 9;
-        }
-
-        @Override
-        public int getRowCount() {
-            return rows.size() + totals.size();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 10;
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            switch (column) {
-                case 0:
-                    return "Category";
-                case 1:
-                    return "Code";
-                case 9:
-                    return "Total";
-            }
-            return dates[column - 2];
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            if (columnIndex > 1) {
-                return double.class;
-            }
-            return String.class;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            if (rowIndex < rows.size()) {
-                Row row = rows.get(rowIndex);
-
-                switch (columnIndex) {
-                    case 0:
-                        return row.category.name;
-                    case 1:
-                        return row.code.name;
-                    case 9:
-                        return row.total;
-                }
-                return row.hours[columnIndex - 2];
-            }
-            else {
-                TotalRow totalRow = totals.get(rowIndex - rows.size());
-
-                switch (columnIndex) {
-                    case 0:
-                        return totalRow.category.name + " - Total";
-                    case 1:
-                        return null;
-                    case 9:
-                        return totalRow.total;
-                }
-                return totalRow.hours[columnIndex - 2];
-            }
-        }
-
-        public void clear() {
-            rows.clear();
-            totals.clear();
-        }
-
-        public void addRow(Row value) {
-            rows.add(value);
-
-            for (int i = 0; i < 7; i++) {
-                if (value.hours[i] != null) {
-                    value.total += value.hours[i];
-                }
-            }
-            // sort the rows to display the most time at the top
-            rows.sort(Comparator.comparingDouble(o -> ((Row) o).total).reversed());
-
-            Optional<TotalRow> totalOptional = totals.stream()
-                    .filter(totalRow -> totalRow.category.id == value.category.id)
-                    .findFirst();
-
-            if (totalOptional.isPresent()) {
-                for (int i = 0; i < 7; i++) {
-                    if (value.hours[i] == null) {
-                        continue;
-                    }
-                    if (totalOptional.get().hours[i] == null) {
-                        totalOptional.get().hours[i] = 0.0;
-                    }
-                    totalOptional.get().hours[i] += value.hours[i];
-                }
-                totalOptional.get().total += value.total;
-            }
-            else {
-                TotalRow total = new TotalRow();
-                total.category = value.category;
-                for (int i = 0; i < 7; i++) {
-                    if (value.hours[i] == null) {
-                        continue;
-                    }
-                    if (total.hours[i] == null) {
-                        total.hours[i] = 0.0;
-                    }
-                    total.hours[i] += value.hours[i];
-                }
-                total.total += value.total;
-                totals.add(total);
-            }
-
-            // sort the rows to display the most time at the top
-            totals.sort(Comparator.comparingDouble(o -> ((TotalRow) o).total).reversed());
-        }
-    }
-
     private WeeklyReport report = null;
-
-    TableModel model = new TableModel();
-
-    WeeklyReportTreeTable newTable = new WeeklyReportTreeTable();
 
     public WeeklyReportPanel(MainFrame mainFrame, LocalDate date) {
         this.mainFrame = mainFrame;
@@ -326,5 +185,145 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
     @Override
     public boolean isWrappableInScrollpane() {
         return false;
+    }
+
+    static class TotalRow {
+        TimeData.TimeCategory category;
+        Double[] hours = new Double[7];
+        double total;
+    }
+
+    private static class TableModel extends AbstractTableModel {
+        String[] dates = new String[7];
+        private List<Row> rows = new ArrayList<>();
+        private List<TotalRow> totals = new ArrayList<>();
+
+        public int getTotalRowStart() {
+            return rows.size();
+        }
+
+        public int getTotalColumnIndex() {
+            return 9;
+        }
+
+        @Override
+        public int getRowCount() {
+            return rows.size() + totals.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 10;
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            switch (column) {
+                case 0:
+                    return "Category";
+                case 1:
+                    return "Code";
+                case 9:
+                    return "Total";
+            }
+            return dates[column - 2];
+        }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            if (columnIndex > 1) {
+                return double.class;
+            }
+            return String.class;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            if (rowIndex < rows.size()) {
+                Row row = rows.get(rowIndex);
+
+                switch (columnIndex) {
+                    case 0:
+                        return row.category.name;
+                    case 1:
+                        return row.code.name;
+                    case 9:
+                        return row.total;
+                }
+                return row.hours[columnIndex - 2];
+            }
+            else {
+                TotalRow totalRow = totals.get(rowIndex - rows.size());
+
+                switch (columnIndex) {
+                    case 0:
+                        return totalRow.category.name + " - Total";
+                    case 1:
+                        return null;
+                    case 9:
+                        return totalRow.total;
+                }
+                return totalRow.hours[columnIndex - 2];
+            }
+        }
+
+        public void clear() {
+            rows.clear();
+            totals.clear();
+        }
+
+        public void addRow(Row value) {
+            rows.add(value);
+
+            for (int i = 0; i < 7; i++) {
+                if (value.hours[i] != null) {
+                    value.total += value.hours[i];
+                }
+            }
+            // sort the rows to display the most time at the top
+            rows.sort(Comparator.comparingDouble(o -> ((Row) o).total).reversed());
+
+            Optional<TotalRow> totalOptional = totals.stream()
+                    .filter(totalRow -> totalRow.category.id == value.category.id)
+                    .findFirst();
+
+            if (totalOptional.isPresent()) {
+                for (int i = 0; i < 7; i++) {
+                    if (value.hours[i] == null) {
+                        continue;
+                    }
+                    if (totalOptional.get().hours[i] == null) {
+                        totalOptional.get().hours[i] = 0.0;
+                    }
+                    totalOptional.get().hours[i] += value.hours[i];
+                }
+                totalOptional.get().total += value.total;
+            }
+            else {
+                TotalRow total = new TotalRow();
+                total.category = value.category;
+                for (int i = 0; i < 7; i++) {
+                    if (value.hours[i] == null) {
+                        continue;
+                    }
+                    if (total.hours[i] == null) {
+                        total.hours[i] = 0.0;
+                    }
+                    total.hours[i] += value.hours[i];
+                }
+                total.total += value.total;
+                totals.add(total);
+            }
+
+            // sort the rows to display the most time at the top
+            totals.sort(Comparator.comparingDouble(o -> ((TotalRow) o).total).reversed());
+        }
+    }
+
+    class Row {
+        TimeData.TimeCategory category;
+        TimeData.TimeCode code;
+        Double[] hours = new Double[7];
+        double total;
     }
 }

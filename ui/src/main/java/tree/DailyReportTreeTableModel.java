@@ -4,9 +4,6 @@ import data.Task;
 import data.TimeData;
 import net.byteseek.swing.treetable.TableUtils;
 import net.byteseek.swing.treetable.TreeTableModel;
-import net.byteseek.swing.treetable.TreeUtils;
-import org.jdesktop.swingx.treetable.DefaultMutableTreeTableNode;
-import org.jdesktop.swingx.treetable.MutableTreeTableNode;
 
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumnModel;
@@ -14,54 +11,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 
 public class DailyReportTreeTableModel extends TreeTableModel {
-    public static class CategoryNode extends DefaultMutableTreeNode {
-        TimeData.TimeCategory category;
-        TimeData.TimeCode code;
-        long minutes;
-
-        @Override
-        public void add(MutableTreeNode child) {
-            super.add(child);
-
-            // add minutes
-            if (((TaskNode) child).minutes != null) {
-                minutes += ((TaskNode) child).minutes;
-            }
-        }
-
-        @Override
-        public void remove(MutableTreeNode node) {
-            super.remove(node);
-
-            if (((TaskNode) node).minutes != null) {
-                minutes -= ((TaskNode) node).minutes;
-            }
-        }
-    }
-
-    public static class TaskNode extends DefaultMutableTreeNode {
-        Task task;
-        private Long minutes = null;
-
-        public void setMinutes(Long minutes) {
-            this.minutes = minutes;
-        }
-
-        public Long getMinutes() {
-            return minutes;
-        }
-    }
-
-    public static class TotalCategoryNode extends DefaultMutableTreeNode {
-        TimeData.TimeCategory category;
-        long minutes;
-    }
-
     public DailyReportTreeTableModel(TreeNode rootNode) {
         super(rootNode, false);
 
@@ -70,10 +23,12 @@ public class DailyReportTreeTableModel extends TreeTableModel {
             if (o1 instanceof TotalCategoryNode a) {
                 if (o2 instanceof TotalCategoryNode b) {
                     return Integer.compare(a.category.id, b.category.id);
-                } else {
+                }
+                else {
                     return 1;
                 }
-            } else if (o2 instanceof TotalCategoryNode) {
+            }
+            else if (o2 instanceof TotalCategoryNode) {
                 return -1;
             }
 
@@ -87,13 +42,15 @@ public class DailyReportTreeTableModel extends TreeTableModel {
 
             if (o1 instanceof CategoryNode categoryNode) {
                 minutes1 = categoryNode.minutes;
-            } else if (o1 instanceof TaskNode taskNode) {
+            }
+            else if (o1 instanceof TaskNode taskNode) {
                 minutes1 = taskNode.minutes == null ? 0 : taskNode.minutes;
             }
 
             if (o2 instanceof CategoryNode categoryNode) {
                 minutes2 = categoryNode.minutes;
-            } else if (o2 instanceof TaskNode taskNode) {
+            }
+            else if (o2 instanceof TaskNode taskNode) {
                 minutes2 = taskNode.minutes == null ? 0 : taskNode.minutes;
             }
 
@@ -165,5 +122,48 @@ public class DailyReportTreeTableModel extends TreeTableModel {
         result.addColumn(TableUtils.createColumn(0, "Description"));
         result.addColumn(TableUtils.createColumn(1, "Time"));
         return result;
+    }
+
+    public static class CategoryNode extends DefaultMutableTreeNode {
+        TimeData.TimeCategory category;
+        TimeData.TimeCode code;
+        long minutes;
+
+        @Override
+        public void add(MutableTreeNode child) {
+            super.add(child);
+
+            // add minutes
+            if (((TaskNode) child).minutes != null) {
+                minutes += ((TaskNode) child).minutes;
+            }
+        }
+
+        @Override
+        public void remove(MutableTreeNode node) {
+            super.remove(node);
+
+            if (((TaskNode) node).minutes != null) {
+                minutes -= ((TaskNode) node).minutes;
+            }
+        }
+    }
+
+    public static class TaskNode extends DefaultMutableTreeNode {
+        Task task;
+        private Long minutes = null;
+
+        public Long getMinutes() {
+            return minutes;
+        }
+
+        public void setMinutes(Long minutes) {
+            this.minutes = minutes;
+        }
+    }
+
+    public static class TotalCategoryNode extends DefaultMutableTreeNode {
+        TimeData.TimeCategory category;
+        long minutes;
     }
 }

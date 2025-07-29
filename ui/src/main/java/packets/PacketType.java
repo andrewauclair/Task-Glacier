@@ -52,10 +52,6 @@ public enum PacketType {
         this.value = value;
     }
 
-    public int value() {
-        return value;
-    }
-
     public static PacketType valueOf(int value) {
         for (PacketType packetType : values()) {
             if (packetType.value == value) {
@@ -63,5 +59,9 @@ public enum PacketType {
             }
         }
         return null;
+    }
+
+    public int value() {
+        return value;
     }
 }

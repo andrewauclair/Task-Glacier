@@ -13,22 +13,6 @@ import java.awt.event.KeyEvent;
 public class AddTask extends JDialog {
     public static AddTask openInstance = null;
 
-    public void failureResponse(String message) {
-        JOptionPane.showMessageDialog(this, message, "Failure", JOptionPane.ERROR_MESSAGE);
-    }
-
-    public void close() {
-        openInstance = null;
-        AddTask.this.dispose();
-    }
-
-    JPanel createFlow(String name, JComponent comp) {
-        JPanel panel = new JPanel(new FlowLayout());
-        panel.add(new JLabel(name));
-        panel.add(comp);
-        return panel;
-    }
-
     public AddTask(MainFrame mainFrame, Window parentWindow, int defaultParentID) {
         super(parentWindow);
         openInstance = this;
@@ -75,15 +59,15 @@ public class AddTask extends JDialog {
             }
         });
 
-        // TODO we'll have to add this to all components on the dialog
-        name.addKeyListener(new KeyAdapter() {
+        KeyAdapter enterAction = new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     add.doClick();
                 }
             }
-        });
+        };
+        name.addKeyListener(enterAction);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -111,5 +95,21 @@ public class AddTask extends JDialog {
 
         // center on the main frame
         setLocationRelativeTo(mainFrame);
+    }
+
+    public void failureResponse(String message) {
+        JOptionPane.showMessageDialog(this, message, "Failure", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public void close() {
+        openInstance = null;
+        AddTask.this.dispose();
+    }
+
+    JPanel createFlow(String name, JComponent comp) {
+        JPanel panel = new JPanel(new FlowLayout());
+        panel.add(new JLabel(name));
+        panel.add(comp);
+        return panel;
     }
 }

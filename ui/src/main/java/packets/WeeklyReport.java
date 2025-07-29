@@ -9,21 +9,9 @@ import java.io.IOException;
 import java.time.Instant;
 
 public class WeeklyReport implements Packet {
-    private int requestID;
-
     public DailyReportMessage.DailyReport[] reports = new DailyReportMessage.DailyReport[7];
-
+    private int requestID;
     private int size = 0;
-
-    @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
-    public PacketType type() {
-        return PacketType.WEEKLY_REPORT;
-    }
 
     public static WeeklyReport parse(DataInputStream input, int size) throws IOException {
         WeeklyReport message = new WeeklyReport();
@@ -33,8 +21,7 @@ public class WeeklyReport implements Packet {
         message.requestID = input.readInt();
         Instant reportTime = Instant.ofEpochMilli(input.readLong());
 
-        for (int i = 0; i < 7; i++)
-        {
+        for (int i = 0; i < 7; i++) {
             DailyReportMessage.DailyReport dailyReport = new DailyReportMessage.DailyReport();
             message.reports[i] = dailyReport;
 
@@ -86,6 +73,16 @@ public class WeeklyReport implements Packet {
         }
 
         return message;
+    }
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public PacketType type() {
+        return PacketType.WEEKLY_REPORT;
     }
 
     @Override

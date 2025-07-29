@@ -18,20 +18,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
 public class TasksList extends JPanel implements Dockable {
+    public JTextField search = new JTextField(20);
     @DockingProperty(name = "taskID", required = true)
     private int taskID = 0;
-
     @DockingProperty(name = "allTasks", required = true)
     private boolean allTasks = false;
-
     private String persistentID;
     private String titleText;
     private String tabText;
-
     private MainFrame mainFrame;
-
     private TaskTreeTable taskTable;
-    public JTextField search = new JTextField(20);
 
     public TasksList(MainFrame mainFrame) {
         allTasks = true;

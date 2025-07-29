@@ -23,59 +23,6 @@ class TimeEntry extends JPanel {
     TableModel model = new TableModel();
     JTable table = new JTable(model);
 
-    class Row {
-        TimeData.TimeCategory category;
-        TimeData.TimeCode code;
-        boolean inherited;
-
-        public Row(TimeData.TimeCategory category, TimeData.TimeCode code, boolean inherited) {
-            this.category = category;
-            this.code = code;
-            this.inherited = inherited;
-        }
-    }
-
-    class TableModel extends AbstractTableModel {
-        public List<Row> data = new ArrayList<>();
-
-        @Override
-        public int getRowCount() {
-            return data.size();
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            if (column == 0) {
-                return "Category";
-            } else if (column == 1) {
-                return "Code";
-            }
-            return "Inherited";
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            return String.class;
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 3;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            Row row = data.get(rowIndex);
-            if (columnIndex == 0) {
-                return row.category.name;
-            }
-            if (columnIndex == 1) {
-                return row.code.name;
-            }
-            return row.inherited;
-        }
-    }
-
     TimeEntry(TaskConfig taskConfig, MainFrame mainFrame, Task task) {
         setLayout(new GridBagLayout());
 
@@ -106,7 +53,8 @@ class TimeEntry extends JPanel {
                     inherited = true;
 
                     break;
-                } else {
+                }
+                else {
                     parent = mainFrame.getTaskModel().getTask(parent.parentID);
                 }
             }
@@ -187,7 +135,8 @@ class TimeEntry extends JPanel {
                     code.id = 0;
                     inherited = true;
                 }
-            } else {
+            }
+            else {
                 // try to find a code for the category in a parent
                 Task parent = mainFrame.getTaskModel().getTask(task.parentID);
 
@@ -201,7 +150,8 @@ class TimeEntry extends JPanel {
                         inherited = true;
 
                         break;
-                    } else {
+                    }
+                    else {
                         parent = mainFrame.getTaskModel().getTask(parent.parentID);
                     }
                 }
@@ -267,6 +217,60 @@ class TimeEntry extends JPanel {
             for (Row row : data) {
                 update.timeEntry.add(new TimeData.TimeEntry(row.category, row.code));
             }
+        }
+    }
+
+    class Row {
+        TimeData.TimeCategory category;
+        TimeData.TimeCode code;
+        boolean inherited;
+
+        public Row(TimeData.TimeCategory category, TimeData.TimeCode code, boolean inherited) {
+            this.category = category;
+            this.code = code;
+            this.inherited = inherited;
+        }
+    }
+
+    class TableModel extends AbstractTableModel {
+        public List<Row> data = new ArrayList<>();
+
+        @Override
+        public int getRowCount() {
+            return data.size();
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            if (column == 0) {
+                return "Category";
+            }
+            else if (column == 1) {
+                return "Code";
+            }
+            return "Inherited";
+        }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            return String.class;
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 3;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            Row row = data.get(rowIndex);
+            if (columnIndex == 0) {
+                return row.category.name;
+            }
+            if (columnIndex == 1) {
+                return row.code.name;
+            }
+            return row.inherited;
         }
     }
 }

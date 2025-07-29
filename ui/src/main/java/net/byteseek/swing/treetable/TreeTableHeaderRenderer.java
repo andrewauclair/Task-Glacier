@@ -159,6 +159,7 @@ public class TreeTableHeaderRenderer extends JLabel implements TableCellRenderer
 
     /**
      * Constructs a TreeTableHeaderRenderer given whether to display the column number or not.
+     *
      * @param showNumber whether to display the sort order number or not on sorted columns.
      */
     public TreeTableHeaderRenderer(final boolean showNumber) {
@@ -167,7 +168,8 @@ public class TreeTableHeaderRenderer extends JLabel implements TableCellRenderer
 
     /**
      * Constructs a TreeTableHeaderRenderer given whether to display the column number or not.
-     * @param showNumber whether to display the sort order number or not on sorted columns.
+     *
+     * @param showNumber   whether to display the sort order number or not on sorted columns.
      * @param boldOnSorted whether the column header should be bold when it is sorted.
      */
     public TreeTableHeaderRenderer(final boolean showNumber, final boolean boldOnSorted) {
@@ -198,7 +200,7 @@ public class TreeTableHeaderRenderer extends JLabel implements TableCellRenderer
             if (header != null) {
                 setForeground(header.getForeground());
                 setBackground(header.getBackground());
-                String displayText = value == null? "" : value.toString();
+                String displayText = value == null ? "" : value.toString();
                 setText(displayText);
                 setToolTipText(displayText);
                 setColumnSortedProperties(table, column);
@@ -224,9 +226,17 @@ public class TreeTableHeaderRenderer extends JLabel implements TableCellRenderer
         // just set it directly to avoid repeatedly nesting compound borders.
         if (border instanceof CompoundBorder && ((CompoundBorder) border).getInsideBorder() == sortIconBorder) {
             super.setBorder(border);
-        } else {  // Wrap the border in a CompoundBorder using the SortIconBorder inside to render sort icon and number.
+        }
+        else {  // Wrap the border in a CompoundBorder using the SortIconBorder inside to render sort icon and number.
             super.setBorder(new CompoundBorder(border, sortIconBorder));
         }
+    }
+
+    /**
+     * @return whether the column headers should be in a bold font if they are sorted.
+     */
+    public boolean getBoldOnSorted() {
+        return boldOnSorted;
     }
 
     /**
@@ -239,13 +249,6 @@ public class TreeTableHeaderRenderer extends JLabel implements TableCellRenderer
     }
 
     /**
-     * @return whether the column headers should be in a bold font if they are sorted.
-     */
-    public boolean getBoldOnSorted() {
-        return boldOnSorted;
-    }
-
-    /**
      * @return Whether the sort order number of the column should be displayed.
      */
     public boolean getShowNumber() {
@@ -254,19 +257,11 @@ public class TreeTableHeaderRenderer extends JLabel implements TableCellRenderer
 
     /**
      * Sets whether the sort order number of the column should be displayed.
+     *
      * @param showNumber whether the sort order number of the column should be displayed.
      */
     public void setShowNumber(final boolean showNumber) {
         this.showNumber = showNumber;
-    }
-
-    /**
-     * Sets the icon for an ascending sort.
-     * @param sortAscendingIcon the icon for an ascending sort.
-     */
-    public void setSortAscendingIcon(final Icon sortAscendingIcon) {
-        this.sortAscendingIcon = sortAscendingIcon;
-        setMaxIconWidth();
     }
 
     /**
@@ -277,11 +272,12 @@ public class TreeTableHeaderRenderer extends JLabel implements TableCellRenderer
     }
 
     /**
-     * Sets the icon for a descending sort.
-     * @param sortDescendingIcon the icon for a descending sort.
+     * Sets the icon for an ascending sort.
+     *
+     * @param sortAscendingIcon the icon for an ascending sort.
      */
-    public void setSortDescendingIcon(final Icon sortDescendingIcon) {
-        this.sortDescendingIcon = sortDescendingIcon;
+    public void setSortAscendingIcon(final Icon sortAscendingIcon) {
+        this.sortAscendingIcon = sortAscendingIcon;
         setMaxIconWidth();
     }
 
@@ -293,7 +289,18 @@ public class TreeTableHeaderRenderer extends JLabel implements TableCellRenderer
     }
 
     /**
+     * Sets the icon for a descending sort.
+     *
+     * @param sortDescendingIcon the icon for a descending sort.
+     */
+    public void setSortDescendingIcon(final Icon sortDescendingIcon) {
+        this.sortDescendingIcon = sortDescendingIcon;
+        setMaxIconWidth();
+    }
+
+    /**
      * Mostly make this available for test purposes.
+     *
      * @return the inner border which is responsible for rendering the ascending / descending icons and column number.
      */
     protected Border getSortIconBorder() {
@@ -302,6 +309,7 @@ public class TreeTableHeaderRenderer extends JLabel implements TableCellRenderer
 
     /**
      * Mostly make this available for test purposes.
+     *
      * @return the JLabel that paints the icon and number.
      */
     protected JLabel getSortIconPainter() {
@@ -312,8 +320,8 @@ public class TreeTableHeaderRenderer extends JLabel implements TableCellRenderer
      * Sets the maximum icon width for the descending and ascending icons.
      */
     protected final void setMaxIconWidth() {
-        int descendingWidth = sortDescendingIcon == null? 0 : sortDescendingIcon.getIconWidth();
-        int ascendingWidth = sortAscendingIcon == null? 0 : sortAscendingIcon.getIconWidth();
+        int descendingWidth = sortDescendingIcon == null ? 0 : sortDescendingIcon.getIconWidth();
+        int ascendingWidth = sortAscendingIcon == null ? 0 : sortAscendingIcon.getIconWidth();
         maxIconWidth = Math.max(descendingWidth, ascendingWidth);
     }
 
@@ -325,7 +333,7 @@ public class TreeTableHeaderRenderer extends JLabel implements TableCellRenderer
     /**
      * Sets the properties for a column, depending on whether it is sorted or not.
      *
-     * @param table The table we are rendering for.
+     * @param table  The table we are rendering for.
      * @param column The column we need to set the sort properties for.
      */
     protected void setColumnSortedProperties(final JTable table, final int column) {
@@ -335,14 +343,16 @@ public class TreeTableHeaderRenderer extends JLabel implements TableCellRenderer
         sortOrder = sortKeyIndex >= 0 ? sortKeys.get(sortKeyIndex).getSortOrder() : SortOrder.UNSORTED;
         if (sortOrder == SortOrder.UNSORTED) {
             setUnsortedColumnProperties(table);
-        } else {
+        }
+        else {
             setSortedColumnProperties(table, sortKeyIndex);
         }
     }
 
     /**
      * Sets the column properties for a sorted column.
-     * @param table The table for the the unsorted column.
+     *
+     * @param table           The table for the the unsorted column.
      * @param sortOrderNumber The sort number of the column.
      */
     protected void setSortedColumnProperties(final JTable table, final int sortOrderNumber) {
@@ -353,6 +363,7 @@ public class TreeTableHeaderRenderer extends JLabel implements TableCellRenderer
 
     /**
      * Sets the column properties if the column is not sorted.
+     *
      * @param table The table for the the unsorted column.
      */
     protected void setUnsortedColumnProperties(final JTable table) {
@@ -387,7 +398,7 @@ public class TreeTableHeaderRenderer extends JLabel implements TableCellRenderer
         if (!headerFont.equals(cachedHeaderFont)) {
             cachedHeaderFont = headerFont;
             boldHeaderFont = headerFont.isBold() ? headerFont
-                                                 : headerFont.deriveFont(headerFont.getStyle() | Font.BOLD);
+                    : headerFont.deriveFont(headerFont.getStyle() | Font.BOLD);
         }
     }
 
@@ -403,7 +414,8 @@ public class TreeTableHeaderRenderer extends JLabel implements TableCellRenderer
             if (sortOrderNumber >= 0 && sortOrder != SortOrder.UNSORTED) {
                 if (showNumber) {
                     setNumber(g);
-                } else {
+                }
+                else {
                     setNoNumber();
                 }
                 final JLabel labelToPaint = paintLabel;

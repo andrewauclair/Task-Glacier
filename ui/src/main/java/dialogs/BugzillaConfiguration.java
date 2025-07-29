@@ -19,18 +19,145 @@ public class BugzillaConfiguration extends JDialog {
     private JButton instanceRemove = new JButton("-");
 
     private JButton save = new JButton("Save");
-
-    class BugzillaInstance {
-        int instanceID;
-        String name;
-        JTextField URL = new JTextField();
-        JTextField apiKey = new JTextField();
-        JTextField username = new JTextField();
-        JTextField rootTask = new JTextField();
-        DefaultTableModel groupByModel = new DefaultTableModel(new Object[] { "Group By" }, 0);
-        DefaultTableModel labelModel = new DefaultTableModel(new Object[] { "Label", "Bugzilla Field"}, 0);
-    }
     private Map<String, BugzillaInstance> instances = new HashMap<>();
+
+    public BugzillaConfiguration(MainFrame mainFrame) {
+        setLayout(new GridBagLayout());
+        setTitle("Bugzilla Configuration");
+        setModal(true);
+
+        JSplitPane split = new JSplitPane();
+        split.setLeftComponent(buildInstances());
+
+        CardLayout layout = new CardLayout();
+        JPanel stack = new JPanel(layout);
+
+        stack.add(createBlankPanel(), "blank");
+
+        split.setRightComponent(stack);
+
+        instanceAdd.addActionListener(e -> {
+            String name = JOptionPane.showInputDialog(this, "New Bugzilla Instance Name");
+
+            BugzillaInstance instance = new BugzillaInstance();
+            instances.put(name, instance);
+
+            JPanel instancePanel = createInstance(name, instance);
+
+            stack.add(instancePanel, name);
+
+            instanceModel.addRow(new String[]{name});
+            instanceModel.fireTableRowsInserted(instanceModel.getRowCount() - 1, instanceModel.getRowCount() - 1);
+
+            instanceTable.getSelectionModel().setSelectionInterval(instanceModel.getRowCount() - 1, instanceModel.getRowCount() - 1);
+        });
+
+        instanceTable.getSelectionModel().addListSelectionListener(e -> {
+            instanceRemove.setEnabled(instanceTable.getSelectedRow() != -1);
+
+            String name = instanceTable.getSelectedRow() != -1 ? (String) instanceModel.getValueAt(instanceTable.getSelectedRow(), 0) : "blank";
+
+            layout.show(stack, name);
+        });
+
+        instanceRemove.setEnabled(false);
+
+        instanceRemove.addActionListener(e -> {
+            if (instanceTable.getSelectedRow() != -1) {
+                String name = (String) instanceModel.getValueAt(instanceTable.getSelectedRow(), 0);
+
+                instanceModel.removeRow(instanceTable.getSelectedRow());
+                instanceModel.fireTableRowsDeleted(instanceTable.getSelectedRow(), instanceTable.getSelectedRow());
+
+                instances.remove(name);
+
+                layout.show(stack, "blank");
+            }
+        });
+
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+
+        add(split, gbc);
+
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.SOUTHEAST;
+        gbc.gridy++;
+
+        add(save, gbc);
+
+        save.addActionListener(e -> {
+            for (BugzillaInstance instance : instances.values()) {
+                BugzillaInfo info = new BugzillaInfo(instance.instanceID, instance.name, instance.URL.getText(), instance.apiKey.getText(), instance.username.getText());
+
+                for (int i = 0; i < instance.groupByModel.getRowCount(); i++) {
+                    info.groupTasksBy.add((String) instance.groupByModel.getValueAt(i, 0));
+                }
+
+                info.setRootTaskID(Integer.parseInt(instance.rootTask.getText()));
+                Map<String, String> labelToField = new HashMap<>();
+                for (int i = 0; i < instance.labelModel.getRowCount(); i++) {
+                    labelToField.put((String) instance.labelModel.getValueAt(i, 0), (String) instance.labelModel.getValueAt(i, 1));
+                }
+                info.setLabelToField(labelToField);
+                mainFrame.getConnection().sendPacket(info);
+            }
+
+            BugzillaConfiguration.this.dispose();
+        });
+
+        for (BugzillaInfo info : MainFrame.bugzillaInfo.values()) {
+            BugzillaInstance instance = new BugzillaInstance();
+            instance.name = info.name;
+            instance.URL.setText(info.url);
+            instance.apiKey.setText(info.apiKey);
+            instance.username.setText(info.username);
+            instance.rootTask.setText(String.valueOf(info.rootTaskID));
+
+            instances.put(info.name, instance);
+
+            stack.add(createInstance(info.name, instance), info.name);
+
+            instanceModel.addRow(new Object[]{info.name});
+            instanceModel.fireTableRowsInserted(instanceModel.getRowCount() - 1, instanceModel.getRowCount() - 1);
+
+            if (instanceModel.getRowCount() == 1) {
+                instanceTable.getSelectionModel().setSelectionInterval(instanceModel.getRowCount() - 1, instanceModel.getRowCount() - 1);
+            }
+
+            instance.groupByModel.setRowCount(0);
+            instance.groupByModel.fireTableDataChanged();
+
+            for (String groupBy : info.groupTasksBy) {
+                instance.groupByModel.addRow(new Object[]{groupBy});
+                instance.groupByModel.fireTableRowsInserted(instance.groupByModel.getRowCount() - 1, instance.groupByModel.getRowCount() - 1);
+            }
+
+            instance.labelModel.setRowCount(0);
+            instance.labelModel.fireTableDataChanged();
+
+            info.labelToField.forEach((label, field) -> {
+                instance.labelModel.addRow(new Object[]{label, field});
+                instance.labelModel.fireTableRowsInserted(instance.labelModel.getRowCount() - 1, instance.labelModel.getRowCount() - 1);
+            });
+        }
+
+
+        pack();
+
+        setSize(400, 300);
+
+        // center on the main frame
+        setLocationRelativeTo(mainFrame);
+    }
 
     private JPanel buildInstances() {
 
@@ -110,17 +237,17 @@ public class BugzillaConfiguration extends JDialog {
         // configure labels
         JTable groupByTable = new JTable(instance.groupByModel);
 
-        instance.groupByModel.addRow(new Object[] { "target_milestone" });
+        instance.groupByModel.addRow(new Object[]{"target_milestone"});
 
         JTable labelTable = new JTable(instance.labelModel);
         labelTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        instance.labelModel.addRow(new Object[] { "Priority", "priority" });
-        instance.labelModel.addRow(new Object[] { "Status", "tray"});
-        instance.labelModel.addRow(new Object[] { "Resolution", "resolution" });
-        instance.labelModel.addRow(new Object[] { "Severity", "severity" });
-        instance.labelModel.addRow(new Object[] { "Target", "target_milestone" });
-        instance.labelModel.addRow(new Object[] { "Component", "component" });
+        instance.labelModel.addRow(new Object[]{"Priority", "priority"});
+        instance.labelModel.addRow(new Object[]{"Status", "tray"});
+        instance.labelModel.addRow(new Object[]{"Resolution", "resolution"});
+        instance.labelModel.addRow(new Object[]{"Severity", "severity"});
+        instance.labelModel.addRow(new Object[]{"Target", "target_milestone"});
+        instance.labelModel.addRow(new Object[]{"Component", "component"});
 
         JButton groupByAdd = new JButton("+");
         JButton groupByRemove = new JButton("-");
@@ -141,7 +268,7 @@ public class BugzillaConfiguration extends JDialog {
         groupByAdd.addActionListener(e -> {
             String newGroupBy = JOptionPane.showInputDialog(this, "New Group By");
 
-            instance.groupByModel.addRow(new Object[] { newGroupBy });
+            instance.groupByModel.addRow(new Object[]{newGroupBy});
             instance.groupByModel.fireTableRowsInserted(instance.groupByModel.getRowCount() - 1, instance.groupByModel.getRowCount() - 1);
         });
 
@@ -245,142 +372,14 @@ public class BugzillaConfiguration extends JDialog {
         return panel;
     }
 
-    public BugzillaConfiguration(MainFrame mainFrame) {
-        setLayout(new GridBagLayout());
-        setTitle("Bugzilla Configuration");
-        setModal(true);
-
-        JSplitPane split = new JSplitPane();
-        split.setLeftComponent(buildInstances());
-
-        CardLayout layout = new CardLayout();
-        JPanel stack = new JPanel(layout);
-
-        stack.add(createBlankPanel(), "blank");
-
-        split.setRightComponent(stack);
-
-        instanceAdd.addActionListener(e -> {
-            String name = JOptionPane.showInputDialog(this, "New Bugzilla Instance Name");
-
-            BugzillaInstance instance = new BugzillaInstance();
-            instances.put(name, instance);
-
-            JPanel instancePanel = createInstance(name, instance);
-
-            stack.add(instancePanel, name);
-
-            instanceModel.addRow(new String[] { name });
-            instanceModel.fireTableRowsInserted(instanceModel.getRowCount() - 1, instanceModel.getRowCount() - 1);
-
-            instanceTable.getSelectionModel().setSelectionInterval(instanceModel.getRowCount() - 1, instanceModel.getRowCount() - 1);
-        });
-
-        instanceTable.getSelectionModel().addListSelectionListener(e -> {
-            instanceRemove.setEnabled(instanceTable.getSelectedRow() != -1);
-
-            String name = instanceTable.getSelectedRow() != -1 ? (String) instanceModel.getValueAt(instanceTable.getSelectedRow(), 0) : "blank";
-
-            layout.show(stack, name);
-        });
-
-        instanceRemove.setEnabled(false);
-
-        instanceRemove.addActionListener(e -> {
-            if (instanceTable.getSelectedRow() != -1) {
-                String name = (String) instanceModel.getValueAt(instanceTable.getSelectedRow(), 0);
-
-                instanceModel.removeRow(instanceTable.getSelectedRow());
-                instanceModel.fireTableRowsDeleted(instanceTable.getSelectedRow(), instanceTable.getSelectedRow());
-
-                instances.remove(name);
-
-                layout.show(stack, "blank");
-            }
-        });
-
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-
-        add(split, gbc);
-
-        gbc.weightx = 0;
-        gbc.weighty = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.SOUTHEAST;
-        gbc.gridy++;
-
-        add(save, gbc);
-
-        save.addActionListener(e -> {
-            for (BugzillaInstance instance : instances.values()) {
-                BugzillaInfo info = new BugzillaInfo(instance.instanceID, instance.name, instance.URL.getText(), instance.apiKey.getText(), instance.username.getText());
-
-                for (int i = 0; i < instance.groupByModel.getRowCount(); i++) {
-                    info.groupTasksBy.add((String) instance.groupByModel.getValueAt(i, 0));
-                }
-
-                info.setRootTaskID(Integer.parseInt(instance.rootTask.getText()));
-                Map<String, String> labelToField = new HashMap<>();
-                for (int i = 0; i < instance.labelModel.getRowCount(); i++) {
-                    labelToField.put((String) instance.labelModel.getValueAt(i, 0), (String) instance.labelModel.getValueAt(i, 1));
-                }
-                info.setLabelToField(labelToField);
-                mainFrame.getConnection().sendPacket(info);
-            }
-
-            BugzillaConfiguration.this.dispose();
-        });
-
-        for (BugzillaInfo info : MainFrame.bugzillaInfo.values()) {
-            BugzillaInstance instance = new BugzillaInstance();
-            instance.name = info.name;
-            instance.URL.setText(info.url);
-            instance.apiKey.setText(info.apiKey);
-            instance.username.setText(info.username);
-            instance.rootTask.setText(String.valueOf(info.rootTaskID));
-
-            instances.put(info.name, instance);
-
-            stack.add(createInstance(info.name, instance), info.name);
-
-            instanceModel.addRow(new Object[] { info.name });
-            instanceModel.fireTableRowsInserted(instanceModel.getRowCount() - 1, instanceModel.getRowCount() - 1);
-
-            if (instanceModel.getRowCount() == 1) {
-                instanceTable.getSelectionModel().setSelectionInterval(instanceModel.getRowCount() - 1, instanceModel.getRowCount() - 1);
-            }
-
-            instance.groupByModel.setRowCount(0);
-            instance.groupByModel.fireTableDataChanged();
-
-            for (String groupBy : info.groupTasksBy) {
-                instance.groupByModel.addRow(new Object[] { groupBy });
-                instance.groupByModel.fireTableRowsInserted(instance.groupByModel.getRowCount() - 1, instance.groupByModel.getRowCount() - 1);
-            }
-
-            instance.labelModel.setRowCount(0);
-            instance.labelModel.fireTableDataChanged();
-
-            info.labelToField.forEach((label, field) -> {
-                instance.labelModel.addRow(new Object[] { label, field });
-                instance.labelModel.fireTableRowsInserted(instance.labelModel.getRowCount() - 1, instance.labelModel.getRowCount() - 1);
-            });
-        }
-
-
-
-        pack();
-
-        setSize(400, 300);
-
-        // center on the main frame
-        setLocationRelativeTo(mainFrame);
+    class BugzillaInstance {
+        int instanceID;
+        String name;
+        JTextField URL = new JTextField();
+        JTextField apiKey = new JTextField();
+        JTextField username = new JTextField();
+        JTextField rootTask = new JTextField();
+        DefaultTableModel groupByModel = new DefaultTableModel(new Object[]{"Group By"}, 0);
+        DefaultTableModel labelModel = new DefaultTableModel(new Object[]{"Label", "Bugzilla Field"}, 0);
     }
 }

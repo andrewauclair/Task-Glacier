@@ -8,7 +8,12 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.util.Objects;
 
@@ -54,18 +59,6 @@ public class SystemTrayDisplay extends JFrame {
             System.out.println("Mouse entered");
         }
     };
-
-    private static boolean isModalDialogShowing()
-    {
-        Window[] windows = Window.getWindows();
-        if( windows != null ) { // don't rely on current implementation, which at least returns [0].
-            for( Window w : windows ) {
-                if( w.isShowing() && w instanceof Dialog && ((Dialog)w).isModal() )
-                    return true;
-            }
-        }
-        return false;
-    }
 
     public SystemTrayDisplay(MainFrame mainFrame, TrayIcon trayIcon) {
         this.trayIcon = trayIcon;
@@ -206,6 +199,18 @@ public class SystemTrayDisplay extends JFrame {
                 updateFilter(layout, stack);
             }
         });
+    }
+
+    private static boolean isModalDialogShowing() {
+        Window[] windows = Window.getWindows();
+        if (windows != null) { // don't rely on current implementation, which at least returns [0].
+            for (Window w : windows) {
+                if (w.isShowing() && w instanceof Dialog && ((Dialog) w).isModal()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void updateFilter(CardLayout layout, JPanel stack) {

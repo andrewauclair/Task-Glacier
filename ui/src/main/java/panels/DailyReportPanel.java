@@ -15,6 +15,8 @@ import java.awt.*;
 import java.time.LocalDate;
 
 public class DailyReportPanel extends JPanel implements Dockable {
+    JLabel date = new JLabel();
+    DailyReportTreeTable newTable = new DailyReportTreeTable();
     private MainFrame mainFrame;
     @DockingProperty(name = "month", required = true)
     private int month;
@@ -22,16 +24,10 @@ public class DailyReportPanel extends JPanel implements Dockable {
     private int day;
     @DockingProperty(name = "year", required = true)
     private int year;
-
     private DailyReportMessage.DailyReport report = null;
-
     private String persistentID;
     private String titleText;
     private String tabText;
-
-    JLabel date = new JLabel();
-
-    DailyReportTreeTable newTable = new DailyReportTreeTable();
 
     public DailyReportPanel(MainFrame mainFrame, LocalDate date) {
         this.mainFrame = mainFrame;

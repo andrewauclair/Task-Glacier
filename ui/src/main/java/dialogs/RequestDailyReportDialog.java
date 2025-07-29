@@ -31,9 +31,9 @@ public class RequestDailyReportDialog extends JDialog {
 
         send.addActionListener(e -> {
             LocalDate localDate = picker.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            int year  = localDate.getYear();
+            int year = localDate.getYear();
             int month = localDate.getMonthValue();
-            int day   = localDate.getDayOfMonth();
+            int day = localDate.getDayOfMonth();
 
             RequestDailyReport request = new RequestDailyReport();
             request.requestID = RequestID.nextRequestID();

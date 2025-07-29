@@ -13,12 +13,11 @@ import javax.swing.tree.TreeNode;
 import java.awt.*;
 
 public class WeeklyReportTreeTable extends JTable {
+    private final ReportBuilder reportBuilder;
     private MainFrame mainFrame;
     private DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
     private TreeTableModel treeTableModel;
     private DefaultTreeModel treeModel;
-
-    private final ReportBuilder reportBuilder;
 
     public WeeklyReportTreeTable() {
         treeTableModel = createTreeTableModel(rootNode);
