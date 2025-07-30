@@ -137,6 +137,14 @@ class Sessions extends JPanel {
 
             }
         });
+
+        remove.addActionListener(e -> {
+            TaskInfo.Session session = sessionModel.data.get(sessionTable.getSelectedRow());
+
+            TimeData.TimeEntry timeEntry = session.timeEntry.get(timeEntryTable.getSelectedRow());
+
+            timeEntry.category = task.
+        });
     }
 
     public void save(Task task, UpdateTask update) {
