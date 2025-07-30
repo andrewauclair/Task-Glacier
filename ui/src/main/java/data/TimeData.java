@@ -103,8 +103,8 @@ public class TimeData {
     }
 
     public static class TimeEntry {
-        public TimeCategory category;
-        public TimeCode code;
+        public final TimeCategory category;
+        public final TimeCode code;
 
         public TimeEntry(TimeCategory category, TimeCode code) {
             this.category = category;

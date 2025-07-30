@@ -5,10 +5,14 @@ import java.awt.*;
 
 public class LabeledComponent extends JPanel {
     public LabeledComponent(String label, JComponent component) {
+        this(label, component, GridBagConstraints.CENTER);
+    }
+
+    public LabeledComponent(String label, JComponent component, int anchor) {
         super(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.anchor = anchor;
         gbc.insets = new Insets(0, 0, 0, 0);
         gbc.gridx = 0;
         gbc.gridy = 0;

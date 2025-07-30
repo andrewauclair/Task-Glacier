@@ -38,7 +38,6 @@ class TimeEntry extends JPanel {
 
             TimeData.TimeCategory category = existingRow.category;
             TimeData.TimeCode code = null;
-            boolean inherited = false;
 
             // try to find a code for the category in a parent
             Task parent = mainFrame.getTaskModel().getTask(task.parentID);
@@ -50,8 +49,6 @@ class TimeEntry extends JPanel {
 
                 if (parentEntry.isPresent()) {
                     code = parentEntry.get().code;
-                    inherited = true;
-
                     break;
                 }
                 else {
@@ -64,10 +61,9 @@ class TimeEntry extends JPanel {
                 code = new TimeData.TimeCode();
                 code.name = "Unknown";
                 code.id = 0;
-                inherited = true;
             }
 
-            model.data.add(new Row(category, code, inherited));
+            model.data.add(new Row(category, code, true));
             model.fireTableRowsInserted(model.data.size() - 1, model.data.size() - 1);
         });
 

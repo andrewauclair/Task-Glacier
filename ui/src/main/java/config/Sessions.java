@@ -14,6 +14,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static taskglacier.MainFrame.mainFrame;
 
@@ -25,10 +26,28 @@ class Sessions extends JPanel {
     JButton add = new JButton("+");
     JButton remove = new JButton("-");
 
+    private JPanel createTimeEntryButtonPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        panel.add(add, gbc);
+        gbc.gridy++;
+        panel.add(remove, gbc);
+        gbc.gridy++;
+
+        return panel;
+    }
+
     Sessions(Window parent, Task task) {
         setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
@@ -36,13 +55,15 @@ class Sessions extends JPanel {
         gbc.fill = GridBagConstraints.BOTH;
 
         JPanel right = new JPanel(new GridBagLayout());
-        gbc.gridheight = 2;
         right.add(new JScrollPane(timeEntryTable), gbc);
         gbc.gridx++;
         gbc.gridheight = 1;
-        right.add(add, gbc);
-        gbc.gridy++;
-        right.add(remove, gbc);
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+
+        right.add(createTimeEntryButtonPanel(), gbc);
+
+        gbc.weighty = 0;
 
         add.setEnabled(false);
         remove.setEnabled(false);
@@ -75,10 +96,11 @@ class Sessions extends JPanel {
 
             }
         });
+
         // table of sessions, of which has a table of time entries?
         // start time, stop time, time entry
         for (TaskInfo.Session session : task.sessions) {
-            sessionModel.data.add(session);
+            sessionModel.data.add(new TaskInfo.Session(session));
             sessionModel.fireTableRowsInserted(sessionModel.data.size() - 1, sessionModel.data.size() - 1);
         }
 
@@ -112,29 +134,29 @@ class Sessions extends JPanel {
 
                 boolean found = false;
 
+                int row = 0;
+                int sessionRow = 0;
+
                 for (TimeData.TimeEntry timeEntry : session.timeEntry) {
                     if (timeEntry.category.equals(entry.category)) {
-                        timeEntry.code = entry.code;
+                        row = timeEntryModel.data.indexOf(timeEntry);
+                        sessionRow = session.timeEntry.indexOf(timeEntry);
                         found = true;
+
                         break;
                     }
                 }
 
                 if (!found) {
                     session.timeEntry.add(entry);
+                    timeEntryModel.data.add(entry);
+                    timeEntryModel.fireTableRowsInserted(timeEntryModel.data.size() - 1, timeEntryModel.data.size() - 1);
                 }
-
-                sessionModel.fireTableCellUpdated(sessionTable.getSelectedRow(), sessionTable.getSelectedRow());
-
-                boolean hasValidCategory = session.timeEntry.stream()
-                        .anyMatch(timeEntry -> timeEntry.category.id != 0);
-
-                // remove any unknown categories
-                if (hasValidCategory) {
-                    session.timeEntry.removeIf(timeEntry -> timeEntry.category.id == 0);
-                    sessionModel.fireTableDataChanged();
+                else {
+                    timeEntryModel.data.set(row, entry);
+                    session.timeEntry.set(sessionRow, entry);
+                    timeEntryModel.fireTableRowsUpdated(row, row);
                 }
-
             }
         });
 
@@ -143,7 +165,46 @@ class Sessions extends JPanel {
 
             TimeData.TimeEntry timeEntry = session.timeEntry.get(timeEntryTable.getSelectedRow());
 
-            timeEntry.category = task.
+            TimeData.TimeCode code = null;
+
+            for (TimeData.TimeEntry entry : task.timeEntry) {
+                if (entry.category.equals(timeEntry.category)) {
+                    code = entry.code;
+                    break;
+                }
+            }
+
+            if (code == null) {
+                Task parentTask = mainFrame.getTaskModel().getTask(task.parentID);
+
+                while (parentTask != null) {
+                    Optional<TimeData.TimeEntry> parentEntry = parentTask.timeEntry.stream()
+                            .filter(parentTimeEntry -> parentTimeEntry.category.equals(timeEntry.category))
+                            .findFirst();
+
+                    if (parentEntry.isPresent()) {
+                        code = parentEntry.get().code;
+
+                        break;
+                    }
+                    else {
+                        parentTask = mainFrame.getTaskModel().getTask(parentTask.parentID);
+                    }
+                }
+
+                // if we didn't find a code, show unknown
+                if (parentTask == null) {
+                    code = new TimeData.TimeCode();
+                    code.name = "Unknown";
+                    code.id = 0;
+                }
+            }
+
+            TimeData.TimeEntry newEntry = new TimeData.TimeEntry(timeEntry.category, code);
+
+            session.timeEntry.set(timeEntryTable.getSelectedRow(), newEntry);
+
+            timeEntryModel.fireTableRowsUpdated(timeEntryTable.getSelectedRow(), timeEntryTable.getSelectedRow());
         });
     }
 

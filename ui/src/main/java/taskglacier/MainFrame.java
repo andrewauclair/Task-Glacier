@@ -45,12 +45,12 @@ public class MainFrame extends JFrame {
     public static MainFrame mainFrame = null;
     ImageIcon appIcon16 = new ImageIcon(Objects.requireNonNull(System.getenv("TASK_GLACIER_DEV_INSTANCE") != null ? getClass().getResource("/work-in-progress (1).png") : getClass().getResource("/app-icon-16.png")));
     TrayIcon trayIcon = new TrayIcon(appIcon16.getImage(), "");
-    private SystemTrayDisplay systemTrayDisplay = new SystemTrayDisplay(this, trayIcon);
     TimeData timeData = new TimeData();
     private Thread listen;
     private Socket socket;
     private ServerConnection connection = null;
     private TaskModel taskModel = new TaskModel();
+    private SystemTrayDisplay systemTrayDisplay = new SystemTrayDisplay(this, trayIcon);
 
     public MainFrame() throws IOException {
         mainFrame = this;

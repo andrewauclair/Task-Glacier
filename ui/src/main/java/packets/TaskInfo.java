@@ -9,6 +9,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,21 +58,15 @@ public class TaskInfo implements Packet {
         int timesCount = input.readInt();// number of times
 
         for (int i = 0; i < timesCount; i++) {
-            Session time = new Session();
 
-            time.startTime = Instant.ofEpochMilli(input.readLong()); // start time
+
+            Instant startTime = Instant.ofEpochMilli(input.readLong()); // start time
             boolean stopPresent = input.readByte() != 0;// stop present
 
             Instant stopTime = Instant.ofEpochMilli(input.readLong()); // stop time
 
-            if (stopPresent) {
-                time.stopTime = Optional.ofNullable(stopTime);
-            }
-            else {
-                time.stopTime = Optional.empty();
-            }
-
             int timeEntryCount = input.readInt();
+            List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
 
             for (int j = 0; j < timeEntryCount; j++) {
                 TimeData.TimeCategory category = MainFrame.mainFrame.getTimeData().findTimeCategory(input.readInt());
@@ -88,8 +83,10 @@ public class TaskInfo implements Packet {
                     code.name = "Unknown";
                 }
 
-                time.timeEntry.add(new TimeData.TimeEntry(category, code));
+                timeEntry.add(new TimeData.TimeEntry(category, code));
             }
+
+            Session time = new Session(startTime, stopPresent ? Optional.ofNullable(stopTime) : Optional.empty(), timeEntry);
             info.sessions.add(time);
         }
 
@@ -131,6 +128,19 @@ public class TaskInfo implements Packet {
     public static class Session {
         public Instant startTime;
         public Optional<Instant> stopTime;
-        public List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
+        public List<TimeData.TimeEntry> timeEntry;
+
+        public Session() {
+        }
+
+        public Session(Session session) {
+            this(session.startTime, session.stopTime, session.timeEntry);
+        }
+
+        public Session(Instant startTime, Optional<Instant> stopTime, List<TimeData.TimeEntry> timeEntry) {
+            this.startTime = startTime;
+            this.stopTime = stopTime;
+            this.timeEntry = new ArrayList<>(timeEntry);
+        }
     }
 }

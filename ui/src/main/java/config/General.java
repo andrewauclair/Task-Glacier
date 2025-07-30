@@ -9,7 +9,7 @@ import java.awt.*;
 
 // general (id, name, status, parent, bugzilla)
 class General extends JPanel {
-    JTextField name = new JTextField(15);
+    JTextArea description = new JTextArea(6, 20);
     JTextField parent = new JTextField(3);
     JCheckBox serverControlled = new JCheckBox("Server Controlled");
     JCheckBox locked = new JCheckBox("Locked");
@@ -28,9 +28,11 @@ class General extends JPanel {
         add(new JLabel("ID " + task.id), gbc);
 
         gbc.gridy++;
-        add(new LabeledComponent("Name", name), gbc);
+        add(new LabeledComponent("Description", description, GridBagConstraints.NORTH), gbc);
 
-        name.setText(task.name);
+        description.setWrapStyleWord(true);
+        description.setLineWrap(true);
+        description.setText(task.name);
 
         JComboBox<String> status = new JComboBox<>();
         status.addItem("Pending");
@@ -71,21 +73,21 @@ class General extends JPanel {
         locked.addActionListener(e -> {
             boolean controlsLocked = serverControlled.isSelected() || locked.isSelected();
 
-            name.setEnabled(!controlsLocked);
+            description.setEnabled(!controlsLocked);
             status.setEnabled(!controlsLocked);
             parent.setEnabled(!controlsLocked);
         });
 
         boolean controlsLocked = serverControlled.isSelected() || locked.isSelected();
 
-        name.setEnabled(!controlsLocked);
+        description.setEnabled(!controlsLocked);
         status.setEnabled(!controlsLocked);
         parent.setEnabled(!controlsLocked);
         locked.setEnabled(!serverControlled.isSelected());
     }
 
     private boolean hasChanges(Task task) {
-        return !task.name.equals(name.getText()) ||
+        return !task.name.equals(description.getText()) ||
                 task.parentID != Integer.parseInt(parent.getText()) ||
                 task.locked != locked.isSelected();
     }
