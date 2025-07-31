@@ -206,6 +206,7 @@ class Sessions extends JPanel {
 
             TimeData.TimeEntry newEntry = new TimeData.TimeEntry(timeEntry.category, code);
 
+            timeEntryModel.data.set(timeEntryTable.getSelectedRow(), newEntry);
             session.timeEntry.set(timeEntryTable.getSelectedRow(), newEntry);
 
             timeEntryModel.fireTableRowsUpdated(timeEntryTable.getSelectedRow(), timeEntryTable.getSelectedRow());
