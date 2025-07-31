@@ -126,12 +126,9 @@ public class TaskInfo implements Packet {
     }
 
     public static class Session {
-        public Instant startTime;
-        public Optional<Instant> stopTime;
-        public List<TimeData.TimeEntry> timeEntry;
-
-        public Session() {
-        }
+        public final Instant startTime;
+        public final Optional<Instant> stopTime;
+        public final List<TimeData.TimeEntry> timeEntry;
 
         public Session(Session session) {
             this(session.startTime, session.stopTime, session.timeEntry);

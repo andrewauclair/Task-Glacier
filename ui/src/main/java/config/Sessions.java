@@ -100,7 +100,11 @@ class Sessions extends JPanel {
         // table of sessions, of which has a table of time entries?
         // start time, stop time, time entry
         for (TaskInfo.Session session : task.sessions) {
-            sessionModel.data.add(new TaskInfo.Session(session));
+            SessionRow row = new SessionRow();
+            row.start = session.startTime;
+            row.stop = session.stopTime;
+
+            sessionModel.data.add(row);
             sessionModel.fireTableRowsInserted(sessionModel.data.size() - 1, sessionModel.data.size() - 1);
         }
 
@@ -130,7 +134,7 @@ class Sessions extends JPanel {
             TimeData.TimeEntry entry = TimeEntryDialog.display(parent, mainFrame.getTimeData());
 
             if (entry != null) {
-                TaskInfo.Session session = sessionModel.data.get(sessionTable.getSelectedRow());
+                SessionRow session = sessionModel.data.get(sessionTable.getSelectedRow());
 
                 boolean found = false;
 
@@ -161,7 +165,7 @@ class Sessions extends JPanel {
         });
 
         remove.addActionListener(e -> {
-            TaskInfo.Session session = sessionModel.data.get(sessionTable.getSelectedRow());
+            SessionRow session = sessionModel.data.get(sessionTable.getSelectedRow());
 
             TimeData.TimeEntry timeEntry = session.timeEntry.get(timeEntryTable.getSelectedRow());
 
@@ -209,11 +213,21 @@ class Sessions extends JPanel {
     }
 
     public void save(Task task, UpdateTask update) {
-        update.sessions = sessionModel.data;
+        update.sessions.clear();
+
+        for (SessionRow row : sessionModel.data) {
+            update.sessions.add(new TaskInfo.Session(row.start, row.stop, row.timeEntry));
+        }
+    }
+
+    class SessionRow {
+        Instant start;
+        Optional<Instant> stop;
+        List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
     }
 
     class SessionTableModel extends AbstractTableModel {
-        public List<TaskInfo.Session> data = new ArrayList<>();
+        public List<SessionRow> data = new ArrayList<>();
 
         @Override
         public int getRowCount() {
@@ -240,11 +254,11 @@ class Sessions extends JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            TaskInfo.Session row = data.get(rowIndex);
+            SessionRow row = data.get(rowIndex);
             if (columnIndex == 0) {
-                return row.startTime;
+                return row.start;
             }
-            return row.stopTime.orElse(null);
+            return row.stop.orElse(null);
         }
     }
 

@@ -22,21 +22,6 @@ public class TaskModel {
                 .orElse(null);
     }
 
-    public String getTaskName(int taskID) {
-        Optional<String> first = tasks.stream().filter(task -> task.id == taskID)
-                .map(task -> task.name)
-                .findFirst();
-
-        return first.orElse("");
-    }
-
-    public TaskState getTaskState(int taskID) {
-        return tasks.stream().filter(task -> task.id == taskID)
-                .map(task -> task.state)
-                .findFirst()
-                .orElse(TaskState.PENDING);
-    }
-
     public Optional<Integer> getActiveTaskID() {
         return tasks.stream().filter(task -> task.state == TaskState.ACTIVE)
                 .map(task -> task.id)
