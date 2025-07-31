@@ -93,7 +93,6 @@ class Sessions extends JPanel {
                 }
 
                 return label;
-
             }
         });
 
@@ -103,6 +102,7 @@ class Sessions extends JPanel {
             SessionRow row = new SessionRow();
             row.start = session.startTime;
             row.stop = session.stopTime;
+            row.timeEntry = new ArrayList<>(session.timeEntry);
 
             sessionModel.data.add(row);
             sessionModel.fireTableRowsInserted(sessionModel.data.size() - 1, sessionModel.data.size() - 1);
