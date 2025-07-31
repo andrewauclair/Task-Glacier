@@ -50,7 +50,7 @@ jobs:
         sudo apt install gcc-13 g++-13
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 --slave /usr/bin/g++ g++ /usr/bin/g++-13 --slave /usr/bin/gcov gcov /usr/bin/gcov-13
         sudo update-alternatives --set gcc /usr/bin/gcc-13
-        sudo apt install curl
+        sudo apt install libcurl4-openssl-dev
 
     - name: switch to clang-18 on linux
       if: matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'clang-18'
@@ -58,7 +58,7 @@ jobs:
          wget https://apt.llvm.org/llvm.sh && sudo bash llvm.sh 18
          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-18 100
          sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-18 100
-         sudo apt install curl
+         sudo apt install libcurl4-openssl-dev
          echo $(clang++-18 -v)
          
     - uses: actions/checkout@v3
