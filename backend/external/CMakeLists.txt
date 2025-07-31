@@ -42,7 +42,7 @@ FetchContent_Declare(
     simdjson
     GIT_SHALLOW     TRUE
     GIT_REPOSITORY  https://github.com/simdjson/simdjson
-    GIT_TAG         v3.9.2
+    GIT_TAG         v3.13.0
 )
 
 FetchContent_Declare(
