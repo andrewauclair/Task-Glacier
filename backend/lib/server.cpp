@@ -177,16 +177,18 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 			return std::format("Task with ID {} is finished.", id);
 		}
 
+		auto now = m_clock->now();
+
 		if (m_activeTask)
 		{
 			m_activeTask->state = TaskState::INACTIVE;
-			m_activeTask->m_times.back().stop = m_clock->now();
+			m_activeTask->m_times.back().stop = now;
 
 			m_database->write_task(*m_activeTask);
 		}
 
 		task->state = TaskState::ACTIVE;
-		TaskTimes& times = task->m_times.emplace_back(m_clock->now());
+		TaskTimes& times = task->m_times.emplace_back(now);
 
 		for (const TimeCategory& category : m_timeCategories)
 		{

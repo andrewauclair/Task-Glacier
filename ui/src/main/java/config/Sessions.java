@@ -117,7 +117,7 @@ class Sessions extends JPanel {
             add.setEnabled(sessionTable.getSelectedRow() != -1);
 
             if (sessionTable.getSelectedRow() != -1) {
-                TaskInfo.Session session = sessionModel.data.get(sessionTable.getSelectedRow());
+                SessionRow session = sessionModel.data.get(sessionTable.getSelectedRow());
 
                 for (TimeData.TimeEntry entry : session.timeEntry) {
                     timeEntryModel.data.add(entry);

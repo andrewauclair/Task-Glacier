@@ -121,7 +121,7 @@ TEST_CASE("Start Task", "[api][task]")
 		auto taskInfo2 = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
 
 		taskInfo2.createTime = std::chrono::milliseconds(1737344939870);
-		taskInfo2.times.emplace_back(std::chrono::milliseconds(1737347639870));
+		taskInfo2.times.emplace_back(std::chrono::milliseconds(1737346739870));
 		taskInfo2.state = TaskState::ACTIVE;
 		taskInfo2.newTask = false;
 		taskInfo2.indexInParent = 1;
@@ -608,7 +608,7 @@ TEST_CASE("Finish Task", "[api][task]")
 		auto taskInfo3 = TaskInfoMessage(TaskID(3), NO_PARENT, "test 3");
 
 		taskInfo3.createTime = std::chrono::milliseconds(1737345839870);
-		taskInfo3.times.emplace_back(std::chrono::milliseconds(1737349439870));
+		taskInfo3.times.emplace_back(std::chrono::milliseconds(1737348539870));
 		taskInfo3.state = TaskState::ACTIVE;
 		taskInfo3.newTask = false;
 		taskInfo3.indexInParent = 2;
