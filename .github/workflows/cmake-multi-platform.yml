@@ -50,7 +50,7 @@ jobs:
         sudo apt install gcc-14 g++-14
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 --slave /usr/bin/g++ g++ /usr/bin/g++-14 --slave /usr/bin/gcov gcov /usr/bin/gcov-14
         sudo update-alternatives --set gcc /usr/bin/gcc-14
-        sudo apt install libcurl4-openssl-dev ninja-build
+        sudo apt install libcurl4-openssl-dev ninja-build clang-tools
 
     - name: switch to clang-19 on linux
       if: matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'clang-19'
