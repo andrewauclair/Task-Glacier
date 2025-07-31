@@ -25,7 +25,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         build_type: [Release]
-        c_compiler: [gcc, clang-18, cl]
+        c_compiler: [gcc, clang-19, cl]
         include:
           - os: windows-latest
             c_compiler: cl
@@ -34,13 +34,13 @@ jobs:
             c_compiler: gcc
             cpp_compiler: g++
           - os: ubuntu-latest
-            c_compiler: clang-18
-            cpp_compiler: clang++-18
+            c_compiler: clang-19
+            cpp_compiler: clang++-19
         exclude:
           - os: windows-latest
             c_compiler: gcc
           - os: windows-latest
-            c_compiler: clang-18
+            c_compiler: clang-19
           - os: ubuntu-latest
             c_compiler: cl
     steps:
@@ -52,13 +52,13 @@ jobs:
         sudo update-alternatives --set gcc /usr/bin/gcc-13
         sudo apt install libcurl4-openssl-dev ninja-build
 
-    - name: switch to clang-18 on linux
-      if: matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'clang-18'
+    - name: switch to clang-19 on linux
+      if: matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'clang-19'
       run: |
-         wget https://apt.llvm.org/llvm.sh && sudo bash llvm.sh 18
-         sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-18 100
-         sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-18 100
-         echo $(clang++-18 -v)
+         wget https://apt.llvm.org/llvm.sh && sudo bash llvm.sh 19
+         sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-19 100
+         sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-19 100
+         echo $(clang++-19 -v)
          
     - uses: actions/checkout@v3
 
