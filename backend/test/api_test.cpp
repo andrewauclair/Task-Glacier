@@ -25,7 +25,7 @@ TEST_CASE("Create Task", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "this is a test");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.state = TaskState::INACTIVE;
+		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = true;
 
 		helper.required_messages({ &taskInfo });
@@ -39,7 +39,7 @@ TEST_CASE("Create Task", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(2), TaskID(1), "test 2");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344939870);
-		taskInfo.state = TaskState::INACTIVE;
+		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = true;
 
 		helper.required_messages({ &taskInfo });
@@ -55,7 +55,7 @@ TEST_CASE("Create Task", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.state = TaskState::INACTIVE;
+		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = true;
 
 		taskInfo.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
@@ -115,7 +115,7 @@ TEST_CASE("Start Task", "[api][task]")
 		
 		taskInfo1.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo1.times.emplace_back(std::chrono::milliseconds(1737345839870), std::chrono::milliseconds(1737346739870));
-		taskInfo1.state = TaskState::INACTIVE;
+		taskInfo1.state = TaskState::PENDING;
 		taskInfo1.newTask = false;
 
 		auto taskInfo2 = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
@@ -399,7 +399,7 @@ TEST_CASE("Stop Task", "[api][task]")
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.times.emplace_back(std::chrono::milliseconds(1737344939870), std::chrono::milliseconds(1737345839870));
-		taskInfo.state = TaskState::INACTIVE;
+		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 
 		helper.required_messages({ &taskInfo });
@@ -411,7 +411,7 @@ TEST_CASE("Stop Task", "[api][task]")
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 2"));
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1))); // sotp the task. this step is critical to the test
-		helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1))); // finish the task to force it out of INACTIVE state
+		helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1))); // finish the task to force it out of PENDING state
 
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(2)));
 
@@ -456,7 +456,7 @@ TEST_CASE("Stop Task", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.state = TaskState::INACTIVE;
+		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 
 		helper.required_messages({ &taskInfo });
@@ -602,7 +602,7 @@ TEST_CASE("Finish Task", "[api][task]")
 
 		taskInfo1.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo1.times.emplace_back(std::chrono::milliseconds(1737346739870), std::chrono::milliseconds(1737348539870));
-		taskInfo1.state = TaskState::INACTIVE;
+		taskInfo1.state = TaskState::PENDING;
 		taskInfo1.newTask = false;
 
 		auto taskInfo3 = TaskInfoMessage(TaskID(3), NO_PARENT, "test 3");
@@ -649,7 +649,7 @@ TEST_CASE("Modify Task", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "something else");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.state = TaskState::INACTIVE;
+		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 
 		helper.required_messages({ &taskInfo });
@@ -664,7 +664,7 @@ TEST_CASE("Modify Task", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), TaskID(2), "test");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.state = TaskState::INACTIVE;
+		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 
 		helper.required_messages({ &taskInfo });
@@ -694,7 +694,7 @@ TEST_CASE("Modify Task", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.state = TaskState::INACTIVE;
+		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 		taskInfo.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
@@ -720,7 +720,7 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 	// - time code cannot be deleted once in use
 	// - time category can be archived if all associated tasks are finished
 	// - time code can be archived if all associated tasks are finished
-	// - task cannot be changed back to inactive from finished if using an archived time category or time code (I don't think this feature exists yet)
+	// - task cannot be changed back to pending from finished if using an archived time category or time code (I don't think this feature exists yet)
 	TestHelper<nullDatabase> helper;
 
 	SECTION("Success - Add Time Category")

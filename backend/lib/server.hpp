@@ -53,7 +53,7 @@ public:
 	std::chrono::milliseconds createTime() const { return m_createTime; }
 
 	std::string m_name;
-	TaskState state = TaskState::INACTIVE;
+	TaskState state = TaskState::PENDING;
 
 	friend std::ostream& operator<<(std::ostream& out, const Task& task)
 	{

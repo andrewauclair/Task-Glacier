@@ -40,7 +40,7 @@ struct std::formatter<TaskID> : std::formatter<std::int32_t> {
 
 enum class TaskState : std::int32_t
 {
-	INACTIVE,
+	PENDING,
 	ACTIVE,
 	FINISHED
 };
@@ -715,7 +715,7 @@ struct TaskInfoMessage : Message
 {
 	TaskID taskID;
 	TaskID parentID;
-	TaskState state = TaskState::INACTIVE;
+	TaskState state = TaskState::PENDING;
 	bool newTask = false;
 	std::int32_t indexInParent = 0;
 	bool serverControlled = false;

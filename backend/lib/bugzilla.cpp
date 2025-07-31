@@ -87,7 +87,7 @@ void Bugzilla::build_group_by_task(BugzillaInstance& instance, MicroTask& app, A
 			// make sure the parent task isn't finished
 			if (app.find_task(parent) != nullptr)
 			{
-				app.find_task(parent)->state = TaskState::INACTIVE;
+				app.find_task(parent)->state = TaskState::PENDING;
 			}
 
 			const auto result = app.create_task(value, parent, true);
@@ -138,7 +138,7 @@ Task* Bugzilla::parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, 
 		// make sure the parent task isn't finished
 		if (app.find_task(currentParent) != nullptr)
 		{
-			app.find_task(currentParent)->state = TaskState::INACTIVE;
+			app.find_task(currentParent)->state = TaskState::PENDING;
 		}
 
 		const auto result = app.create_task(groupBy, currentParent, true);
@@ -234,7 +234,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 				startingStates[task] = app.find_task(task)->state;
 			}
 
-			// finish all the non-bug children of the root task. we'll find the parents and set them back to inactive as we need them
+			// finish all the non-bug children of the root task. we'll find the parents and set them back to pending as we need them
 			std::map<TaskID, TaskState> helperTasks;
 			app.find_bugzilla_helper_tasks(info.bugzillaRootTaskID, bugTasks, helperTasks);
 
@@ -256,7 +256,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 
 						while (nextParent)
 						{
-							nextParent->state = TaskState::INACTIVE;
+							nextParent->state = TaskState::PENDING;
 							nextParent->m_finishTime = std::nullopt;
 
 							nextParent = app.find_task(nextParent->parentID());

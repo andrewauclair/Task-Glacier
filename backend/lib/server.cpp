@@ -181,7 +181,7 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 
 		if (m_activeTask)
 		{
-			m_activeTask->state = TaskState::INACTIVE;
+			m_activeTask->state = TaskState::PENDING;
 			m_activeTask->m_times.back().stop = now;
 
 			m_database->write_task(*m_activeTask);
@@ -257,7 +257,7 @@ std::optional<std::string> MicroTask::stop_task(TaskID id)
 	{
 		m_activeTask = nullptr;
 
-		task->state = TaskState::INACTIVE;
+		task->state = TaskState::PENDING;
 		task->m_times.back().stop = m_clock->now();
 
 		m_database->write_task(*task);
