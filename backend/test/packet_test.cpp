@@ -85,6 +85,42 @@ public:
 	}
 };
 
+void packet_match(const RequestMessage* expected, const RequestMessage* actual)
+{
+	INFO("");
+	INFO(cpptrace::generate_trace().to_string());
+
+	CHECK(expected->packetType() == actual->packetType());
+	CHECK(expected->requestID == actual->requestID);
+}
+
+void packet_match(const CreateTaskMessage* expected, const CreateTaskMessage* actual)
+{
+	INFO("");
+	INFO(cpptrace::generate_trace().to_string());
+
+	CHECK(expected->packetType() == actual->packetType());
+	CHECK(expected->requestID == actual->requestID);
+	CHECK(expected->parentID == actual->parentID);
+	CHECK(expected->name == actual->name);
+	CHECK(expected->labels == actual->labels);
+	CHECK(expected->timeEntry == actual->timeEntry);
+}
+
+void packet_match(const UpdateTaskMessage* expected, const UpdateTaskMessage* actual){}
+void packet_match(const TaskMessage* expected, const TaskMessage* actual){}
+void packet_match(const TimeEntryDataPacket* expected, const TimeEntryDataPacket* actual){}
+void packet_match(const TimeEntryModifyPacket* expected, const TimeEntryModifyPacket* actual){}
+void packet_match(const SuccessResponse* expected, const SuccessResponse* actual){}
+void packet_match(const FailureResponse* expected, const FailureResponse* actual){}
+void packet_match(const BasicMessage* expected, const BasicMessage* actual){}
+void packet_match(const TaskInfoMessage* expected, const TaskInfoMessage* actual){}
+void packet_match(const BugzillaInfoMessage* expected, const BugzillaInfoMessage* actual){}
+void packet_match(const RequestDailyReportMessage* expected, const RequestDailyReportMessage* actual){}
+void packet_match(const RequestWeeklyReportMessage* expected, const RequestWeeklyReportMessage* actual){}
+void packet_match(const DailyReportMessage* expected, const DailyReportMessage* actual){}
+void packet_match(const WeeklyReportMessage* expected, const WeeklyReportMessage* actual){}
+
 struct PacketTestHelper
 {
 	TestClock clock;
@@ -103,12 +139,14 @@ struct PacketTestHelper
 
 		REQUIRE(result.packet);
 
-		const auto* packet = dynamic_cast<T*>(result.packet.get());
+		const T* packet = dynamic_cast<T*>(result.packet.get());
 
 		REQUIRE(packet);
 
 		CHECK(*packet == message);
 		CHECK(result.bytes_read == size);
+
+		packet_match(dynamic_cast<const T*>(&message), packet);
 	}
 };
 
