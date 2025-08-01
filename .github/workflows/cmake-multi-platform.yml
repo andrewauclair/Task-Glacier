@@ -59,7 +59,9 @@ jobs:
          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-19 100
          sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-19 100
          echo $(clang++-19 -v)
-         
+
+    - name: Enable Developer Command Prompt
+      uses: ilammy/msvc-dev-cmd@v1.13.0
     - uses: actions/checkout@v3
 
     - name: Set reusable strings
