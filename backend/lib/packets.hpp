@@ -241,7 +241,7 @@ public:
 
 	PacketType packetType() const { return m_packetType; }
 
-	virtual bool operator==(const Message& message) const = 0;
+	virtual bool operator==(const Message& message) const { return m_packetType == message.m_packetType; }
 
 	virtual std::vector<std::byte> pack() const = 0;
 
@@ -268,20 +268,6 @@ struct RequestMessage : Message
 
 	RequestMessage(PacketType packetType, RequestID requestID) : Message(packetType), requestID(requestID) {}
 
-	bool operator==(const Message& message) const override
-	{
-		if (const auto* other = dynamic_cast<const RequestMessage*>(&message))
-		{
-			return *this == *other;
-		}
-		return false;
-	}
-
-	bool operator==(const RequestMessage& message) const
-	{
-		return packetType() == message.packetType() && requestID == message.requestID;
-	}
-
 	std::vector<std::byte> pack() const override;
 	static std::expected<RequestMessage, UnpackError> unpack(std::span<const std::byte> data);
 
@@ -306,20 +292,6 @@ struct CreateTaskMessage : RequestMessage
 	std::vector<TimeEntry> timeEntry;
 
 	CreateTaskMessage(TaskID parentID, RequestID requestID, std::string name) : RequestMessage(PacketType::CREATE_TASK, requestID), parentID(parentID), name(std::move(name)) {}
-
-	bool operator==(const Message& message) const override
-	{
-		if (const auto* other = dynamic_cast<const CreateTaskMessage*>(&message))
-		{
-			return *this == *other;
-		}
-		return false;
-	}
-	
-	bool operator==(const CreateTaskMessage& message) const
-	{
-		return parentID == message.parentID && requestID == message.requestID && name == message.name && labels == message.labels && timeEntry == message.timeEntry;
-	}
 
 	std::vector<std::byte> pack() const override;
 	static std::expected<CreateTaskMessage, UnpackError> unpack(std::span<const std::byte> data);
@@ -455,20 +427,6 @@ struct TaskMessage : RequestMessage
 		assert(type == PacketType::START_TASK || type == PacketType::STOP_TASK || type == PacketType::FINISH_TASK || type == PacketType::REQUEST_TASK);
 	}
 
-	bool operator==(const Message& message) const override
-	{
-		if (const auto* other = dynamic_cast<const TaskMessage*>(&message))
-		{
-			return *this == *other;
-		}
-		return false;
-	}
-
-	bool operator==(const TaskMessage& message) const
-	{
-		return packetType() == message.packetType() && taskID == message.taskID && requestID == message.requestID;
-	}
-
 	std::vector<std::byte> pack() const override;
 	static std::expected<TaskMessage, UnpackError> unpack(std::span<const std::byte> data);
 
@@ -501,20 +459,6 @@ struct TimeEntryDataPacket : Message
 
 	TimeEntryDataPacket(std::vector<TimeCategory> timeCategories) : Message(PacketType::TIME_ENTRY_DATA), timeCategories(std::move(timeCategories))
 	{
-	}
-
-	bool operator==(const Message& message) const override
-	{
-		if (const auto* other = dynamic_cast<const TimeEntryDataPacket*>(&message))
-		{
-			return *this == *other;
-		}
-		return false;
-	}
-
-	bool operator==(const TimeEntryDataPacket& message) const
-	{
-		return packetType() == message.packetType() && timeCategories == message.timeCategories;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -554,20 +498,6 @@ struct TimeEntryModifyPacket : RequestMessage
 	{
 	}
 
-	bool operator==(const Message& message) const override
-	{
-		if (const auto* other = dynamic_cast<const TimeEntryModifyPacket*>(&message))
-		{
-			return *this == *other;
-		}
-		return false;
-	}
-
-	bool operator==(const TimeEntryModifyPacket& message) const
-	{
-		return packetType() == message.packetType() && requestID == message.requestID && type == message.type && timeCategories == message.timeCategories;
-	}
-
 	std::vector<std::byte> pack() const override;
 	static std::expected<TimeEntryModifyPacket, UnpackError> unpack(std::span<const std::byte> data);
 
@@ -604,20 +534,6 @@ struct SuccessResponse : Message
 
 	SuccessResponse(RequestID requestID) : Message(PacketType::SUCCESS_RESPONSE), requestID(requestID) {}
 
-	bool operator==(const Message& message) const override
-	{
-		if (const auto* other = dynamic_cast<const SuccessResponse*>(&message))
-		{
-			return *this == *other;
-		}
-		return false;
-	}
-
-	bool operator==(const SuccessResponse& message) const
-	{
-		return requestID == message.requestID;
-	}
-
 	std::vector<std::byte> pack() const override;
 	static std::expected<SuccessResponse, UnpackError> unpack(std::span<const std::byte> data);
 
@@ -643,20 +559,6 @@ struct FailureResponse : Message
 
 	FailureResponse(RequestID requestID, std::string message) : Message(PacketType::FAILURE_RESPONSE), requestID(requestID), message(std::move(message)) {}
 
-	bool operator==(const Message& message) const override
-	{
-		if (const auto* other = dynamic_cast<const FailureResponse*>(&message))
-		{
-			return *this == *other;
-		}
-		return false;
-	}
-
-	bool operator==(const FailureResponse& message) const
-	{
-		return requestID == message.requestID && this->message == message.message;
-	}
-
 	std::vector<std::byte> pack() const override;
 	static std::expected<FailureResponse, UnpackError> unpack(std::span<const std::byte> data);
 
@@ -678,20 +580,6 @@ struct FailureResponse : Message
 struct BasicMessage : Message
 {
 	BasicMessage(PacketType type) : Message(type) {}
-
-	bool operator==(const Message& message) const override
-	{
-		if (const auto* other = dynamic_cast<const BasicMessage*>(&message))
-		{
-			return *this == *other;
-		}
-		return false;
-	}
-
-	bool operator==(const BasicMessage& message) const
-	{
-		return packetType() == message.packetType();
-	}
 
 	std::vector<std::byte> pack() const override;
 	static std::expected<BasicMessage, UnpackError> unpack(std::span<const std::byte> data);
@@ -732,82 +620,6 @@ struct TaskInfoMessage : Message
 
 	TaskInfoMessage(TaskID taskID, TaskID parentID, std::string name, std::chrono::milliseconds createTime = std::chrono::milliseconds(0)) : Message(PacketType::TASK_INFO), taskID(taskID), parentID(parentID), name(std::move(name)), createTime(createTime) {}
 	
-	bool operator==(const Message& message) const override
-	{
-		if (const auto* other = dynamic_cast<const TaskInfoMessage*>(&message))
-		{
-			return *this == *other;
-		}
-		return false;
-	}
-
-	bool operator==(const TaskInfoMessage& message) const
-	{
-		if (times.size() != message.times.size())
-		{
-			return false;
-		}
-
-		for (std::size_t i = 0; i < times.size(); i++)
-		{
-			if (times[i].start != message.times[i].start || times[i].stop != message.times[i].stop)
-			{
-				return false;
-			}
-
-			if (times[i].timeEntry.size() != message.times[i].timeEntry.size())
-			{
-				return false;
-			}
-
-			for (std::size_t j = 0; j < times[i].timeEntry.size(); j++)
-			{
-				if (times[i].timeEntry[j] != message.times[i].timeEntry[j])
-				{
-					return false;
-				}
-			}
-		}
-
-		if (labels.size() != message.labels.size())
-		{
-			return false;
-		}
-
-		for (std::size_t i = 0; i < labels.size(); i++)
-		{
-			if (labels[i] != message.labels[i])
-			{
-				return false;
-			}
-		}
-
-		if (timeEntry.size() != message.timeEntry.size())
-		{
-			return false;
-		}
-
-		for (std::size_t i = 0; i < timeEntry.size(); i++)
-		{
-			if (timeEntry[i].categoryID != message.timeEntry[i].categoryID ||
-				timeEntry[i].codeID != message.timeEntry[i].codeID)
-			{
-				return false;
-			}
-		}
-
-		return taskID == message.taskID && 
-			parentID == message.parentID && 
-			state == message.state && 
-			newTask == message.newTask && 
-			indexInParent == message.indexInParent &&
-			serverControlled == message.serverControlled &&
-			locked == message.locked &&
-			name == message.name && 
-			createTime == message.createTime && 
-			finishTime == message.finishTime;
-	}
-
 	std::vector<std::byte> pack() const override;
 	static std::expected<TaskInfoMessage, UnpackError> unpack(std::span<const std::byte> data);
 
@@ -863,21 +675,6 @@ struct BugzillaInfoMessage : Message
 
 	BugzillaInfoMessage(BugzillaInstanceID instanceID, std::string name, std::string URL, std::string apiKey) : Message(PacketType::BUGZILLA_INFO), instanceID(instanceID), name(std::move(name)), URL(std::move(URL)), apiKey(std::move(apiKey)) {}
 
-	bool operator==(const Message& message) const override
-	{
-		if (const auto* other = dynamic_cast<const BugzillaInfoMessage*>(&message))
-		{
-			return *this == *other;
-		}
-		return false;
-	}
-
-	bool operator==(const BugzillaInfoMessage& message) const
-	{
-		return instanceID == message.instanceID && name == message.name && URL == message.URL && apiKey == message.apiKey && username == message.username && rootTaskID == message.rootTaskID &&
-			groupTasksBy == message.groupTasksBy && labelToField == message.labelToField;
-	}
-
 	std::vector<std::byte> pack() const override;
 	static std::expected<BugzillaInfoMessage, UnpackError> unpack(std::span<const std::byte> data);
 
@@ -917,20 +714,6 @@ struct RequestDailyReportMessage : RequestMessage
 	{
 	}
 
-	bool operator==(const Message& message) const override
-	{
-		if (const auto* other = dynamic_cast<const RequestDailyReportMessage*>(&message))
-		{
-			return *this == *other;
-		}
-		return false;
-	}
-
-	bool operator==(const RequestDailyReportMessage& message) const
-	{
-		return packetType() == message.packetType() && requestID == message.requestID && month == message.month && day == message.day && year == message.year;
-	}
-
 	std::vector<std::byte> pack() const override;
 	static std::expected<RequestDailyReportMessage, UnpackError> unpack(std::span<const std::byte> data);
 
@@ -957,20 +740,6 @@ struct RequestWeeklyReportMessage : RequestMessage
 
 	RequestWeeklyReportMessage(RequestID requestID, int month, int day, int year) : RequestMessage(PacketType::REQUEST_WEEKLY_REPORT, requestID), month(month), day(day), year(year)
 	{
-	}
-
-	bool operator==(const Message& message) const override
-	{
-		if (const auto* other = dynamic_cast<const RequestWeeklyReportMessage*>(&message))
-		{
-			return *this == *other;
-		}
-		return false;
-	}
-
-	bool operator==(const RequestWeeklyReportMessage& message) const
-	{
-		return packetType() == message.packetType() && requestID == message.requestID && month == message.month && day == message.day && year == message.year;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -1065,20 +834,6 @@ struct DailyReportMessage : Message
 
 	DailyReportMessage(RequestID requestID, std::chrono::milliseconds reportTime) : Message(PacketType::DAILY_REPORT), requestID(requestID), reportTime(reportTime) {}
 
-	bool operator==(const Message& message) const override
-	{
-		if (const auto* other = dynamic_cast<const DailyReportMessage*>(&message))
-		{
-			return *this == *other;
-		}
-		return false;
-	}
-
-	bool operator==(const DailyReportMessage& message) const
-	{
-		return requestID == message.requestID && reportTime == message.reportTime && report == message.report;
-	}
-
 	std::vector<std::byte> pack() const override;
 	static std::expected<DailyReportMessage, UnpackError> unpack(std::span<const std::byte> data);
 
@@ -1112,20 +867,6 @@ struct WeeklyReportMessage : Message
 	std::map<TimeCodeID, std::chrono::milliseconds> timePerTimeCode;
 
 	WeeklyReportMessage(RequestID requestID, std::chrono::milliseconds reportTime) : Message(PacketType::WEEKLY_REPORT), requestID(requestID), reportTime(reportTime) {}
-
-	bool operator==(const Message& message) const override
-	{
-		if (const auto* other = dynamic_cast<const WeeklyReportMessage*>(&message))
-		{
-			return *this == *other;
-		}
-		return false;
-	}
-
-	bool operator==(const WeeklyReportMessage& message) const
-	{
-		return requestID == message.requestID;
-	}
 
 	std::vector<std::byte> pack() const override;
 	static std::expected<WeeklyReportMessage, UnpackError> unpack(std::span<const std::byte> data);

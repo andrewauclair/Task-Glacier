@@ -107,19 +107,161 @@ void packet_match(const CreateTaskMessage* expected, const CreateTaskMessage* ac
 	CHECK(expected->timeEntry == actual->timeEntry);
 }
 
-void packet_match(const UpdateTaskMessage* expected, const UpdateTaskMessage* actual){}
-void packet_match(const TaskMessage* expected, const TaskMessage* actual){}
-void packet_match(const TimeEntryDataPacket* expected, const TimeEntryDataPacket* actual){}
-void packet_match(const TimeEntryModifyPacket* expected, const TimeEntryModifyPacket* actual){}
-void packet_match(const SuccessResponse* expected, const SuccessResponse* actual){}
-void packet_match(const FailureResponse* expected, const FailureResponse* actual){}
-void packet_match(const BasicMessage* expected, const BasicMessage* actual){}
-void packet_match(const TaskInfoMessage* expected, const TaskInfoMessage* actual){}
-void packet_match(const BugzillaInfoMessage* expected, const BugzillaInfoMessage* actual){}
-void packet_match(const RequestDailyReportMessage* expected, const RequestDailyReportMessage* actual){}
-void packet_match(const RequestWeeklyReportMessage* expected, const RequestWeeklyReportMessage* actual){}
-void packet_match(const DailyReportMessage* expected, const DailyReportMessage* actual){}
-void packet_match(const WeeklyReportMessage* expected, const WeeklyReportMessage* actual){}
+void packet_match(const UpdateTaskMessage* expected, const UpdateTaskMessage* actual)
+{
+	INFO("");
+	INFO(cpptrace::generate_trace().to_string());
+
+	CHECK(expected->packetType() == actual->packetType());
+	CHECK(expected->taskID == actual->taskID);
+	CHECK(expected->parentID == actual->parentID);
+	CHECK(expected->indexInParent == actual->indexInParent);
+	CHECK(expected->serverControlled == actual->serverControlled);
+	CHECK(expected->locked == actual->locked);
+	CHECK(expected->name == actual->name);
+	CHECK(expected->times == actual->times);
+	CHECK(expected->labels == actual->labels);
+	CHECK(expected->timeEntry == actual->timeEntry);
+}
+
+void packet_match(const TaskMessage* expected, const TaskMessage* actual)
+{
+	INFO("");
+	INFO(cpptrace::generate_trace().to_string());
+
+	CHECK(expected->packetType() == actual->packetType());
+	CHECK(expected->requestID == actual->requestID);
+	CHECK(expected->taskID == actual->taskID);
+}
+
+void packet_match(const TimeEntryDataPacket* expected, const TimeEntryDataPacket* actual)
+{
+	INFO("");
+	INFO(cpptrace::generate_trace().to_string());
+
+	CHECK(expected->packetType() == actual->packetType());
+	CHECK(expected->timeCategories == actual->timeCategories);
+}
+
+void packet_match(const TimeEntryModifyPacket* expected, const TimeEntryModifyPacket* actual)
+{
+	INFO("");
+	INFO(cpptrace::generate_trace().to_string());
+
+	CHECK(expected->packetType() == actual->packetType());
+	CHECK(expected->type == actual->type);
+	CHECK(expected->timeCategories == actual->timeCategories);
+}
+
+void packet_match(const SuccessResponse* expected, const SuccessResponse* actual)
+{
+	INFO("");
+	INFO(cpptrace::generate_trace().to_string());
+
+	CHECK(expected->packetType() == actual->packetType());
+	CHECK(expected->requestID == actual->requestID);
+}
+
+void packet_match(const FailureResponse* expected, const FailureResponse* actual)
+{
+	INFO("");
+	INFO(cpptrace::generate_trace().to_string());
+
+	CHECK(expected->packetType() == actual->packetType());
+	CHECK(expected->requestID == actual->requestID);
+	CHECK(expected->message == actual->message);
+}
+
+void packet_match(const BasicMessage* expected, const BasicMessage* actual)
+{
+	INFO("");
+	INFO(cpptrace::generate_trace().to_string());
+
+	CHECK(expected->packetType() == actual->packetType());
+}
+
+void packet_match(const TaskInfoMessage* expected, const TaskInfoMessage* actual)
+{
+	INFO("");
+	INFO(cpptrace::generate_trace().to_string());
+
+	CHECK(expected->packetType() == actual->packetType());
+	CHECK(expected->taskID == actual->taskID);
+	CHECK(expected->parentID == actual->parentID);
+	CHECK(expected->state == actual->state);
+	CHECK(expected->newTask == actual->newTask);
+	CHECK(expected->indexInParent == actual->indexInParent);
+	CHECK(expected->serverControlled == actual->serverControlled);
+	CHECK(expected->locked == actual->locked);
+	CHECK(expected->name == actual->name);
+	CHECK(expected->createTime == actual->createTime);
+	CHECK(expected->finishTime == actual->finishTime);
+	CHECK(expected->times == actual->times);
+	CHECK(expected->labels == actual->labels);
+	CHECK(expected->timeEntry == actual->timeEntry);
+}
+
+void packet_match(const BugzillaInfoMessage* expected, const BugzillaInfoMessage* actual)
+{
+	INFO("");
+	INFO(cpptrace::generate_trace().to_string());
+
+	CHECK(expected->packetType() == actual->packetType());
+	CHECK(expected->instanceID == actual->instanceID);
+	CHECK(expected->name == actual->name);
+	CHECK(expected->URL == actual->URL);
+	CHECK(expected->apiKey == actual->apiKey);
+	CHECK(expected->username == actual->username);
+	CHECK(expected->rootTaskID == actual->rootTaskID);
+	CHECK(expected->groupTasksBy == actual->groupTasksBy);
+	CHECK(expected->labelToField == actual->labelToField);
+}
+
+void packet_match(const RequestDailyReportMessage* expected, const RequestDailyReportMessage* actual)
+{
+	INFO("");
+	INFO(cpptrace::generate_trace().to_string());
+
+	CHECK(expected->packetType() == actual->packetType());
+	CHECK(expected->month == actual->month);
+	CHECK(expected->day == actual->day);
+	CHECK(expected->year == actual->year);
+}
+
+void packet_match(const RequestWeeklyReportMessage* expected, const RequestWeeklyReportMessage* actual)
+{
+	INFO("");
+	INFO(cpptrace::generate_trace().to_string());
+
+	CHECK(expected->packetType() == actual->packetType());
+	CHECK(expected->month == actual->month);
+	CHECK(expected->day == actual->day);
+	CHECK(expected->year == actual->year);
+}
+
+void packet_match(const DailyReportMessage* expected, const DailyReportMessage* actual)
+{
+	INFO("");
+	INFO(cpptrace::generate_trace().to_string());
+
+	CHECK(expected->packetType() == actual->packetType());
+	CHECK(expected->requestID == actual->requestID);
+	CHECK(expected->reportTime == actual->reportTime);
+	CHECK(expected->report == actual->report);
+}
+
+void packet_match(const WeeklyReportMessage* expected, const WeeklyReportMessage* actual)
+{
+	INFO("");
+	INFO(cpptrace::generate_trace().to_string());
+
+	CHECK(expected->packetType() == actual->packetType());
+	CHECK(expected->requestID == actual->requestID);
+	CHECK(expected->reportTime == actual->reportTime);
+	CHECK(expected->dailyReports == actual->dailyReports);
+	CHECK(expected->totalTime == actual->totalTime);
+	CHECK(expected->timePerTimeCode == actual->timePerTimeCode);
+}
 
 struct PacketTestHelper
 {
@@ -157,69 +299,6 @@ TEST_CASE("Create Task", "[message]")
 	create_task.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
 	CAPTURE(create_task);
-
-	SECTION("Compare - Through Message")
-	{
-		SECTION("Does Not Match Other Message")
-		{
-			const auto task = TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(1));
-			CAPTURE(task);
-
-			const Message* message = &task;
-
-			CHECK(!(create_task == *message));
-		}
-
-		SECTION("Match")
-		{
-			auto create_task2 = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
-			create_task2.labels = { "one", "two" };
-			create_task2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
-			CAPTURE(create_task2);
-
-			const Message* message = &create_task2;
-
-			CHECK(create_task == *message);
-		}
-	}
-
-	SECTION("Compare - Directly")
-	{
-		auto create_task2 = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
-		create_task2.labels = { "one", "two" };
-		create_task2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
-		CAPTURE(create_task2);
-
-		CHECK(create_task == create_task2);
-	}
-
-	SECTION("Compare Messages That Do Not Match")
-	{
-		auto create_task2 = CreateTaskMessage(TaskID(15), RequestID(10), "this is a test");
-		create_task2.labels = { "one", "two" };
-		create_task2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
-		CAPTURE(create_task2);
-
-		CHECK(!(create_task == create_task2));
-
-		create_task2.parentID = create_task.parentID;
-		create_task2.requestID = RequestID(15);
-		CAPTURE(create_task2);
-
-		CHECK(!(create_task == create_task2));
-
-		create_task2.requestID = create_task.requestID;
-		create_task2.name = "another task";
-		CAPTURE(create_task2);
-
-		CHECK(!(create_task == create_task2));
-
-		create_task2.name = create_task.name;
-		create_task2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(3), TimeCodeID(3)} };
-		CAPTURE(create_task2);
-
-		CHECK(!(create_task == create_task2));
-	}
 
 	SECTION("Print")
 	{
@@ -406,58 +485,6 @@ TEST_CASE("Task", "[messages]")
 	const auto task = TaskMessage(packet_type, RequestID(10), TaskID(20));
 	CAPTURE(task);
 
-	SECTION("Compare - Through Message")
-	{
-		SECTION("Does Not Match Other Message")
-		{
-			const auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
-			CAPTURE(create_task);
-
-			const Message* message = &create_task;
-
-			CHECK(!(task == *message));
-		}
-
-		SECTION("Match")
-		{
-			const auto task2 = TaskMessage(packet_type, RequestID(10), TaskID(20));
-			CAPTURE(task2);
-
-			const Message* message = &task2;
-
-			CHECK(task == *message);
-		}
-	}
-
-	SECTION("Compare - Directly")
-	{
-		const auto task2 = TaskMessage(packet_type, RequestID(10), TaskID(20));
-		CAPTURE(task2);
-
-		CHECK(task == task2);
-	}
-
-	SECTION("Compare Messages That Do Not Match")
-	{
-		auto types = std::vector{ PacketType::START_TASK, PacketType::STOP_TASK, PacketType::FINISH_TASK, PacketType::REQUEST_TASK };
-		std::erase(types, packet_type);
-
-		auto task2 = TaskMessage(types[0], RequestID(10), TaskID(20));
-		CAPTURE(task2);
-
-		CHECK(!(task == task2));
-
-		task2 = TaskMessage(packet_type, RequestID(15), TaskID(20));
-		CAPTURE(task2);
-
-		CHECK(!(task == task2));
-
-		task2 = TaskMessage(packet_type, RequestID(10), TaskID(25));
-		CAPTURE(task2);
-
-		CHECK(!(task == task2));
-	}
-
 	SECTION("Print")
 	{
 		std::ostringstream ss;
@@ -509,47 +536,6 @@ TEST_CASE("Time Categories Data", "[messages]")
 	const auto data = TimeEntryDataPacket(timeCategories);
 	CAPTURE(data);
 
-	SECTION("Compare - Through Message")
-	{
-		SECTION("Does Not Match Other Message")
-		{
-			const auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
-			CAPTURE(create_task);
-
-			const Message* message = &create_task;
-
-			CHECK(!(data == *message));
-		}
-
-		SECTION("Match")
-		{
-			auto data2 = TimeEntryDataPacket(timeCategories);
-			CAPTURE(data2);
-
-			const Message* message = &data2;
-
-			CHECK(data == *message);
-		}
-	}
-
-	SECTION("Compare - Directly")
-	{
-		auto data2 = TimeEntryDataPacket(timeCategories);
-		CAPTURE(data2);
-
-		CHECK(data == data2);
-	}
-
-	SECTION("Compare Messages That Do Not Match")
-	{
-		std::vector<TimeCategory> timeCategories2;
-		timeCategories2.emplace_back(TimeCategory{ TimeCategoryID(5), "two", std::vector{TimeCode{TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}}});
-		auto data2 = TimeEntryDataPacket(timeCategories2);
-		CAPTURE(data2);
-
-		CHECK(!(data == data2));
-	}
-
 	SECTION("Print")
 	{
 		std::ostringstream ss;
@@ -599,47 +585,6 @@ TEST_CASE("Time Categories Modify", "[messages]")
 	const auto modify = TimeEntryModifyPacket(RequestID(10), TimeCategoryModType::ADD, timeCategories);
 	CAPTURE(modify);
 
-	SECTION("Compare - Through Message")
-	{
-		SECTION("Does Not Match Other Message")
-		{
-			const auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
-			CAPTURE(create_task);
-
-			const Message* message = &create_task;
-
-			CHECK(!(modify == *message));
-		}
-
-		SECTION("Match")
-		{
-			auto modify2 = TimeEntryModifyPacket(RequestID(10), TimeCategoryModType::ADD, timeCategories);
-			CAPTURE(modify2);
-
-			const Message* message = &modify2;
-
-			CHECK(modify == *message);
-		}
-	}
-
-	SECTION("Compare - Directly")
-	{
-		auto modify2 = TimeEntryModifyPacket(RequestID(10), TimeCategoryModType::ADD, timeCategories);
-		CAPTURE(modify2);
-
-		CHECK(modify == modify2);
-	}
-
-	SECTION("Compare Messages That Do Not Match")
-	{
-		std::vector<TimeCategory> timeCategories2;
-		timeCategories2.emplace_back(TimeCategory{ TimeCategoryID(5), "two", std::vector{TimeCode{TimeCodeID(1), "a"}, TimeCode{TimeCodeID(2), "b"}}});
-		auto modify2 = TimeEntryModifyPacket(RequestID(15), TimeCategoryModType::ADD, timeCategories2);
-		CAPTURE(modify2);
-
-		CHECK(!(modify == modify2));
-	}
-
 	SECTION("Print")
 	{
 		std::ostringstream ss;
@@ -686,45 +631,6 @@ TEST_CASE("Success Response", "[messages]")
 {
 	const auto response = SuccessResponse(RequestID(10));
 	CAPTURE(response);
-
-	SECTION("Compare - Through Message")
-	{
-		SECTION("Does Not Match Other Message")
-		{
-			const auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
-			CAPTURE(create_task);
-
-			const Message* message = &create_task;
-
-			CHECK(!(response == *message));
-		}
-
-		SECTION("Match")
-		{
-			const auto response2 = SuccessResponse(RequestID(10));
-			CAPTURE(response2);
-
-			const Message* message = &response2;
-
-			CHECK(response == *message);
-		}
-	}
-
-	SECTION("Compare - Directly")
-	{
-		const auto response2 = SuccessResponse(RequestID(10));
-		CAPTURE(response2);
-
-		CHECK(response == response2);
-	}
-
-	SECTION("Compare Messages That Do Not Match")
-	{
-		auto response2 = SuccessResponse(RequestID(15));
-		CAPTURE(response2);
-
-		CHECK(!(response == response2));
-	}
 
 	SECTION("Print")
 	{
@@ -773,50 +679,6 @@ TEST_CASE("Failure Response", "[messages]")
 	const auto response = FailureResponse(RequestID(10), "Task does not exist.");
 	CAPTURE(response);
 
-	SECTION("Compare - Through Message")
-	{
-		SECTION("Does Not Match Other Message")
-		{
-			const auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
-			CAPTURE(create_task);
-
-			const Message* message = &create_task;
-
-			CHECK(!(response == *message));
-		}
-
-		SECTION("Match")
-		{
-			const auto response2 = FailureResponse(RequestID(10), "Task does not exist.");
-			CAPTURE(response2);
-
-			const Message* message = &response2;
-
-			CHECK(response == *message);
-		}
-	}
-
-	SECTION("Compare - Directly")
-	{
-		const auto response2 = FailureResponse(RequestID(10), "Task does not exist.");
-		CAPTURE(response2);
-
-		CHECK(response == response2);
-	}
-
-	SECTION("Compare Messages That Do Not Match")
-	{
-		auto response2 = FailureResponse(RequestID(15), "Task does not exist.");
-		CAPTURE(response2);
-
-		CHECK(!(response == response2));
-
-		response2.message = "Task is active.";
-		CAPTURE(response2);
-
-		CHECK(!(response == response2));
-	}
-
 	SECTION("Print")
 	{
 		std::ostringstream ss;
@@ -864,63 +726,6 @@ TEST_CASE("Request Daily Report", "[messages]")
 {
 	const auto request = RequestDailyReportMessage(RequestID(10), 2, 3, 2025);
 	CAPTURE(request);
-
-	SECTION("Compare - Through Message")
-	{
-		SECTION("Does Not Match Other Message")
-		{
-			const auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
-			CAPTURE(create_task);
-
-			const Message* message = &create_task;
-
-			CHECK(!(request == *message));
-		}
-
-		SECTION("Match")
-		{
-			const auto request2 = RequestDailyReportMessage(RequestID(10), 2, 3, 2025);
-			CAPTURE(request2);
-
-			const Message* message = &request2;
-
-			CHECK(request == *message);
-		}
-	}
-
-	SECTION("Compare - Directly")
-	{
-		const auto request2 = RequestDailyReportMessage(RequestID(10), 2, 3, 2025);
-		CAPTURE(request2);
-
-		CHECK(request == request2);
-	}
-
-	SECTION("Compare Messages That Do Not Match")
-	{
-		auto request2 = RequestDailyReportMessage(RequestID(12), 2, 3, 2025);
-		CAPTURE(request2);
-
-		CHECK(!(request == request2));
-
-		request2.requestID = request.requestID;
-		request2.month = 3;
-		CAPTURE(request2);
-
-		CHECK(!(request == request2));
-
-		request2.month = request.month;
-		request2.day = 4;
-		CAPTURE(request2);
-
-		CHECK(!(request == request2));
-
-		request2.day = request.day;
-		request2.year = 2026;
-		CAPTURE(request2);
-
-		CHECK(!(request == request2));
-	}
 
 	SECTION("Print")
 	{
@@ -971,64 +776,6 @@ TEST_CASE("Daily Report", "[messages]")
 {
 	const auto report = DailyReportMessage(RequestID(10), std::chrono::milliseconds(5000));
 	CAPTURE(report);
-
-	SECTION("Compare - Through Message")
-	{
-		SECTION("Does Not Match Other Message")
-		{
-			const auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
-			CAPTURE(create_task);
-
-			const Message* message = &create_task;
-
-			CHECK(!(report == *message));
-		}
-
-		SECTION("Match")
-		{
-			const auto report2 = DailyReportMessage(RequestID(10), std::chrono::milliseconds(5000));
-			CAPTURE(report2);
-
-			const Message* message = &report2;
-
-			CHECK(report == *message);
-		}
-	}
-
-	SECTION("Compare - Directly")
-	{
-		const auto report2 = DailyReportMessage(RequestID(10), std::chrono::milliseconds(5000));
-		CAPTURE(report2);
-
-		CHECK(report == report2);
-	}
-
-	SECTION("Compare Messages That Do Not Match")
-	{
-		auto report2 = DailyReportMessage(RequestID(12), std::chrono::milliseconds(5000));
-		CAPTURE(report2);
-
-		CHECK(!(report == report2));
-
-		report2.requestID = report.requestID;
-		report2.report.found = true;
-		CAPTURE(report2);
-
-		CHECK(!(report == report2));
-
-		/*
-		request2.month = request.month;
-		request2.day = 4;
-		CAPTURE(request2);
-
-		CHECK(!(request == request2));
-
-		request2.day = request.day;
-		request2.year = 2026;
-		CAPTURE(request2);
-
-		CHECK(!(request == request2));*/
-	}
 
 	SECTION("Print - No Report Found")
 	{
