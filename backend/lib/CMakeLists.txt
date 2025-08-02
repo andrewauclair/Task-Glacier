@@ -1,4 +1,37 @@
-﻿add_library (task-glacier-server-lib STATIC 
+﻿set(PACKET_SOURCES
+
+	packets/basic.hpp
+	packets/bugzilla_info.hpp
+	packets/bugzilla_instance_id.hpp
+	packets/create_task.hpp
+	packets/daily_report.hpp
+	packets/failure_response.hpp
+	packets/message.hpp
+	packets/packet_builder.hpp
+	packets/packet_parser.hpp
+	packets/request.hpp
+	packets/request_daily_report.hpp
+	packets/request_id.hpp
+	packets/request_weekly_report.hpp
+	packets/success_response.hpp
+	packets/task.hpp
+	packets/task_id.hpp
+	packets/task_info.hpp
+	packets/task_state.hpp
+	packets/task_times.hpp
+	packets/time_category.hpp
+	packets/time_category_id.hpp
+	packets/time_category_mod_type.hpp
+	packets/time_code.hpp
+	packets/time_code_id.hpp
+	packets/time_entry.hpp
+	packets/time_entry_modify_packet.hpp
+	packets/unpack_error.hpp
+	packets/update_task.hpp
+	packets/weekly_report.hpp
+)
+set(LIB_SOURCES
+
 	api.hpp		api.cpp
 	clock.hpp
 	curl.hpp
@@ -8,6 +41,13 @@
 	server.cpp  server.hpp
 	bugzilla.cpp bugzilla.hpp
 )
+add_library (task-glacier-server-lib STATIC 
+	${LIB_SOURCES}
+	${PACKET_SOURCES}
+)
+
+#source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${LIB_SOURCES} ${PACKET_SOURCES})
+source_group("Header Files/packets" FILES ${PACKET_SOURCES})
 
 target_include_directories(task-glacier-server-lib PUBLIC .)
 
