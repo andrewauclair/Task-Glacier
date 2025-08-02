@@ -1,8 +1,12 @@
 #pragma once
 
 #include "clock.hpp"
-#include "packets.hpp"
 #include "curl.hpp"
+
+#include "packets/bugzilla_info.hpp"
+#include "packets/bugzilla_instance_id.hpp"
+#include "packets/task_id.hpp"
+#include "packets/request.hpp"
 
 #include <simdjson.h>
 

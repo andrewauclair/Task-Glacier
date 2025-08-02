@@ -4,11 +4,14 @@
 
 #include "bugzilla_instance_id.hpp"
 #include "task_id.hpp"
+#include "unpack_error.hpp"
 
 #include <string>
 #include <ostream>
 #include <vector>
-
+#include <map>
+#include <expected>
+#include <span>
 struct BugzillaInfoMessage : Message
 {
 	BugzillaInstanceID instanceID;

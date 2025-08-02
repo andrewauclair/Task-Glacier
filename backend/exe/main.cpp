@@ -1,5 +1,4 @@
-﻿#include "packets.hpp"
-#include "server.hpp"
+﻿#include "server.hpp"
 #include "api.hpp"
 #include "curl.hpp"
 
