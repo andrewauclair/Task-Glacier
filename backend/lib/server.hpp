@@ -18,6 +18,8 @@
 
 #include <strong_type/strong_type.hpp>
 
+#include "packet_sender.hpp"
+
 class API;
 class Database;
 
@@ -80,7 +82,7 @@ public:
 class MicroTask
 {
 public:
-	MicroTask(API& api, const Clock& clock, Database& database) : m_api(&api), m_clock(&clock), m_database(&database) {}
+	MicroTask(API& api, const Clock& clock, Database& database, PacketSender& sender) : m_clock(&clock), m_database(&database), m_sender(&sender), m_api(&api) {}
 
 	std::expected<TaskID, std::string> create_task(const std::string& name, TaskID parentID = NO_PARENT, bool serverControlled = false);
 
@@ -134,7 +136,7 @@ public:
 		}
 	}
 
-	void send_task_info(const Task& task, bool newTask, std::vector<std::unique_ptr<Message>>& output)
+	void send_task_info(const Task& task, bool newTask)
 	{
 		auto info = std::make_unique<TaskInfoMessage>(task.taskID(), task.parentID(), task.m_name);
 
@@ -149,12 +151,12 @@ public:
 		info->timeEntry = task.timeEntry;
 		info->labels = task.labels;
 
-		output.push_back(std::move(info));
+		m_sender->send(std::move(info));
 	}
 
-	void send_all_tasks(std::vector<std::unique_ptr<Message>>& output)
+	void send_all_tasks()
 	{
-		output.push_back(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_START));
+		m_sender->send(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_START));
 
 		std::vector<TaskID> parents;
 
@@ -168,7 +170,7 @@ public:
 			{
 				if (parent != NO_PARENT)
 				{
-					send_task_info(m_tasks.at(parent), false, output);
+					send_task_info(m_tasks.at(parent), false);
 				}
 
 				auto all_tasks = find_tasks_with_parent(parent);
@@ -181,7 +183,7 @@ public:
 			parents = next;
 		}
 
-		output.push_back(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_FINISH));
+		m_sender->send(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_FINISH));
 	}
 
 	std::vector<TimeCategory>& timeCategories() { return m_timeCategories; }
@@ -216,19 +218,19 @@ public:
 	bool is_bulk_update() const { return m_bulk_update; }
 	void add_update_task(TaskID id) { m_changedTasksBulkUpdate.insert(id); }
 	void start_bulk_update() { m_bulk_update = true; }
-	void finish_bulk_update(std::vector<std::unique_ptr<Message>>& output)
+	void finish_bulk_update()
 	{
 		m_bulk_update = false;
 
-		output.push_back(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_START));
+		m_sender->send(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_START));
 
 		for (TaskID task : m_changedTasksBulkUpdate)
 		{
-			send_task_info(m_tasks.at(task), false, output);
+			send_task_info(m_tasks.at(task), false);
 		}
 		m_changedTasksBulkUpdate.clear();
 
-		output.push_back(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_FINISH));
+		m_sender->send(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_FINISH));
 	}
 
 public:
@@ -247,6 +249,7 @@ private:
 
 	const Clock* m_clock;
 	Database* m_database;
+	PacketSender* m_sender;
 
 	API* m_api;
 };

@@ -9,36 +9,39 @@
 
 #include <vector>
 
+#include "packet_sender.hpp"
+
 class API
 {
 public:
-	API(const Clock& clock, cURL& curl, Database& database) 
+	API(const Clock& clock, cURL& curl, Database& database, PacketSender& sender) 
 		: m_clock(&clock), 
-		m_app(*this, clock, database),
-		m_bugzilla(clock, curl),
-		m_database(&database)
+		m_app(*this, clock, database, sender),
+		m_bugzilla(clock, curl, sender),
+		m_database(&database),
+		m_sender(&sender)
 	{
 		database.load(m_bugzilla, m_app, *this);
 	}
 
-	void process_packet(const Message& message, std::vector<std::unique_ptr<Message>>& output);
+	void process_packet(const Message& message);
 
-	void send_task_info(const Task& task, bool newTask, std::vector<std::unique_ptr<Message>>& output);
+	void send_task_info(const Task& task, bool newTask);
 
 private:
-	void create_task(const CreateTaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
-	void start_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
-	void stop_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
-	void finish_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
-	void update_task(const UpdateTaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
-	void request_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
+	void create_task(const CreateTaskMessage& message);
+	void start_task(const TaskMessage& message);
+	void stop_task(const TaskMessage& message);
+	void finish_task(const TaskMessage& message);
+	void update_task(const UpdateTaskMessage& message);
+	void request_task(const TaskMessage& message);
 
-	void handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<Message>>& output);
+	void handle_basic(const BasicMessage& message);
 
-	void time_entry_modify(const TimeEntryModifyPacket& message, std::vector<std::unique_ptr<Message>>& output);
+	void time_entry_modify(const TimeEntryModifyPacket& message);
 
 	DailyReportMessage create_daily_report(RequestID requestID, int month, int day, int year);
-	void create_weekly_report(RequestID requestID, int month, int day, int year, std::vector<std::unique_ptr<Message>>& output);
+	void create_weekly_report(RequestID requestID, int month, int day, int year);
 
 	const Clock* m_clock;
 	MicroTask m_app;
@@ -46,6 +49,7 @@ public:
 	Bugzilla m_bugzilla;
 private:
 	Database* m_database;
+	PacketSender* m_sender;
 };
 
 #endif

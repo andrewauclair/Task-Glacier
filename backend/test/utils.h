@@ -9,6 +9,8 @@
 #include <source_location>
 #include <memory>
 
+#include "packet_sender.hpp"
+
 template<typename T>
 void verify_message(const T& expected, const Message& actual, std::source_location location = std::source_location::current())
 {
@@ -89,6 +91,16 @@ struct nullDatabase : Database
 	void finish_transaction() override {}
 };
 
+struct TestPacketSender : PacketSender
+{
+	std::vector<std::unique_ptr<Message>> output;
+
+	void send(std::unique_ptr<Message> message) override
+	{
+		output.emplace_back(std::move(message));
+	}
+};
+
 template<typename DatabaseType>
 struct TestHelper
 {
@@ -96,10 +108,9 @@ struct TestHelper
 
 	TestClock clock;
 	curlTest curl;
+	TestPacketSender sender;
 
-	API api = API(clock, curl, database);
-
-	std::vector<std::unique_ptr<Message>> output;
+	API api = API(clock, curl, database, sender);
 
 	RequestID next_request_id()
 	{
@@ -115,27 +126,27 @@ struct TestHelper
 
 	void clear_message_output()
 	{
-		output.clear();
+		sender.output.clear();
 	}
 
 	void expect_success(const RequestMessage& message, std::source_location location = std::source_location::current())
 	{
-		output.clear();
+		sender.output.clear();
 
-		api.process_packet(message, output);
+		api.process_packet(message);
 
 		// check output for a success message for the request ID
-		if (!output.empty())
+		if (!sender.output.empty())
 		{
 			INFO("First message sent should be the response");
 
 			INFO("");
 			INFO(location.file_name() << ":" << location.line());
 
-			CHECK(*output[0] == SuccessResponse(message.requestID));
+			CHECK(*sender.output[0] == SuccessResponse(message.requestID));
 
 			// now remove the first message, calls to required_messages will check what comes after the response message
-			output.erase(output.begin());
+			sender.output.erase(sender.output.begin());
 		}
 		else
 		{
@@ -148,21 +159,21 @@ struct TestHelper
 
 	void expect_failure(const RequestMessage& message, const std::string& error, std::source_location location = std::source_location::current())
 	{
-		output.clear();
+		sender.output.clear();
 
-		api.process_packet(message, output);
+		api.process_packet(message);
 
 		// check output for a failure message for the request ID
-		if (!output.empty())
+		if (!sender.output.empty())
 		{
 			INFO("Only message sent should be the failure response");
 
 			INFO("");
 			INFO(location.file_name() << ":" << location.line());
 
-			CHECK(*output[0] == FailureResponse(message.requestID, error));
+			CHECK(*sender.output[0] == FailureResponse(message.requestID, error));
 
-			REQUIRE(output.size() == 1);
+			REQUIRE(sender.output.size() == 1);
 		}
 		else
 		{
@@ -184,20 +195,20 @@ struct TestHelper
 		// m2
 		// m3
 
-		bool match = output.size() == messages.size();
+		bool match = sender.output.size() == messages.size();
 
 		if (!match)
 		{
-			UNSCOPED_INFO("Expected " << messages.size() << " messages, but found " << output.size());
+			UNSCOPED_INFO("Expected " << messages.size() << " messages, but found " << sender.output.size());
 		}
 
-		for (std::size_t i = 0; i < output.size() && match; i++)
+		for (std::size_t i = 0; i < sender.output.size() && match; i++)
 		{
-			if (*output[i] != *messages[i])
+			if (*sender.output[i] != *messages[i])
 			{
 				UNSCOPED_INFO("Message " << (i + 1) << ". did not match expected message");
 			}
-			match &= *output[i] == *messages[i];
+			match &= *sender.output[i] == *messages[i];
 		}
 
 		if (!match)
@@ -219,7 +230,7 @@ struct TestHelper
 
 			count = 1;
 
-			for (auto&& msg : output)
+			for (auto&& msg : sender.output)
 			{
 				UNSCOPED_INFO(count << ". " << *msg);
 				count++;

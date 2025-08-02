@@ -15,6 +15,8 @@
 #include <map>
 #include <optional>
 
+#include "packet_sender.hpp"
+
 class MicroTask;
 class API;
 class Database;
@@ -41,27 +43,29 @@ struct BugzillaInstance
 class Bugzilla
 {
 public:
-	Bugzilla(const Clock& clock, cURL& curl)
+	Bugzilla(const Clock& clock, cURL& curl, PacketSender& sender)
 		: m_clock(&clock),
-		m_curl(&curl)
+		m_curl(&curl),
+		m_sender(&sender)
 	{
 	}
 
-	void receive_info(const BugzillaInfoMessage& info, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, Database& database);
-	void send_info(std::vector<std::unique_ptr<Message>>& output);
+	void receive_info(const BugzillaInfoMessage& info, MicroTask& app, API& api, Database& database);
+	void send_info();
 
-	void refresh(const RequestMessage& request, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, Database& database);
+	void refresh(const RequestMessage& request, MicroTask& app, API& api, Database& database);
 
 	void load_instance(const BugzillaInstance& instance);
 	void next_instance_id(BugzillaInstanceID next);
 
 private:
-	void build_group_by_task(BugzillaInstance& instance, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, TaskID parent, std::span<const std::string> groupTaskBy);
+	void build_group_by_task(BugzillaInstance& instance, MicroTask& app, API& api, TaskID parent, std::span<const std::string> groupTaskBy);
 
-	class Task* parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, API& api, std::vector<std::unique_ptr<Message>>& output, const simdjson::dom::element& bug, TaskID currentParent, std::span<const std::string> groupTaskBy);
+	class Task* parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, API& api, const simdjson::dom::element& bug, TaskID currentParent, std::span<const std::string> groupTaskBy);
 
 	const Clock* m_clock;
 	cURL* m_curl;
+	PacketSender* m_sender;
 
 	BugzillaInstanceID m_nextBugzillaID = BugzillaInstanceID(1);
 	std::map<std::string, BugzillaInstance> m_bugzilla;

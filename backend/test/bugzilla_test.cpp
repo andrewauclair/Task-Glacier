@@ -29,7 +29,7 @@ TEST_CASE("Configuring Bugzilla Information", "[bugzilla][api]")
 	helper.curl.requestResponse.emplace_back("{ \"fields\": [] }");
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
-	helper.api.process_packet(configure, helper.output);
+	helper.api.process_packet(configure);
 	configure.instanceID = BugzillaInstanceID(1);
 
 	helper.required_messages({ &configure });
@@ -55,12 +55,12 @@ TEST_CASE("Request Bugzilla Information", "[bugzilla][api]")
 	helper.curl.requestResponse.emplace_back("{ \"fields\": [] }");
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
-	helper.api.process_packet(configure, helper.output);
+	helper.api.process_packet(configure);
 	helper.clear_message_output();
 
 	auto request = BasicMessage(PacketType::REQUEST_CONFIGURATION);
 
-	helper.api.process_packet(request, helper.output);
+	helper.api.process_packet(request);
 
 	auto timeCategories = TimeEntryDataPacket({});
 	auto complete = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
@@ -180,7 +180,7 @@ TEST_CASE("Configuring Multiple Bugzilla Instances", "[bugzilla][api]")
 	helper.curl.requestResponse.emplace_back(fieldsResponse);
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
-	helper.api.process_packet(configure, helper.output);
+	helper.api.process_packet(configure);
 
 	auto configure2 = configure;
 	configure2.name = "bugzilla2";
@@ -191,7 +191,7 @@ TEST_CASE("Configuring Multiple Bugzilla Instances", "[bugzilla][api]")
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 	helper.curl.current = 0;
 
-	helper.api.process_packet(configure2, helper.output);
+	helper.api.process_packet(configure2);
 
 	SECTION("Information is Set in Memory")
 	{
@@ -199,7 +199,7 @@ TEST_CASE("Configuring Multiple Bugzilla Instances", "[bugzilla][api]")
 
 		auto request = BasicMessage(PacketType::REQUEST_CONFIGURATION);
 
-		helper.api.process_packet(request, helper.output);
+		helper.api.process_packet(request);
 
 		auto timeCategories = TimeEntryDataPacket({});
 		auto complete = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
@@ -322,7 +322,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 	helper.curl.requestResponse.emplace_back(fieldsResponse);
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
-	helper.api.process_packet(configure, helper.output);
+	helper.api.process_packet(configure);
 	configure.instanceID = BugzillaInstanceID(1);
 
 	CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/field/bug?api_key=asfesdFEASfslj");
@@ -360,7 +360,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 		helper.clear_message_output();
 
 		helper.curl.current = 0;
-		helper.api.process_packet(configure, helper.output);
+		helper.api.process_packet(configure);
 
 		helper.required_messages({ &configure });
 	}
@@ -675,7 +675,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 				"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
 				"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
 
-			helper.api.process_packet(configure, helper.output);
+			helper.api.process_packet(configure);
 
 			auto nitpick = TaskInfoMessage(TaskID(21), TaskID(1), "Nitpick");
 			auto minor = TaskInfoMessage(TaskID(15), TaskID(1), "Minor");

@@ -1023,7 +1023,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 	{
 		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
 
-		helper.api.process_packet(request, helper.output);
+		helper.api.process_packet(request);
 
 		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1737344039870));
 		report.report.month = 2;
@@ -1044,7 +1044,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
 
-		helper.api.process_packet(request, helper.output);
+		helper.api.process_packet(request);
 
 		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738560600000));
 		report.report.found = true;
@@ -1072,7 +1072,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
 
-		helper.api.process_packet(request, helper.output);
+		helper.api.process_packet(request);
 
 		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738647000000));
 		report.report.found = true;
@@ -1099,7 +1099,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 4, 2025);
 
-		helper.api.process_packet(request, helper.output);
+		helper.api.process_packet(request);
 
 		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738542600000));
 		report.report.month = 2;
@@ -1120,7 +1120,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
 
-		helper.api.process_packet(request, helper.output);
+		helper.api.process_packet(request);
 
 		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738560600000));
 		report.report.found = true;
@@ -1150,7 +1150,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
 
-		helper.api.process_packet(request, helper.output);
+		helper.api.process_packet(request);
 
 		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738566000000));
 		report.report.found = true;
@@ -1180,7 +1180,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
 
-		helper.api.process_packet(request, helper.output);
+		helper.api.process_packet(request);
 
 		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738566000000));
 		report.report.found = true;
@@ -1222,7 +1222,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
 
-		helper.api.process_packet(request, helper.output);
+		helper.api.process_packet(request);
 
 		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738652400000));
 		report.report.found = true;
@@ -1299,7 +1299,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
 
-		helper.api.process_packet(request, helper.output);
+		helper.api.process_packet(request);
 
 		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738659600000));
 		report.report.found = true;
@@ -1351,7 +1351,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		auto request = RequestDailyReportMessage(helper.next_request_id(), 2, 3, 2025);
 
-		helper.api.process_packet(request, helper.output);
+		helper.api.process_packet(request);
 
 		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738569600000));
 		report.report.found = true;
@@ -1377,7 +1377,7 @@ TEST_CASE("Request Weekly Report", "[api][task]")
 	{
 		auto request = RequestWeeklyReportMessage(helper.next_request_id(), 6, 29, 2025);
 
-		helper.api.process_packet(request, helper.output);
+		helper.api.process_packet(request);
 
 		auto report = WeeklyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1737344039870));
 		report.dailyReports[0].day = 29;
@@ -1410,9 +1410,8 @@ TEST_CASE("request configuration at startup", "[api]")
 	TestClock clock;
 	curlTest curl;
 	nullDatabase db;
-	API api(clock, curl, db);
-
-	std::vector<std::unique_ptr<Message>> output;
+	TestPacketSender sender;
+	API api(clock, curl, db, sender);
 
 	auto create_task_1 = CreateTaskMessage(NO_PARENT, RequestID(1), "task 1");
 	auto create_task_2 = CreateTaskMessage(TaskID(1), RequestID(2), "task 2");
@@ -1421,12 +1420,12 @@ TEST_CASE("request configuration at startup", "[api]")
 	auto create_task_5 = CreateTaskMessage(TaskID(3), RequestID(5), "task 5");
 	auto create_task_6 = CreateTaskMessage(TaskID(4), RequestID(6), "task 6");
 
-	api.process_packet(create_task_1, output);
-	api.process_packet(create_task_2, output);
-	api.process_packet(create_task_3, output);
-	api.process_packet(create_task_4, output);
-	api.process_packet(create_task_5, output);
-	api.process_packet(create_task_6, output);
+	api.process_packet(create_task_1);
+	api.process_packet(create_task_2);
+	api.process_packet(create_task_3);
+	api.process_packet(create_task_4);
+	api.process_packet(create_task_5);
+	api.process_packet(create_task_6);
 
 	auto timeCategories = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
 	auto& category1 = timeCategories.timeCategories.emplace_back(TimeCategoryID(0), "Foo");
@@ -1437,25 +1436,25 @@ TEST_CASE("request configuration at startup", "[api]")
 	category2.codes.emplace_back(TimeCodeID(0), "Bing");
 	category2.codes.emplace_back(TimeCodeID(0), "Bong");
 
-	output.clear();
+	sender.output.clear();
 
 	// now that we're setup, request the configuration and check the output
-	api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, output);
+	api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION });
 
-	REQUIRE(output.size() == 10);
+	REQUIRE(sender.output.size() == 10);
 
 	auto timeCategoriesData = TimeEntryDataPacket({});
 
-	verify_message(timeCategoriesData, *output[0]);
+	verify_message(timeCategoriesData, *sender.output[0]);
 
-	verify_message(TaskInfoMessage(TaskID(1), NO_PARENT, "task 1", std::chrono::milliseconds(1737344039870)), *output[2]);
-	verify_message(TaskInfoMessage(TaskID(2), TaskID(1), "task 2", std::chrono::milliseconds(1737344939870)), *output[3]);
-	verify_message(TaskInfoMessage(TaskID(3), TaskID(2), "task 3", std::chrono::milliseconds(1737345839870)), *output[4]);
+	verify_message(TaskInfoMessage(TaskID(1), NO_PARENT, "task 1", std::chrono::milliseconds(1737344039870)), *sender.output[2]);
+	verify_message(TaskInfoMessage(TaskID(2), TaskID(1), "task 2", std::chrono::milliseconds(1737344939870)), *sender.output[3]);
+	verify_message(TaskInfoMessage(TaskID(3), TaskID(2), "task 3", std::chrono::milliseconds(1737345839870)), *sender.output[4]);
 	auto task4 = TaskInfoMessage(TaskID(4), TaskID(2), "task 4", std::chrono::milliseconds(1737346739870));
 	task4.indexInParent = 1;
-	verify_message(task4, *output[5]);
-	verify_message(TaskInfoMessage(TaskID(5), TaskID(3), "task 5", std::chrono::milliseconds(1737347639870)), *output[6]);
-	verify_message(TaskInfoMessage(TaskID(6), TaskID(4), "task 6", std::chrono::milliseconds(1737348539870)), *output[7]);
+	verify_message(task4, *sender.output[5]);
+	verify_message(TaskInfoMessage(TaskID(5), TaskID(3), "task 5", std::chrono::milliseconds(1737347639870)), *sender.output[6]);
+	verify_message(TaskInfoMessage(TaskID(6), TaskID(4), "task 6", std::chrono::milliseconds(1737348539870)), *sender.output[7]);
 
-	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *output[9]);
+	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *sender.output[9]);
 }

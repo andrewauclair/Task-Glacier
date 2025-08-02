@@ -268,8 +268,9 @@ struct PacketTestHelper
 	TestClock clock;
 	curlTest curl;
 	nullDatabase db;
-	API api = API(clock, curl, db);
-	MicroTask app = MicroTask(api, clock, db);
+	TestPacketSender sender;
+	API api = API(clock, curl, db, sender);
+	MicroTask app = MicroTask(api, clock, db, sender);
 
 	template<typename T>
 	void expect_packet(const Message& message, std::size_t size)
@@ -888,8 +889,9 @@ TEST_CASE("unpack the empty packet", "[message][unpack]")
 	TestClock clock;
 	curlTest curl;
 	nullDatabase db;
-	API api = API(clock, curl, db);
-	MicroTask app = MicroTask(api, clock, db);
+	TestPacketSender sender;
+	API api = API(clock, curl, db, sender);
+	MicroTask app = MicroTask(api, clock, db, sender);
 
 	const auto message = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
 
@@ -909,8 +911,9 @@ TEST_CASE("Bugzilla Info Packet", "[message]")
 	TestClock clock;
 	curlTest curl;
 	nullDatabase db;
-	API api = API(clock, curl, db);
-	MicroTask app = MicroTask(api, clock, db);
+	TestPacketSender sender;
+	API api = API(clock, curl, db, sender);
+	MicroTask app = MicroTask(api, clock, db, sender);
 
 	auto message = BugzillaInfoMessage(BugzillaInstanceID(1), "bugzilla", "0.0.0.0", "aBSEFASDfOJOEFfjlsojFEF");
 	message.username = "admin";

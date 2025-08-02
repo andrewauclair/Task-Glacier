@@ -202,21 +202,21 @@ TEST_CASE("Load Database", "[database]")
 			"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
 			"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
 
-		helper.api.process_packet(configure, helper.output);
+		helper.api.process_packet(configure);
 	}
 
 	{
 		TestHelper<DatabaseImpl> helper{ DatabaseImpl("database_load_test.db3") };
 
-		helper.api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION }, helper.output);
+		helper.api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION });
 
-		REQUIRE(helper.output.size() == 22);
+		REQUIRE(helper.sender.output.size() == 22);
 
 
 
 
 		// test next bugzilla instance ID
-		helper.output.clear();
+		helper.sender.output.clear();
 		auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla2", "0.0.0.0", "asfesdFEASfslj");
 		configure.username = "test";
 		configure.rootTaskID = TaskID(1);
@@ -230,16 +230,16 @@ TEST_CASE("Load Database", "[database]")
 		helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 		helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
-		helper.api.process_packet(configure, helper.output);
+		helper.api.process_packet(configure);
 
-		REQUIRE(helper.output.size() == 15);
-		CHECK(dynamic_cast<BugzillaInfoMessage*>(helper.output[1].get())->instanceID == BugzillaInstanceID(2));
+		REQUIRE(helper.sender.output.size() == 15);
+		CHECK(dynamic_cast<BugzillaInfoMessage*>(helper.sender.output[1].get())->instanceID == BugzillaInstanceID(2));
 
 		// test next task ID
-		helper.output.clear();
+		helper.sender.output.clear();
 		helper.expect_success(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"));
-		REQUIRE(helper.output.size() == 1);
-		CHECK(dynamic_cast<TaskInfoMessage*>(helper.output[0].get())->taskID == TaskID(18));
+		REQUIRE(helper.sender.output.size() == 1);
+		CHECK(dynamic_cast<TaskInfoMessage*>(helper.sender.output[0].get())->taskID == TaskID(18));
 
 		// test next time category ID
 		// test next time code ID
@@ -247,11 +247,11 @@ TEST_CASE("Load Database", "[database]")
 		auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "C");
 		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 5");
 
-		helper.output.clear();
-		helper.api.process_packet(modify, helper.output);
-		REQUIRE(helper.output.size() == 2);
+		helper.sender.output.clear();
+		helper.api.process_packet(modify);
+		REQUIRE(helper.sender.output.size() == 2);
 
-		auto* timeEntry = dynamic_cast<TimeEntryDataPacket*>(helper.output[1].get());
+		auto* timeEntry = dynamic_cast<TimeEntryDataPacket*>(helper.sender.output[1].get());
 		REQUIRE(timeEntry->timeCategories.size() == 3);
 		CHECK(timeEntry->timeCategories[2].id == TimeCategoryID(3));
 		CHECK(timeEntry->timeCategories[2].codes[0].id == TimeCodeID(5));
@@ -259,7 +259,7 @@ TEST_CASE("Load Database", "[database]")
 		// verify that we have an active task by starting a new task (this sends an info message for the old active task)
 		helper.expect_success(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(1)));
 
-		REQUIRE(helper.output.size() == 2);
+		REQUIRE(helper.sender.output.size() == 2);
 
 
 	}
@@ -269,17 +269,17 @@ TEST_CASE("Write Task to Database", "[database]")
 {
 	TestClock clock;
 	curlTest curl;
-
+	TestPacketSender sender;
 	DatabaseImpl database(":memory:");
 
-	API api = API(clock, curl, database);
+	API api = API(clock, curl, database, sender);
 
 	std::vector<std::unique_ptr<Message>> output;
 
 	SECTION("Create")
 	{
-		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
-		api.process_packet(CreateTaskMessage(TaskID(1), RequestID(2), "this is a test"), output);
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"));
+		api.process_packet(CreateTaskMessage(TaskID(1), RequestID(2), "this is a test"));
 		
 		SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 2");
 		query.executeStep();
@@ -306,8 +306,8 @@ TEST_CASE("Write Task to Database", "[database]")
 
 	SECTION("Start")
 	{
-		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
-		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(2), TaskID(1)), output);
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"));
+		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(2), TaskID(1)));
 
 		SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 1");
 		query.executeStep();
@@ -333,8 +333,8 @@ TEST_CASE("Write Task to Database", "[database]")
 
 		SECTION("Write Stop When Active")
 		{
-			api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
-			api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(2), TaskID(2)), output);
+			api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"));
+			api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(2), TaskID(2)));
 
 			query = SQLite::Statement(database.database(), "SELECT * FROM tasks WHERE TaskID == 1");
 			query.executeStep();
@@ -362,9 +362,9 @@ TEST_CASE("Write Task to Database", "[database]")
 
 	SECTION("Stop")
 	{
-		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
-		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(2), TaskID(1)), output);
-		api.process_packet(TaskMessage(PacketType::STOP_TASK, RequestID(3), TaskID(1)), output);
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"));
+		api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(2), TaskID(1)));
+		api.process_packet(TaskMessage(PacketType::STOP_TASK, RequestID(3), TaskID(1)));
 
 
 		SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 1");
@@ -392,8 +392,8 @@ TEST_CASE("Write Task to Database", "[database]")
 
 	SECTION("Finish")
 	{
-		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
-		api.process_packet(TaskMessage(PacketType::FINISH_TASK, RequestID(2), TaskID(1)), output);
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"));
+		api.process_packet(TaskMessage(PacketType::FINISH_TASK, RequestID(2), TaskID(1)));
 
 		SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 1");
 		query.executeStep();
@@ -420,10 +420,10 @@ TEST_CASE("Write Task to Database", "[database]")
 
 	SECTION("Reparent")
 	{
-		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
-		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(2), "this is a test"), output);
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"));
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(2), "this is a test"));
 
-		api.process_packet(UpdateTaskMessage(RequestID(3), TaskID(2), TaskID(1), "this is a test"), output);
+		api.process_packet(UpdateTaskMessage(RequestID(3), TaskID(2), TaskID(1), "this is a test"));
 
 		SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 2");
 		query.executeStep();
@@ -450,9 +450,9 @@ TEST_CASE("Write Task to Database", "[database]")
 
 	SECTION("Rename")
 	{
-		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"));
 
-		api.process_packet(UpdateTaskMessage(RequestID(3), TaskID(1), NO_PARENT, "child"), output);
+		api.process_packet(UpdateTaskMessage(RequestID(3), TaskID(1), NO_PARENT, "child"));
 
 		SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 1");
 		query.executeStep();
@@ -479,12 +479,12 @@ TEST_CASE("Write Task to Database", "[database]")
 
 	SECTION("Lock")
 	{
-		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"));
 
 		auto update = UpdateTaskMessage(RequestID(3), TaskID(1), NO_PARENT, "parent");
 		update.locked = 1;
 
-		api.process_packet(update, output);
+		api.process_packet(update);
 
 		SQLite::Statement query(database.database(), "SELECT * FROM tasks WHERE TaskID == 1");
 		query.executeStep();
@@ -501,9 +501,9 @@ TEST_CASE("Write Task to Database", "[database]")
 
 	SECTION("Index in Parent")
 	{
-		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
-		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
-		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"));
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"));
+		api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"));
 
 		SQLite::Statement query(database.database(), "SELECT * FROM tasks");
 		query.executeStep();
@@ -537,10 +537,10 @@ TEST_CASE("Write Task Session to Database", "[database]")
 {
 	TestClock clock;
 	curlTest curl;
-
+	TestPacketSender sender;
 	DatabaseImpl database(":memory:");
 
-	API api = API(clock, curl, database);
+	API api = API(clock, curl, database, sender);
 
 	std::vector<std::unique_ptr<Message>> output;
 
@@ -553,16 +553,16 @@ TEST_CASE("Write Task Session to Database", "[database]")
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
 
-	api.process_packet(modify, output);
+	api.process_packet(modify);
 
 	auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
 	create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
 	create.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
 
-	api.process_packet(create, output);
-	api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(3), TaskID(1)), output);
-	api.process_packet(TaskMessage(PacketType::STOP_TASK, RequestID(4), TaskID(1)), output);
-	api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(5), TaskID(1)), output);
+	api.process_packet(create);
+	api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(3), TaskID(1)));
+	api.process_packet(TaskMessage(PacketType::STOP_TASK, RequestID(4), TaskID(1)));
+	api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(5), TaskID(1)));
 
 	SQLite::Statement query(database.database(), "SELECT * FROM timeEntrySession WHERE TaskID == 1");
 	query.executeStep();
@@ -646,10 +646,10 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 {
 	TestClock clock;
 	curlTest curl;
-
+	TestPacketSender sender;
 	DatabaseImpl database(":memory:");
 
-	API api = API(clock, curl, database);
+	API api = API(clock, curl, database, sender);
 
 	std::vector<std::unique_ptr<Message>> output;
 
@@ -662,7 +662,7 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
 
-	api.process_packet(modify, output);
+	api.process_packet(modify);
 
 	SECTION("Add")
 	{
@@ -756,7 +756,7 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 		auto update_category = TimeEntryModifyPacket(RequestID(4), TimeCategoryModType::UPDATE, {});
 		update_category.timeCategories.push_back(cat);
 
-		api.process_packet(update_category, output);
+		api.process_packet(update_category);
 
 		SQLite::Statement query(database.database(), "SELECT * FROM timeEntryCategory WHERE TimeCategoryID == 1");
 		query.executeStep();
@@ -812,7 +812,7 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 			auto remove_category = TimeEntryModifyPacket(RequestID(5), TimeCategoryModType::REMOVE_CATEGORY, {});
 			remove_category.timeCategories.push_back(cat);
 
-			api.process_packet(remove_category, output);
+			api.process_packet(remove_category);
 
 			SQLite::Statement query(database.database(), "SELECT * FROM timeEntryCategory");
 			query.executeStep();
@@ -867,7 +867,7 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 			auto remove_category = TimeEntryModifyPacket(RequestID(5), TimeCategoryModType::REMOVE_CODE, {});
 			remove_category.timeCategories.push_back(cat);
 
-			api.process_packet(remove_category, output);
+			api.process_packet(remove_category);
 
 			SQLite::Statement query(database.database(), "SELECT * FROM timeEntryCategory");
 			query.executeStep();
@@ -942,10 +942,10 @@ TEST_CASE("Write Task Time Entry to Database", "[database]")
 {
 	TestClock clock;
 	curlTest curl;
-
+	TestPacketSender sender;
 	DatabaseImpl database(":memory:");
 
-	API api = API(clock, curl, database);
+	API api = API(clock, curl, database, sender);
 
 	std::vector<std::unique_ptr<Message>> output;
 
@@ -958,7 +958,7 @@ TEST_CASE("Write Task Time Entry to Database", "[database]")
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
 	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
 
-	api.process_packet(modify, output);
+	api.process_packet(modify);
 
 	SECTION("Add")
 	{
@@ -966,7 +966,7 @@ TEST_CASE("Write Task Time Entry to Database", "[database]")
 		create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
 		create.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
 
-		api.process_packet(create, output);
+		api.process_packet(create);
 
 		SQLite::Statement query(database.database(), "SELECT * FROM timeEntryTask");
 		query.executeStep();
@@ -1008,8 +1008,8 @@ TEST_CASE("Write Task Time Entry to Database", "[database]")
 		update.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(2));
 		update.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(3));
 
-		api.process_packet(create, output);
-		api.process_packet(update, output);
+		api.process_packet(create);
+		api.process_packet(update);
 
 		SQLite::Statement query(database.database(), "SELECT * FROM timeEntryTask");
 		query.executeStep();
@@ -1049,17 +1049,17 @@ TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
 {
 	TestClock clock;
 	curlTest curl;
-
+	TestPacketSender sender;
 	DatabaseImpl database(":memory:");
 
 	std::istringstream fileInput;
 	std::ostringstream fileOutput;
 
-	API api = API(clock, curl, database);
+	API api = API(clock, curl, database, sender);
 
 	std::vector<std::unique_ptr<Message>> output;
 
-	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"));
 
 	SECTION("Add")
 	{
@@ -1075,7 +1075,7 @@ TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
 		curl.requestResponse.emplace_back("{ \"fields\": [] }");
 		curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
-		api.process_packet(configure, output);
+		api.process_packet(configure);
 
 		SQLite::Statement query(database.database(), "SELECT * FROM bugzilla");
 		query.executeStep();
@@ -1113,14 +1113,14 @@ TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
 		curl.requestResponse.emplace_back("{ \"fields\": [] }");
 		curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
-		api.process_packet(configure, output);
+		api.process_packet(configure);
 
 		configure.instanceID = BugzillaInstanceID(1);
 		configure.apiKey = "asdfasdf";
 
 		curl.current = 0;
 
-		api.process_packet(configure, output);
+		api.process_packet(configure);
 
 		SQLite::Statement query(database.database(), "SELECT * FROM bugzilla");
 		query.executeStep();
@@ -1162,13 +1162,13 @@ TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
 		curl.requestResponse.emplace_back("{ \"fields\": [] }");
 		curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
-		api.process_packet(configure, output);
+		api.process_packet(configure);
 
 		const auto refresh = RequestMessage(PacketType::BUGZILLA_REFRESH, RequestID(3));
 
 		curl.current = 1;
 
-		api.process_packet(refresh, output);
+		api.process_packet(refresh);
 
 		SQLite::Statement query(database.database(), "SELECT * FROM bugzilla");
 		query.executeStep();
@@ -1207,14 +1207,14 @@ TEST_CASE("Write Bugzilla Group By to Database", "[database]")
 {
 	TestClock clock;
 	curlTest curl;
-
+	TestPacketSender sender;
 	DatabaseImpl database(":memory:");
 
-	API api = API(clock, curl, database);
+	API api = API(clock, curl, database, sender);
 
 	std::vector<std::unique_ptr<Message>> output;
 
-	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"));
 
 	auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla", "0.0.0.0", "asfesdFEASfslj");
 	configure.username = "test";
@@ -1228,7 +1228,7 @@ TEST_CASE("Write Bugzilla Group By to Database", "[database]")
 	curl.requestResponse.emplace_back("{ \"fields\": [] }");
 	curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
-	api.process_packet(configure, output);
+	api.process_packet(configure);
 
 	SQLite::Statement query(database.database(), "SELECT * FROM bugzillaGroupBy");
 	query.executeStep();
@@ -1246,14 +1246,14 @@ TEST_CASE("Write Bugzilla Bug ID to Task ID to Database", "[database]")
 {
 	TestClock clock;
 	curlTest curl;
-
+	TestPacketSender sender;
 	DatabaseImpl database(":memory:");
 
-	API api = API(clock, curl, database);
+	API api = API(clock, curl, database, sender);
 
 	std::vector<std::unique_ptr<Message>> output;
 
-	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"), output);
+	api.process_packet(CreateTaskMessage(NO_PARENT, RequestID(1), "parent"));
 
 	auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla", "0.0.0.0", "asfesdFEASfslj");
 	configure.username = "test";
@@ -1354,7 +1354,7 @@ TEST_CASE("Write Bugzilla Bug ID to Task ID to Database", "[database]")
 		"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
 		"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
 
-	api.process_packet(configure, output);
+	api.process_packet(configure);
 
 	SQLite::Statement query(database.database(), "SELECT * FROM bugzillaBugToTask");
 	query.executeStep();

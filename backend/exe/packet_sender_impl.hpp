@@ -12,11 +12,11 @@ struct PacketSenderImpl : PacketSender
 
 	PacketSenderImpl(sockpp::tcp_socket* socket) : socket(socket) {}
 
-	void send(const Message& message) override
+	void send(std::unique_ptr<Message> message) override
 	{
 		std::cout << "[TX] " << message << '\n';
 
-		const auto output = message.pack();
+		const auto output = message->pack();
 		socket->write_n(output.data(), output.size());
 	}
 };

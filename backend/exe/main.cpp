@@ -92,8 +92,6 @@ int main(int argc, char** argv)
 
 	Clock clock;
 
-	API api(clock, curl, db);
-
 	// ctrl-c app to kill it
 	while (true)
 	{
@@ -104,6 +102,8 @@ int main(int argc, char** argv)
 		auto socket = std::make_unique<sockpp::tcp_socket>(std::move(connection));
 
 		auto sender = PacketSenderImpl{ socket.get() };
+
+		API api(clock, curl, db, sender);
 
 		while (socket->is_open())
 		{
@@ -142,7 +142,7 @@ int main(int argc, char** argv)
 
 					/*const auto output = message->pack();
 					socket->write_n(output.data(), output.size());*/
-					sender.send(*message);
+					sender.send(std::move(message));
 				}
 			}
 		}
