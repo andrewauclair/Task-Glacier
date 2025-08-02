@@ -11,20 +11,9 @@ set(CURLPP_BUILD_SHARED_LIBS ON)
 
 FetchContent_MakeAvailable(curlpp)
 
-#find_package(CURL REQUIRED)
-
-#find_package(FindPkgConfig)
-#pkg_check_modules(CURLPP REQUIRED curlpp)
-
-add_executable(task-glacier-server main.cpp)
+add_executable(task-glacier-server main.cpp packet_sender_impl.hpp)
 
 set_target_properties(task-glacier-server PROPERTIES CXX_STANDARD 23)
-
-#target_compile_definitions(task-glacier-server PRIVATE CURL_STATICLIB)
-
-#target_include_directories(task-glacier-server PRIVATE
-#    ${CURL_INCLUDE_DIR}
-#)
 
 target_link_libraries(task-glacier-server PRIVATE
  	task-glacier-server-lib

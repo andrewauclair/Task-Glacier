@@ -1,6 +1,7 @@
 ﻿#include "server.hpp"
 #include "api.hpp"
 #include "curl.hpp"
+#include "packet_sender_impl.hpp"
 
 #include <iostream>
 #include <cstdlib>
@@ -102,6 +103,8 @@ int main(int argc, char** argv)
 
 		auto socket = std::make_unique<sockpp::tcp_socket>(std::move(connection));
 
+		auto sender = PacketSenderImpl{ socket.get() };
+
 		while (socket->is_open())
 		{
 			std::vector<std::byte> input(4);
@@ -135,10 +138,11 @@ int main(int argc, char** argv)
 
 				for (auto&& message : toSend)
 				{
-					std::cout << "[TX] " << *message << '\n';
+					//std::cout << "[TX] " << *message << '\n';
 
-					const auto output = message->pack();
-					socket->write_n(output.data(), output.size());
+					/*const auto output = message->pack();
+					socket->write_n(output.data(), output.size());*/
+					sender.send(*message);
 				}
 			}
 		}

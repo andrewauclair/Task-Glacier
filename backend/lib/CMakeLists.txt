@@ -37,16 +37,16 @@ set(LIB_SOURCES
 	curl.hpp
 	database.hpp database.cpp
 	packets.hpp packets.cpp
-	persist.hpp persist.cpp
 	server.cpp  server.hpp
 	bugzilla.cpp bugzilla.hpp
+	packet_sender.hpp packet_sender.cpp
 )
+
 add_library (task-glacier-server-lib STATIC 
 	${LIB_SOURCES}
 	${PACKET_SOURCES}
 )
 
-#source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${LIB_SOURCES} ${PACKET_SOURCES})
 source_group("Header Files/packets" FILES ${PACKET_SOURCES})
 
 target_include_directories(task-glacier-server-lib PUBLIC .)

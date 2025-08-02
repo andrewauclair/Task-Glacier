@@ -8,24 +8,6 @@
 #include "database.hpp"
 
 #include <vector>
-#include <format>
-
-inline std::string persist_string(const std::string& str)
-{
-	return std::format("({} {})", str.size(), str);
-}
-
-inline std::vector<std::string> split(const std::string& s, char delim) {
-	std::vector<std::string> result;
-	std::stringstream ss(s);
-	std::string item;
-
-	while (getline(ss, item, delim)) {
-		result.push_back(item);
-	}
-
-	return result;
-}
 
 class API
 {
@@ -52,8 +34,6 @@ private:
 	void request_task(const TaskMessage& message, std::vector<std::unique_ptr<Message>>& output);
 
 	void handle_basic(const BasicMessage& message, std::vector<std::unique_ptr<Message>>& output);
-
-	
 
 	void time_entry_modify(const TimeEntryModifyPacket& message, std::vector<std::unique_ptr<Message>>& output);
 

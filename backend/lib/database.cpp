@@ -11,6 +11,18 @@
 */
 static constexpr std::int32_t CURRENT_DATABASE_VERSION = 2;
 
+static std::vector<std::string> split(const std::string& s, char delim) {
+	std::vector<std::string> result;
+	std::stringstream ss(s);
+	std::string item;
+
+	while (getline(ss, item, delim)) {
+		result.push_back(item);
+	}
+
+	return result;
+}
+
 DatabaseImpl::DatabaseImpl(const std::string& file)
 	: m_database(file, SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE)
 {

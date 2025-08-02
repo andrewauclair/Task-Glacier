@@ -4,6 +4,7 @@
 #include "database.hpp"
 #include "clock.hpp"
 #include "api.hpp"
+#include "test_clock.hpp"
 
 #include <source_location>
 #include <memory>
