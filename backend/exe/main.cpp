@@ -2,6 +2,7 @@
 #include "api.hpp"
 #include "curl.hpp"
 #include "packet_sender_impl.hpp"
+#include "packets/packet_parser.hpp"
 
 #include <iostream>
 #include <cstdlib>

@@ -1,8 +1,18 @@
 #ifndef MICRO_TASK_LIB_HPP
 #define MICRO_TASK_LIB_HPP
 
-#include "packets.hpp"
 #include "clock.hpp"
+
+#include "packets/task_id.hpp"
+#include "packets/time_entry.hpp"
+#include "packets/task_times.hpp"
+#include "packets/task_state.hpp"
+#include "packets/task_info.hpp"
+#include "packets/daily_report.hpp"
+#include "packets/time_category.hpp"
+#include "packets/basic.hpp"
+
+#include "packet_sender.hpp"
 
 #include <vector>
 #include <string>
@@ -15,13 +25,12 @@
 #include <bit>
 #include <algorithm>
 #include <set>
+#include <map>
 
 #include <strong_type/strong_type.hpp>
 
-#include "packet_sender.hpp"
-
 class API;
-class Database;
+struct Database;
 
 class Task
 {

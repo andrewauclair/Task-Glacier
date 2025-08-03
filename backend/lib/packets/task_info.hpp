@@ -4,11 +4,14 @@
 #include "task_id.hpp"
 #include "task_state.hpp"
 #include "task_times.hpp"
+#include "unpack_error.hpp"
 
 #include <cstdint>
 #include <string>
 #include <optional>
 #include <vector>
+#include <expected>
+#include <span>
 
 struct TaskInfoMessage : Message
 {

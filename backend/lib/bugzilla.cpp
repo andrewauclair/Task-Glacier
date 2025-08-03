@@ -1,6 +1,9 @@
 #include "bugzilla.hpp"
 #include "api.hpp"
 
+#include "packets/success_response.hpp"
+#include "packets/failure_response.hpp"
+
 #include <format>
 #include <memory>
 #include <string>

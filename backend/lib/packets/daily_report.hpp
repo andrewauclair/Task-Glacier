@@ -1,5 +1,12 @@
 #pragma once
 
+#include "task_id.hpp"
+#include "request_id.hpp"
+
+#include <map>
+#include <vector>
+#include <chrono>
+
 struct DailyReport
 {
 	bool found = false;

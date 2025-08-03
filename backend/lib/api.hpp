@@ -2,10 +2,14 @@
 #define MICRO_TASK_API_HPP
 
 #include "server.hpp"
-#include "packets.hpp"
 #include "curl.hpp"
 #include "bugzilla.hpp"
 #include "database.hpp"
+
+#include "packets/create_task.hpp"
+#include "packets/task.hpp"
+#include "packets/update_task.hpp"
+#include "packets/time_entry_modify_packet.hpp"
 
 #include <vector>
 

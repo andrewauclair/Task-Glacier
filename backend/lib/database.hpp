@@ -1,19 +1,27 @@
 #pragma once
 
-#include "packets.hpp"
+#include "packets/task_id.hpp"
+#include "packets/bugzilla_instance_id.hpp"
+#include "packets/time_category_id.hpp"
+#include "packets/time_code_id.hpp"
+#include "packets/time_code.hpp"
 
 #include <SQLiteCpp/Database.h>
 
-class Task;
+
 struct BugzillaInstance;
-class Bugzilla;
-class MicroTask;
-class API;
 struct TaskTimes;
 struct TimeCategory;
 
+class Task;
+class Bugzilla;
+class MicroTask;
+class API;
+
 struct Database
 {
+	virtual ~Database() = default;
+
 	virtual void load(Bugzilla& bugzilla, MicroTask& app, API& api) = 0;
 
 	// write task

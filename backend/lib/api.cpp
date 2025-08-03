@@ -1,6 +1,14 @@
 #include "api.hpp"
 #include "simdjson.h"
 
+#include "packets/request_daily_report.hpp"
+#include "packets/request_weekly_report.hpp"
+#include "packets/success_response.hpp"
+#include "packets/failure_response.hpp"
+#include "packets/time_entry.hpp"
+#include "packets/weekly_report.hpp"
+#include "packets/time_entry_data_packet.hpp"
+
 #include <iostream>
 
 void API::process_packet(const Message& message)

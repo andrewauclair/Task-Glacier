@@ -3,6 +3,8 @@
 #include "message.hpp"
 #include "unpack_error.hpp"
 
+#include <expected>
+
 struct BasicMessage : Message
 {
 	BasicMessage(PacketType type) : Message(type) {}
