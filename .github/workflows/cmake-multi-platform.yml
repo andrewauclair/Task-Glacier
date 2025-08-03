@@ -71,6 +71,7 @@ jobs:
       with:
         vcpkgArguments: 'curl'
         vcpkgDirectory: '${{ github.workspace }}/vckpg'
+        vcpkgGitCommitId: dd3097e305afa53f7b4312371f62058d2e665320
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
