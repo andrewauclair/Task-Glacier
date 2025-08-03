@@ -69,8 +69,7 @@ jobs:
       if: matrix.os == 'windows-latest'
       uses: lukka/run-vcpkg@v11
       with:
-        vcpkgArguments: 'curl'
-        vcpkgGitCommitId: dd3097e305afa53f7b4312371f62058d2e665320
+        vcpkgJsonGlob: '**/cmakepresets/vcpkg.json'
         runVcpkgInstall: true
 
     - name: Set reusable strings
