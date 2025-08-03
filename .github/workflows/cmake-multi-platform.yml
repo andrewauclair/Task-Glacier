@@ -61,8 +61,16 @@ jobs:
          echo $(clang++-19 -v)
 
     - name: Enable Developer Command Prompt
+      if: matrix.os == 'windows-latest'
       uses: ilammy/msvc-dev-cmd@v1.13.0
     - uses: actions/checkout@v3
+
+    - name: Run vcpkg
+      if: matrix.os == 'windows-latest'
+      uses: lukka/run-vcpkg@v4
+      with:
+        vcpkgArguments: 'curl'
+        vcpkgDirectory: '${{ github.workspace }}/vckpg'
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
