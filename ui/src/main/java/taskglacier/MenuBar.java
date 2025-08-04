@@ -8,6 +8,7 @@ import dialogs.RequestWeeklyReportDialog;
 import dialogs.TimeEntryConfiguration;
 import io.github.andrewauclair.moderndocking.app.DockingState;
 import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
+import packets.Basic;
 import packets.BugzillaRefresh;
 import packets.CreateTask;
 import packets.RequestID;
@@ -15,6 +16,7 @@ import packets.RequestID;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class MenuBar extends JMenuBar {
     private final JMenuItem add;
@@ -534,6 +536,26 @@ public class MenuBar extends JMenuBar {
                     CreateTask create = new CreateTask(str, 0, RequestID.nextRequestID());
                     mainFrame.getConnection().sendPacket(create);
                 }
+            });
+
+            JMenuItem million = new JMenuItem("2k Tasks");
+            window.add(million);
+
+            million.addActionListener(e -> {
+                long start = System.currentTimeMillis();
+
+                mainFrame.getConnection().sendPacket(Basic.BulkUpdateStart());
+
+                for (int i = 1; i <= 2_000; i++) {
+                    CreateTask create = new CreateTask(Integer.toString(i), 0, RequestID.nextRequestID());
+                    mainFrame.getConnection().sendPacket(create);
+                }
+
+                mainFrame.getConnection().sendPacket(Basic.BulkUpdateFinish());
+
+                long stop = System.currentTimeMillis();
+
+                System.out.println("Time to create one million tasks: " + (stop - start) + "ms");
             });
         }
     }

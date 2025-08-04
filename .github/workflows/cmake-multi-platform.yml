@@ -102,3 +102,19 @@ jobs:
       # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest --build-config ${{ matrix.build_type }}
+
+    - name: Setup Java
+      if: matrix.os == 'windows-latest'
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+    - name: Validate Gradle wrapper
+      if: matrix.os == 'windows-latest'
+      uses: gradle/actions/wrapper-validation@v4
+    - name: Setup Gradle
+      if: matrix.os == 'windows-latest'
+      uses: gradle/actions/setup-gradle@v3
+    - name: Build UI on Windows
+      if: matrix.os == 'windows-latest'
+      run: ./create_installer.bat
