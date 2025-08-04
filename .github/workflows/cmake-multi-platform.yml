@@ -117,4 +117,4 @@ jobs:
       uses: gradle/actions/setup-gradle@v3
     - name: Build UI on Windows
       if: matrix.os == 'windows-latest'
-      run: ${{ github.workspace }}/create_installer.bat
+      run: ${{ github.workspace }}/ui/create_installer.bat
