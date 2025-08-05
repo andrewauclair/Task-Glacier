@@ -121,8 +121,7 @@ jobs:
         cd ${{ github.workspace }}/ui
         .\create_installer.bat
     - name: Upload Artifacts
-      runs-on: windows-latest
-      if: github.event_name == 'release'
+      if: github.event_name == 'release' && matrix.os == 'windows-latest'
       uses: actions/upload-artifact@v4
       with:
         name: Task Glacier
