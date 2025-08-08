@@ -853,3 +853,29 @@ std::expected<WeeklyReportMessage, UnpackError> WeeklyReportMessage::unpack(std:
 		return std::unexpected(e.error());
 	}
 }
+
+std::vector<std::byte> VersionMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(PacketType::VERSION);
+	builder.add(version);
+
+	return builder.build();
+}
+
+std::expected<VersionMessage, UnpackError> VersionMessage::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto version = parser.parse_next<std::string>();
+
+	try
+	{
+		return VersionMessage(version.value());
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
+}

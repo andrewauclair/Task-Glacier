@@ -46,5 +46,6 @@
 #include "packets/unpack_error.hpp"
 #include "packets/update_task.hpp"
 #include "packets/weekly_report.hpp"
+#include "packets/version.hpp"
 
 #endif

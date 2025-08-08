@@ -29,6 +29,7 @@
 	packets/unpack_error.hpp
 	packets/update_task.hpp
 	packets/weekly_report.hpp
+	packets/version.hpp
 )
 set(LIB_SOURCES
 

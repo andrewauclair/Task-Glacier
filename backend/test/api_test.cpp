@@ -1458,3 +1458,20 @@ TEST_CASE("request configuration at startup", "[api]")
 
 	verify_message(BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE), *sender.output[9]);
 }
+
+TEST_CASE("Request Version", "[api]")
+{
+	TestClock clock;
+	curlTest curl;
+	nullDatabase db;
+	TestPacketSender sender;
+	API api(clock, curl, db, sender);
+
+	auto request = BasicMessage(PacketType::VERSION_REQUEST);
+
+	api.process_packet(request);
+
+	REQUIRE(sender.output.size() == 1);
+
+	verify_message(VersionMessage("0.6.0"), *sender.output[0]);
+}
