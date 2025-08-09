@@ -1,5 +1,6 @@
 package data;
 
+import dialogs.About;
 import dialogs.AddTask;
 import packets.BugzillaInfo;
 import packets.DailyReportMessage;
@@ -8,6 +9,7 @@ import packets.Packet;
 import packets.PacketType;
 import packets.TaskInfo;
 import packets.TimeCategoriesMessage;
+import packets.Version;
 import packets.WeeklyReport;
 import taskglacier.MainFrame;
 
@@ -67,6 +69,10 @@ public class ServerConnection {
                 PacketType packetType = PacketType.valueOf(ByteBuffer.wrap(bytes, 0, 4).getInt());
                 System.out.println("Received packet with length: " + packetLength + ", type: " + packetType);
 
+                if (packetType == PacketType.VERSION) {
+                    Version version = Version.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
+                    About.serverVersion = version.version;
+                }
                 if (packetType == PacketType.TASK_INFO) {
                     TaskInfo info = TaskInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
 

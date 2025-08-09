@@ -23,6 +23,10 @@ public class Basic implements Packet {
         return new Basic(PacketType.BULK_TASK_UPDATE_FINISH);
     }
 
+    public static Basic VersionRequest() {
+        return new Basic(PacketType.VERSION_REQUEST);
+    }
+
     @Override
     public int size() {
         return size;

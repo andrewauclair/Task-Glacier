@@ -1,5 +1,6 @@
 package taskglacier;
 
+import dialogs.About;
 import dialogs.AddTask;
 import dialogs.BugzillaConfiguration;
 import dialogs.ConnectToServer;
@@ -127,6 +128,15 @@ public class MenuBar extends JMenuBar {
         theme.add(new ThemeItem("Solarized Light", "com.formdev.flatlaf.intellijthemes.FlatSolarizedLightIJTheme"));
 
         add(window);
+
+        JMenu help = new JMenu("Help");
+        JMenuItem about = new JMenuItem("About");
+        about.addActionListener(e -> {
+            About dialog = new About(mainFrame);
+            dialog.setVisible(true);
+        });
+        help.add(about);
+        add(help);
 
         if (System.getenv("TASK_GLACIER_DEV_INSTANCE") != null) {
             JMenuItem random = new JMenuItem("Random Tasks");

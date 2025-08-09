@@ -179,6 +179,7 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 			result.packet = std::make_unique<FailureResponse>(FailureResponse::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 			break;
+		case VERSION_REQUEST:
 		case REQUEST_CONFIGURATION:
 		case REQUEST_CONFIGURATION_COMPLETE:
 		case BULK_TASK_UPDATE_START:

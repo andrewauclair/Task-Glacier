@@ -274,6 +274,9 @@ public class MainFrame extends JFrame {
 
         ((MenuBar) getJMenuBar()).connected();
 
+        Basic versionRequest = Basic.VersionRequest();
+        connection.sendPacket(versionRequest);
+
         Basic requestConfig = Basic.RequestConfig();
         connection.sendPacket(requestConfig);
     }
