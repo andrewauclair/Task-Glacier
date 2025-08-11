@@ -6,7 +6,7 @@ import javax.swing.*;
 
 public class About extends JDialog {
     public static String serverVersion;
-    private static final String uiVersion = "0.6.0";
+    private static final String uiVersion = "0.7.0";
 
     public About(MainFrame mainFrame) {
         setSize(200, 200);
