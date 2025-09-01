@@ -81,7 +81,7 @@ int main(int argc, char** argv)
 	sockpp::initialize();
 
 	curlpp_ curl;
-	DatabaseImpl db(argv[3]);
+	
 
 	const std::string ip_address = argv[1];
 
@@ -103,6 +103,7 @@ int main(int argc, char** argv)
 		auto socket = std::make_unique<sockpp::tcp_socket>(std::move(connection));
 
 		auto sender = PacketSenderImpl{ socket.get() };
+		DatabaseImpl db(argv[3], sender);
 
 		API api(clock, curl, db, sender);
 

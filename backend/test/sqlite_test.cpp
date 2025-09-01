@@ -34,7 +34,8 @@
 
 TEST_CASE("Create Database", "[database]")
 {
-	DatabaseImpl db(":memory:");
+	TestPacketSender sender;
+	DatabaseImpl db(":memory:", sender);
 
 	const auto has_table = [&](const std::string& table)
 		{
@@ -60,7 +61,8 @@ TEST_CASE("Load Database", "[database]")
 	std::filesystem::remove("database_load_test.db3");
 
 	{
-		TestHelper<DatabaseImpl> helper{ DatabaseImpl("database_load_test.db3") };
+		TestPacketSender sender;
+		TestHelper<DatabaseImpl> helper{ DatabaseImpl("database_load_test.db3", sender) };
 
 		auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
 		auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
@@ -206,7 +208,8 @@ TEST_CASE("Load Database", "[database]")
 	}
 
 	{
-		TestHelper<DatabaseImpl> helper{ DatabaseImpl("database_load_test.db3") };
+		TestPacketSender sender;
+		TestHelper<DatabaseImpl> helper{ DatabaseImpl("database_load_test.db3", sender) };
 
 		helper.api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION });
 
@@ -270,7 +273,7 @@ TEST_CASE("Write Task to Database", "[database]")
 	TestClock clock;
 	curlTest curl;
 	TestPacketSender sender;
-	DatabaseImpl database(":memory:");
+	DatabaseImpl database(":memory:", sender);
 
 	API api = API(clock, curl, database, sender);
 
@@ -538,7 +541,7 @@ TEST_CASE("Write Task Session to Database", "[database]")
 	TestClock clock;
 	curlTest curl;
 	TestPacketSender sender;
-	DatabaseImpl database(":memory:");
+	DatabaseImpl database(":memory:", sender);
 
 	API api = API(clock, curl, database, sender);
 
@@ -647,7 +650,7 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 	TestClock clock;
 	curlTest curl;
 	TestPacketSender sender;
-	DatabaseImpl database(":memory:");
+	DatabaseImpl database(":memory:", sender);
 
 	API api = API(clock, curl, database, sender);
 
@@ -943,7 +946,7 @@ TEST_CASE("Write Task Time Entry to Database", "[database]")
 	TestClock clock;
 	curlTest curl;
 	TestPacketSender sender;
-	DatabaseImpl database(":memory:");
+	DatabaseImpl database(":memory:", sender);
 
 	API api = API(clock, curl, database, sender);
 
@@ -1050,7 +1053,7 @@ TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
 	TestClock clock;
 	curlTest curl;
 	TestPacketSender sender;
-	DatabaseImpl database(":memory:");
+	DatabaseImpl database(":memory:", sender);
 
 	std::istringstream fileInput;
 	std::ostringstream fileOutput;
@@ -1208,7 +1211,7 @@ TEST_CASE("Write Bugzilla Group By to Database", "[database]")
 	TestClock clock;
 	curlTest curl;
 	TestPacketSender sender;
-	DatabaseImpl database(":memory:");
+	DatabaseImpl database(":memory:", sender);
 
 	API api = API(clock, curl, database, sender);
 
@@ -1247,7 +1250,7 @@ TEST_CASE("Write Bugzilla Bug ID to Task ID to Database", "[database]")
 	TestClock clock;
 	curlTest curl;
 	TestPacketSender sender;
-	DatabaseImpl database(":memory:");
+	DatabaseImpl database(":memory:", sender);
 
 	API api = API(clock, curl, database, sender);
 

@@ -21,6 +21,7 @@
 #include "packets/bugzilla_instance_id.hpp"
 #include "packets/create_task.hpp"
 #include "packets/daily_report.hpp"
+#include "packets/error.hpp"
 #include "packets/failure_response.hpp"
 #include "packets/message.hpp"
 #include "packets/packet_builder.hpp"

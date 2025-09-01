@@ -5,6 +5,7 @@
 	packets/bugzilla_instance_id.hpp
 	packets/create_task.hpp
 	packets/daily_report.hpp
+	packets/error.hpp
 	packets/failure_response.hpp
 	packets/message.hpp
 	packets/packet_builder.hpp
@@ -57,5 +58,3 @@ set_target_properties(task-glacier-server-lib PROPERTIES CXX_STANDARD 23)
 target_link_libraries(task-glacier-server-lib PUBLIC
 	strong_type simdjson SQLiteCpp
 )
-
-add_subdirectory(packets)

@@ -3,6 +3,8 @@
 
 #include <format>
 
+#include "packets/error.hpp"
+
 /*
 * Database Versions for Reference
 * 
@@ -23,7 +25,7 @@ static std::vector<std::string> split(const std::string& s, char delim) {
 	return result;
 }
 
-DatabaseImpl::DatabaseImpl(const std::string& file)
+DatabaseImpl::DatabaseImpl(const std::string& file, PacketSender& sender)
 	: m_database(file, SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE)
 {
 	try
@@ -73,7 +75,7 @@ DatabaseImpl::DatabaseImpl(const std::string& file)
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
 }
 
@@ -85,7 +87,7 @@ void DatabaseImpl::load(Bugzilla& bugzilla, MicroTask& app, API& api)
 	load_next_ids(bugzilla, app);
 }
 
-void DatabaseImpl::write_task(const Task& task)
+void DatabaseImpl::write_task(const Task& task, PacketSender& sender)
 {
 	SQLite::Statement insert(m_database, "insert or replace into tasks values(?, ?, ?, ?, ?, ?, ?, ?, ?)");
 	insert.bind(1, task.taskID()._val);
@@ -104,14 +106,14 @@ void DatabaseImpl::write_task(const Task& task)
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
 
-	write_task_time_entry(task);
-	write_sessions(task);
+	write_task_time_entry(task, sender);
+	write_sessions(task, sender);
 }
 
-void DatabaseImpl::write_next_task_id(TaskID nextID)
+void DatabaseImpl::write_next_task_id(TaskID nextID, PacketSender& sender)
 {
 	SQLite::Statement insert(m_database, "insert or replace into nextIDs values ('task', ?)");
 	insert.bind(1, nextID._val);
@@ -122,11 +124,11 @@ void DatabaseImpl::write_next_task_id(TaskID nextID)
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
 }
 
-void DatabaseImpl::write_bugzilla_instance(const BugzillaInstance& instance)
+void DatabaseImpl::write_bugzilla_instance(const BugzillaInstance& instance, PacketSender& sender)
 {
 	SQLite::Statement insert(m_database, "insert or replace into bugzilla values(?, ?, ?, ?, ?, ?, ?)");
 	insert.bind(1, instance.instanceID._val);
@@ -143,14 +145,14 @@ void DatabaseImpl::write_bugzilla_instance(const BugzillaInstance& instance)
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
 
-	write_bugzilla_group_by(instance);
-	write_bugzilla_bug_to_task(instance);
+	write_bugzilla_group_by(instance, sender);
+	write_bugzilla_bug_to_task(instance, sender);
 }
 
-void DatabaseImpl::write_next_bugzilla_instance_id(BugzillaInstanceID nextID)
+void DatabaseImpl::write_next_bugzilla_instance_id(BugzillaInstanceID nextID, PacketSender& sender)
 {
 	SQLite::Statement insert(m_database, "insert or replace into nextIDs values ('bugzilla', ?)");
 	insert.bind(1, nextID._val);
@@ -161,7 +163,7 @@ void DatabaseImpl::write_next_bugzilla_instance_id(BugzillaInstanceID nextID)
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
 }
 void DatabaseImpl::load_time_entry(MicroTask& app)
@@ -362,7 +364,7 @@ void DatabaseImpl::load_next_ids(Bugzilla& bugzilla, MicroTask& app)
 	}
 }
 
-void DatabaseImpl::write_task_time_entry(const Task& task)
+void DatabaseImpl::write_task_time_entry(const Task& task, PacketSender& sender)
 {
 	for (const TimeEntry& entry : task.timeEntry)
 	{
@@ -377,12 +379,12 @@ void DatabaseImpl::write_task_time_entry(const Task& task)
 		}
 		catch (const std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			sender.send(std::make_unique<ErrorMessage>(e.what()));
 		}
 	}
 }
 
-void DatabaseImpl::write_sessions(const Task& task)
+void DatabaseImpl::write_sessions(const Task& task, PacketSender& sender)
 {
 	std::int32_t index = 0;
 
@@ -404,7 +406,7 @@ void DatabaseImpl::write_sessions(const Task& task)
 			}
 			catch (const std::exception& e)
 			{
-				std::cerr << e.what() << std::endl;
+				sender.send(std::make_unique<ErrorMessage>(e.what()));
 			}
 		}
 
@@ -424,7 +426,7 @@ void DatabaseImpl::write_sessions(const Task& task)
 			}
 			catch (const std::exception& e)
 			{
-				std::cerr << e.what() << std::endl;
+				sender.send(std::make_unique<ErrorMessage>(e.what()));
 			}
 		}
 
@@ -432,7 +434,7 @@ void DatabaseImpl::write_sessions(const Task& task)
 	}
 }
 
-void DatabaseImpl::write_time_entry_config(const TimeCategory& entry)
+void DatabaseImpl::write_time_entry_config(const TimeCategory& entry, PacketSender& sender)
 {
 	SQLite::Statement insert_cat(m_database, "insert or replace into timeEntryCategory values (?, ?)");
 	insert_cat.bind(1, entry.id._val);
@@ -444,7 +446,7 @@ void DatabaseImpl::write_time_entry_config(const TimeCategory& entry)
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
 
 	for (const TimeCode& code : entry.codes)
@@ -461,12 +463,12 @@ void DatabaseImpl::write_time_entry_config(const TimeCategory& entry)
 		}
 		catch (const std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			sender.send(std::make_unique<ErrorMessage>(e.what()));
 		}
 	}
 }
 
-void DatabaseImpl::write_next_time_category_id(TimeCategoryID nextID)
+void DatabaseImpl::write_next_time_category_id(TimeCategoryID nextID, PacketSender& sender)
 {
 	SQLite::Statement insert(m_database, "insert or replace into nextIDs values ('category', ?)");
 	insert.bind(1, nextID._val);
@@ -477,11 +479,11 @@ void DatabaseImpl::write_next_time_category_id(TimeCategoryID nextID)
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
 }
 
-void DatabaseImpl::write_next_time_code_id(TimeCodeID nextID)
+void DatabaseImpl::write_next_time_code_id(TimeCodeID nextID, PacketSender& sender)
 {
 	SQLite::Statement insert(m_database, "insert or replace into nextIDs values ('code', ?)");
 	insert.bind(1, nextID._val);
@@ -492,11 +494,11 @@ void DatabaseImpl::write_next_time_code_id(TimeCodeID nextID)
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
 }
 
-void DatabaseImpl::remove_time_category(const TimeCategory& entry)
+void DatabaseImpl::remove_time_category(const TimeCategory& entry, PacketSender& sender)
 {
 	SQLite::Statement remove_cat(m_database, "delete from timeEntryCategory where TimeCategoryID == ?");
 	remove_cat.bind(1, entry.id._val);
@@ -507,7 +509,7 @@ void DatabaseImpl::remove_time_category(const TimeCategory& entry)
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
 
 	SQLite::Statement remove_code(m_database, "delete from timeEntryCode where TimeCategoryID == ?");
@@ -519,11 +521,11 @@ void DatabaseImpl::remove_time_category(const TimeCategory& entry)
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
 }
 
-void DatabaseImpl::remove_time_code(const TimeCategory& entry, const TimeCode& code)
+void DatabaseImpl::remove_time_code(const TimeCategory& entry, const TimeCode& code, PacketSender& sender)
 {
 	SQLite::Statement remove_code(m_database, "delete from timeEntryCode where TimeCodeID == ?");
 	remove_code.bind(1, code.id._val);
@@ -534,11 +536,11 @@ void DatabaseImpl::remove_time_code(const TimeCategory& entry, const TimeCode& c
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
 }
 
-void DatabaseImpl::start_transaction()
+void DatabaseImpl::start_transaction(PacketSender& sender)
 {
 	SQLite::Statement start(m_database, "BEGIN TRANSACTION;");
 
@@ -548,11 +550,11 @@ void DatabaseImpl::start_transaction()
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
 }
 
-void DatabaseImpl::finish_transaction()
+void DatabaseImpl::finish_transaction(PacketSender& sender)
 {
 	SQLite::Statement start(m_database, "COMMIT;");
 
@@ -562,11 +564,11 @@ void DatabaseImpl::finish_transaction()
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
 }
 
-void DatabaseImpl::write_bugzilla_group_by(const BugzillaInstance& instance)
+void DatabaseImpl::write_bugzilla_group_by(const BugzillaInstance& instance, PacketSender& sender)
 {
 	SQLite::Statement insert(m_database, "insert or replace into bugzillaGroupBy values(?, ?)");
 
@@ -593,11 +595,11 @@ void DatabaseImpl::write_bugzilla_group_by(const BugzillaInstance& instance)
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
 }
 
-void DatabaseImpl::write_bugzilla_bug_to_task(const BugzillaInstance& instance)
+void DatabaseImpl::write_bugzilla_bug_to_task(const BugzillaInstance& instance, PacketSender& sender)
 {
 	for (auto&& [bug, task] : instance.bugToTaskID)
 	{
@@ -612,7 +614,7 @@ void DatabaseImpl::write_bugzilla_bug_to_task(const BugzillaInstance& instance)
 		}
 		catch (const std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			sender.send(std::make_unique<ErrorMessage>(e.what()));
 		}
 	}
 }

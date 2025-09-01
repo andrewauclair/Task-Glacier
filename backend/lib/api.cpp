@@ -195,7 +195,7 @@ void API::update_task(const UpdateTaskMessage& message)
 		task->m_times = message.times;
 		task->timeEntry = message.timeEntry;
 
-		m_database->write_task(*task);
+		m_database->write_task(*task, *m_sender);
 	}
 	
 	if (result)
@@ -232,7 +232,7 @@ void API::update_task(const UpdateTaskMessage& message)
 					{
 						m_app.add_update_task(child->taskID());
 					}
-					m_database->write_task(*child);
+					m_database->write_task(*child, *m_sender);
 				}
 				++expectedIndex;
 			}
@@ -301,13 +301,13 @@ void API::handle_basic(const BasicMessage& message)
 		// pause any task updates until we receive the finish
 		// this message will be followed by the task updates, all using the same request ID
 		m_app.start_bulk_update();
-		m_database->start_transaction();
+		m_database->start_transaction(*m_sender);
 	}
 	else if (message.packetType() == PacketType::BULK_TASK_UPDATE_FINISH)
 	{
 		// now send the task update for any tasks that changed
 		m_app.finish_bulk_update();
-		m_database->finish_transaction();
+		m_database->finish_transaction(*m_sender);
 	}
 }
 
@@ -350,7 +350,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 
 			m_app.m_nextTimeCategoryID++;
 
-			m_database->write_next_time_category_id(m_app.m_nextTimeCategoryID);
+			m_database->write_next_time_category_id(m_app.m_nextTimeCategoryID, *m_sender);
 
 			m_app.timeCategories().push_back(newCategory);
 
@@ -397,7 +397,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 				}
 			}
 
-			m_database->write_time_entry_config(*timeCategory);
+			m_database->write_time_entry_config(*timeCategory, *m_sender);
 		}
 		else if (message.type == TimeCategoryModType::REMOVE_CATEGORY)
 		{
@@ -405,7 +405,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 
 			if (result != m_app.timeCategories().end())
 			{
-				m_database->remove_time_category(*result);
+				m_database->remove_time_category(*result, *m_sender);
 			}
 
 			m_app.timeCategories().erase(result);
@@ -430,7 +430,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 			for (auto&& code : category.codes)
 			{
 				// TODO validate that this is called multiple times in storage_test.cpp
-				m_database->remove_time_code(category, code);
+				m_database->remove_time_code(category, code, *m_sender);
 			}
 		}
 		else
@@ -459,12 +459,12 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 
 						timeCategory->codes.push_back(copyCode);
 
-						m_database->write_next_time_code_id(m_app.m_nextTimeCodeID);
+						m_database->write_next_time_code_id(m_app.m_nextTimeCodeID, *m_sender);
 					}
 				}
 			}
 
-			m_database->write_time_entry_config(*timeCategory);
+			m_database->write_time_entry_config(*timeCategory, *m_sender);
 		}
 		
 	}

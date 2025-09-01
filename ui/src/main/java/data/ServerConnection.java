@@ -4,6 +4,7 @@ import dialogs.About;
 import dialogs.AddTask;
 import packets.BugzillaInfo;
 import packets.DailyReportMessage;
+import packets.ErrorMessage;
 import packets.FailureResponse;
 import packets.Packet;
 import packets.PacketType;
@@ -125,6 +126,13 @@ public class ServerConnection {
                         if (AddTask.openInstance != null) {
                             AddTask.openInstance.close();
                         }
+                    });
+                }
+                else if (packetType == PacketType.ERROR_MESSAGE) {
+                    ErrorMessage error = ErrorMessage.parse(new DataInputStream((new ByteArrayInputStream(bytes))), packetLength);
+
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(mainFrame, error.message, "Error", JOptionPane.ERROR_MESSAGE);
                     });
                 }
             }

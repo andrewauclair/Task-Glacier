@@ -17,7 +17,7 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 		m_bugzilla.emplace(info.name, BugzillaInstance(m_nextBugzillaID));
 		++m_nextBugzillaID;
 
-		database.write_next_bugzilla_instance_id(m_nextBugzillaID);
+		database.write_next_bugzilla_instance_id(m_nextBugzillaID, *m_sender);
 	}
 	
 	instance = &m_bugzilla.at(info.name);
@@ -30,7 +30,7 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 	instance->bugzillaGroupTasksBy = info.groupTasksBy;
 	instance->bugzillaLabelToField = info.labelToField;
 
-	database.write_bugzilla_instance(*instance);
+	database.write_bugzilla_instance(*instance, *m_sender);
 
 	send_info();
 
@@ -344,7 +344,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 
 			info.lastBugzillaRefresh = now;
 
-			database.write_bugzilla_instance(info);
+			database.write_bugzilla_instance(info, *m_sender);
 		}
 	}
 }

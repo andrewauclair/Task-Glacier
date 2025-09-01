@@ -879,3 +879,30 @@ std::expected<VersionMessage, UnpackError> VersionMessage::unpack(std::span<cons
 		return std::unexpected(e.error());
 	}
 }
+
+std::vector<std::byte> ErrorMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(PacketType::ERROR_MESSAGE);
+	builder.add(message);
+
+	return builder.build();
+}
+
+std::expected<ErrorMessage, UnpackError> ErrorMessage::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto message = parser.parse_next<std::string>();
+
+	try
+	{
+		return ErrorMessage(message.value());
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
+}

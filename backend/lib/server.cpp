@@ -30,8 +30,8 @@ std::expected<TaskID, std::string> MicroTask::create_task(const std::string& nam
 	
 	m_nextTaskID._val++;
 
-	m_database->write_task(task);
-	m_database->write_next_task_id(m_nextTaskID);
+	m_database->write_task(task, *m_sender);
+	m_database->write_next_task_id(m_nextTaskID, *m_sender);
 
 	return std::expected<TaskID, std::string>(id);
 }
@@ -44,7 +44,7 @@ std::optional<std::string> MicroTask::configure_task_time_entry(TaskID taskID, s
 	{
 		task->timeEntry = std::vector<TimeEntry>(timeEntry.begin(), timeEntry.end());
 
-		m_database->write_task(*task);
+		m_database->write_task(*task, *m_sender);
 	}
 
 	return std::nullopt;
@@ -184,7 +184,7 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 			m_activeTask->state = TaskState::PENDING;
 			m_activeTask->m_times.back().stop = now;
 
-			m_database->write_task(*m_activeTask);
+			m_database->write_task(*m_activeTask, *m_sender);
 		}
 
 		task->state = TaskState::ACTIVE;
@@ -242,7 +242,7 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 
 		m_activeTask = task;
 
-		m_database->write_task(*task);
+		m_database->write_task(*task, *m_sender);
 
 		return std::nullopt;
 	}
@@ -260,7 +260,7 @@ std::optional<std::string> MicroTask::stop_task(TaskID id)
 		task->state = TaskState::PENDING;
 		task->m_times.back().stop = m_clock->now();
 
-		m_database->write_task(*task);
+		m_database->write_task(*task, *m_sender);
 
 		return std::nullopt;
 	}
@@ -290,7 +290,7 @@ std::optional<std::string> MicroTask::finish_task(TaskID id)
 
 		task->state = TaskState::FINISHED;
 
-		m_database->write_task(*task);
+		m_database->write_task(*task, *m_sender);
 
 		return std::nullopt;
 	}
@@ -310,7 +310,7 @@ std::optional<std::string> MicroTask::reparent_task(TaskID id, TaskID new_parent
 	{
 		task->m_parentID = new_parent_id;
 
-		m_database->write_task(*task);
+		m_database->write_task(*task, *m_sender);
 
 		return std::nullopt;
 	}
@@ -329,7 +329,7 @@ std::optional<std::string> MicroTask::rename_task(TaskID id, std::string_view na
 	{
 		task->m_name = name;
 
-		m_database->write_task(*task);
+		m_database->write_task(*task, *m_sender);
 
 		return std::nullopt;
 	}

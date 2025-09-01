@@ -44,7 +44,12 @@ public enum PacketType {
     BULK_TASK_UPDATE_FINISH(32),
 
     BULK_TASK_INFO_START(33),
-    BULK_TASK_INFO_FINISH(34);
+    BULK_TASK_INFO_FINISH(34),
+
+    BULK_TASK_ADD_START(35),
+    BULK_TASK_ADD_FINISH(36),
+
+    ERROR_MESSAGE(37);
 
     private final int value;
 

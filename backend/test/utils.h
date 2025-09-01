@@ -62,33 +62,33 @@ struct nullDatabase : Database
 	void load(Bugzilla& bugzilla, MicroTask& app, API& api) override {}
 
 	// write task
-	void write_task(const Task& task) override {}
-	void write_next_task_id(TaskID nextID) override {}
+	void write_task(const Task& task, PacketSender& sender) override {}
+	void write_next_task_id(TaskID nextID, PacketSender& sender) override {}
 
 	// write bugzilla config
-	void write_bugzilla_instance(const BugzillaInstance& instance) override {}
-	void write_next_bugzilla_instance_id(BugzillaInstanceID nextID) override {}
+	void write_bugzilla_instance(const BugzillaInstance& instance, PacketSender& sender) override {}
+	void write_next_bugzilla_instance_id(BugzillaInstanceID nextID, PacketSender& sender) override {}
 	void remove_bugzilla_instance(int ID) override {}
 	void bugzilla_refreshed(int ID) override {}
 
 	// write time entry configuration
 	// write sessions
-	void write_session(TaskID task, const TaskTimes& session) override {}
+	void write_session(TaskID task, const TaskTimes& session, PacketSender& sender) override {}
 	void remove_session() override {}
 
 	// write time entries
-	void write_time_entry(TaskID task) override {}
+	void write_time_entry(TaskID task, PacketSender& sender) override {}
 	void remove_time_entry() override {}
 
-	void write_time_entry_config(const TimeCategory& entry) override {}
-	void write_next_time_category_id(TimeCategoryID nextID) override {}
-	void write_next_time_code_id(TimeCodeID nextID) override {}
+	void write_time_entry_config(const TimeCategory& entry, PacketSender& sender) override {}
+	void write_next_time_category_id(TimeCategoryID nextID, PacketSender& sender) override {}
+	void write_next_time_code_id(TimeCodeID nextID, PacketSender& sender) override {}
 
-	void remove_time_category(const TimeCategory& entry) override {}
-	void remove_time_code(const TimeCategory& entry, const TimeCode& code) override {}
+	void remove_time_category(const TimeCategory& entry, PacketSender& sender) override {}
+	void remove_time_code(const TimeCategory& entry, const TimeCode& code, PacketSender& sender) override {}
 
-	void start_transaction() override {}
-	void finish_transaction() override {}
+	void start_transaction(PacketSender& sender) override {}
+	void finish_transaction(PacketSender& sender) override {}
 };
 
 struct TestPacketSender : PacketSender
