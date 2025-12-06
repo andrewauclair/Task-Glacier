@@ -4,6 +4,7 @@ import org.jdesktop.swingx.JXDatePicker;
 import packets.RequestDailyReport;
 import packets.RequestID;
 import taskglacier.MainFrame;
+import util.DialogEscape;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,6 +15,9 @@ import java.util.Calendar;
 public class RequestDailyReportDialog extends JDialog {
     public RequestDailyReportDialog(MainFrame mainFrame) {
         setLayout(new FlowLayout());
+        setModal(true);
+
+        DialogEscape.addEscapeHandler(this);
 
         JXDatePicker picker = new JXDatePicker();
         picker.setDate(Calendar.getInstance().getTime());

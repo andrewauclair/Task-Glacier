@@ -7,6 +7,7 @@ import packets.RequestID;
 import packets.TimeCategoriesMessage;
 import packets.TimeCategoryModType;
 import taskglacier.MainFrame;
+import util.DialogEscape;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -34,18 +35,7 @@ public class TimeEntryConfiguration extends JDialog {
         setModalityType(ModalityType.APPLICATION_MODAL);
         setTitle("Time Entry Configuration");
 
-        KeyStroke ESCAPE_KEY = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
-
-        InputMap inputMap = ((JComponent) getContentPane()).getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        ActionMap actionMap = ((JComponent) getContentPane()).getActionMap();
-
-        inputMap.put(ESCAPE_KEY, "escape");
-        actionMap.put("escape", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                TimeEntryConfiguration.this.dispose();
-            }
-        });
+        DialogEscape.addEscapeHandler(this);
 
         JSplitPane split = new JSplitPane();
         split.setLeftComponent(buildCategories());

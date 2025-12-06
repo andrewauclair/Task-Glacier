@@ -1,6 +1,7 @@
 package dialogs;
 
 import taskglacier.MainFrame;
+import util.DialogEscape;
 
 import javax.swing.*;
 
@@ -10,13 +11,28 @@ public class About extends JDialog {
 
     public About(MainFrame mainFrame) {
         setSize(200, 200);
-        setLayout(new BoxLayout(getContentPane(), BoxLayout.PAGE_AXIS));
+        setTitle("About");
+        setModal(true);
 
-        add(new JLabel("Task Glacier"));
-        add(new JLabel("Server Version: " + serverVersion));
-        add(new JLabel("UI Version: " + uiVersion));
+        DialogEscape.addEscapeHandler(this);
+
+        JPanel info = new JPanel();
+
+        info.setLayout(new BoxLayout(info, BoxLayout.PAGE_AXIS));
+        info.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        info.add(new JLabel("Task Glacier"));
+
+
+        info.add(new JLabel("Server Version: " + serverVersion));
+
+        info.add(new JLabel("UI Version: " + uiVersion));
+
+        add(info);
 
         // center on the main frame
         setLocationRelativeTo(mainFrame);
+
+        pack();
     }
 }

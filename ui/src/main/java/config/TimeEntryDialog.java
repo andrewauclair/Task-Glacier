@@ -1,6 +1,7 @@
 package config;
 
 import data.TimeData;
+import util.DialogEscape;
 import util.LabeledComponent;
 
 import javax.swing.*;
@@ -14,6 +15,8 @@ class TimeEntryDialog extends JDialog {
     TimeEntryDialog(Window parent, TimeData timeData) {
         super(parent);
         setModal(true);
+
+        DialogEscape.addEscapeHandler(this);
 
         setLayout(new GridBagLayout());
 
