@@ -16,6 +16,8 @@
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
 
+std::ofstream logfile;
+
 inline std::uint32_t read_u32(const std::vector<std::byte>& input, std::size_t index)
 {
 	std::array<std::byte, 4> bytes;
@@ -57,11 +59,15 @@ struct curlpp_ : cURL
 			request.perform();
 			return ss.str();
 		}
-		catch (const curlpp::LogicError& e) {
+		catch (const curlpp::LogicError& e)
+		{
 			std::cout << e.what() << std::endl;
+			logfile << e.what() << std::endl;
 		}
-		catch (const curlpp::RuntimeError& e) {
+		catch (const curlpp::RuntimeError& e)
+		{
 			std::cout << e.what() << std::endl;
+			logfile << e.what() << std::endl;
 		}
 		return "";
 	}
@@ -72,11 +78,13 @@ struct curlpp_ : cURL
 */
 int main(int argc, char** argv)
 {
-	if (argc < 4)
+	if (argc < 5)
 	{
-		std::cerr << "task-glacier <ip address> <port> <database>\n";
+		std::cerr << "task-glacier <ip address> <port> <database> <logfile>\n";
 		return -1;
 	}
+
+	logfile = std::ofstream(argv[4]);
 
 	sockpp::initialize();
 
@@ -87,7 +95,9 @@ int main(int argc, char** argv)
 
 	const int port = std::atoi(argv[2]);
 
-	std::cout << ip_address << ' ' << port << ' ' << argv[3] << '\n';
+	std::cout << ip_address << ' ' << port << ' ' << argv[3] << ' ' << argv[4] << '\n';
+
+	logfile << ip_address << ' ' << port << ' ' << argv[3] << ' ' << argv[4] << '\n';
 
 	auto acceptor = sockpp::tcp_acceptor(sockpp::inet_address(ip_address, port));
 
@@ -99,6 +109,8 @@ int main(int argc, char** argv)
 		auto connection = acceptor.accept();
 
 		std::cout << "Connected\n";
+
+		logfile << "Connected\n";
 
 		auto socket = std::make_unique<sockpp::tcp_socket>(std::move(connection));
 
@@ -115,6 +127,9 @@ int main(int argc, char** argv)
 				std::cout << "Error with socket\n";
 				std::cout << socket->last_error() << '\n';
 
+				logfile << "Error with socket\n";
+				logfile << socket->last_error() << '\n';
+
 				break;
 			}
 
@@ -126,6 +141,9 @@ int main(int argc, char** argv)
 				std::cout << "Error with socket\n";
 				std::cout << socket->last_error() << '\n';
 
+				logfile << "Error with socket\n";
+				logfile << socket->last_error() << '\n';
+
 				break;
 			}
 
@@ -135,10 +153,14 @@ int main(int argc, char** argv)
 			{
 				std::cout << "[RX] " << *result.packet << '\n';
 
+				logfile << "[RX] " << *result.packet << '\n';
+
 				api.process_packet(*result.packet);
 			}
 		}
 
 		std::cout << "Disconnected\n";
+
+		logfile << "Disconnected\n";
 	}
 }

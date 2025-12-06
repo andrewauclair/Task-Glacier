@@ -203,6 +203,7 @@ TEST_CASE("Load Database", "[database]")
 			"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
 			"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
 			"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+		helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 		helper.api.process_packet(configure);
 	}
@@ -1077,6 +1078,7 @@ TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
 
 		curl.requestResponse.emplace_back("{ \"fields\": [] }");
 		curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+		curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
 		api.process_packet(configure);
 
@@ -1114,6 +1116,7 @@ TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
 		configure.labelToField["Status"] = "status";
 
 		curl.requestResponse.emplace_back("{ \"fields\": [] }");
+		curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 		curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
 		api.process_packet(configure);
@@ -1163,6 +1166,7 @@ TEST_CASE("Write Bugzilla Instance Configurations to Database", "[database]")
 		configure.labelToField["Status"] = "status";
 
 		curl.requestResponse.emplace_back("{ \"fields\": [] }");
+		curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 		curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
 		api.process_packet(configure);
@@ -1229,6 +1233,7 @@ TEST_CASE("Write Bugzilla Group By to Database", "[database]")
 	configure.labelToField["Status"] = "status";
 
 	curl.requestResponse.emplace_back("{ \"fields\": [] }");
+	curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 	curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
 	api.process_packet(configure);
@@ -1356,6 +1361,7 @@ TEST_CASE("Write Bugzilla Bug ID to Task ID to Database", "[database]")
 		"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
 		"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
 		"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+	curl.requestResponse.push_back(curl.requestResponse.back());
 
 	api.process_packet(configure);
 

@@ -18,6 +18,9 @@ public class BugzillaConfiguration extends JDialog {
     private JButton instanceAdd = new JButton("+");
     private JButton instanceRemove = new JButton("-");
 
+    private JButton bugsAdd = new JButton("+");
+    private JButton bugsRemove = new JButton("-");
+
     private JButton save = new JButton("Save");
     private Map<String, BugzillaInstance> instances = new HashMap<>();
 
@@ -208,7 +211,7 @@ public class BugzillaConfiguration extends JDialog {
         JPanel general = new JPanel(new GridBagLayout());
         JPanel groupBy = new JPanel(new GridBagLayout());
         JPanel labels = new JPanel(new GridBagLayout());
-
+        JPanel bugs = new JPanel(new GridBagLayout());
 
         general.add(new LabeledComponent("URL", instance.URL), gbc);
         gbc.gridy++;
@@ -241,6 +244,9 @@ public class BugzillaConfiguration extends JDialog {
 
         JTable labelTable = new JTable(instance.labelModel);
         labelTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        JTable bugsTable = new JTable(instance.bugsModel);
+//        bugsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         instance.labelModel.addRow(new Object[]{"Priority", "priority"});
         instance.labelModel.addRow(new Object[]{"Status", "tray"});
@@ -341,10 +347,20 @@ public class BugzillaConfiguration extends JDialog {
         gbc.fill = GridBagConstraints.BOTH;
         labels.add(new JScrollPane(labelTable), gbc);
 
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        labels.add(new JScrollPane(bugsTable), gbc);
+
         JTabbedPane tabs = new JTabbedPane();
         tabs.add("General", general);
         tabs.add("Group By", groupBy);
         tabs.add("Labels", labels);
+        tabs.add("Bugs", bugs);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -381,5 +397,6 @@ public class BugzillaConfiguration extends JDialog {
         JTextField rootTask = new JTextField();
         DefaultTableModel groupByModel = new DefaultTableModel(new Object[]{"Group By"}, 0);
         DefaultTableModel labelModel = new DefaultTableModel(new Object[]{"Label", "Bugzilla Field"}, 0);
+        DefaultTableModel bugsModel = new DefaultTableModel(new Object[]{"Bugs"}, 0);
     }
 }

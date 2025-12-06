@@ -200,6 +200,131 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 		{
 			const bool initial_refresh = !info.lastBugzillaRefresh.has_value();
 
+			
+
+			const auto refresh = [&](const std::string& requestAddress)
+			{
+					auto result = m_curl->execute_request(requestAddress);
+
+					simdjson::dom::parser parser;
+					auto json = simdjson::padded_string(result);
+					simdjson::dom::element doc = parser.parse(json);
+
+					std::vector<TaskID> bugTasks;
+					std::map<TaskID, TaskState> startingStates;
+
+					for (auto&& [bug, task] : info.bugToTaskID)
+					{
+						bugTasks.push_back(task);
+						startingStates[task] = app.find_task(task)->state;
+					}
+
+					// finish all the non-bug children of the root task. we'll find the parents and set them back to pending as we need them
+					std::map<TaskID, TaskState> helperTasks;
+					app.find_bugzilla_helper_tasks(info.bugzillaRootTaskID, bugTasks, helperTasks);
+
+					for (auto bug : doc["bugs"])
+					{
+						// check if we already have a task ID for this bug
+
+						// find the parent for this task
+						Task* parent = app.find_task(info.bugzillaRootTaskID);
+
+						if (!info.bugzillaGroupTasksBy.empty())
+						{
+							parent = parent_task_for_bug(info, app, api, bug, info.bugzillaRootTaskID, info.bugzillaGroupTasksBy);
+						}
+
+						[&]()
+							{
+								Task* nextParent = parent;
+
+								while (nextParent)
+								{
+									nextParent->state = TaskState::PENDING;
+									nextParent->m_finishTime = std::nullopt;
+
+									nextParent = app.find_task(nextParent->parentID());
+								}
+							}();
+
+						auto id = bug["id"];
+						int i = id.get_int64();
+
+						auto iter = info.bugToTaskID.find(i);
+
+						if (iter != info.bugToTaskID.end())
+						{
+							auto name = std::format("{} - {}", i, std::string_view(bug["summary"]));
+
+							Task* task = app.find_task(iter->second);
+
+							bool sendInfo = false;
+
+							if (task && name != task->m_name)
+							{
+								app.rename_task(iter->second, name);
+
+								sendInfo = true;
+							}
+
+							if (task && parent && parent->taskID() != task->parentID())
+							{
+								app.reparent_task(task->taskID(), parent->taskID());
+
+								sendInfo = true;
+							}
+
+							if (task && std::string_view(bug["status"]) == "RESOLVED")
+							{
+								app.finish_task(task->taskID());
+
+								sendInfo = true;
+							}
+
+							if (sendInfo)
+							{
+								api.send_task_info(*task, false);
+							}
+						}
+						else if (parent)
+						{
+							const auto result = app.create_task(std::format("{} - {}", i, std::string_view(bug["summary"])), parent->taskID(), true);
+
+							auto* task = app.find_task(result.value());
+
+							api.send_task_info(*task, true);
+
+							//info.bugToTaskID[i] = task->taskID();
+							info.bugToTaskID.emplace(i, task->taskID());
+						}
+					}
+
+					bugTasks.clear();
+					startingStates.clear();
+
+					for (auto&& [bug, task] : info.bugToTaskID)
+					{
+						bugTasks.push_back(task);
+						startingStates[task] = app.find_task(task)->state;
+					}
+
+					for (auto&& [taskID, state] : helperTasks)
+					{
+						Task* task = app.find_task(taskID);
+
+						if (!app.task_has_active_bug_tasks(taskID, bugTasks))
+						{
+							app.finish_task(taskID);
+						}
+
+						if (task && task->state != state)
+						{
+							api.send_task_info(*task, false);
+						}
+					}
+			};
+
 			// find all bugs that are not resolved
 			std::string requestAddress = info.bugzillaURL + "/rest/bug?assigned_to=" + info.bugzillaUsername + "&api_key=" + info.bugzillaApiKey;
 
@@ -222,125 +347,9 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 				requestAddress += "&resolution=---";
 			}
 
-			auto result = m_curl->execute_request(requestAddress);
-
-			simdjson::dom::parser parser;
-			auto json = simdjson::padded_string(result);
-			simdjson::dom::element doc = parser.parse(json);
-
-			std::vector<TaskID> bugTasks;
-			std::map<TaskID, TaskState> startingStates;
-
-			for (auto&& [bug, task] : info.bugToTaskID)
-			{
-				bugTasks.push_back(task);
-				startingStates[task] = app.find_task(task)->state;
-			}
-
-			// finish all the non-bug children of the root task. we'll find the parents and set them back to pending as we need them
-			std::map<TaskID, TaskState> helperTasks;
-			app.find_bugzilla_helper_tasks(info.bugzillaRootTaskID, bugTasks, helperTasks);
-
-			for (auto bug : doc["bugs"])
-			{
-				// check if we already have a task ID for this bug
-
-				// find the parent for this task
-				Task* parent = app.find_task(info.bugzillaRootTaskID);
-
-				if (!info.bugzillaGroupTasksBy.empty())
-				{
-					parent = parent_task_for_bug(info, app, api, bug, info.bugzillaRootTaskID, info.bugzillaGroupTasksBy);
-				}
-
-				[&]()
-					{
-						Task* nextParent = parent;
-
-						while (nextParent)
-						{
-							nextParent->state = TaskState::PENDING;
-							nextParent->m_finishTime = std::nullopt;
-
-							nextParent = app.find_task(nextParent->parentID());
-						}
-					}();
-
-				auto id = bug["id"];
-				int i = id.get_int64();
-
-				auto iter  = info.bugToTaskID.find(i);
-
-				if (iter != info.bugToTaskID.end())
-				{
-					auto name = std::format("{} - {}", i, std::string_view(bug["summary"]));
-
-					Task* task = app.find_task(iter->second);
-
-					bool sendInfo = false;
-
-					if (task && name != task->m_name)
-					{
-						app.rename_task(iter->second, name);
-
-						sendInfo = true;
-					}
-
-					if (task && parent && parent->taskID() != task->parentID())
-					{
-						app.reparent_task(task->taskID(), parent->taskID());
-
-						sendInfo = true;
-					}
-
-					if (task && std::string_view(bug["status"]) == "RESOLVED")
-					{
-						app.finish_task(task->taskID());
-
-						sendInfo = true;
-					}
-
-					if (sendInfo)
-					{
-						api.send_task_info(*task, false);
-					}
-				}
-				else if (parent)
-				{
-					const auto result = app.create_task(std::format("{} - {}", i, std::string_view(bug["summary"])), parent->taskID(), true);
-
-					auto* task = app.find_task(result.value());
-
-					api.send_task_info(*task, true);
-
-					//info.bugToTaskID[i] = task->taskID();
-					info.bugToTaskID.emplace(i, task->taskID());
-				}
-			}
-
-			bugTasks.clear();
-			startingStates.clear();
-
-			for (auto&& [bug, task] : info.bugToTaskID)
-			{
-				bugTasks.push_back(task);
-				startingStates[task] = app.find_task(task)->state;
-			}
-
-			for (auto&& [taskID, state] : helperTasks)
-			{
-				Task* task = app.find_task(taskID);
-
-				if (!app.task_has_active_bug_tasks(taskID, bugTasks))
-				{
-					app.finish_task(taskID);
-				}
-
-				if (task && task->state != state)
-				{
-					api.send_task_info(*task, false);
-				}
-			}
+			refresh(requestAddress);
+			requestAddress.replace(requestAddress.find("assigned_to"), std::string("assigned_to").length(), "cc");
+			refresh(requestAddress);
 
 			info.lastBugzillaRefresh = now;
 

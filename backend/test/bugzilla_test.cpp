@@ -28,6 +28,8 @@ TEST_CASE("Configuring Bugzilla Information", "[bugzilla][api]")
 
 	helper.curl.requestResponse.emplace_back("{ \"fields\": [] }");
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
 	helper.api.process_packet(configure);
 	configure.instanceID = BugzillaInstanceID(1);
@@ -53,6 +55,7 @@ TEST_CASE("Request Bugzilla Information", "[bugzilla][api]")
 	configure.labelToField["Status"] = "status";
 
 	helper.curl.requestResponse.emplace_back("{ \"fields\": [] }");
+	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
 	helper.api.process_packet(configure);
@@ -177,7 +180,9 @@ TEST_CASE("Configuring Multiple Bugzilla Instances", "[bugzilla][api]")
 
 	helper.curl.requestResponse.emplace_back(fieldsResponse);
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 	helper.curl.requestResponse.emplace_back(fieldsResponse);
+	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
 	helper.api.process_packet(configure);
@@ -321,6 +326,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 	helper.curl.requestResponse.emplace_back(fieldsResponse);
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
 	helper.api.process_packet(configure);
 	configure.instanceID = BugzillaInstanceID(1);
@@ -377,10 +383,12 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
 			"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
 			"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+		helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 		helper.expect_success(refresh);
 
 		CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&api_key=asfesdFEASfslj&last_change_time=2025-01-20T03:48:59Z");
+		CHECK(helper.curl.requestResponse[1].request == "0.0.0.0/rest/bug?cc=test&api_key=asfesdFEASfslj&last_change_time=2025-01-20T03:48:59Z");
 
 		auto p1 = TaskInfoMessage(TaskID(6), TaskID(1), "P1");
 		auto p2 = TaskInfoMessage(TaskID(2), TaskID(1), "P2");
@@ -451,6 +459,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 				"{ \"id\": 60, \"summary\": \"bug 3 rename\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
 				"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
 				"{ \"id\": 70, \"summary\": \"bug 5 rename\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+			helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 			helper.expect_success(refresh);
 
@@ -471,6 +480,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			helper.clear_message_output();
 
 			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 75, \"summary\": \"bug 6\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+			helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 			helper.expect_success(refresh);
 
@@ -487,6 +497,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			helper.clear_message_output();
 
 			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1 rename\", \"status\": \"RESOLVED\", \"priority\": \"P2\", \"severity\": \"Minor\" } ] }");
+			helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 			helper.expect_success(refresh);
 
@@ -505,6 +516,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 				helper.clear_message_output();
 
 				helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P5\", \"severity\": \"Nitpick\" } ] }");
+				helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 				helper.expect_success(refresh);
 
@@ -533,6 +545,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 				helper.clear_message_output();
 
 				helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Minor2\" } ] }");
+				helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 				helper.expect_success(refresh);
 
@@ -559,6 +572,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 				helper.clear_message_output();
 
 				helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 75, \"summary\": \"bug 6\", \"status\": \"Confirmed\", \"priority\": \"P5\", \"severity\": \"Nitpick\" } ] }");
+				helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 				helper.expect_success(refresh);
 
@@ -585,6 +599,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 				helper.clear_message_output();
 
 				helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 75, \"summary\": \"bug 6\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Minor2\" } ] }");
+				helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 				helper.expect_success(refresh);
 
@@ -609,6 +624,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			helper.clear_message_output();
 
 			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Confirmed\", \"priority\": \"P2\", \"severity\": \"Critical\" } ] }");
+			helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 			helper.expect_success(refresh);
 
@@ -638,6 +654,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			helper.clear_message_output();
 
 			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 60, \"summary\": \"bug 3\", \"status\": \"RESOLVED\", \"priority\": \"P1\", \"severity\": \"Critical\" } ] }");
+			helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 			helper.expect_success(refresh);
 
@@ -674,6 +691,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 				"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
 				"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
 				"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+			helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 			helper.api.process_packet(configure);
 
@@ -761,7 +779,8 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 						"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": [ \"Critical\" ] },"
 						"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": [ \"Blocker\" ] },"
 						"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": [ \"Nitpick\" ] } ] }");
-			
+		helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
+
 		helper.expect_success(refresh);
 
 		CHECK(helper.curl.requestResponse[0].request == "0.0.0.0/rest/bug?assigned_to=test&api_key=asfesdFEASfslj&last_change_time=2025-01-20T03:48:59Z");

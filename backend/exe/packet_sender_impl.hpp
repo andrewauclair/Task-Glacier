@@ -5,6 +5,9 @@
 #include <sockpp/tcp_acceptor.h>
 
 #include <iostream>
+#include <fstream>
+
+extern std::ofstream logfile;
 
 struct PacketSenderImpl : PacketSender
 {
@@ -15,6 +18,8 @@ struct PacketSenderImpl : PacketSender
 	void send(std::unique_ptr<Message> message) override
 	{
 		std::cout << "[TX] " << *message << '\n';
+
+		logfile << "[TX] " << *message << '\n';
 
 		const auto output = message->pack();
 		socket->write_n(output.data(), output.size());
