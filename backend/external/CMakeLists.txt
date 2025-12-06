@@ -45,6 +45,8 @@ FetchContent_Declare(
     GIT_TAG         v3.13.0
 )
 
+set(SQLITECPP_RUN_CPPCHECK OFF)
+
 FetchContent_Declare(
     SQLiteCpp
     GIT_SHALLOW     TRUE
