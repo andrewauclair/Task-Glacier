@@ -283,6 +283,8 @@ public class MainFrame extends JFrame {
 
     public void receivedDailyReport(DailyReportMessage dailyReport) {
         if (!dailyReport.isReportFound()) {
+            String name = String.format("%d/%d/%d", dailyReport.getReport().month, dailyReport.getReport().day, dailyReport.getReport().year);
+            JOptionPane.showMessageDialog(MainFrame.this, String.format("Daily Report for %s not found", name));
             return;
         }
         DailyReportPanel panel = null;
