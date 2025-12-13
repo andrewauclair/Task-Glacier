@@ -18,6 +18,9 @@ import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
 import packets.Basic;
 import packets.BugzillaInfo;
 import packets.DailyReportMessage;
+import packets.RequestDailyReport;
+import packets.RequestID;
+import packets.RequestWeeklyReport;
 import packets.WeeklyReport;
 import panels.DailyReportPanel;
 import panels.StatusBar;
@@ -152,6 +155,33 @@ public class MainFrame extends JFrame {
             catch (Exception ignored) {
             }
         }
+
+        // refresh reports every 5 minutes
+        Timer timer = new Timer(5 * 60 * 1000, e1 -> {
+            for (Dockable dockable : Docking.getDockables()) {
+                if (dockable instanceof DailyReportPanel dailyReport) {
+                    RequestDailyReport request = new RequestDailyReport();
+                    request.requestID = RequestID.nextRequestID();
+                    request.month = dailyReport.getMonth();
+                    request.day = dailyReport.getDay();
+                    request.year = dailyReport.getYear();
+
+                    mainFrame.getConnection().sendPacket(request);
+                }
+                else if (dockable instanceof WeeklyReportPanel weeklyReport) {
+                    RequestWeeklyReport request = new RequestWeeklyReport();
+                    request.requestID = RequestID.nextRequestID();
+                    request.month = weeklyReport.getMonth();
+                    request.day = weeklyReport.getDay();
+                    request.year = weeklyReport.getYear();
+
+                    mainFrame.getConnection().sendPacket(request);
+                }
+            }
+        });
+        timer.setRepeats(true);
+
+        timer.start();
 
         // if we're connected, we'll wait for the request config to complete before restoring
         restoreLayout();

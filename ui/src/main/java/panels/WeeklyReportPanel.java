@@ -29,6 +29,7 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
     TableModel model = new TableModel();
     WeeklyReportTreeTable newTable = new WeeklyReportTreeTable();
     private MainFrame mainFrame;
+
     @DockingProperty(name = "month", required = true)
     private int month;
     @DockingProperty(name = "day", required = true)
@@ -63,6 +64,18 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
         Docking.registerDockable(this);
 
         buildUI();
+    }
+
+    public int getMonth() {
+        return month;
+    }
+
+    public int getDay() {
+        return day;
+    }
+
+    public int getYear() {
+        return year;
     }
 
     @Override

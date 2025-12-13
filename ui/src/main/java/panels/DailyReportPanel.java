@@ -18,6 +18,7 @@ public class DailyReportPanel extends JPanel implements Dockable {
     JLabel date = new JLabel();
     DailyReportTreeTable newTable = new DailyReportTreeTable();
     private MainFrame mainFrame;
+
     @DockingProperty(name = "month", required = true)
     private int month;
     @DockingProperty(name = "day", required = true)
@@ -52,6 +53,18 @@ public class DailyReportPanel extends JPanel implements Dockable {
         Docking.registerDockable(this);
 
         buildUI();
+    }
+
+    public int getMonth() {
+        return month;
+    }
+
+    public int getDay() {
+        return day;
+    }
+
+    public int getYear() {
+        return year;
     }
 
     @Override
