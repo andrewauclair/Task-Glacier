@@ -7,6 +7,7 @@ import data.ServerConnection;
 import data.TaskModel;
 import data.TimeData;
 import dialogs.ConnectToServer;
+import dialogs.UnspecifiedTask;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.app.AppState;
 import io.github.andrewauclair.moderndocking.app.Docking;
@@ -18,9 +19,11 @@ import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
 import packets.Basic;
 import packets.BugzillaInfo;
 import packets.DailyReportMessage;
+import packets.PacketType;
 import packets.RequestDailyReport;
 import packets.RequestID;
 import packets.RequestWeeklyReport;
+import packets.TaskStateChange;
 import packets.WeeklyReport;
 import panels.DailyReportPanel;
 import panels.StatusBar;
@@ -370,5 +373,13 @@ public class MainFrame extends JFrame {
 
     public TimeData getTimeData() {
         return timeData;
+    }
+
+    public void startUnspecifiedTask() {
+        TaskStateChange change = new TaskStateChange();
+        change.packetType = PacketType.START_UNSPECIFIED_TASK;
+
+        UnspecifiedTask dialog = new UnspecifiedTask(this);
+        dialog.setVisible(true);
     }
 }

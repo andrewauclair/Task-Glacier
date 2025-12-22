@@ -200,7 +200,7 @@ public class SystemTrayDisplay extends JFrame {
         });
 
         unspecifiedTask.addActionListener(e -> {
-
+            mainFrame.startUnspecifiedTask();
         });
     }
 
