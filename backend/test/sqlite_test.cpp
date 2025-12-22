@@ -233,6 +233,8 @@ TEST_CASE("Load Database", "[database]")
 		helper.curl.requestResponse.emplace_back("{ \"fields\": [] }");
 		helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 		helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+		helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+		helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
 		helper.api.process_packet(configure);
 

@@ -40,10 +40,25 @@ struct curlTest : cURL
 	std::vector<curlRequestResponse> requestResponse;
 	std::size_t current = 0;
 
+	std::vector<std::string> requests;
+
+	void clear()
+	{
+		requestResponse.clear();
+		current = 0;
+		requests.clear();
+	}
+
 	std::string execute_request(const std::string& request) override
 	{
+		requests.push_back(request);
+
 		if (current >= requestResponse.size())
 		{
+			for (const std::string& request : requests)
+			{
+				UNSCOPED_INFO(request);
+			}
 			FAIL("More cURL requests than expected");
 		}
 

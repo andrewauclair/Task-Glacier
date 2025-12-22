@@ -181,7 +181,7 @@ TEST_CASE("Configuring Multiple Bugzilla Instances", "[bugzilla][api]")
 	helper.curl.requestResponse.emplace_back(fieldsResponse);
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
-	helper.curl.requestResponse.emplace_back(fieldsResponse);
+	//helper.curl.requestResponse.emplace_back(fieldsResponse);
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
@@ -190,11 +190,13 @@ TEST_CASE("Configuring Multiple Bugzilla Instances", "[bugzilla][api]")
 	auto configure2 = configure;
 	configure2.name = "bugzilla2";
 
-	helper.curl.requestResponse.clear();
+	helper.curl.clear();
 	helper.curl.requestResponse.emplace_back(fieldsResponse);
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
-	helper.curl.current = 0;
+	//helper.curl.requestResponse.emplace_back(fieldsResponse);
+	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
+	helper.curl.requestResponse.emplace_back("{ \"bugs\": [] }");
 
 	helper.api.process_packet(configure2);
 
@@ -373,8 +375,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 	SECTION("Group By Task as Strings")
 	{
-		helper.curl.requestResponse.clear();
-		helper.curl.current = 0;
+		helper.curl.clear();
 
 		const auto refresh = RequestMessage(PacketType::BUGZILLA_REFRESH, helper.next_request_id());
 
@@ -506,7 +507,8 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			taskInfo4.state = TaskState::FINISHED;
 			taskInfo4.finishTime = 1737359339870ms;
 
-			helper.required_messages({ &taskInfo4 });
+			// Catch 2 hates this
+			helper.required_messages({ &taskInfo4, &taskInfo4 });
 		}
 
 		SECTION("Creating New Grouping Tasks - Moving Bug to New Group By")
@@ -670,7 +672,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			p1_critical.finishTime = 1737361139870ms;
 			p1_critical.newTask = false;
 
-			helper.required_messages({ &taskInfo8, &p1, &p1_critical });
+			helper.required_messages({ &taskInfo8, &p1, &p1_critical, &taskInfo8 });
 		}
 
 		SECTION("Building a Totally New Grouping")
@@ -681,8 +683,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			configure.groupTasksBy.push_back("severity");
 			configure.groupTasksBy.push_back("priority");
 
-			helper.curl.requestResponse.clear();
-			helper.curl.current = 0;
+			helper.curl.clear();
 
 			helper.curl.requestResponse.emplace_back(fieldsResponse);
 
@@ -769,8 +770,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 	SECTION("Group By Task as Array")
 	{
-		helper.curl.requestResponse.clear();
-		helper.curl.current = 0;
+		helper.curl.clear();
 
 		const auto refresh = RequestMessage(PacketType::BUGZILLA_REFRESH, helper.next_request_id());
 

@@ -196,11 +196,9 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 			m_sender->send(std::make_unique<SuccessResponse>(request.requestID));
 		}
 
-		for (auto&& [asdf, info] : m_bugzilla)
+		for (auto&& [instanceName, info] : m_bugzilla)
 		{
 			const bool initial_refresh = !info.lastBugzillaRefresh.has_value();
-
-			
 
 			const auto refresh = [&](const std::string& requestAddress)
 			{
