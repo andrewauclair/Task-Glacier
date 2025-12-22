@@ -10,24 +10,7 @@
 #include <memory>
 
 #include "packet_sender.hpp"
-
-template<typename T>
-void verify_message(const T& expected, const Message& actual, std::source_location location = std::source_location::current())
-{
-	INFO(location.file_name() << ":" << location.line());
-
-	UNSCOPED_INFO("packet type: " << static_cast<std::int32_t>(actual.packetType()));
-
-	if (const auto* actual_message = dynamic_cast<const T*>(&actual))
-	{
-		CHECK(*actual_message == expected);
-	}
-	else
-	{
-		UNSCOPED_INFO("expected message: " << expected);
-		FAIL();
-	}
-}
+#include "message_compare.h"
 
 struct curlRequestResponse
 {
@@ -158,7 +141,7 @@ struct TestHelper
 			INFO("");
 			INFO(location.file_name() << ":" << location.line());
 
-			CHECK(*sender.output[0] == SuccessResponse(message.requestID));
+			verify_message(*sender.output[0], SuccessResponse(message.requestID));
 
 			// now remove the first message, calls to required_messages will check what comes after the response message
 			sender.output.erase(sender.output.begin());
@@ -186,7 +169,7 @@ struct TestHelper
 			INFO("");
 			INFO(location.file_name() << ":" << location.line());
 
-			CHECK(*sender.output[0] == FailureResponse(message.requestID, error));
+			verify_message(*sender.output[0], FailureResponse(message.requestID, error));
 
 			REQUIRE(sender.output.size() == 1);
 		}
@@ -219,12 +202,21 @@ struct TestHelper
 
 		for (std::size_t i = 0; i < sender.output.size() && match; i++)
 		{
+			verify_message(*messages[i], *sender.output[i]);
+			/*if (*sender.output[i] != *messages[i])
+			{
+				UNSCOPED_INFO("Message " << (i + 1) << ". did not match expected message");
+			}
+			match &= *sender.output[i] == *messages[i];*/
+		}
+		/*for (std::size_t i = 0; i < sender.output.size() && match; i++)
+		{
 			if (*sender.output[i] != *messages[i])
 			{
 				UNSCOPED_INFO("Message " << (i + 1) << ". did not match expected message");
 			}
 			match &= *sender.output[i] == *messages[i];
-		}
+		}*/
 
 		if (!match)
 		{

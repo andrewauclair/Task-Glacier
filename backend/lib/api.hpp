@@ -36,6 +36,7 @@ private:
 	void create_task(const CreateTaskMessage& message);
 	void start_task(const TaskMessage& message);
 	void stop_task(const TaskMessage& message);
+	void stop_unspecified_task(const TaskMessage& message);
 	void finish_task(const TaskMessage& message);
 	void update_task(const UpdateTaskMessage& message);
 	void request_task(const TaskMessage& message);

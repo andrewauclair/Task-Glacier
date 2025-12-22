@@ -34,6 +34,19 @@ struct TaskInfoMessage : Message
 
 	TaskInfoMessage(TaskID taskID, TaskID parentID, std::string name, std::chrono::milliseconds createTime = std::chrono::milliseconds(0)) : Message(PacketType::TASK_INFO), taskID(taskID), parentID(parentID), name(std::move(name)), createTime(createTime) {}
 
+	/*bool operator==(const Message& message) const
+	{
+		bool match = Message::operator==(message);
+
+		if (!match || !dynamic_cast<const TaskInfoMessage*>(&message)) return false;
+
+		const auto* other = static_cast<const TaskInfoMessage*>(&message);
+
+		if (taskID != other->taskID) return false;
+
+		return true;
+	}*/
+
 	std::vector<std::byte> pack() const override;
 	static std::expected<TaskInfoMessage, UnpackError> unpack(std::span<const std::byte> data);
 

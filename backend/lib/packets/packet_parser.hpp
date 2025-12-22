@@ -161,7 +161,9 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 
 			break;
 		case START_TASK:
+		case START_UNSPECIFIED_TASK:
 		case STOP_TASK:
+		case STOP_UNSPECIFIED_TASK:
 		case FINISH_TASK:
 		case REQUEST_TASK:
 			result.packet = std::make_unique<TaskMessage>(TaskMessage::unpack(bytes.subspan(4)).value());

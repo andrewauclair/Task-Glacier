@@ -71,13 +71,15 @@ public class DailyReportPanel extends JPanel implements Dockable {
     public void updateProperties() {
         mainFrame = MainFrame.mainFrame;
 
-        RequestDailyReport request = new RequestDailyReport();
-        request.requestID = RequestID.nextRequestID();
-        request.month = month;
-        request.day = day;
-        request.year = year;
+        if (mainFrame.isConnected()) {
+            RequestDailyReport request = new RequestDailyReport();
+            request.requestID = RequestID.nextRequestID();
+            request.month = month;
+            request.day = day;
+            request.year = year;
 
-        mainFrame.getConnection().sendPacketWhenReady(request);
+            mainFrame.getConnection().sendPacketWhenReady(request);
+        }
     }
 
     private void buildUI() {

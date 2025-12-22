@@ -1473,5 +1473,125 @@ TEST_CASE("Request Version", "[api]")
 
 	REQUIRE(sender.output.size() == 1);
 
-	verify_message(VersionMessage("0.6.0"), *sender.output[0]);
+	verify_message(VersionMessage("0.7.0"), *sender.output[0]);
+}
+
+TEST_CASE("Start Unspecified Task", "[api][task]")
+{
+	TestHelper<nullDatabase> helper;
+
+	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
+
+	SECTION("Success - Start Unspecified Task when There is No Active Task")
+	{
+		helper.expect_success(TaskMessage(PacketType::START_UNSPECIFIED_TASK, helper.next_request_id(), UNSPECIFIED_TASK));
+
+		auto taskInfo = TaskInfoMessage(UNSPECIFIED_TASK, NO_PARENT, "unspecified");
+
+		taskInfo.createTime = std::chrono::milliseconds(0);
+		taskInfo.times.emplace_back(std::chrono::milliseconds(1737344939870));
+		taskInfo.state = TaskState::ACTIVE;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
+	}
+
+	SECTION("Success - Start Unspecified Task when There is an Active Task (other than unspecified)")
+	{
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::START_UNSPECIFIED_TASK, helper.next_request_id(), UNSPECIFIED_TASK));
+
+		auto taskInfo1 = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+
+		taskInfo1.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo1.times.emplace_back(std::chrono::milliseconds(1737344939870), std::chrono::milliseconds(1737345839870));
+		taskInfo1.state = TaskState::PENDING;
+		taskInfo1.newTask = false;
+
+		auto taskInfo = TaskInfoMessage(UNSPECIFIED_TASK, NO_PARENT, "unspecified");
+
+		taskInfo.createTime = std::chrono::milliseconds(0);
+		taskInfo.times.emplace_back(std::chrono::milliseconds(1737345839870));
+		taskInfo.state = TaskState::ACTIVE;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo1, &taskInfo });
+	}
+
+	SECTION("Failure - Does Not Start when Unspecified Task is Active Task")
+	{
+		helper.expect_success(TaskMessage(PacketType::START_UNSPECIFIED_TASK, helper.next_request_id(), UNSPECIFIED_TASK));
+
+		helper.expect_failure(TaskMessage(PacketType::START_UNSPECIFIED_TASK, helper.next_request_id(), UNSPECIFIED_TASK), "Unspecified task is already active.");
+	}
+
+	SECTION("Failure - Cannot Start Normal Task While Unspecified is Active")
+	{
+		helper.expect_success(TaskMessage(PacketType::START_UNSPECIFIED_TASK, helper.next_request_id(), UNSPECIFIED_TASK));
+
+		helper.expect_failure(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)), "Cannot start task with ID 1. Unspecified task is active.");
+	}
+
+	SECTION("Failure - Cannot Stop Unspecified Task Like Normal Task")
+	{
+		helper.expect_success(TaskMessage(PacketType::START_UNSPECIFIED_TASK, helper.next_request_id(), UNSPECIFIED_TASK));
+
+		helper.expect_failure(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), UNSPECIFIED_TASK), "Unspecified task cannot be stopped.");
+	}
+
+	SECTION("Failure - Cannot Finish Unspecified Task Like Normal Task")
+	{
+		helper.expect_success(TaskMessage(PacketType::START_UNSPECIFIED_TASK, helper.next_request_id(), UNSPECIFIED_TASK));
+
+		helper.expect_failure(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), UNSPECIFIED_TASK), "Unspecified task cannot be finished.");
+	}
+}
+
+TEST_CASE("Stop Unspecified Task", "[api][task]")
+{
+	TestHelper<nullDatabase> helper;
+
+	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
+
+	helper.expect_success(TaskMessage(PacketType::START_UNSPECIFIED_TASK, helper.next_request_id(), UNSPECIFIED_TASK));
+
+	helper.expect_success(TaskMessage(PacketType::STOP_UNSPECIFIED_TASK, helper.next_request_id(), TaskID(1)));
+
+	auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+
+	taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+	taskInfo.times.emplace_back(std::chrono::milliseconds(1737344939870));
+	taskInfo.state = TaskState::ACTIVE;
+	taskInfo.newTask = false;
+
+	helper.required_messages({ &taskInfo });
+}
+
+TEST_CASE("Starting Unspecified Task Multiple Times Clears Times", "[api][task]")
+{
+	TestHelper<nullDatabase> helper;
+
+	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
+
+	helper.expect_success(TaskMessage(PacketType::START_UNSPECIFIED_TASK, helper.next_request_id(), UNSPECIFIED_TASK));
+
+	helper.expect_success(TaskMessage(PacketType::STOP_UNSPECIFIED_TASK, helper.next_request_id(), TaskID(1)));
+
+	helper.expect_success(TaskMessage(PacketType::START_UNSPECIFIED_TASK, helper.next_request_id(), UNSPECIFIED_TASK));
+
+	auto taskInfo1 = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+
+	taskInfo1.createTime = std::chrono::milliseconds(1737344039870);
+	taskInfo1.times.emplace_back(std::chrono::milliseconds(1737344939870), std::chrono::milliseconds(1737345839870));
+	taskInfo1.state = TaskState::PENDING;
+	taskInfo1.newTask = false;
+
+	auto taskInfo = TaskInfoMessage(UNSPECIFIED_TASK, NO_PARENT, "unspecified");
+
+	taskInfo.createTime = std::chrono::milliseconds(0);
+	taskInfo.times.emplace_back(std::chrono::milliseconds(1737345839870));
+	taskInfo.state = TaskState::ACTIVE;
+	taskInfo.newTask = false;
+
+	helper.required_messages({ &taskInfo1, &taskInfo });
 }

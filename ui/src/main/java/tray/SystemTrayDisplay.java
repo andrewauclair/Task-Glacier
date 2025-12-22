@@ -130,7 +130,6 @@ public class SystemTrayDisplay extends JFrame {
         setUndecorated(true);
         setType(Type.UTILITY);
 
-
         addWindowFocusListener(new WindowAdapter() {
             @Override
             public void windowLostFocus(WindowEvent e) {
@@ -198,6 +197,10 @@ public class SystemTrayDisplay extends JFrame {
             public void changedUpdate(DocumentEvent e) {
                 updateFilter(layout, stack);
             }
+        });
+
+        unspecifiedTask.addActionListener(e -> {
+
         });
     }
 

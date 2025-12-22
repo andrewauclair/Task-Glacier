@@ -57,8 +57,8 @@ enum class PacketType : std::int32_t
 	TIME_ENTRY_DATA = 27,
 	TIME_ENTRY_MODIFY = 28,
 
-	START_UNKNOWN_TASK = 29,
-	ASSIGN_UNKNOWN_TASK = 30,
+	START_UNSPECIFIED_TASK = 29,
+	STOP_UNSPECIFIED_TASK = 30,
 
 	BULK_TASK_UPDATE_START = 31,
 	BULK_TASK_UPDATE_FINISH = 32,
@@ -79,7 +79,7 @@ public:
 
 	PacketType packetType() const { return m_packetType; }
 
-	virtual bool operator==(const Message& message) const { return m_packetType == message.m_packetType; }
+	virtual bool operator==(const Message& message) const = delete;// = 0;
 
 	virtual std::vector<std::byte> pack() const = 0;
 
@@ -93,6 +93,11 @@ public:
 private:
 	PacketType m_packetType;
 };
+
+//inline bool Message::operator==(const Message& message) const
+//{
+//	return m_packetType == message.m_packetType;
+//}
 
 inline std::ostream& Message::print(std::ostream& out) const
 {

@@ -15,3 +15,4 @@ struct std::formatter<TaskID> : std::formatter<std::int32_t> {
 };
 
 inline constexpr TaskID NO_PARENT = TaskID(0);
+inline constexpr TaskID UNSPECIFIED_TASK = TaskID(0);

@@ -24,10 +24,14 @@ void API::process_packet(const Message& message)
 		create_task(static_cast<const CreateTaskMessage&>(message));
 		break;
 	case PacketType::START_TASK:
+	case PacketType::START_UNSPECIFIED_TASK:
 		start_task(static_cast<const TaskMessage&>(message));
 		break;
 	case PacketType::STOP_TASK:
 		stop_task(static_cast<const TaskMessage&>(message));
+		break;
+	case PacketType::STOP_UNSPECIFIED_TASK:
+		stop_unspecified_task(static_cast<const TaskMessage&>(message));
 		break;
 	case PacketType::FINISH_TASK:
 		finish_task(static_cast<const TaskMessage&>(message));
@@ -105,6 +109,13 @@ void API::start_task(const TaskMessage& message)
 {
 	auto* currentActiveTask = m_app.active_task();
 
+	if (currentActiveTask && currentActiveTask->taskID() == UNSPECIFIED_TASK)
+	{
+		m_sender->send(std::make_unique<FailureResponse>(message.requestID, std::format("Cannot start task with ID {}. Unspecified task is active.", message.taskID)));
+
+		return;
+	}
+
 	const auto result = m_app.start_task(message.taskID);
 
 	if (result)
@@ -128,7 +139,48 @@ void API::start_task(const TaskMessage& message)
 
 void API::stop_task(const TaskMessage& message)
 {
+	if (message.taskID == UNSPECIFIED_TASK)
+	{
+		m_sender->send(std::make_unique<FailureResponse>(message.requestID, "Unspecified task cannot be stopped."));
+
+		return;
+	}
+
 	const auto result = m_app.stop_task(message.taskID);
+
+	if (result)
+	{
+		m_sender->send(std::make_unique<FailureResponse>(message.requestID, result.value()));
+	}
+	else
+	{
+		m_sender->send(std::make_unique<SuccessResponse>(message.requestID));
+
+		auto* task = m_app.find_task(message.taskID);
+
+		send_task_info(*task, false);
+	}
+}
+
+void API::stop_unspecified_task(const TaskMessage& message)
+{
+	if (message.packetType() == PacketType::STOP_TASK)
+	{
+		m_sender->send(std::make_unique<FailureResponse>(message.requestID, "Unspecified task cannot be stopped."));
+
+		return;
+	}
+
+	auto* currentActiveTask = m_app.active_task();
+
+	if (!currentActiveTask)
+	{
+		return;
+	}
+
+	(void) m_app.stop_task(UNSPECIFIED_TASK);
+
+	const auto result = m_app.start_task(message.taskID, currentActiveTask->m_times.back().start);
 
 	if (result)
 	{
@@ -146,6 +198,13 @@ void API::stop_task(const TaskMessage& message)
 
 void API::finish_task(const TaskMessage& message)
 {
+	if (message.taskID == UNSPECIFIED_TASK && message.packetType() == PacketType::FINISH_TASK)
+	{
+		m_sender->send(std::make_unique<FailureResponse>(message.requestID, "Unspecified task cannot be finished."));
+
+		return;
+	}
+
 	const auto result = m_app.finish_task(message.taskID);
 
 	if (result)
@@ -169,6 +228,7 @@ void API::update_task(const UpdateTaskMessage& message)
 	if (!task)
 	{
 		m_sender->send(std::make_unique<FailureResponse>(message.requestID, std::format("Task with ID {} does not exist.", message.taskID)));
+
 		return;
 	}
 

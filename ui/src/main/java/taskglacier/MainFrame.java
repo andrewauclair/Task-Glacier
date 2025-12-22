@@ -158,6 +158,10 @@ public class MainFrame extends JFrame {
 
         // refresh reports every 5 minutes
         Timer timer = new Timer(5 * 60 * 1000, e1 -> {
+            if (!isConnected()) {
+                return;
+            }
+            
             for (Dockable dockable : Docking.getDockables()) {
                 if (dockable instanceof DailyReportPanel dailyReport) {
                     RequestDailyReport request = new RequestDailyReport();

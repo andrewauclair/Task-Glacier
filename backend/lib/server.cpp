@@ -52,6 +52,12 @@ std::optional<std::string> MicroTask::configure_task_time_entry(TaskID taskID, s
 
 Task* MicroTask::find_task(TaskID taskID)
 {
+	// only allow the unspecified task to be found while it is active
+	if (m_activeTask == &m_unspecifiedTask && taskID == UNSPECIFIED_TASK)
+	{
+		return &m_unspecifiedTask;
+	}
+
 	auto result = m_tasks.find(taskID);
 
 	return result != m_tasks.end() ? &result->second : nullptr;
@@ -164,7 +170,24 @@ std::vector<MicroTask::FindTasksOnDay> MicroTask::find_tasks_on_day(int month, i
 
 std::optional<std::string> MicroTask::start_task(TaskID id)
 {
+	return start_task(id, m_clock->now());
+}
+
+std::optional<std::string> MicroTask::start_task(TaskID id, std::chrono::milliseconds startTime)
+{
 	auto* task = find_task(id);
+
+	if (id == UNSPECIFIED_TASK)
+	{
+		task = &m_unspecifiedTask;
+
+		if (task->state == TaskState::ACTIVE)
+		{
+			return std::format("Unspecified task is already active.");
+		}
+
+		m_unspecifiedTask.m_times.clear();
+	}
 
 	if (task)
 	{
@@ -177,18 +200,16 @@ std::optional<std::string> MicroTask::start_task(TaskID id)
 			return std::format("Task with ID {} is finished.", id);
 		}
 
-		auto now = m_clock->now();
-
 		if (m_activeTask)
 		{
 			m_activeTask->state = TaskState::PENDING;
-			m_activeTask->m_times.back().stop = now;
+			m_activeTask->m_times.back().stop = startTime;
 
 			m_database->write_task(*m_activeTask, *m_sender);
 		}
 
 		task->state = TaskState::ACTIVE;
-		TaskTimes& times = task->m_times.emplace_back(now);
+		TaskTimes& times = task->m_times.emplace_back(startTime);
 
 		for (const TimeCategory& category : m_timeCategories)
 		{
@@ -253,14 +274,23 @@ std::optional<std::string> MicroTask::stop_task(TaskID id)
 {
 	auto* task = find_task(id);
 
+	if (id == UNSPECIFIED_TASK)
+	{
+		task = &m_unspecifiedTask;
+	}
+
 	if (task && task->state == TaskState::ACTIVE)
 	{
 		m_activeTask = nullptr;
 
 		task->state = TaskState::PENDING;
-		task->m_times.back().stop = m_clock->now();
 
-		m_database->write_task(*task, *m_sender);
+		if (id != UNSPECIFIED_TASK)
+		{
+			task->m_times.back().stop = m_clock->now();
+
+			m_database->write_task(*task, *m_sender);
+		}
 
 		return std::nullopt;
 	}

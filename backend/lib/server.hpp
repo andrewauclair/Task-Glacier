@@ -91,7 +91,13 @@ public:
 class MicroTask
 {
 public:
-	MicroTask(API& api, const Clock& clock, Database& database, PacketSender& sender) : m_clock(&clock), m_database(&database), m_sender(&sender), m_api(&api) {}
+	MicroTask(API& api, const Clock& clock, Database& database, PacketSender& sender)
+	: m_clock(&clock),
+	m_database(&database),
+	m_sender(&sender),
+	m_api(&api),
+	m_unspecifiedTask("unspecified", UNSPECIFIED_TASK, NO_PARENT, std::chrono::milliseconds(0))
+	{}
 
 	std::expected<TaskID, std::string> create_task(const std::string& name, TaskID parentID = NO_PARENT, bool serverControlled = false);
 
@@ -115,6 +121,7 @@ public:
 	std::vector<FindTasksOnDay> find_tasks_on_day(int month, int year, int day);
 
 	std::optional<std::string> start_task(TaskID id);
+	std::optional<std::string> start_task(TaskID id, std::chrono::milliseconds startTime);
 	std::optional<std::string> stop_task(TaskID id);
 	std::optional<std::string> finish_task(TaskID id);
 
@@ -249,6 +256,7 @@ public:
 
 private:
 	std::unordered_map<TaskID, Task> m_tasks;
+	Task m_unspecifiedTask;
 	Task* m_activeTask = nullptr;
 
 	bool m_bulk_update = false;
