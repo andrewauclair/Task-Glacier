@@ -1486,14 +1486,9 @@ TEST_CASE("Start Unspecified Task", "[api][task]")
 	{
 		helper.expect_success(TaskMessage(PacketType::START_UNSPECIFIED_TASK, helper.next_request_id(), UNSPECIFIED_TASK));
 
-		auto taskInfo = TaskInfoMessage(UNSPECIFIED_TASK, NO_PARENT, "unspecified");
+		auto active = BasicMessage(PacketType::UNSPECIFIED_TASK_ACTIVE);
 
-		taskInfo.createTime = std::chrono::milliseconds(0);
-		taskInfo.times.emplace_back(std::chrono::milliseconds(1737344939870));
-		taskInfo.state = TaskState::ACTIVE;
-		taskInfo.newTask = false;
-
-		helper.required_messages({ &taskInfo });
+		helper.required_messages({ &active });
 	}
 
 	SECTION("Success - Start Unspecified Task when There is an Active Task (other than unspecified)")
@@ -1565,6 +1560,9 @@ TEST_CASE("Stop Unspecified Task", "[api][task]")
 	taskInfo.newTask = false;
 
 	helper.required_messages({ &taskInfo });
+
+	// verify that we can start the unspecified task again
+	helper.expect_success(TaskMessage(PacketType::START_UNSPECIFIED_TASK, helper.next_request_id(), UNSPECIFIED_TASK));
 }
 
 TEST_CASE("Starting Unspecified Task Multiple Times Clears Times", "[api][task]")
@@ -1579,19 +1577,15 @@ TEST_CASE("Starting Unspecified Task Multiple Times Clears Times", "[api][task]"
 
 	helper.expect_success(TaskMessage(PacketType::START_UNSPECIFIED_TASK, helper.next_request_id(), UNSPECIFIED_TASK));
 
-	auto taskInfo1 = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+	helper.expect_success(TaskMessage(PacketType::STOP_UNSPECIFIED_TASK, helper.next_request_id(), TaskID(1)));
 
-	taskInfo1.createTime = std::chrono::milliseconds(1737344039870);
-	taskInfo1.times.emplace_back(std::chrono::milliseconds(1737344939870), std::chrono::milliseconds(1737345839870));
-	taskInfo1.state = TaskState::PENDING;
-	taskInfo1.newTask = false;
+	auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
 
-	auto taskInfo = TaskInfoMessage(UNSPECIFIED_TASK, NO_PARENT, "unspecified");
-
-	taskInfo.createTime = std::chrono::milliseconds(0);
-	taskInfo.times.emplace_back(std::chrono::milliseconds(1737345839870));
+	taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+	taskInfo.times.emplace_back(std::chrono::milliseconds(1737344939870), std::chrono::milliseconds(1737346739870));
+	taskInfo.times.emplace_back(std::chrono::milliseconds(1737346739870));
 	taskInfo.state = TaskState::ACTIVE;
 	taskInfo.newTask = false;
 
-	helper.required_messages({ &taskInfo1, &taskInfo });
+	helper.required_messages({ &taskInfo });
 }

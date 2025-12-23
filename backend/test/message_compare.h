@@ -144,6 +144,7 @@ void verify_message(const T& expected, const Message& actual, std::source_locati
 	case BULK_TASK_UPDATE_FINISH:
 	case BULK_TASK_INFO_START:
 	case BULK_TASK_INFO_FINISH:
+	case UNSPECIFIED_TASK_ACTIVE:
 		// basic type. no fields; no verification
 		break;
 	case VERSION:

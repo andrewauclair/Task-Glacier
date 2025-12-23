@@ -376,10 +376,21 @@ public class MainFrame extends JFrame {
     }
 
     public void startUnspecifiedTask() {
-        TaskStateChange change = new TaskStateChange();
-        change.packetType = PacketType.START_UNSPECIFIED_TASK;
+        TaskStateChange startUnspecified = new TaskStateChange();
+        
+        startUnspecified.packetType = PacketType.START_UNSPECIFIED_TASK;
+        startUnspecified.requestID = RequestID.nextRequestID();
 
+        getConnection().sendPacket(startUnspecified);
+    }
+
+    public void unspecifiedTaskActive() {
+        systemTrayDisplay.setUnspecifiedTaskState(false);
         UnspecifiedTask dialog = new UnspecifiedTask(this);
         dialog.setVisible(true);
+    }
+
+    public SystemTrayDisplay getSystemTrayDisplay() {
+        return systemTrayDisplay;
     }
 }

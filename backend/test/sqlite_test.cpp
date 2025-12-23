@@ -266,8 +266,83 @@ TEST_CASE("Load Database", "[database]")
 		helper.expect_success(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(1)));
 
 		REQUIRE(helper.sender.output.size() == 2);
+	}
+}
 
+TEST_CASE("Load Unspecified Task from Database - Active", "[database]")
+{
+	std::filesystem::remove("database_load_test.db3");
 
+	{
+		TestPacketSender do_not_use;
+		TestHelper<DatabaseImpl> helper{ DatabaseImpl("database_load_test.db3", do_not_use) };
+
+		CreateTaskMessage create1(NO_PARENT, RequestID(1), "Bugzilla");
+
+		helper.expect_success(create1);
+
+		helper.expect_success(TaskMessage(PacketType::START_UNSPECIFIED_TASK, RequestID(10), UNSPECIFIED_TASK));
+	}
+
+	{
+		TestPacketSender do_not_use;
+		TestHelper<DatabaseImpl> helper{ DatabaseImpl("database_load_test.db3", do_not_use) };
+
+		helper.api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION });
+
+		auto timeCategories = TimeEntryDataPacket({});
+		auto complete = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
+		
+		auto root = TaskInfoMessage(TaskID(1), NO_PARENT, "Bugzilla");
+		root.createTime = std::chrono::milliseconds(1737344039870);
+
+		auto bulk_start = BasicMessage(PacketType::BULK_TASK_INFO_START);
+		auto bulk_finish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
+		auto active_task = BasicMessage(PacketType::UNSPECIFIED_TASK_ACTIVE);
+
+		helper.required_messages({ &timeCategories, &bulk_start, &root, &active_task, &bulk_finish, &complete });
+	}
+}
+
+TEST_CASE("Load Unspecified Task from Database - Inactive", "[database]")
+{
+	std::filesystem::remove("database_load_test.db3");
+
+	{
+		TestPacketSender do_not_use;
+		TestHelper<DatabaseImpl> helper{ DatabaseImpl("database_load_test.db3", do_not_use) };
+
+		CreateTaskMessage create1(NO_PARENT, RequestID(1), "Bugzilla");
+
+		helper.expect_success(create1);
+
+		helper.expect_success(TaskMessage(PacketType::START_UNSPECIFIED_TASK, RequestID(10), UNSPECIFIED_TASK));
+		helper.expect_success(TaskMessage(PacketType::STOP_UNSPECIFIED_TASK, RequestID(10), TaskID(1)));
+	}
+
+	{
+		TestPacketSender do_not_use;
+		TestHelper<DatabaseImpl> helper{ DatabaseImpl("database_load_test.db3", do_not_use) };
+
+		helper.api.process_packet(BasicMessage{ PacketType::REQUEST_CONFIGURATION });
+
+		auto timeCategories = TimeEntryDataPacket({});
+		auto complete = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
+
+		auto root = TaskInfoMessage(TaskID(1), NO_PARENT, "Bugzilla");
+		root.createTime = std::chrono::milliseconds(1737344039870);
+		root.state = TaskState::ACTIVE;
+		root.times.emplace_back(std::chrono::milliseconds(1737344939870));
+		root.times.back().timeEntry.emplace_back(TimeCategoryID(0), TimeCodeID(0));
+
+		auto bulk_start = BasicMessage(PacketType::BULK_TASK_INFO_START);
+		auto bulk_finish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
+		helper.required_messages({ &timeCategories, &bulk_start, &root, &bulk_finish, &complete });
+
+		// verify that we can start the unspecified task again
+		helper.expect_success(TaskMessage(PacketType::START_UNSPECIFIED_TASK, helper.next_request_id(), UNSPECIFIED_TASK));
 	}
 }
 

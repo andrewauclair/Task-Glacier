@@ -89,6 +89,9 @@ public class ServerConnection {
                     }
                     toSend.clear();
                 }
+                else if (packetType == PacketType.UNSPECIFIED_TASK_ACTIVE) {
+                    mainFrame.unspecifiedTaskActive();
+                }
                 else if (packetType == PacketType.BUGZILLA_INFO) {
                     BugzillaInfo info = BugzillaInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
 

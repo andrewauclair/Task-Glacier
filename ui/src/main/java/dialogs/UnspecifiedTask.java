@@ -44,6 +44,10 @@ public class UnspecifiedTask extends JDialog {
 
             mainFrame.getConnection().sendPacket(change);
 
+            mainFrame.getTaskModel().removeUnspecifiedTask();
+
+            mainFrame.getSystemTrayDisplay().setUnspecifiedTaskState(true);
+
             UnspecifiedTask.this.dispose();
         });
         add(done, gbc);

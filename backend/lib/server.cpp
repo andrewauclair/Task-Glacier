@@ -285,12 +285,9 @@ std::optional<std::string> MicroTask::stop_task(TaskID id)
 
 		task->state = TaskState::PENDING;
 
-		if (id != UNSPECIFIED_TASK)
-		{
-			task->m_times.back().stop = m_clock->now();
+		task->m_times.back().stop = m_clock->now();
 
-			m_database->write_task(*task, *m_sender);
-		}
+		m_database->write_task(*task, *m_sender);
 
 		return std::nullopt;
 	}
@@ -379,6 +376,18 @@ std::expected<TaskState, std::string> MicroTask::task_state(TaskID id)
 
 void MicroTask::load_task(const Task& task)
 {
+	if (task.taskID() == UNSPECIFIED_TASK)
+	{
+		m_unspecifiedTask = task;
+
+		if (task.state == TaskState::ACTIVE)
+		{
+			m_activeTask = &m_unspecifiedTask;
+		}
+
+		return;
+	}
+
 	m_tasks.emplace(task.taskID(), task);
 
 	if (task.state == TaskState::ACTIVE)

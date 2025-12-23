@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static taskglacier.MainFrame.mainFrame;
+
 public class TaskModel {
     private List<Task> tasks = new ArrayList<>();
     private List<Listener> listeners = new ArrayList<>();
@@ -166,6 +168,14 @@ public class TaskModel {
             for (Task task1 : toUpdate) {
                 listeners.forEach(listener -> listener.updatedTask(task1));
             }
+        }
+    }
+
+    public void removeUnspecifiedTask() {
+        Optional<Task> unspecified = tasks.stream().filter(task -> task.id == 0).findFirst();
+
+        if (unspecified.isPresent()) {
+            listeners.forEach(listener -> listener.removeTask(unspecified.get()));
         }
     }
 

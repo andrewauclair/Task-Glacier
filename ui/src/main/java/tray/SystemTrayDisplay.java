@@ -199,9 +199,11 @@ public class SystemTrayDisplay extends JFrame {
             }
         });
 
-        unspecifiedTask.addActionListener(e -> {
-            mainFrame.startUnspecifiedTask();
-        });
+        unspecifiedTask.addActionListener(e -> mainFrame.startUnspecifiedTask());
+    }
+
+    public void setUnspecifiedTaskState(boolean active) {
+        unspecifiedTask.setEnabled(active);
     }
 
     private static boolean isModalDialogShowing() {

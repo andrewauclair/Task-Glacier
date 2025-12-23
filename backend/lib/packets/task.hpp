@@ -11,7 +11,12 @@ struct TaskMessage : RequestMessage
 
 	TaskMessage(PacketType type, RequestID requestID, TaskID taskID) : RequestMessage(type, requestID), taskID(taskID)
 	{
-		assert(type == PacketType::START_TASK || type == PacketType::STOP_TASK || type == PacketType::FINISH_TASK || type == PacketType::REQUEST_TASK);
+		assert(type == PacketType::START_TASK || 
+			   type == PacketType::STOP_TASK || 
+			   type == PacketType::FINISH_TASK || 
+			   type == PacketType::REQUEST_TASK ||
+			   type == PacketType::START_UNSPECIFIED_TASK ||
+			   type == PacketType::STOP_UNSPECIFIED_TASK);
 	}
 
 	std::vector<std::byte> pack() const override;

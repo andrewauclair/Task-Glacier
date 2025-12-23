@@ -193,10 +193,20 @@ public:
 
 				for (auto&& task : all_tasks)
 				{
+					// skip the unspecified task
+					if (task->taskID() == UNSPECIFIED_TASK)
+					{
+						continue;
+					}
 					next.push_back(task->taskID());
 				}
 			}
 			parents = next;
+		}
+
+		if (m_activeTask == &m_unspecifiedTask)
+		{
+			m_sender->send(std::make_unique<BasicMessage>(PacketType::UNSPECIFIED_TASK_ACTIVE));
 		}
 
 		m_sender->send(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_FINISH));

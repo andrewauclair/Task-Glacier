@@ -133,7 +133,15 @@ void API::start_task(const TaskMessage& message)
 
 		auto* task = m_app.find_task(message.taskID);
 
-		send_task_info(*task, false);
+		// don't send the unspecified task
+		if (task->taskID() != UNSPECIFIED_TASK)
+		{
+			send_task_info(*task, false);
+		}
+		else
+		{
+			m_sender->send(std::make_unique<BasicMessage>(PacketType::UNSPECIFIED_TASK_ACTIVE));
+		}
 	}
 }
 
