@@ -1,6 +1,6 @@
 {
   "name": "task-glacier",
-  "version": "0.7.0",
+  "version": "",
   "dependencies": [
     "curl"
   ]
