@@ -131,4 +131,5 @@ jobs:
           ${{ steps.strings.outputs.build-output-dir }}/bin/task-glacier-server.exe
           ${{ steps.strings.outputs.build-output-dir }}/bin/curlpp.dll
           ${{ steps.strings.outputs.build-output-dir }}/bin/libcurl.dll
+          ${{ steps.strings.outputs.build-output-dir }}/bin/zlib1.dll
 
