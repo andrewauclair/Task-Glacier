@@ -25,6 +25,12 @@ public class RequestWeeklyReportDialog extends JDialog {
         DatePicker picker = new DatePicker();
         picker.setSelectedDate(LocalDate.now());
 
+        picker.setDateSelectionMode(DatePicker.DateSelectionMode.BETWEEN_DATE_SELECTED);
+
+        picker.addDateSelectionListener(dateSelectionEvent -> {
+            picker.setSelectedDateRange(picker.getSelectedDate(), picker.getSelectedDate().plusDays(6));
+        });
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.insets = new Insets(5, 5, 5, 5);
