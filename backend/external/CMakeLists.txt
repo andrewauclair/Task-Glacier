@@ -8,7 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 FetchContent_Declare(
     Catch2
-    GIT_SHALLOW    TRUE
+    GIT_SHALLOW    FALSE
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
     #GIT_TAG        v3.11.0
     GIT_TAG        97091636d012baa87711e7dbbd4cd778b96a211b
