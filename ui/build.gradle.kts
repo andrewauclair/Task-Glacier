@@ -24,6 +24,7 @@ dependencies {
     implementation("com.formdev:flatlaf-extras:3.6.1")
     implementation("com.formdev:flatlaf-intellij-themes:3.6.1")
     implementation("me.xdrop:fuzzywuzzy:1.4.0")
+    implementation("io.github.dj-raven:swing-datetime-picker:2.1.3")
 
     // https://mvnrepository.com/artifact/org.swinglabs/swingx
     implementation("org.swinglabs:swingx:1.6.1")

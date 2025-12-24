@@ -1,32 +1,42 @@
 package dialogs;
 
-import org.jdesktop.swingx.JXDatePicker;
 import packets.RequestDailyReport;
 import packets.RequestID;
+import raven.datetime.DatePicker;
 import taskglacier.MainFrame;
 import util.DialogEscape;
 
 import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Calendar;
 
 public class RequestDailyReportDialog extends JDialog {
     public RequestDailyReportDialog(MainFrame mainFrame) {
-        setLayout(new FlowLayout());
+        setTitle("Request Daily Report");
+        
+        setLayout(new GridBagLayout());
         setModal(true);
 
         DialogEscape.addEscapeHandler(this);
 
-        JXDatePicker picker = new JXDatePicker();
-        picker.setDate(Calendar.getInstance().getTime());
-//        picker.setFormats(new SimpleDateFormat("dd.MM.yyyy"));
+        DatePicker picker = new DatePicker();
+        picker.setSelectedDate(LocalDate.now());
 
-        add(picker);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+
+        add(picker, gbc);
+        gbc.gridy++;
 
         JButton send = new JButton("Send");
-        add(send);
+
+        add(send, gbc);
+        gbc.gridy++;
 
         pack();
 
@@ -34,7 +44,8 @@ public class RequestDailyReportDialog extends JDialog {
         setLocationRelativeTo(mainFrame);
 
         send.addActionListener(e -> {
-            LocalDate localDate = picker.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            LocalDate localDate = picker.getSelectedDate();
+
             int year = localDate.getYear();
             int month = localDate.getMonthValue();
             int day = localDate.getDayOfMonth();
