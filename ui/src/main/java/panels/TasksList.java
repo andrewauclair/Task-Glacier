@@ -89,7 +89,7 @@ public class TasksList extends JPanel implements Dockable {
     }
 
     private void configure(Task rootObject) {
-        taskTable = new TaskTreeTable(mainFrame, rootObject, taskID, false);
+        taskTable = new TaskTreeTable(mainFrame, rootObject, taskID, false, false, ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         // Register the keyboard shortcut
         KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.CTRL_DOWN_MASK);

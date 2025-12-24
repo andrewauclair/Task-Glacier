@@ -1,4 +1,4 @@
-package tray;
+package panels;
 
 import data.Task;
 import data.TaskState;
@@ -9,16 +9,13 @@ import tree.TaskTreeTable;
 import javax.swing.*;
 import java.awt.*;
 
-class Search extends JPanel {
-    private final MainFrame mainFrame;
-
-    private TaskTreeTable newTable;
+public class Search extends JPanel {
+    public TaskTreeTable newTable;
 
     public Search(MainFrame mainFrame) {
-        this.mainFrame = mainFrame;
-
         Task rootObject = new Task(0, 0, "");
-        newTable = new TaskTreeTable(mainFrame, rootObject, 0, false);
+        newTable = new TaskTreeTable(mainFrame, rootObject, 0, false, true, ListSelectionModel.SINGLE_SELECTION);
+
 
         setLayout(new GridBagLayout());
 
@@ -35,11 +32,16 @@ class Search extends JPanel {
     public void setSearchText(final String search) {
         newTable.setNodeFilter(treeNode -> {
             Task obj = TreeUtils.getUserObject(treeNode);
-            boolean includeFinish = search.startsWith("finish: ");
+            boolean includeFinish = search.startsWith("finish:");
             String text = search;
 
             if (includeFinish) {
-                text = text.substring("finish: ".length());
+                if (search.startsWith("finish: ")) {
+                    text = text.substring("finish: ".length());
+                }
+                else {
+                    text = text.substring("finish: ".length());
+                }
                 return !childrenHaveMatch(obj, text);
             }
             return obj.state == TaskState.FINISHED || !childrenHaveMatch(obj, text);

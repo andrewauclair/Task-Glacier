@@ -2,6 +2,7 @@ package tray;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import panels.Search;
 import taskglacier.MainFrame;
 
 import javax.swing.*;

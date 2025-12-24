@@ -6,14 +6,21 @@ import taskglacier.MainFrame;
 import util.LabeledComponent;
 
 import javax.swing.*;
+import javax.swing.text.AbstractDocument;
 import java.awt.*;
 
 public class UnspecifiedTask extends JDialog {
     public UnspecifiedTask(MainFrame mainFrame) {
         setModal(true);
 
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
         JButton create = new JButton("Create New Task");
 
+        create.addActionListener(e -> {
+            AddTask add = new AddTask(mainFrame, this, 0);
+            add.setVisible(true);
+        });
         JTextField taskID = new JTextField(5);
 
         add(create);
@@ -28,8 +35,22 @@ public class UnspecifiedTask extends JDialog {
         gbc.weightx = 1;
         gbc.weighty = 0;
 
-        add(new LabeledComponent("Task ID", taskID), gbc);
+        ((AbstractDocument) taskID.getDocument()).setDocumentFilter(new TaskIDFilter());
 
+        add(new LabeledComponent("Task ID", taskID), gbc);
+        gbc.gridy++;
+
+        JButton pick = new JButton("Pick Task...");
+        add(pick, gbc);
+
+        pick.addActionListener(e -> {
+            TaskPicker picker = new TaskPicker(mainFrame);
+            picker.setVisible(true);
+
+            if (picker.task != null) {
+                taskID.setText(String.valueOf(picker.task.intValue()));
+            }
+        });
         gbc.gridy++;
 
         add(create, gbc);

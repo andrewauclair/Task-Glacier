@@ -1,20 +1,27 @@
 package config;
 
 import data.Task;
+import dialogs.TaskIDFilter;
+import dialogs.TaskPicker;
 import packets.UpdateTask;
 import util.LabeledComponent;
 
 import javax.swing.*;
+import javax.swing.text.AbstractDocument;
 import java.awt.*;
+
+import static taskglacier.MainFrame.mainFrame;
 
 // general (id, name, status, parent, bugzilla)
 class General extends JPanel {
+    private final Task task;
     JTextArea description = new JTextArea(6, 20);
-    JTextField parent = new JTextField(3);
+    JTextField parent = new JTextField();
     JCheckBox serverControlled = new JCheckBox("Server Controlled");
     JCheckBox locked = new JCheckBox("Locked");
 
     General(Task task) {
+        this.task = task;
         setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -26,9 +33,10 @@ class General extends JPanel {
         gbc.weighty = 0;
 
         add(new JLabel("ID " + task.id), gbc);
-
         gbc.gridy++;
+
         add(new LabeledComponent("Description", description, GridBagConstraints.NORTH), gbc);
+        gbc.gridy++;
 
         description.setWrapStyleWord(true);
         description.setLineWrap(true);
@@ -39,8 +47,8 @@ class General extends JPanel {
         status.addItem("Active");
         status.addItem("Finished");
 
-        gbc.gridy++;
         add(new LabeledComponent("Status", status), gbc);
+        gbc.gridy++;
 
         switch (task.state) {
             case PENDING -> status.setSelectedItem("Pending");
@@ -49,26 +57,45 @@ class General extends JPanel {
         }
 
         parent.setText(String.valueOf(task.parentID));
+        ((AbstractDocument) parent.getDocument()).setDocumentFilter(new TaskIDFilter());
 
-        gbc.gridy++;
         add(new LabeledComponent("Parent", parent), gbc);
+        gbc.gridy++;
 
+        JButton pick = new JButton("Pick Parent Task...");
+        pick.addActionListener(e -> {
+            TaskPicker picker = new TaskPicker(mainFrame);
+            picker.setVisible(true);
+
+            if (picker.task != null) {
+                if (picker.task.intValue() == task.id) {
+                    JOptionPane.showMessageDialog(this, "Task cannot be its own parent", "Invalid Parent", JOptionPane.ERROR_MESSAGE);
+                }
+                else {
+                    parent.setText(String.valueOf(picker.task.intValue()));
+                }
+            }
+        });
+
+        add(pick, gbc);
+        gbc.gridy++;
 
         serverControlled.setEnabled(false);
         serverControlled.setSelected(task.serverControlled);
 
-        gbc.gridy++;
         add(serverControlled, gbc);
+        gbc.gridy++;
 
         locked.setSelected(task.locked);
 
-        gbc.gridy++;
         add(locked, gbc);
+        gbc.gridy++;
 
         // add filler
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
         add(new JLabel(), gbc);
+        gbc.gridy++;
 
         locked.addActionListener(e -> {
             boolean controlsLocked = serverControlled.isSelected() || locked.isSelected();
@@ -96,5 +123,16 @@ class General extends JPanel {
         if (hasChanges(task)) {
             update.locked = locked.isSelected();
         }
+    }
+
+    public boolean verify() {
+        int parentID = Integer.parseInt(parent.getText());
+
+        if (parentID == task.id) {
+            JOptionPane.showMessageDialog(this, "Task cannot be its own parent", "Invalid Parent", JOptionPane.ERROR_MESSAGE);
+
+            return false;
+        }
+        return true;
     }
 }

@@ -102,6 +102,10 @@ public class TaskConfig extends JDialog {
         add(save, gbc);
 
         save.addActionListener(e -> {
+            if (!general.verify()) {
+                return;
+            }
+
             // send any packets that are necessary
             UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task.id, Integer.parseInt(general.parent.getText()), general.description.getText());
             update.indexInParent = task.indexInParent;
@@ -114,7 +118,7 @@ public class TaskConfig extends JDialog {
             dispose();
         });
 
-        setSize(500, 350);
+        setSize(550, 400);
 
         // center on the main frame
         setLocationRelativeTo(mainFrame);

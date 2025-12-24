@@ -377,7 +377,7 @@ public class MainFrame extends JFrame {
 
     public void startUnspecifiedTask() {
         TaskStateChange startUnspecified = new TaskStateChange();
-        
+
         startUnspecified.packetType = PacketType.START_UNSPECIFIED_TASK;
         startUnspecified.requestID = RequestID.nextRequestID();
 
@@ -385,6 +385,8 @@ public class MainFrame extends JFrame {
     }
 
     public void unspecifiedTaskActive() {
+        mainFrame.setVisible(true);
+
         systemTrayDisplay.setUnspecifiedTaskState(false);
         UnspecifiedTask dialog = new UnspecifiedTask(this);
         dialog.setVisible(true);

@@ -19,6 +19,7 @@ import panels.TasksList;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
@@ -41,7 +42,8 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
     private DefaultMutableTreeNode rootNode;
     private TreeTableModel treeTableModel;
     private DefaultTreeModel treeModel;
-    public TaskTreeTable(MainFrame mainFrame, Task root, int taskID, boolean onlyStateConfigure) {
+
+    public TaskTreeTable(MainFrame mainFrame, Task root, int taskID, boolean onlyStateConfigure, boolean readOnly, int selectionMode) {
         rootNode = TreeUtils.buildTree(root, Task::getChildren, parent -> false);
 
         this.mainFrame = mainFrame;
@@ -50,8 +52,8 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
 
         mainFrame.getTaskModel().addListener(this);
 
-        setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        setDragEnabled(true);
+        setSelectionMode(selectionMode);
+        setDragEnabled(!readOnly);
         setDropMode(DropMode.ON_OR_INSERT_ROWS);
         setTransferHandler(new TaskTransferHandler());
 
@@ -135,63 +137,69 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
             }
         });
 
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
-                    int selectedRow = getSelectedRow();
+        if (!readOnly) {
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (SwingUtilities.isRightMouseButton(e)) {
+                        int selectedRow = getSelectedRow();
 
-                    JPopupMenu contextMenu = new JPopupMenu();
+                        JPopupMenu contextMenu = new JPopupMenu();
 
-                    if (selectedRow == -1) {
-                        contextMenu.add(add);
-                        contextMenu.show(TaskTreeTable.this, e.getX(), e.getY());
-                        return;
-                    }
-
-                    contextMenu.add(config);
-
-
-                    if (mainFrame.getTaskModel().getActiveTaskID().isPresent() &&
-                            !mainFrame.getTaskModel().taskHasNonFinishedChildren(mainFrame.getTaskModel().getActiveTaskID().get()) &&
-                            !mainFrame.getTaskModel().getTask(mainFrame.getTaskModel().getActiveTaskID().get()).locked) {
-                        contextMenu.add(startStopActive);
-                        contextMenu.add(stop);
-                        contextMenu.add(startFinishActive);
-                        contextMenu.add(finish);
-                    }
-                    else {
-                        contextMenu.add(start);
-                        contextMenu.add(stop);
-                        contextMenu.add(finish);
-                    }
-
-                    if (!onlyStateConfigure) {
-                        contextMenu.addSeparator();
-                        contextMenu.add(addSubTask);
-
-                        TreeNode node = treeTableModel.getNodeAtTableRow(selectedRow);
-                        Task task = (Task) ((DefaultMutableTreeNode) node).getUserObject();
-
-                        startStopActive.setEnabled(task.state == TaskState.PENDING);
-                        startFinishActive.setEnabled(task.state == TaskState.PENDING);
-                        stop.setEnabled(task.state == TaskState.ACTIVE);
-                        finish.setEnabled(task.state != TaskState.FINISHED && !mainFrame.getTaskModel().taskHasNonFinishedChildren(task.id) && !task.locked && !task.serverControlled);
-
-                        // task has subtasks, allow an option to open it in a new panel
-                        if (node.getChildCount() != 0) {
-                            contextMenu.addSeparator();
-                            contextMenu.add(openInNewWindow);
+                        if (selectedRow == -1) {
+                            contextMenu.add(add);
+                            contextMenu.show(TaskTreeTable.this, e.getX(), e.getY());
+                            return;
                         }
-                    }
 
-                    contextMenu.show(TaskTreeTable.this, e.getX(), e.getY());
+                        contextMenu.add(config);
+
+
+                        if (mainFrame.getTaskModel().getActiveTaskID().isPresent() &&
+                                !mainFrame.getTaskModel().taskHasNonFinishedChildren(mainFrame.getTaskModel().getActiveTaskID().get()) &&
+                                !mainFrame.getTaskModel().getTask(mainFrame.getTaskModel().getActiveTaskID().get()).locked) {
+                            contextMenu.add(startStopActive);
+                            contextMenu.add(stop);
+                            contextMenu.add(startFinishActive);
+                            contextMenu.add(finish);
+                        }
+                        else {
+                            contextMenu.add(start);
+                            contextMenu.add(stop);
+                            contextMenu.add(finish);
+                        }
+
+                        if (!onlyStateConfigure) {
+                            contextMenu.addSeparator();
+                            contextMenu.add(addSubTask);
+
+                            TreeNode node = treeTableModel.getNodeAtTableRow(selectedRow);
+                            Task task = (Task) ((DefaultMutableTreeNode) node).getUserObject();
+
+                            startStopActive.setEnabled(task.state == TaskState.PENDING);
+                            startFinishActive.setEnabled(task.state == TaskState.PENDING);
+                            stop.setEnabled(task.state == TaskState.ACTIVE);
+                            finish.setEnabled(task.state != TaskState.FINISHED && !mainFrame.getTaskModel().taskHasNonFinishedChildren(task.id) && !task.locked && !task.serverControlled);
+
+                            // task has subtasks, allow an option to open it in a new panel
+                            if (node.getChildCount() != 0) {
+                                contextMenu.addSeparator();
+                                contextMenu.add(openInNewWindow);
+                            }
+                        }
+
+                        contextMenu.show(TaskTreeTable.this, e.getX(), e.getY());
+                    }
+                    else if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                        config.doClick();
+                    }
                 }
-                else if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
-                    config.doClick();
-                }
-            }
-        });
+            });
+        }
+    }
+
+    public void addListSelectionListener(ListSelectionListener listener) {
+        getSelectionModel().addListSelectionListener(listener);
     }
 
     public void setNodeFilter(final Predicate<TreeNode> filterPredicate) {
