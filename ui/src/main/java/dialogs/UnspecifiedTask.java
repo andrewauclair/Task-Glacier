@@ -63,8 +63,10 @@ public class UnspecifiedTask extends JDialog {
             change.packetType = PacketType.STOP_UNSPECIFIED_TASK;
             change.taskID = Integer.parseInt(taskID.getText());
 
-            mainFrame.getConnection().sendPacket(change);
-
+            if (mainFrame.isConnected()) {
+                mainFrame.getConnection().sendPacket(change);
+            }
+            
             mainFrame.getTaskModel().removeUnspecifiedTask();
 
             mainFrame.getSystemTrayDisplay().setUnspecifiedTaskState(true);

@@ -21,10 +21,35 @@ import static taskglacier.MainFrame.mainFrame;
 class Sessions extends JPanel {
     SessionTableModel sessionModel = new SessionTableModel();
     JTable sessionTable = new JTable(sessionModel);
+
+    JButton editSession = new JButton("E");
+    JButton addSession = new JButton("+");
+    JButton removeSession = new JButton("-");
+
     TimeEntryTableModel timeEntryModel = new TimeEntryTableModel();
     JTable timeEntryTable = new JTable(timeEntryModel);
-    JButton add = new JButton("+");
-    JButton remove = new JButton("-");
+
+    JButton addTimeEntry = new JButton("+");
+    JButton removeTimeEntry = new JButton("-");
+
+    private JPanel createSessionButtonPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        panel.add(editSession, gbc);
+        gbc.gridy++;
+        panel.add(addSession, gbc);
+        gbc.gridy++;
+        panel.add(removeSession, gbc);
+        gbc.gridy++;
+
+        return panel;
+    }
 
     private JPanel createTimeEntryButtonPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
@@ -35,9 +60,9 @@ class Sessions extends JPanel {
         gbc.gridy = 0;
         gbc.insets = new Insets(5, 5, 5, 5);
 
-        panel.add(add, gbc);
+        panel.add(addTimeEntry, gbc);
         gbc.gridy++;
-        panel.add(remove, gbc);
+        panel.add(removeTimeEntry, gbc);
         gbc.gridy++;
 
         return panel;
@@ -54,23 +79,31 @@ class Sessions extends JPanel {
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
 
+        JPanel left = new JPanel(new GridBagLayout());
+        left.add(new JScrollPane(sessionTable), gbc);
+
         JPanel right = new JPanel(new GridBagLayout());
         right.add(new JScrollPane(timeEntryTable), gbc);
+
         gbc.gridx++;
         gbc.gridheight = 1;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
 
+        left.add(createSessionButtonPanel(), gbc);
         right.add(createTimeEntryButtonPanel(), gbc);
 
         gbc.weighty = 0;
 
-        add.setEnabled(false);
-        remove.setEnabled(false);
+        editSession.setEnabled(false);
+        removeSession.setEnabled(false);
+
+        addTimeEntry.setEnabled(false);
+        removeTimeEntry.setEnabled(false);
 
         JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         split.setResizeWeight(0.75);
-        split.setLeftComponent(new JScrollPane(sessionTable));
+        split.setLeftComponent(left);
         split.setRightComponent(right);
 
         gbc.gridx = 0;
@@ -111,10 +144,13 @@ class Sessions extends JPanel {
         sessionTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         sessionTable.getSelectionModel().addListSelectionListener(e -> {
+            editSession.setEnabled(sessionTable.getSelectedRow() != -1);
+            removeSession.setEnabled(sessionTable.getSelectedRow() != -1);
+
             timeEntryModel.data.clear();
             timeEntryModel.fireTableDataChanged();
 
-            add.setEnabled(sessionTable.getSelectedRow() != -1);
+            addTimeEntry.setEnabled(sessionTable.getSelectedRow() != -1);
 
             if (sessionTable.getSelectedRow() != -1) {
                 SessionRow session = sessionModel.data.get(sessionTable.getSelectedRow());
@@ -127,10 +163,10 @@ class Sessions extends JPanel {
         });
 
         timeEntryTable.getSelectionModel().addListSelectionListener(e -> {
-            remove.setEnabled(timeEntryTable.getSelectedRow() != -1);
+            removeTimeEntry.setEnabled(timeEntryTable.getSelectedRow() != -1);
         });
 
-        add.addActionListener(e -> {
+        addTimeEntry.addActionListener(e -> {
             TimeData.TimeEntry entry = TimeEntryDialog.display(parent, mainFrame.getTimeData());
 
             if (entry != null) {
@@ -164,7 +200,7 @@ class Sessions extends JPanel {
             }
         });
 
-        remove.addActionListener(e -> {
+        removeTimeEntry.addActionListener(e -> {
             SessionRow session = sessionModel.data.get(sessionTable.getSelectedRow());
 
             TimeData.TimeEntry timeEntry = session.timeEntry.get(timeEntryTable.getSelectedRow());
