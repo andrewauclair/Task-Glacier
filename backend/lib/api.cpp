@@ -18,7 +18,7 @@ void API::process_packet(const Message& message)
 	switch (message.packetType())
 	{
 	case PacketType::VERSION_REQUEST:
-		m_sender->send(std::make_unique<VersionMessage>("0.8.0"));
+		m_sender->send(std::make_unique<VersionMessage>("0.9.0"));
 		break;
 	case PacketType::CREATE_TASK:
 		create_task(static_cast<const CreateTaskMessage&>(message));
