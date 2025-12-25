@@ -14,7 +14,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 
 public class TaskPicker extends JDialog {
-    public Integer task = null;
+    public Task task = null;
 
     public TaskPicker(MainFrame mainFrame) {
         setModal(true);
@@ -36,7 +36,7 @@ public class TaskPicker extends JDialog {
 
             Task task = (Task) ((DefaultMutableTreeNode) ((TreeTableModel) search.newTable.getModel()).getNodeAtTableRow(selectedRow)).getUserObject();
 
-            this.task = task.id;
+            this.task = task;
         });
         JTextField searchText = new JTextField(30);
 

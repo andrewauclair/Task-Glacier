@@ -11,6 +11,10 @@ import util.LabeledComponent;
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import static taskglacier.MainFrame.mainFrame;
 
@@ -68,6 +72,26 @@ class General extends JPanel {
         parent.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
 
         parent.setText(String.valueOf(task.parentID));
+        Task parentTask = mainFrame.getTaskModel().getTask(task.parentID);
+        parent.setToolTipText(parentTask != null ? parentTask.name : "Root");
+
+        parent.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusLost(FocusEvent e) {
+                int newTaskID = Integer.valueOf(parent.getText());
+                Task parentTask = mainFrame.getTaskModel().getTask(newTaskID);
+
+                if (newTaskID == 0) {
+                    parent.setToolTipText("Root");
+                }
+                else if (parentTask == null) {
+                    parent.setToolTipText("");
+                }
+                else {
+                    parent.setToolTipText(parentTask.name);
+                }
+            }
+        });
         ((AbstractDocument) parent.getDocument()).setDocumentFilter(new TaskIDFilter());
 
         add(new LabeledComponent("Parent", parent), gbc);
@@ -78,11 +102,12 @@ class General extends JPanel {
             picker.setVisible(true);
 
             if (picker.task != null) {
-                if (picker.task.intValue() == task.id) {
+                if (picker.task.id == task.id) {
                     JOptionPane.showMessageDialog(this, "Task cannot be its own parent", "Invalid Parent", JOptionPane.ERROR_MESSAGE);
                 }
                 else {
-                    parent.setText(String.valueOf(picker.task.intValue()));
+                    parent.setText(String.valueOf(picker.task.id));
+                    parent.setToolTipText(picker.task.name);
                 }
             }
         });
@@ -139,6 +164,14 @@ class General extends JPanel {
 
         if (parentID == task.id) {
             JOptionPane.showMessageDialog(this, "Task cannot be its own parent", "Invalid Parent", JOptionPane.ERROR_MESSAGE);
+
+            return false;
+        }
+
+        Task parentTask = mainFrame.getTaskModel().getTask(parentID);
+
+        if (parentTask == null) {
+            JOptionPane.showMessageDialog(this, "Parent task ID does not exist", "Invalid Parent", JOptionPane.ERROR_MESSAGE);
 
             return false;
         }

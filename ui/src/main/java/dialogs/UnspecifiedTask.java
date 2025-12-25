@@ -57,7 +57,8 @@ public class UnspecifiedTask extends JDialog {
             picker.setVisible(true);
 
             if (picker.task != null) {
-                taskID.setText(String.valueOf(picker.task.intValue()));
+                taskID.setText(String.valueOf(picker.task.id));
+                taskID.setToolTipText(picker.task.name);
             }
         });
         gbc.gridy++;
