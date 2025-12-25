@@ -1,5 +1,7 @@
 package config;
 
+import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import data.Task;
 import dialogs.TaskIDFilter;
 import dialogs.TaskPicker;
@@ -16,7 +18,7 @@ import static taskglacier.MainFrame.mainFrame;
 class General extends JPanel {
     private final Task task;
     JTextArea description = new JTextArea(6, 20);
-    JTextField parent = new JTextField();
+    JTextField parent = new JTextField(6);
     JCheckBox serverControlled = new JCheckBox("Server Controlled");
     JCheckBox locked = new JCheckBox("Locked");
 
@@ -56,14 +58,22 @@ class General extends JPanel {
             case FINISHED -> status.setSelectedItem("Finished");
         }
 
+        JToolBar toolBar = new JToolBar();
+        FlatSVGIcon searchIcon = new FlatSVGIcon(getClass().getResource("/search-svgrepo-com.svg")).derive(24, 24);
+
+        JButton search = new JButton(searchIcon);
+
+        toolBar.add(search);
+
+        parent.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
+
         parent.setText(String.valueOf(task.parentID));
         ((AbstractDocument) parent.getDocument()).setDocumentFilter(new TaskIDFilter());
 
         add(new LabeledComponent("Parent", parent), gbc);
         gbc.gridy++;
 
-        JButton pick = new JButton("Pick Parent Task...");
-        pick.addActionListener(e -> {
+        search.addActionListener(e -> {
             TaskPicker picker = new TaskPicker(mainFrame);
             picker.setVisible(true);
 
@@ -76,9 +86,6 @@ class General extends JPanel {
                 }
             }
         });
-
-        add(pick, gbc);
-        gbc.gridy++;
 
         serverControlled.setEnabled(false);
         serverControlled.setSelected(task.serverControlled);

@@ -1,5 +1,7 @@
 package dialogs;
 
+import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import packets.PacketType;
 import packets.TaskStateChange;
 import taskglacier.MainFrame;
@@ -21,7 +23,17 @@ public class UnspecifiedTask extends JDialog {
             AddTask add = new AddTask(mainFrame, this, 0);
             add.setVisible(true);
         });
-        JTextField taskID = new JTextField(5);
+
+        JTextField taskID = new JTextField(6);
+
+        JToolBar toolBar = new JToolBar();
+        FlatSVGIcon searchIcon = new FlatSVGIcon(getClass().getResource("/search-svgrepo-com.svg")).derive(24, 24);
+
+        JButton search = new JButton(searchIcon);
+
+        toolBar.add(search);
+
+        taskID.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
 
         add(create);
 
@@ -40,10 +52,7 @@ public class UnspecifiedTask extends JDialog {
         add(new LabeledComponent("Task ID", taskID), gbc);
         gbc.gridy++;
 
-        JButton pick = new JButton("Pick Task...");
-        add(pick, gbc);
-
-        pick.addActionListener(e -> {
+        search.addActionListener(e -> {
             TaskPicker picker = new TaskPicker(mainFrame);
             picker.setVisible(true);
 
