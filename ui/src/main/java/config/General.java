@@ -110,6 +110,7 @@ class General extends JPanel {
             description.setEnabled(!controlsLocked);
             status.setEnabled(!controlsLocked);
             parent.setEnabled(!controlsLocked);
+            search.setEnabled(!controlsLocked);
         });
 
         boolean controlsLocked = serverControlled.isSelected() || locked.isSelected();
@@ -117,6 +118,7 @@ class General extends JPanel {
         description.setEnabled(!controlsLocked);
         status.setEnabled(!controlsLocked);
         parent.setEnabled(!controlsLocked);
+        search.setEnabled(!controlsLocked);
         locked.setEnabled(!serverControlled.isSelected());
     }
 
