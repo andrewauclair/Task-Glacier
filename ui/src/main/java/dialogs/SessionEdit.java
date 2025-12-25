@@ -1,60 +1,50 @@
 package dialogs;
 
-import com.formdev.flatlaf.FlatClientProperties;
-import com.formdev.flatlaf.extras.FlatSVGIcon;
+import packets.TaskInfo;
+import raven.datetime.DatePicker;
+import raven.datetime.TimePicker;
 import taskglacier.MainFrame;
 import util.LabeledComponent;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 public class SessionEdit extends JDialog {
-    public enum Type {
-        ADD, EDIT
-    }
-    public SessionEdit(MainFrame mainFrame, Type type) {
+    public TaskInfo.Session session = null;
+
+    private DatePicker startDatePicker = new DatePicker();
+    private DatePicker stopDatePicker = new DatePicker();
+
+    private TimePicker startTimePicker = new TimePicker();
+    private TimePicker stopTimePicker = new TimePicker();
+
+    JFormattedTextField startDate = new JFormattedTextField();
+    JFormattedTextField stopDate = new JFormattedTextField();
+
+    JFormattedTextField startTime = new JFormattedTextField();
+    JFormattedTextField stopTime = new JFormattedTextField();
+
+    public SessionEdit(MainFrame mainFrame) {
         setModal(true);
 
-        setTitle(type == Type.ADD ? "Add Session" : "Edit Session");
+        setTitle("Add Session");
 
-        JFormattedTextField startDate = new JFormattedTextField();
-        JFormattedTextField stopDate = new JFormattedTextField();
 
-        JFormattedTextField startTime = new JFormattedTextField();
-        JFormattedTextField stopTime = new JFormattedTextField();
+        startDate.setText("--/--/----");
+        stopDate.setText("--/--/----");
 
-        FlatSVGIcon calendarIcon = new FlatSVGIcon(getClass().getResource("/raven/datetime/icon/calendar.svg")).derive(24, 24);
+        startDatePicker.setEditor(startDate);
+        stopDatePicker.setEditor(stopDate);
 
-        JButton startDateSelect = new JButton(calendarIcon);
-        JButton stopDateSelect = new JButton(calendarIcon);
 
-        startDate.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, startDateSelect);
-        stopDate.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, stopDateSelect);
 
-        startDateSelect.addActionListener(e -> {
+        startTime.setText("--:-- --");
+        stopTime.setText("--:-- --");
 
-        });
-
-        stopDateSelect.addActionListener(e -> {
-
-        });
-
-        FlatSVGIcon clockIcon = new FlatSVGIcon(getClass().getResource("/raven/datetime/icon/clock.svg")).derive(24, 24);
-
-        JButton startTimeSelect = new JButton(clockIcon);
-        JButton stopTimeSelect = new JButton(clockIcon);
-
-        startTime.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, startTimeSelect);
-        stopTime.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, stopTimeSelect);
-
-        startTimeSelect.addActionListener(e -> {
-
-        });
-
-        stopTimeSelect.addActionListener(e -> {
-
-        });
-
+        startTimePicker.setEditor(startTime);
+        stopTimePicker.setEditor(stopTime);
 
         JCheckBox stopPresent = new JCheckBox("Include Stop");
 
@@ -90,10 +80,10 @@ public class SessionEdit extends JDialog {
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
 
-        add(start, gbc);
+        add(createStartPanel(), gbc);
         gbc.gridx++;
 
-        add(stop, gbc);
+        add(createStopPanel(), gbc);
         gbc.gridy++;
 
         JButton save = new JButton("Save");
@@ -113,16 +103,66 @@ public class SessionEdit extends JDialog {
 
         stopPresent.addActionListener(e -> {
             stopDate.setEnabled(stopPresent.isSelected());
-            stopDateSelect.setEnabled(stopPresent.isSelected());
-
             stopTime.setEnabled(stopPresent.isSelected());
-            stopTimeSelect.setEnabled(stopPresent.isSelected());
         });
 
         stopDate.setEnabled(false);
-        stopDateSelect.setEnabled(false);
-
         stopTime.setEnabled(false);
-        stopTimeSelect.setEnabled(false);
+    }
+
+    public SessionEdit(MainFrame mainFrame, TaskInfo.Session session) {
+        this(mainFrame);
+
+        setTitle("Edit Session");
+
+        LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
+        startDatePicker.setSelectedDate(start);
+
+        if (session.stopTime.isPresent()) {
+            LocalDate stop = session.stopTime.get().atZone(ZoneId.systemDefault()).toLocalDate();
+            stopDatePicker.setSelectedDate(stop);
+        }
+    }
+
+    private JPanel createStartPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createTitledBorder("Start"));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+
+        panel.add(new LabeledComponent("Date", startDate), gbc);
+        gbc.gridy++;
+
+        panel.add(new LabeledComponent("Time", startTime), gbc);
+        gbc.gridy++;
+
+        return panel;
+    }
+
+    private JPanel createStopPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createTitledBorder("Stop"));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+
+        panel.add(new LabeledComponent("Date", stopDate), gbc);
+        gbc.gridy++;
+
+        panel.add(new LabeledComponent("Time", stopTime), gbc);
+        gbc.gridy++;
+
+        return panel;
     }
 }

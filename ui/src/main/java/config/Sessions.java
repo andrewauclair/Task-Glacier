@@ -49,9 +49,19 @@ class Sessions extends JPanel {
         panel.add(removeSession, gbc);
         gbc.gridy++;
 
+        editSession.addActionListener(e -> {
+            if (sessionTable.getSelectedRow() != -1) {
+                SessionRow session = sessionModel.data.get(sessionTable.getSelectedRow());
+
+                SessionEdit edit = new SessionEdit(mainFrame, new TaskInfo.Session(session.start, session.stop, session.timeEntry));
+                edit.setVisible(true);
+            }
+        });
         addSession.addActionListener(e -> {
-            SessionEdit add = new SessionEdit(mainFrame, SessionEdit.Type.ADD);
+            SessionEdit add = new SessionEdit(mainFrame);
             add.setVisible(true);
+
+            // add.session
         });
         return panel;
     }
