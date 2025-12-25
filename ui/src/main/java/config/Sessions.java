@@ -2,6 +2,7 @@ package config;
 
 import data.Task;
 import data.TimeData;
+import dialogs.SessionEdit;
 import packets.TaskInfo;
 import packets.UpdateTask;
 
@@ -48,6 +49,10 @@ class Sessions extends JPanel {
         panel.add(removeSession, gbc);
         gbc.gridy++;
 
+        addSession.addActionListener(e -> {
+            SessionEdit add = new SessionEdit(mainFrame, SessionEdit.Type.ADD);
+            add.setVisible(true);
+        });
         return panel;
     }
 
