@@ -31,14 +31,11 @@ public class SessionEdit extends JDialog {
 
         setTitle("Add Session");
 
-
         startDate.setText("--/--/----");
         stopDate.setText("--/--/----");
 
         startDatePicker.setEditor(startDate);
         stopDatePicker.setEditor(stopDate);
-
-
 
         startTime.setText("--:-- --");
         stopTime.setText("--:-- --");
@@ -78,7 +75,7 @@ public class SessionEdit extends JDialog {
 
         gbc.weightx = 1;
         gbc.weighty = 1;
-        gbc.fill = GridBagConstraints.BOTH;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         add(createStartPanel(), gbc);
         gbc.gridx++;
@@ -96,7 +93,7 @@ public class SessionEdit extends JDialog {
 
         add(save, gbc);
 
-        pack();
+        setSize(400, 200);
 
         // center on the main frame
         setLocationRelativeTo(mainFrame);
@@ -133,7 +130,8 @@ public class SessionEdit extends JDialog {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
         gbc.weighty = 0;
 
         panel.add(new LabeledComponent("Date", startDate), gbc);
@@ -154,7 +152,8 @@ public class SessionEdit extends JDialog {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
         gbc.weighty = 0;
 
         panel.add(new LabeledComponent("Date", stopDate), gbc);
