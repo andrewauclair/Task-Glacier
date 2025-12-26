@@ -26,10 +26,17 @@ public class SessionEdit extends JDialog {
     JFormattedTextField startTime = new JFormattedTextField();
     JFormattedTextField stopTime = new JFormattedTextField();
 
+    JCheckBox stopPresent = new JCheckBox("Include Stop");
+
+    JButton save = new JButton("Save");
+
     public SessionEdit(MainFrame mainFrame) {
         setModal(true);
 
         setTitle("Add Session");
+
+        startDatePicker.setDateFormat("MM/dd/yyyy");
+        stopDatePicker.setDateFormat("MM/dd/yyyy");
 
         startDate.setText("--/--/----");
         stopDate.setText("--/--/----");
@@ -42,8 +49,6 @@ public class SessionEdit extends JDialog {
 
         startTimePicker.setEditor(startTime);
         stopTimePicker.setEditor(stopTime);
-
-        JCheckBox stopPresent = new JCheckBox("Include Stop");
 
         JPanel start = new JPanel();
         start.setBorder(BorderFactory.createTitledBorder("Start"));
@@ -83,7 +88,20 @@ public class SessionEdit extends JDialog {
         add(createStopPanel(), gbc);
         gbc.gridy++;
 
-        JButton save = new JButton("Save");
+        save.setEnabled(false);
+
+        save.addActionListener(e -> {
+            // we'll need a bunch of verification for this
+            // 1. we'll have to make sure that stop (if present) is after the start
+            // 2. verify that this session doesn't overlap with any other session in this task
+            // 3. verify that this session doesn't overlap with any session in any other task
+        });
+
+        startDate.addPropertyChangeListener(e -> updateSave());
+        startTime.addPropertyChangeListener(e -> updateSave());
+        stopPresent.addActionListener(e -> updateSave());
+        stopDate.addPropertyChangeListener(e -> updateSave());
+        stopTime.addPropertyChangeListener(e -> updateSave());
 
         gbc.weightx = 0;
         gbc.weighty = 0;
@@ -163,5 +181,12 @@ public class SessionEdit extends JDialog {
         gbc.gridy++;
 
         return panel;
+    }
+
+    private void updateSave() {
+        boolean startValid = startDatePicker.isDateSelected() && startTimePicker.isTimeSelected();
+        boolean stopValid = !stopPresent.isSelected() || (stopDatePicker.isDateSelected() && stopTimePicker.isTimeSelected());
+
+        save.setEnabled(startValid && stopValid);
     }
 }
