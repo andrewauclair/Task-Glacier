@@ -410,7 +410,7 @@ TEST_CASE("Stop Task", "[api][task]")
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1"));
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 2"));
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
-		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1))); // sotp the task. this step is critical to the test
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1))); // stop the task. this step is critical to the test
 		helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1))); // finish the task to force it out of PENDING state
 
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(2)));
@@ -442,6 +442,28 @@ TEST_CASE("Stop Task", "[api][task]")
 	SECTION("Failure - Task Does Not Exist")
 	{
 		helper.expect_failure(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)), "Task with ID 1 does not exist.");
+	}
+
+	SECTION("Failure - Active Task is Not Stopped When Task Does Not Exist")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+		helper.expect_failure(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(2)), "Task with ID 1 does not exist.");
+
+		// we can stop the task because it should still be active
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+	}
+
+	SECTION("Failure - Unspecified Task is Not Stopped When Task Does Not Exist")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+		helper.expect_success(TaskMessage(PacketType::START_UNSPECIFIED_TASK, helper.next_request_id(), UNSPECIFIED_TASK));
+
+		helper.expect_failure(TaskMessage(PacketType::STOP_UNSPECIFIED_TASK, helper.next_request_id(), TaskID(2)), "Task with ID 1 does not exist.");
+
+		// we can stop the unspecified task now because it should still be active
+		helper.expect_success(TaskMessage(PacketType::STOP_UNSPECIFIED_TASK, helper.next_request_id(), TaskID(1)));
 	}
 
 	SECTION("Failure - Task Is Not Active")

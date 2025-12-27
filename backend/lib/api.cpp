@@ -179,6 +179,13 @@ void API::stop_unspecified_task(const TaskMessage& message)
 		return;
 	}
 
+	if (m_app.find_task(message.taskID) == nullptr)
+	{
+		m_sender->send(std::make_unique<FailureResponse>(message.requestID, std::format("Task with ID {} does not exist.", message.taskID)));
+
+		return;
+	}
+
 	auto* currentActiveTask = m_app.active_task();
 
 	if (!currentActiveTask)

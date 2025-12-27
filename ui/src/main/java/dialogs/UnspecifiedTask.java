@@ -3,6 +3,7 @@ package dialogs;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import packets.PacketType;
+import packets.RequestID;
 import packets.TaskStateChange;
 import taskglacier.MainFrame;
 import util.LabeledComponent;
@@ -10,14 +11,22 @@ import util.LabeledComponent;
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 public class UnspecifiedTask extends JDialog {
+    public static UnspecifiedTask openInstance = null;
+
+    public int requestID = 0;
+
     public UnspecifiedTask(MainFrame mainFrame) {
+        openInstance = this;
+
         setModal(true);
 
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
-        JButton create = new JButton("Create New Task");
+        JButton create = new JButton("Create New Task...");
 
         create.addActionListener(e -> {
             AddTask add = new AddTask(mainFrame, this, 0);
@@ -52,6 +61,12 @@ public class UnspecifiedTask extends JDialog {
         add(new LabeledComponent("Task ID", taskID), gbc);
         gbc.gridy++;
 
+        add(create, gbc);
+        gbc.gridy++;
+
+        JButton done = new JButton("Done");
+        done.setEnabled(false);
+
         search.addActionListener(e -> {
             TaskPicker picker = new TaskPicker(mainFrame);
             picker.setVisible(true);
@@ -59,18 +74,24 @@ public class UnspecifiedTask extends JDialog {
             if (picker.task != null) {
                 taskID.setText(String.valueOf(picker.task.id));
                 taskID.setToolTipText(picker.task.name);
+
+                done.setEnabled(true);
             }
         });
-        gbc.gridy++;
 
-        add(create, gbc);
-        gbc.gridy++;
-
-        JButton done = new JButton("Done");
+        taskID.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                done.setEnabled(!taskID.getText().isEmpty());
+            }
+        });
 
         done.addActionListener(e -> {
+            requestID = RequestID.nextRequestID();
+
             TaskStateChange change = new TaskStateChange();
             change.packetType = PacketType.STOP_UNSPECIFIED_TASK;
+            change.requestID = requestID;
             change.taskID = Integer.parseInt(taskID.getText());
 
             if (mainFrame.isConnected()) {
@@ -80,8 +101,6 @@ public class UnspecifiedTask extends JDialog {
             mainFrame.getTaskModel().removeUnspecifiedTask();
 
             mainFrame.getSystemTrayDisplay().setUnspecifiedTaskState(true);
-
-            UnspecifiedTask.this.dispose();
         });
         add(done, gbc);
 
@@ -89,5 +108,10 @@ public class UnspecifiedTask extends JDialog {
 
         // center on the main frame
         setLocationRelativeTo(mainFrame);
+    }
+
+    public void close() {
+        openInstance = null;
+        dispose();
     }
 }

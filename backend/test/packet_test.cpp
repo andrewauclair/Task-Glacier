@@ -432,7 +432,7 @@ TEST_CASE("Update Task", "[message]")
 
 		update_task.print(ss);
 
-		auto expected_text = "UpdateTaskMessage { packetType: 15, requestID: 10, taskID: 5, parentID: 1, indexInParent: 0, serverControlled: 0, locked: 0, name: \"this is a test\", labels { \"one\", \"two\", }, timeCodes: [ [ 1 2 ], [ 2 3 ], ] }";
+		auto expected_text = "UpdateTaskMessage { packetType: 8, requestID: 10, taskID: 5, parentID: 1, indexInParent: 0, serverControlled: 0, locked: 0, name: \"this is a test\", labels { \"one\", \"two\", }, timeCodes: [ [ 1 2 ], [ 2 3 ], ] }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -457,7 +457,7 @@ TEST_CASE("Update Task", "[message]")
 
 		verifier
 			.verify_value<std::uint32_t>(80, "packet length")
-			.verify_value<std::uint32_t>(15, "packet ID")
+			.verify_value<std::uint32_t>(8, "packet ID")
 			.verify_value<std::uint32_t>(10, "request ID")
 			.verify_value<std::uint32_t>(5, "task ID")
 			.verify_value<std::uint32_t>(1, "parent ID")
@@ -543,7 +543,7 @@ TEST_CASE("Time Categories Data", "[messages]")
 
 		data.print(ss);
 
-		auto expected_text = "TimeEntryDataPacket { packetType: 27, TimeCategory { id: 5, name: one, inUse: 0, taskCount: 0, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
+		auto expected_text = "TimeEntryDataPacket { packetType: 30, TimeCategory { id: 5, name: one, inUse: 0, taskCount: 0, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -592,7 +592,7 @@ TEST_CASE("Time Categories Modify", "[messages]")
 
 		modify.print(ss);
 
-		auto expected_text = "TimeEntryModifyPacket { packetType: 28, requestID: 10, type: 0, TimeCategory { id: 5, name: one, inUse: 0, taskCount: 0, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
+		auto expected_text = "TimeEntryModifyPacket { packetType: 31, requestID: 10, type: 0, TimeCategory { id: 5, name: one, inUse: 0, taskCount: 0, archived: 0\nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -639,7 +639,7 @@ TEST_CASE("Success Response", "[messages]")
 
 		response.print(ss);
 
-		auto expected_text = "SuccessResponse { packetType: 8, requestID: 10 }";
+		auto expected_text = "SuccessResponse { packetType: 13, requestID: 10 }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -686,7 +686,7 @@ TEST_CASE("Failure Response", "[messages]")
 
 		response.print(ss);
 
-		auto expected_text = "FailureResponse { packetType: 9, requestID: 10, message: \"Task does not exist.\" }";
+		auto expected_text = "FailureResponse { packetType: 14, requestID: 10, message: \"Task does not exist.\" }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -734,7 +734,7 @@ TEST_CASE("Request Daily Report", "[messages]")
 
 		request.print(ss);
 
-		auto expected_text = "RequestDailyReportMessage { packetType: 17, requestID: 10, month: 2, day: 3, year: 2025 }";
+		auto expected_text = "RequestDailyReportMessage { packetType: 21, requestID: 10, month: 2, day: 3, year: 2025 }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -784,7 +784,7 @@ TEST_CASE("Daily Report", "[messages]")
 
 		report.print(ss);
 
-		auto expected_text = "DailyReportMessage { packetType: 16, requestID: 10, reportTime: 5000ms, report: { found: 0, month: 0, day: 0, year: 0 }}";
+		auto expected_text = "DailyReportMessage { packetType: 20, requestID: 10, reportTime: 5000ms, report: { found: 0, month: 0, day: 0, year: 0 }}";
 
 		CHECK(ss.str() == expected_text);
 
@@ -814,7 +814,7 @@ TEST_CASE("Daily Report", "[messages]")
 
 		newReport.print(ss);
 
-		auto expected_text = "DailyReportMessage { packetType: 16, requestID: 10, reportTime: 5000ms, report: { found: 1, month: 2, day: 3, year: 2025, startTime: 0ms, endTime: 0ms\nTime Pairs {\n}\nTime Per Time Code {\n}\nTotal Time: 0ms\n}}";
+		auto expected_text = "DailyReportMessage { packetType: 20, requestID: 10, reportTime: 5000ms, report: { found: 1, month: 2, day: 3, year: 2025, startTime: 0ms, endTime: 0ms\nTime Pairs {\n}\nTime Per Time Code {\n}\nTotal Time: 0ms\n}}";
 
 		CHECK(ss.str() == expected_text);
 	}
@@ -881,7 +881,7 @@ TEST_CASE("pack the empty packet", "[message][pack]")
 
 	verifier
 		.verify_value<std::uint32_t>(8, "packet length")
-		.verify_value<std::uint32_t>(10, "packet ID");
+		.verify_value<std::uint32_t>(15, "packet ID");
 }
 
 TEST_CASE("unpack the empty packet", "[message][unpack]")
@@ -929,7 +929,7 @@ TEST_CASE("Bugzilla Info Packet", "[message]")
 
 		verifier
 			.verify_value<std::uint32_t>(130, "packet length")
-			.verify_value<std::uint32_t>(13, "packet ID")
+			.verify_value<std::uint32_t>(18, "packet ID")
 			.verify_value<std::int32_t>(1, "instance ID")
 			.verify_string("bugzilla", "name")
 			.verify_string("0.0.0.0", "URL")

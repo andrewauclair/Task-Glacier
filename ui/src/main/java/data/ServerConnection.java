@@ -2,6 +2,7 @@ package data;
 
 import dialogs.About;
 import dialogs.AddTask;
+import dialogs.UnspecifiedTask;
 import packets.BugzillaInfo;
 import packets.DailyReportMessage;
 import packets.ErrorMessage;
@@ -128,6 +129,9 @@ public class ServerConnection {
                     SwingUtilities.invokeLater(() -> {
                         if (AddTask.openInstance != null) {
                             AddTask.openInstance.close();
+                        }
+                        if (UnspecifiedTask.openInstance != null) {
+                            UnspecifiedTask.openInstance.close();
                         }
                     });
                 }
