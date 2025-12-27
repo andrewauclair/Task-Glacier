@@ -170,7 +170,7 @@ class General extends JPanel {
 
         Task parentTask = mainFrame.getTaskModel().getTask(parentID);
 
-        if (parentTask == null) {
+        if (parentID != 0 && parentTask == null) {
             JOptionPane.showMessageDialog(this, "Parent task ID does not exist", "Invalid Parent", JOptionPane.ERROR_MESSAGE);
 
             return false;

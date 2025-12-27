@@ -17,9 +17,9 @@ sourceSets.main {
 dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
-    implementation("io.github.andrewauclair:modern-docking-api:1.3.1")
-    implementation("io.github.andrewauclair:modern-docking-single-app:1.3.1")
-    implementation("io.github.andrewauclair:modern-docking-ui:1.3.1")
+    implementation("io.github.andrewauclair:modern-docking-api:1.4")
+    implementation("io.github.andrewauclair:modern-docking-single-app:1.4")
+    implementation("io.github.andrewauclair:modern-docking-ui:1.4")
     implementation("com.formdev:flatlaf:3.6.1")
     implementation("com.formdev:flatlaf-extras:3.6.1")
     implementation("com.formdev:flatlaf-intellij-themes:3.6.1")
