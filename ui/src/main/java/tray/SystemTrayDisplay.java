@@ -79,27 +79,12 @@ public class SystemTrayDisplay extends JFrame {
 
         searchText.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON, searchIcon);
 
-//        Timer test = new Timer(0, e2 -> {
-//            trayIcon.setToolTip("Multi\nline\ntool\ntip\n" + String.valueOf(System.currentTimeMillis()));
-//        });
-//        test.setDelay(1000);
-//        test.setRepeats(true);
-//        test.start();
         timer = new Timer(250, e1 -> {
             if (isVisible()) {
                 // hide
                 setVisible(!isVisible());
             }
             else if (e != null) {
-                double scale = GraphicsEnvironment
-                        .getLocalGraphicsEnvironment()
-                        .getDefaultScreenDevice() // or cycle your getScreenDevices()
-                        .getDefaultConfiguration()
-                        .getDefaultTransform()
-                        .getScaleX();
-
-//                search.updateTasks();
-
                 setVisible(true);
 
                 SwingUtilities.invokeLater(() -> {

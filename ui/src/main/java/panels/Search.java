@@ -14,7 +14,7 @@ public class Search extends JPanel {
 
     public Search(MainFrame mainFrame) {
         Task rootObject = new Task(0, 0, "");
-        newTable = new TaskTreeTable(mainFrame, rootObject, 0, false, true, ListSelectionModel.SINGLE_SELECTION);
+        newTable = new TaskTreeTable(mainFrame, rootObject, 0, false, false, ListSelectionModel.SINGLE_SELECTION);
 
 
         setLayout(new GridBagLayout());
@@ -40,7 +40,7 @@ public class Search extends JPanel {
                     text = text.substring("finish: ".length());
                 }
                 else {
-                    text = text.substring("finish: ".length());
+                    text = text.substring("finish:".length());
                 }
                 return !childrenHaveMatch(obj, text);
             }
