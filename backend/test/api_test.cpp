@@ -1611,3 +1611,54 @@ TEST_CASE("Starting Unspecified Task Multiple Times Clears Times", "[api][task]"
 
 	helper.required_messages({ &taskInfo });
 }
+
+TEST_CASE("Prevent Reparenting Mistakes", "[api][task]")
+{
+	// create tasks a, b, and c
+	// set b parent to a
+	// attempt to set a parent to b
+	// this should fail
+
+	TestHelper<nullDatabase> helper;
+
+	SECTION("")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "b"));
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "c"));
+
+		helper.expect_success(UpdateTaskMessage(helper.next_request_id(), TaskID(2), TaskID(1), "b"));
+
+		helper.expect_failure(UpdateTaskMessage(helper.next_request_id(), TaskID(1), TaskID(2), "b"), "");
+	}
+
+	SECTION("")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+		helper.expect_success(CreateTaskMessage(TaskID(1), helper.next_request_id(), "b"));
+		helper.expect_success(CreateTaskMessage(TaskID(2), helper.next_request_id(), "c"));
+		helper.expect_success(CreateTaskMessage(TaskID(3), helper.next_request_id(), "d"));
+
+		helper.expect_success(UpdateTaskMessage(helper.next_request_id(), TaskID(2), TaskID(1), "b"));
+
+		helper.expect_failure(UpdateTaskMessage(helper.next_request_id(), TaskID(1), TaskID(2), "b"), "");
+	}
+}
+
+TEST_CASE("Add Sessions", "[api][task]")
+{
+	// check that the new session times don't overlap with any session from any task
+}
+
+TEST_CASE("Edit Sessions", "[api][task]")
+{
+	// check that the modified session times don't overlap with any sessions in the task
+	// check that the modified session times don't overlap with any session from any other task
+
+
+}
+
+TEST_CASE("Remove Sessions", "[api][task]")
+{
+	
+}

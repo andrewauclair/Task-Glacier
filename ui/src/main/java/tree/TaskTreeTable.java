@@ -432,7 +432,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
                         mainFrame.getConnection().sendPacket(update);
                     }
                     else {
-                        System.out.println("Reparent '" + task.name + "' to '" + parentTask.name);
+                        System.out.println("Reparent '" + task.name + "' to '" + parentTask.name + "'");
 
                         UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task.id, parentTask.id, task.name);
                         update.indexInParent = index;
