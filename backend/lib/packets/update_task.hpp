@@ -24,15 +24,6 @@ struct UpdateTaskMessage : RequestMessage
 
 	UpdateTaskMessage(RequestID requestID, TaskID taskID, TaskID parentID, std::string name) : RequestMessage(PacketType::UPDATE_TASK, requestID), taskID(taskID), parentID(parentID), name(std::move(name)) {}
 
-	/*bool operator==(const Message& message) const override
-	{
-		if (const auto* other = dynamic_cast<const UpdateTaskMessage*>(&message))
-		{
-			return *this == *other;
-		}
-		return false;
-	}*/
-
 	bool operator==(const UpdateTaskMessage& message) const
 	{
 		if (times.size() != message.times.size())

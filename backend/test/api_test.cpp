@@ -1614,14 +1614,16 @@ TEST_CASE("Starting Unspecified Task Multiple Times Clears Times", "[api][task]"
 
 TEST_CASE("Prevent Reparenting Mistakes", "[api][task]")
 {
-	// create tasks a, b, and c
-	// set b parent to a
-	// attempt to set a parent to b
-	// this should fail
-
 	TestHelper<nullDatabase> helper;
 
-	SECTION("")
+	SECTION("Reparent to Self")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+
+		helper.expect_failure(UpdateTaskMessage(helper.next_request_id(), TaskID(1), TaskID(1), "a"), "Cannot reparent Task with ID 1 to itself");
+	}
+
+	SECTION("Simple")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "b"));
@@ -1629,10 +1631,10 @@ TEST_CASE("Prevent Reparenting Mistakes", "[api][task]")
 
 		helper.expect_success(UpdateTaskMessage(helper.next_request_id(), TaskID(2), TaskID(1), "b"));
 
-		helper.expect_failure(UpdateTaskMessage(helper.next_request_id(), TaskID(1), TaskID(2), "b"), "");
+		helper.expect_failure(UpdateTaskMessage(helper.next_request_id(), TaskID(1), TaskID(2), "a"), "Cannot reparent Task with ID 1 to Task with ID 2. Task with ID 1 is a descendant of Task with ID 2.");
 	}
 
-	SECTION("")
+	SECTION("Deep Recursion")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
 		helper.expect_success(CreateTaskMessage(TaskID(1), helper.next_request_id(), "b"));
@@ -1641,13 +1643,31 @@ TEST_CASE("Prevent Reparenting Mistakes", "[api][task]")
 
 		helper.expect_success(UpdateTaskMessage(helper.next_request_id(), TaskID(2), TaskID(1), "b"));
 
-		helper.expect_failure(UpdateTaskMessage(helper.next_request_id(), TaskID(1), TaskID(2), "b"), "");
+		helper.expect_failure(UpdateTaskMessage(helper.next_request_id(), TaskID(1), TaskID(2), "a"), "Cannot reparent Task with ID 1 to Task with ID 2. Task with ID 1 is a descendant of Task with ID 2.");
 	}
 }
 
 TEST_CASE("Add Sessions", "[api][task]")
 {
 	// check that the new session times don't overlap with any session from any task
+	TestHelper<nullDatabase> helper;
+
+	SECTION("Success - Add Session to Empty Task")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+	}
+
+	SECTION("Success - Does Not Overlap with Task Sessions")
+	{
+
+	}
+
+	SECTION("Success - Does Not Overlap with Other Task Sessions")
+	{
+
+	}
 }
 
 TEST_CASE("Edit Sessions", "[api][task]")
@@ -1655,10 +1675,28 @@ TEST_CASE("Edit Sessions", "[api][task]")
 	// check that the modified session times don't overlap with any sessions in the task
 	// check that the modified session times don't overlap with any session from any other task
 
+	SECTION("Success - Edit Start Time")
+	{
 
+	}
+
+	SECTION("Success - Edit Stop Time")
+	{
+
+	}
 }
 
 TEST_CASE("Remove Sessions", "[api][task]")
 {
-	
+	TestHelper<nullDatabase> helper;
+
+	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+	helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+	helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+	helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+	helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+
+	// remove the first session
+
+	// request the info. should only have the second session
 }

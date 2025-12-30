@@ -330,8 +330,30 @@ std::optional<std::string> MicroTask::finish_task(TaskID id)
 
 std::optional<std::string> MicroTask::reparent_task(TaskID id, TaskID new_parent_id)
 {
+	if (id == new_parent_id)
+	{
+		return std::format("Cannot reparent Task with ID {} to itself", id);
+	}
+
 	auto* task = find_task(id);
 	auto* parent_task = find_task(new_parent_id);
+
+	if (task && parent_task)
+	{
+		// check if parent_task is a descendant of task
+		TaskID parentID = parent_task->taskID();
+
+		while (parentID != NO_PARENT)
+		{
+			auto* next_parent = find_task(parentID);
+			parentID = next_parent->parentID();
+
+			if (parentID == id)
+			{
+				return std::format("Cannot reparent Task with ID {} to Task with ID {}. Task with ID {} is a descendant of Task with ID {}.", id, new_parent_id, id, new_parent_id);
+			}
+		}
+	}
 
 	if (task && (parent_task || new_parent_id == NO_PARENT))
 	{
