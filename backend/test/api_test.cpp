@@ -1684,7 +1684,21 @@ TEST_CASE("Add Sessions", "[api][task]")
 
 	SECTION("Success - Add Session to Empty Task")
 	{
-		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
+		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
+		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
+
+		auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B");
+		newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
+		newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
+
+		helper.expect_success(modify);
+
+		auto create = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a");
+		create.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+
+		helper.expect_success(create);
 
 		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
 
@@ -1695,7 +1709,9 @@ TEST_CASE("Add Sessions", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.timeEntry = create.timeEntry;
 		taskInfo.times.emplace_back(10000ms, 20000ms);
+		taskInfo.times.back().timeEntry = create.timeEntry;
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 

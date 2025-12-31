@@ -88,6 +88,7 @@ void API::process_packet(const Message& message)
 		}
 
 		task->m_times.push_back(update.times);
+		task->m_times.back().timeEntry = task->timeEntry;
 
 		std::sort(task->m_times.begin(), task->m_times.end());
 
