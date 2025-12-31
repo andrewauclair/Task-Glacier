@@ -72,7 +72,7 @@ struct nullDatabase : Database
 	// write time entry configuration
 	// write sessions
 	void write_session(TaskID task, const TaskTimes& session, PacketSender& sender) override {}
-	void remove_session() override {}
+	void remove_sessions(TaskID task, PacketSender& sender) override {}
 
 	// write time entries
 	void write_time_entry(TaskID task, PacketSender& sender) override {}

@@ -434,6 +434,21 @@ void DatabaseImpl::write_sessions(const Task& task, PacketSender& sender)
 	}
 }
 
+void DatabaseImpl::remove_sessions(TaskID task, PacketSender& sender)
+{
+	SQLite::Statement remove(m_database, "delete from timeEntrySession where TaskID == ?");
+	remove.bind(1, task._val);
+
+	try
+	{
+		remove.exec();
+	}
+	catch (const std::exception& e)
+	{
+		sender.send(std::make_unique<ErrorMessage>(e.what()));
+	}
+}
+
 void DatabaseImpl::write_time_entry_config(const TimeCategory& entry, PacketSender& sender)
 {
 	SQLite::Statement insert_cat(m_database, "insert or replace into timeEntryCategory values (?, ?)");

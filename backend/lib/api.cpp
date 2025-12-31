@@ -99,9 +99,53 @@ void API::process_packet(const Message& message)
 		break;
 	}
 	case PacketType::EDIT_TASK_SESSION:
+	{
+		const auto& update = static_cast<const UpdateTaskTimesMessage&>(message);
+
+		auto* task = m_app.find_task(update.taskID);
+
+		if (!task)
+		{
+			m_sender->send(std::make_unique<FailureResponse>(update.requestID, std::format("Task with ID {} does not exist.", update.taskID)));
+			break;
+		}
+
+		if (update.sessionIndex >= task->m_times.size())
+		{
+			//m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Invalid session index."));
+			break;
+		}
+
 		break;
+	}
 	case PacketType::REMOVE_TASK_SESSION:
+	{
+		const auto& update = static_cast<const UpdateTaskTimesMessage&>(message);
+
+		auto* task = m_app.find_task(update.taskID);
+
+		if (!task)
+		{
+			m_sender->send(std::make_unique<FailureResponse>(update.requestID, std::format("Task with ID {} does not exist.", update.taskID)));
+			break;
+		}
+
+		if (update.sessionIndex >= static_cast<std::int32_t>(task->m_times.size()))
+		{
+			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Invalid session index."));
+			break;
+		}
+
+		task->m_times.erase(task->m_times.begin() + update.sessionIndex);
+
+		m_database->remove_sessions(task->taskID(), *m_sender);
+
+		m_database->write_task(*task, *m_sender);
+
+		m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
+
 		break;
+	}
 	case PacketType::REQUEST_TASK:
 		request_task(static_cast<const TaskMessage&>(message));
 		break;

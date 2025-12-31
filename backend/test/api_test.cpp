@@ -1910,6 +1910,8 @@ TEST_CASE("Add Sessions", "[api][task]")
 
 TEST_CASE("Edit Sessions", "[api][task]")
 {
+	TestHelper<nullDatabase> helper;
+
 	// check that the modified session times don't overlap with any sessions in the task
 	// check that the modified session times don't overlap with any session from any other task
 
@@ -1922,19 +1924,93 @@ TEST_CASE("Edit Sessions", "[api][task]")
 	{
 
 	}
+
+	SECTION("Failure - Unknown Task ID")
+	{
+		auto add = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+
+		helper.expect_failure(add, "Task with ID 1 does not exist.");
+	}
 }
 
 TEST_CASE("Remove Sessions", "[api][task]")
 {
 	TestHelper<nullDatabase> helper;
 
-	helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
-	helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
-	helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
-	helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
-	helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
-
+	
 	// remove the first session
+	SECTION("Success - Remove First Session")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
 
-	// request the info. should only have the second session
+		auto remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+		remove.sessionIndex = 0;
+
+		helper.expect_success(remove);
+
+		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(1737346739870ms, 1737347639870ms);
+		taskInfo.state = TaskState::PENDING;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
+	}
+
+	SECTION("Success - Remove Second Session")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+		remove.sessionIndex = 1;
+
+		helper.expect_success(remove);
+
+		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(1737344939870ms, 1737345839870ms);
+		taskInfo.state = TaskState::PENDING;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
+	}
+
+	SECTION("Failure - Unknown Task ID")
+	{
+		auto remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+
+		helper.expect_failure(remove, "Task with ID 1 does not exist.");
+	}
+
+	SECTION("Failure - Invalid Session Index")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+
+		auto remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+		remove.sessionIndex = 0;
+
+		helper.expect_failure(remove, "Invalid session index.");
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+
+		remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+		remove.sessionIndex = 1;
+
+		helper.expect_failure(remove, "Invalid session index.");
+	}
 }

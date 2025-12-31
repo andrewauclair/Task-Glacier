@@ -39,7 +39,7 @@ struct Database
 	// write time entry configuration
 	// write sessions
 	virtual void write_session(TaskID task, const TaskTimes& session, PacketSender& sender) = 0;
-	virtual void remove_session() = 0;
+	virtual void remove_sessions(TaskID task, PacketSender& sender) = 0;
 
 	// write time entries
 	virtual void write_time_entry(TaskID task, PacketSender& sender) = 0;
@@ -77,7 +77,7 @@ struct DatabaseImpl : Database
 	// write time entry configuration
 	// write sessions
 	void write_session(TaskID task, const TaskTimes& session, PacketSender& sender) override {}
-	void remove_session() override {}
+	void remove_sessions(TaskID task, PacketSender& sender) override;
 
 	// write time entries
 	void write_time_entry(TaskID task, PacketSender& sender) override {}
