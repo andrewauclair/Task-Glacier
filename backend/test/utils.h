@@ -141,7 +141,7 @@ struct TestHelper
 			INFO("");
 			INFO(location.file_name() << ":" << location.line());
 
-			verify_message(*sender.output[0], SuccessResponse(message.requestID));
+			verify_message(SuccessResponse(message.requestID), *sender.output[0]);
 
 			// now remove the first message, calls to required_messages will check what comes after the response message
 			sender.output.erase(sender.output.begin());
@@ -169,7 +169,7 @@ struct TestHelper
 			INFO("");
 			INFO(location.file_name() << ":" << location.line());
 
-			verify_message(*sender.output[0], FailureResponse(message.requestID, error));
+			verify_message(FailureResponse(message.requestID, error), *sender.output[0]);
 
 			REQUIRE(sender.output.size() == 1);
 		}

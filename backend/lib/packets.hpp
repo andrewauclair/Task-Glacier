@@ -46,6 +46,7 @@
 #include "packets/time_entry_modify_packet.hpp"
 #include "packets/unpack_error.hpp"
 #include "packets/update_task.hpp"
+#include "packets/update_task_times.hpp"
 #include "packets/weekly_report.hpp"
 #include "packets/version.hpp"
 

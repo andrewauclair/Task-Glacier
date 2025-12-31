@@ -11,6 +11,7 @@
 
 #include <iostream>
 
+#include "packets/update_task_times.hpp"
 #include "packets/version.hpp"
 
 void API::process_packet(const Message& message)
@@ -38,6 +39,65 @@ void API::process_packet(const Message& message)
 		break;
 	case PacketType::UPDATE_TASK:
 		update_task(static_cast<const UpdateTaskMessage&>(message));
+		break;
+	case PacketType::ADD_TASK_SESSION:
+	{
+		const auto& update = static_cast<const UpdateTaskTimesMessage&>(message);
+
+		auto* task = m_app.find_task(update.taskID);
+
+		if (!task)
+		{
+			m_sender->send(std::make_unique<FailureResponse>(update.requestID, std::format("Task with ID {} does not exist.", update.taskID)));
+			break;
+		}
+
+		if (!update.times.stop.has_value())
+		{
+			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "New session must have a stop time."));
+			break;
+		}
+
+		bool overlap_detected = false;
+
+		const auto detect = [update, &overlap_detected](const Task& task)
+		{
+			for (const TaskTimes& times : task.m_times)
+			{
+				if (update.times.start >= times.start && (!times.stop.has_value() || update.times.start <= times.stop.value()))
+				{
+					overlap_detected = true;
+				}
+				else if (times.start >= update.times.start && times.start <= update.times.stop.value())
+				{
+					overlap_detected = true;
+				}
+				else if (update.times.stop.value() >= times.start && update.times.stop.value() <= times.stop.value())
+				{
+					overlap_detected = true;
+				}
+			}
+		};
+
+		m_app.for_each_task_sorted(detect);
+
+		if (overlap_detected)
+		{
+			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Unable to add session. Overlap detected."));
+			break;
+		}
+
+		task->m_times.push_back(update.times);
+
+		std::sort(task->m_times.begin(), task->m_times.end());
+
+		m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
+
+		break;
+	}
+	case PacketType::EDIT_TASK_SESSION:
+		break;
+	case PacketType::REMOVE_TASK_SESSION:
 		break;
 	case PacketType::REQUEST_TASK:
 		request_task(static_cast<const TaskMessage&>(message));

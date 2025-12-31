@@ -9,9 +9,9 @@
 struct UpdateTaskTimesMessage : RequestMessage
 {
 	TaskID taskID;
-	std::vector<TaskTimes> times;
+	TaskTimes times;
 
-	UpdateTaskTimesMessage(PacketType type, RequestID requestID, TaskID taskID) : RequestMessage(type, requestID), taskID(taskID)
+	UpdateTaskTimesMessage(PacketType type, RequestID requestID, TaskID taskID, TaskTimes times) : RequestMessage(type, requestID), taskID(taskID), times(times)
 	{
 		assert(type == PacketType::ADD_TASK_SESSION || type == PacketType::EDIT_TASK_SESSION || type == PacketType::REMOVE_TASK_SESSION);
 	}

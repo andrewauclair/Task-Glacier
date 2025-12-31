@@ -9,6 +9,8 @@
 #include <vector>
 #include <source_location>
 
+using namespace std::chrono_literals;
+
 TEST_CASE("no parent ID is 0", "[task]")
 {
 	CHECK(NO_PARENT == TaskID(0));
@@ -1525,14 +1527,9 @@ TEST_CASE("Start Unspecified Task", "[api][task]")
 		taskInfo1.state = TaskState::PENDING;
 		taskInfo1.newTask = false;
 
-		auto taskInfo = TaskInfoMessage(UNSPECIFIED_TASK, NO_PARENT, "unspecified");
+		auto active = BasicMessage(PacketType::UNSPECIFIED_TASK_ACTIVE);
 
-		taskInfo.createTime = std::chrono::milliseconds(0);
-		taskInfo.times.emplace_back(std::chrono::milliseconds(1737345839870));
-		taskInfo.state = TaskState::ACTIVE;
-		taskInfo.newTask = false;
-
-		helper.required_messages({ &taskInfo1, &taskInfo });
+		helper.required_messages({ &taskInfo1, &active });
 	}
 
 	SECTION("Failure - Does Not Start when Unspecified Task is Active Task")
@@ -1621,6 +1618,17 @@ TEST_CASE("Prevent Reparenting Mistakes", "[api][task]")
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
 
 		helper.expect_failure(UpdateTaskMessage(helper.next_request_id(), TaskID(1), TaskID(1), "a"), "Cannot reparent Task with ID 1 to itself");
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(std::chrono::milliseconds(1737344939870));
+		taskInfo.state = TaskState::ACTIVE;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Simple")
@@ -1632,6 +1640,17 @@ TEST_CASE("Prevent Reparenting Mistakes", "[api][task]")
 		helper.expect_success(UpdateTaskMessage(helper.next_request_id(), TaskID(2), TaskID(1), "b"));
 
 		helper.expect_failure(UpdateTaskMessage(helper.next_request_id(), TaskID(1), TaskID(2), "a"), "Cannot reparent Task with ID 1 to Task with ID 2. Task with ID 1 is a descendant of Task with ID 2.");
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(std::chrono::milliseconds(1737346739870));
+		taskInfo.state = TaskState::ACTIVE;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Deep Recursion")
@@ -1644,6 +1663,17 @@ TEST_CASE("Prevent Reparenting Mistakes", "[api][task]")
 		helper.expect_success(UpdateTaskMessage(helper.next_request_id(), TaskID(2), TaskID(1), "b"));
 
 		helper.expect_failure(UpdateTaskMessage(helper.next_request_id(), TaskID(1), TaskID(2), "a"), "Cannot reparent Task with ID 1 to Task with ID 2. Task with ID 1 is a descendant of Task with ID 2.");
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(std::chrono::milliseconds(1737347639870));
+		taskInfo.state = TaskState::ACTIVE;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
 	}
 }
 
@@ -1655,19 +1685,211 @@ TEST_CASE("Add Sessions", "[api][task]")
 	SECTION("Success - Add Session to Empty Task")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
-		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
-		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+
+		helper.expect_success(add);
+
+		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(10000ms, 20000ms);
+		taskInfo.state = TaskState::PENDING;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Success - Does Not Overlap with Task Sessions")
 	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
 
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+
+		helper.expect_success(add);
+
+		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(10000ms, 20000ms);
+		taskInfo.times.emplace_back(1737344939870ms, 1737345839870ms);
+		taskInfo.state = TaskState::PENDING;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Success - Does Not Overlap with Other Task Sessions")
 	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+		helper.expect_success(CreateTaskMessage(TaskID(1), helper.next_request_id(), "b"));
+		helper.expect_success(CreateTaskMessage(TaskID(2), helper.next_request_id(), "c"));
+		helper.expect_success(CreateTaskMessage(TaskID(3), helper.next_request_id(), "d"));
 
+		// start/stop each of the tasks
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(2)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(3)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(4)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(4)));
+
+		// add new times that won't overlap
+		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+
+		helper.expect_success(add);
+
+		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(10000ms, 20000ms);
+		taskInfo.times.emplace_back(1737347639870ms, 1737348539870ms);
+		taskInfo.state = TaskState::PENDING;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
 	}
+
+	SECTION("Failure - Unknown Task ID")
+	{
+		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+
+		helper.expect_failure(add, "Task with ID 1 does not exist.");
+	}
+
+	SECTION("Failure - Overlaps with Task Sessions")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto start = 1737344939870ms;
+		auto stop = 1737345839870ms;
+
+		// overlap start time of first session (existing start time inside new session)
+		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(start - 50ms, start + 50ms));
+
+		helper.expect_failure(add, "Unable to add session. Overlap detected.");
+
+		// overlap start time of first session (new start time inside existing session)
+		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(start + 50ms, stop + 50ms));
+
+		helper.expect_failure(add, "Unable to add session. Overlap detected.");
+
+		// overlap stop time of first session (existing stop time inside new session)
+		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(stop - 50ms, stop + 50ms));
+
+		helper.expect_failure(add, "Unable to add session. Overlap detected.");
+
+		// overlap stop time of first session (new stop time inside existing session)
+		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(start - 50ms, start + 50ms));
+
+		helper.expect_failure(add, "Unable to add session. Overlap detected.");
+
+		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(1737344939870ms, 1737345839870ms);
+		taskInfo.state = TaskState::PENDING;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
+	}
+
+	SECTION("Failure - Overlaps with Other Task Sessions")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+		helper.expect_success(CreateTaskMessage(TaskID(1), helper.next_request_id(), "b"));
+		helper.expect_success(CreateTaskMessage(TaskID(2), helper.next_request_id(), "c"));
+		helper.expect_success(CreateTaskMessage(TaskID(3), helper.next_request_id(), "d"));
+
+		// start/stop each of the tasks
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(2)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(3)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(4)));
+
+		helper.clock.time += 100s;
+
+		// task 2 times
+		auto start = 1737348639870ms;
+		auto stop = 1737349539870ms;
+
+		// overlap start time of task id 2 session
+		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(start - 50ms, start + 50ms));
+
+		helper.expect_failure(add, "Unable to add session. Overlap detected.");
+
+		// overlap stop time of task id 2 session
+		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(stop - 50ms, stop + 50ms));
+
+		helper.expect_failure(add, "Unable to add session. Overlap detected.");
+
+		auto active_start = 1737350439870ms;
+
+		// overlap active time of task id 4 session (stop time only)
+		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(active_start - 50ms, active_start + 1000s));
+
+		helper.expect_failure(add, "Unable to add session. Overlap detected.");
+
+		// overlap active time of task id 4 session (start time and stop time)
+		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(active_start + 50ms, active_start + 1000s));
+
+		helper.expect_failure(add, "Unable to add session. Overlap detected.");
+
+		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(1737347639870ms, 1737348539870ms);
+		taskInfo.state = TaskState::PENDING;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
+	}
+
+	SECTION("Failure - New Session Must Have Start and Stop Times")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+		helper.expect_success(CreateTaskMessage(TaskID(1), helper.next_request_id(), "b"));
+		helper.expect_success(CreateTaskMessage(TaskID(2), helper.next_request_id(), "c"));
+		helper.expect_success(CreateTaskMessage(TaskID(3), helper.next_request_id(), "d"));
+
+		// start/stop each of the tasks
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(2)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(3)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(4)));
+
+		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms));
+
+		helper.expect_failure(add, "New session must have a stop time.");
+
+		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(1737347639870ms, 1737348539870ms);
+		taskInfo.state = TaskState::PENDING;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
+	}
+
+	// TODO what to do with time entry? I think it just gets set to whatever is on the task, then the user can edit it later
 }
 
 TEST_CASE("Edit Sessions", "[api][task]")

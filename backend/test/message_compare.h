@@ -127,8 +127,10 @@ void verify_message(const T& expected, const Message& actual, std::source_locati
 
 	if (expected.packetType() != actual.packetType())
 	{
-		UNSCOPED_INFO("expected message: " << expected);
-		UNSCOPED_INFO("Found message: " << actual);
+		INFO("expected message: " << expected);
+		INFO("Found message: " << actual);
+
+		CHECK(false);
 
 		return;
 	}

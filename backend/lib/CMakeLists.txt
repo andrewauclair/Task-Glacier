@@ -29,6 +29,7 @@
 	packets/time_entry_modify_packet.hpp
 	packets/unpack_error.hpp
 	packets/update_task.hpp
+	packets/update_task_times.hpp
 	packets/weekly_report.hpp
 	packets/version.hpp
 )
