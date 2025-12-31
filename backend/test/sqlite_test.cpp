@@ -9,6 +9,8 @@
 
 #include "SQLiteCpp/Database.h"
 
+using namespace std::chrono_literals;
+
 // all tests directly related to using sqlite
 
 
@@ -717,6 +719,80 @@ TEST_CASE("Write Task Session to Database", "[database]")
 	CHECK(timeCodeID == 4);
 	CHECK(start == 1737346739870);
 	CHECK(stop == 0);
+
+	query.executeStep();
+
+	REQUIRE(!query.hasRow());
+}
+
+TEST_CASE("Add Session - Write to Database", "[database]")
+{
+	TestClock clock;
+	curlTest curl;
+	TestPacketSender sender;
+	DatabaseImpl database(":memory:", sender);
+
+	API api = API(clock, curl, database, sender);
+
+	std::vector<std::unique_ptr<Message>> output;
+
+	auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
+	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
+	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
+	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
+
+	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B");
+	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
+	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
+
+	api.process_packet(modify);
+
+	auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
+	create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
+	create.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
+
+	api.process_packet(create);
+
+	auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, RequestID(2), TaskID(1), TaskTimes(10000ms, 20000ms));
+
+	api.process_packet(add);
+
+	SQLite::Statement query(database.database(), "SELECT * FROM timeEntrySession WHERE TaskID == 1");
+	query.executeStep();
+
+	REQUIRE(query.hasRow());
+
+	int id = query.getColumn(0);
+	int sessionIndex = query.getColumn(1);
+	int timeCategoryID = query.getColumn(2);
+	int timeCodeID = query.getColumn(3);
+	std::int64_t start = query.getColumn(4);
+	std::int64_t stop = query.getColumn(5);
+
+	CHECK(id == 1);
+	CHECK(sessionIndex == 0);
+	CHECK(timeCategoryID == 1);
+	CHECK(timeCodeID == 1);
+	CHECK(start == 10000);
+	CHECK(stop == 20000);
+
+	query.executeStep();
+
+	REQUIRE(query.hasRow());
+
+	id = query.getColumn(0);
+	sessionIndex = query.getColumn(1);
+	timeCategoryID = query.getColumn(2);
+	timeCodeID = query.getColumn(3);
+	start = query.getColumn(4);
+	stop = query.getColumn(5);
+
+	CHECK(id == 1);
+	CHECK(sessionIndex == 0);
+	CHECK(timeCategoryID == 2);
+	CHECK(timeCodeID == 4);
+	CHECK(start == 10000);
+	CHECK(stop == 20000);
 
 	query.executeStep();
 

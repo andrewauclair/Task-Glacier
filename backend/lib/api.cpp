@@ -92,6 +92,8 @@ void API::process_packet(const Message& message)
 
 		std::sort(task->m_times.begin(), task->m_times.end());
 
+		m_database->write_task(*task, *m_sender);
+
 		m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
 
 		break;
