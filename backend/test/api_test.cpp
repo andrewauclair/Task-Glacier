@@ -1497,7 +1497,7 @@ TEST_CASE("Request Version", "[api]")
 
 	REQUIRE(sender.output.size() == 1);
 
-	verify_message(VersionMessage("0.9.0"), *sender.output[0]);
+	verify_message(VersionMessage("0.10.0"), *sender.output[0]);
 }
 
 TEST_CASE("Start Unspecified Task", "[api][task]")
@@ -1917,19 +1917,119 @@ TEST_CASE("Edit Sessions", "[api][task]")
 
 	SECTION("Success - Edit Start Time")
 	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
 
+		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 1737345839870ms));
+		edit.sessionIndex = 0;
+
+		helper.expect_success(edit);
+
+		edit.sessionIndex = 1;
+		edit.times.start = 20000ms;
+		edit.times.stop = 1737347639870ms;
+
+		helper.expect_success(edit);
+
+		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(10000ms, 1737345839870ms);
+		taskInfo.times.emplace_back(20000ms, 1737347639870ms);
+		taskInfo.state = TaskState::PENDING;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Success - Edit Stop Time")
 	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
 
+		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(5000ms, 10000ms));
+		edit.sessionIndex = 0;
+
+		helper.expect_success(edit);
+
+		edit.sessionIndex = 1;
+		edit.times.start = 11000ms;
+		edit.times.stop = 20000ms;
+
+		helper.expect_success(edit);
+
+		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(5000ms, 10000ms);
+		taskInfo.times.emplace_back(11000ms, 20000ms);
+		taskInfo.state = TaskState::PENDING;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
 	}
 
 	SECTION("Failure - Unknown Task ID")
 	{
-		auto add = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
 
-		helper.expect_failure(add, "Task with ID 1 does not exist.");
+		helper.expect_failure(edit, "Task with ID 1 does not exist.");
+	}
+
+	SECTION("Failure - Invalid Session Index")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(1737344939870ms, 1737345839870ms));
+		edit.sessionIndex = 2;
+
+		helper.expect_failure(edit, "Invalid session index.");
+	}
+
+	SECTION("Failure - Stop Cannot be Before Start")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(20000ms, 10000ms));
+		edit.sessionIndex = 0;
+
+		helper.expect_failure(edit, "Stop time cannot be before start time.");
+	}
+
+	SECTION("Failure - Cannot Change Stop Present State")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms));
+		edit.sessionIndex = 0;
+
+		helper.expect_failure(edit, "Cannot remove stop time from session #1.");
+
+		edit.sessionIndex = 1;
+		edit.times.stop = 20000ms;
+
+		helper.expect_failure(edit, "Cannot add stop time to session #2.");
 	}
 }
 

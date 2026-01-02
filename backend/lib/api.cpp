@@ -19,7 +19,7 @@ void API::process_packet(const Message& message)
 	switch (message.packetType())
 	{
 	case PacketType::VERSION_REQUEST:
-		m_sender->send(std::make_unique<VersionMessage>("0.9.0"));
+		m_sender->send(std::make_unique<VersionMessage>("0.10.0"));
 		break;
 	case PacketType::CREATE_TASK:
 		create_task(static_cast<const CreateTaskMessage&>(message));
@@ -112,9 +112,35 @@ void API::process_packet(const Message& message)
 
 		if (update.sessionIndex >= task->m_times.size())
 		{
-			//m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Invalid session index."));
+			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Invalid session index."));
 			break;
 		}
+
+		if (update.times.stop.has_value() && update.times.stop <= update.times.start)
+		{
+			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Stop time cannot be before start time."));
+			break;
+		}
+
+		TaskTimes& times = task->m_times.at(update.sessionIndex);
+
+		if (times.stop.has_value() && !update.times.stop.has_value())
+		{
+			m_sender->send(std::make_unique<FailureResponse>(update.requestID, std::format("Cannot remove stop time from session #{}", update.sessionIndex + 1)));
+			break;
+		}
+		else if (!times.stop.has_value() && update.times.stop.has_value())
+		{
+			m_sender->send(std::make_unique<FailureResponse>(update.requestID, std::format("Cannot add stop time to session #{}", update.sessionIndex + 1)));
+			break;
+		}
+
+		times.start = update.times.start;
+		times.stop = update.times.stop;
+
+		m_database->write_task(*task, *m_sender);
+
+		m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
 
 		break;
 	}
