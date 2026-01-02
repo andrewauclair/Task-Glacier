@@ -144,17 +144,18 @@ public class TimeEntryConfiguration extends JDialog {
                         updateMessage.getTimeCategories().add(timeCategory);
                     }
                 }
-
-                if (!addMessage.getTimeCategories().isEmpty()) {
-                    addMessage.requestID = RequestID.nextRequestID();
-                    mainFrame.getConnection().sendPacket(addMessage);
-                }
-
-                if (!updateMessage.getTimeCategories().isEmpty()) {
-                    updateMessage.requestID = RequestID.nextRequestID();
-                    mainFrame.getConnection().sendPacket(updateMessage);
-                }
             }
+
+            if (!addMessage.getTimeCategories().isEmpty()) {
+                addMessage.requestID = RequestID.nextRequestID();
+                mainFrame.getConnection().sendPacket(addMessage);
+            }
+
+            if (!updateMessage.getTimeCategories().isEmpty()) {
+                updateMessage.requestID = RequestID.nextRequestID();
+                mainFrame.getConnection().sendPacket(updateMessage);
+            }
+
             TimeEntryConfiguration.this.dispose();
         });
 
