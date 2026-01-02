@@ -35,6 +35,7 @@
 #include "packets/task_id.hpp"
 #include "packets/task_info.hpp"
 #include "packets/task_state.hpp"
+#include "packets/task_state_change.hpp"
 #include "packets/task_times.hpp"
 #include "packets/time_category.hpp"
 #include "packets/time_category_id.hpp"

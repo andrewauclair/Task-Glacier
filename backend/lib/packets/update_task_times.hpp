@@ -6,6 +6,8 @@
 
 #include <cassert>
 
+using namespace std::chrono_literals;
+
 struct UpdateTaskTimesMessage : RequestMessage
 {
 	TaskID taskID;
@@ -16,4 +18,7 @@ struct UpdateTaskTimesMessage : RequestMessage
 	{
 		assert(type == PacketType::ADD_TASK_SESSION || type == PacketType::EDIT_TASK_SESSION || type == PacketType::REMOVE_TASK_SESSION);
 	}
+
+	std::vector<std::byte> pack() const;
+	static std::expected<UpdateTaskTimesMessage, UnpackError> unpack(std::span<const std::byte> data);
 };

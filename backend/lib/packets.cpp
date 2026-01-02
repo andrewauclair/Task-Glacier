@@ -203,6 +203,50 @@ std::expected<UpdateTaskMessage, UnpackError> UpdateTaskMessage::unpack(std::spa
 	}
 }
 
+std::vector<std::byte> UpdateTaskTimesMessage::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(static_cast<std::int32_t>(packetType()));
+	builder.add(requestID);
+	builder.add(taskID);
+	builder.add(sessionIndex);
+	builder.add(times.start);
+	builder.add(times.stop.has_value());
+	builder.add(times.stop.value_or(0ms));
+	
+	return builder.build();
+}
+
+std::expected<UpdateTaskTimesMessage, UnpackError> UpdateTaskTimesMessage::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto requestID = parser.parse_next<RequestID>();
+	const auto taskID = parser.parse_next<TaskID>();
+	const auto sessionIndex = parser.parse_next<std::int32_t>();
+	const auto start = parser.parse_next<std::chrono::milliseconds>();
+	const auto stopPresent = parser.parse_next<bool>();
+	const auto stop = parser.parse_next<std::chrono::milliseconds>();
+
+	try
+	{
+		TaskTimes times;
+		times.start = start.value();
+		times.stop = stopPresent.value() ? std::optional(stop.value()) : std::nullopt;
+
+		auto update = UpdateTaskTimesMessage(packetType.value(), requestID.value(), taskID.value(), times);
+		update.sessionIndex = sessionIndex.value();
+
+		return update;
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
+}
+
 std::vector<std::byte> TaskMessage::pack() const
 {
 	PacketBuilder builder;
@@ -225,6 +269,39 @@ std::expected<TaskMessage, UnpackError> TaskMessage::unpack(std::span<const std:
 	try
 	{
 		return TaskMessage(packetType.value(), requestID.value(), taskID.value());
+	}
+	catch (const std::bad_expected_access<UnpackError>& e)
+	{
+		return std::unexpected(e.error());
+	}
+}
+
+std::vector<std::byte> TaskStateChange::pack() const
+{
+	PacketBuilder builder;
+
+	builder.add(static_cast<std::int32_t>(packetType()));
+	builder.add(requestID);
+	builder.add(taskID);
+	builder.add(state);
+
+	return builder.build();
+}
+
+std::expected<TaskStateChange, UnpackError> TaskStateChange::unpack(std::span<const std::byte> data)
+{
+	auto parser = PacketParser(data);
+
+	const auto packetType = parser.parse_next<PacketType>();
+	const auto requestID = parser.parse_next<RequestID>();
+	const auto taskID = parser.parse_next<TaskID>();
+	const auto state = parser.parse_next<TaskState>();
+
+	try
+	{
+		(void)packetType.value();
+
+		return TaskStateChange(requestID.value(), taskID.value(), state.value());
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{

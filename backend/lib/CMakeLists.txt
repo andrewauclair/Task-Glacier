@@ -19,6 +19,7 @@
 	packets/task_id.hpp
 	packets/task_info.hpp
 	packets/task_state.hpp
+	packets/task_state_change.hpp
 	packets/task_times.hpp
 	packets/time_category.hpp
 	packets/time_category_id.hpp

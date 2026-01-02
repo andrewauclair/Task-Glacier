@@ -8,6 +8,8 @@
 #include "request_weekly_report.hpp"
 #include "time_entry_data_packet.hpp"
 #include "time_entry_modify_packet.hpp"
+#include "task_state_change.hpp"
+#include "update_task_times.hpp"
 
 #include <memory>
 
@@ -171,6 +173,16 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 			break;
 		case UPDATE_TASK:
 			result.packet = std::make_unique<UpdateTaskMessage>(UpdateTaskMessage::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
+			break;
+		case TASK_STATE_CHANGE:
+			result.packet = std::make_unique<TaskStateChange>(TaskStateChange::unpack(bytes.subspan(4)).value());
+			result.bytes_read = raw_length;
+			break;
+		case EDIT_TASK_SESSION:
+		case ADD_TASK_SESSION:
+		case REMOVE_TASK_SESSION:
+			result.packet = std::make_unique<UpdateTaskTimesMessage>(UpdateTaskTimesMessage::unpack(bytes.subspan(4)).value());
 			result.bytes_read = raw_length;
 			break;
 		case SUCCESS_RESPONSE:

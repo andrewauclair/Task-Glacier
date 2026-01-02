@@ -8,6 +8,8 @@
 
 #include <cpptrace/cpptrace.hpp>
 
+using namespace std::chrono_literals;
+
 std::vector<std::byte> bytes(auto... a)
 {
 	return std::vector<std::byte>{ static_cast<std::byte>(a)... };
@@ -85,184 +87,6 @@ public:
 	}
 };
 
-void packet_match(const RequestMessage* expected, const RequestMessage* actual)
-{
-	INFO("");
-	INFO(cpptrace::generate_trace().to_string());
-
-	CHECK(expected->packetType() == actual->packetType());
-	CHECK(expected->requestID == actual->requestID);
-}
-
-void packet_match(const CreateTaskMessage* expected, const CreateTaskMessage* actual)
-{
-	INFO("");
-	INFO(cpptrace::generate_trace().to_string());
-
-	CHECK(expected->packetType() == actual->packetType());
-	CHECK(expected->requestID == actual->requestID);
-	CHECK(expected->parentID == actual->parentID);
-	CHECK(expected->name == actual->name);
-	CHECK(expected->labels == actual->labels);
-	CHECK(expected->timeEntry == actual->timeEntry);
-}
-
-void packet_match(const UpdateTaskMessage* expected, const UpdateTaskMessage* actual)
-{
-	INFO("");
-	INFO(cpptrace::generate_trace().to_string());
-
-	CHECK(expected->packetType() == actual->packetType());
-	CHECK(expected->taskID == actual->taskID);
-	CHECK(expected->parentID == actual->parentID);
-	CHECK(expected->indexInParent == actual->indexInParent);
-	CHECK(expected->serverControlled == actual->serverControlled);
-	CHECK(expected->locked == actual->locked);
-	CHECK(expected->name == actual->name);
-	CHECK(expected->times == actual->times);
-	CHECK(expected->labels == actual->labels);
-	CHECK(expected->timeEntry == actual->timeEntry);
-}
-
-void packet_match(const TaskMessage* expected, const TaskMessage* actual)
-{
-	INFO("");
-	INFO(cpptrace::generate_trace().to_string());
-
-	CHECK(expected->packetType() == actual->packetType());
-	CHECK(expected->requestID == actual->requestID);
-	CHECK(expected->taskID == actual->taskID);
-}
-
-void packet_match(const TimeEntryDataPacket* expected, const TimeEntryDataPacket* actual)
-{
-	INFO("");
-	INFO(cpptrace::generate_trace().to_string());
-
-	CHECK(expected->packetType() == actual->packetType());
-	CHECK(expected->timeCategories == actual->timeCategories);
-}
-
-void packet_match(const TimeEntryModifyPacket* expected, const TimeEntryModifyPacket* actual)
-{
-	INFO("");
-	INFO(cpptrace::generate_trace().to_string());
-
-	CHECK(expected->packetType() == actual->packetType());
-	CHECK(expected->type == actual->type);
-	CHECK(expected->timeCategories == actual->timeCategories);
-}
-
-void packet_match(const SuccessResponse* expected, const SuccessResponse* actual)
-{
-	INFO("");
-	INFO(cpptrace::generate_trace().to_string());
-
-	CHECK(expected->packetType() == actual->packetType());
-	CHECK(expected->requestID == actual->requestID);
-}
-
-void packet_match(const FailureResponse* expected, const FailureResponse* actual)
-{
-	INFO("");
-	INFO(cpptrace::generate_trace().to_string());
-
-	CHECK(expected->packetType() == actual->packetType());
-	CHECK(expected->requestID == actual->requestID);
-	CHECK(expected->message == actual->message);
-}
-
-void packet_match(const BasicMessage* expected, const BasicMessage* actual)
-{
-	INFO("");
-	INFO(cpptrace::generate_trace().to_string());
-
-	CHECK(expected->packetType() == actual->packetType());
-}
-
-void packet_match(const TaskInfoMessage* expected, const TaskInfoMessage* actual)
-{
-	INFO("");
-	INFO(cpptrace::generate_trace().to_string());
-
-	CHECK(expected->packetType() == actual->packetType());
-	CHECK(expected->taskID == actual->taskID);
-	CHECK(expected->parentID == actual->parentID);
-	CHECK(expected->state == actual->state);
-	CHECK(expected->newTask == actual->newTask);
-	CHECK(expected->indexInParent == actual->indexInParent);
-	CHECK(expected->serverControlled == actual->serverControlled);
-	CHECK(expected->locked == actual->locked);
-	CHECK(expected->name == actual->name);
-	CHECK(expected->createTime == actual->createTime);
-	CHECK(expected->finishTime == actual->finishTime);
-	CHECK(expected->times == actual->times);
-	CHECK(expected->labels == actual->labels);
-	CHECK(expected->timeEntry == actual->timeEntry);
-}
-
-void packet_match(const BugzillaInfoMessage* expected, const BugzillaInfoMessage* actual)
-{
-	INFO("");
-	INFO(cpptrace::generate_trace().to_string());
-
-	CHECK(expected->packetType() == actual->packetType());
-	CHECK(expected->instanceID == actual->instanceID);
-	CHECK(expected->name == actual->name);
-	CHECK(expected->URL == actual->URL);
-	CHECK(expected->apiKey == actual->apiKey);
-	CHECK(expected->username == actual->username);
-	CHECK(expected->rootTaskID == actual->rootTaskID);
-	CHECK(expected->groupTasksBy == actual->groupTasksBy);
-	CHECK(expected->labelToField == actual->labelToField);
-}
-
-void packet_match(const RequestDailyReportMessage* expected, const RequestDailyReportMessage* actual)
-{
-	INFO("");
-	INFO(cpptrace::generate_trace().to_string());
-
-	CHECK(expected->packetType() == actual->packetType());
-	CHECK(expected->month == actual->month);
-	CHECK(expected->day == actual->day);
-	CHECK(expected->year == actual->year);
-}
-
-void packet_match(const RequestWeeklyReportMessage* expected, const RequestWeeklyReportMessage* actual)
-{
-	INFO("");
-	INFO(cpptrace::generate_trace().to_string());
-
-	CHECK(expected->packetType() == actual->packetType());
-	CHECK(expected->month == actual->month);
-	CHECK(expected->day == actual->day);
-	CHECK(expected->year == actual->year);
-}
-
-void packet_match(const DailyReportMessage* expected, const DailyReportMessage* actual)
-{
-	INFO("");
-	INFO(cpptrace::generate_trace().to_string());
-
-	CHECK(expected->packetType() == actual->packetType());
-	CHECK(expected->requestID == actual->requestID);
-	CHECK(expected->reportTime == actual->reportTime);
-	CHECK(expected->report == actual->report);
-}
-
-void packet_match(const WeeklyReportMessage* expected, const WeeklyReportMessage* actual)
-{
-	INFO("");
-	INFO(cpptrace::generate_trace().to_string());
-
-	CHECK(expected->packetType() == actual->packetType());
-	CHECK(expected->requestID == actual->requestID);
-	CHECK(expected->reportTime == actual->reportTime);
-	CHECK(expected->dailyReports == actual->dailyReports);
-	CHECK(expected->totalTime == actual->totalTime);
-	CHECK(expected->timePerTimeCode == actual->timePerTimeCode);
-}
-
 struct PacketTestHelper
 {
 	TestClock clock;
@@ -281,15 +105,13 @@ struct PacketTestHelper
 		INFO(cpptrace::generate_trace().to_string());
 
 		REQUIRE(result.packet);
+		CHECK(result.bytes_read == size);
 
 		const T* packet = dynamic_cast<T*>(result.packet.get());
 
 		REQUIRE(packet);
 
 		verify_message(*packet, message);
-		CHECK(result.bytes_read == size);
-
-		packet_match(dynamic_cast<const T*>(&message), packet);
 	}
 };
 
@@ -359,73 +181,6 @@ TEST_CASE("Update Task", "[message]")
 
 	CAPTURE(update_task);
 
-	/*SECTION("Compare - Through Message")
-	{
-		SECTION("Does Not Match Other Message")
-		{
-			const auto task = TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(1));
-			CAPTURE(task);
-
-			const Message* message = &task;
-
-			CHECK(!(update_task == *message));
-		}
-
-		SECTION("Match")
-		{
-			auto update_task2 = UpdateTaskMessage(RequestID(10), TaskID(5), TaskID(1), "this is a test");
-			update_task2.labels = { "one", "two" };
-			update_task2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
-			CAPTURE(update_task2);
-
-			const Message* message = &update_task2;
-
-			CHECK(update_task == *message);
-		}
-	}
-
-	SECTION("Compare - Directly")
-	{
-		auto update_task2 = UpdateTaskMessage(RequestID(10), TaskID(5), TaskID(1), "this is a test");
-		update_task2.labels = { "one", "two" };
-		update_task2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
-		CAPTURE(update_task2);
-
-		CHECK(update_task == update_task2);
-	}
-
-	SECTION("Compare Messages That Do Not Match")
-	{
-		auto update_task2 = UpdateTaskMessage(RequestID(10), TaskID(15), TaskID(1), "this is a test");
-		update_task2.labels = { "one", "two" };
-		update_task2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
-		CAPTURE(update_task2);
-
-		CHECK(!(update_task == update_task2));
-
-		update_task2.taskID = update_task.taskID;
-		update_task2.requestID = RequestID(15);
-		CAPTURE(update_task2);
-
-		CHECK(!(update_task == update_task2));
-
-		update_task2.requestID = update_task.requestID;
-		update_task2.name = "another task";
-		CAPTURE(update_task2);
-
-		CHECK(!(update_task == update_task2));
-
-		update_task2.name = update_task.name;
-		update_task2.parentID = TaskID(2);
-		CAPTURE(update_task2);
-
-		CHECK(!(update_task == update_task2));
-
-		update_task2.labels = { "one" };
-
-		CHECK(!(update_task == update_task2));
-	}*/
-
 	SECTION("Print")
 	{
 		std::ostringstream ss;
@@ -478,6 +233,33 @@ TEST_CASE("Update Task", "[message]")
 	}
 }
 
+TEST_CASE("Update Task Times", "[message]")
+{
+	auto update = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, RequestID(10), TaskID(5), TaskTimes(10ms, 20ms));
+	update.sessionIndex = 2;
+
+	SECTION("pack")
+	{
+		auto verifier = PacketVerifier(update.pack(), 37);
+
+		verifier
+			.verify_value<std::uint32_t>(37, "packet length")
+			.verify_value<std::uint32_t>(10, "packet ID")
+			.verify_value<std::uint32_t>(10, "request ID")
+			.verify_value<std::uint32_t>(5, "task ID")
+			.verify_value<std::uint32_t>(2, "session index")
+			.verify_value<std::int64_t>(10, "start time")
+			.verify_value<bool>(true, "stop present")
+			.verify_value<std::int64_t>(20, "stop time");
+	}
+
+	SECTION("Unpack")
+	{
+		PacketTestHelper helper;
+		helper.expect_packet<UpdateTaskTimesMessage>(update, 37);
+	}
+}
+
 TEST_CASE("Task", "[messages]")
 {
 	const auto packet_type = GENERATE(PacketType::START_TASK, PacketType::STOP_TASK, PacketType::FINISH_TASK, PacketType::REQUEST_TASK);
@@ -526,6 +308,29 @@ TEST_CASE("Task", "[messages]")
 	{
 		PacketTestHelper helper;
 		helper.expect_packet<TaskMessage>(task, 16);
+	}
+}
+
+TEST_CASE("Task State Change", "[message]")
+{
+	auto change = TaskStateChange(RequestID(10), TaskID(5), TaskState::FINISHED);
+
+	SECTION("pack")
+	{
+		auto verifier = PacketVerifier(change.pack(), 20);
+
+		verifier
+			.verify_value<std::uint32_t>(20, "packet length")
+			.verify_value<std::uint32_t>(42, "packet ID")
+			.verify_value<std::uint32_t>(10, "request ID")
+			.verify_value<std::uint32_t>(5, "task ID")
+			.verify_value<std::uint32_t>(2, "state");
+	}
+
+	SECTION("Unpack")
+	{
+		PacketTestHelper helper;
+		helper.expect_packet<TaskStateChange>(change, 20);
 	}
 }
 

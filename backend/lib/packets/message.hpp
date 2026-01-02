@@ -29,6 +29,7 @@ enum class PacketType : std::int32_t
 	REQUEST_CONFIGURATION_COMPLETE = 16,
 
 	TASK_INFO = 17,
+	TASK_STATE_CHANGE = 42,
 
 	// configure and refresh bugzilla (refresh is manual by the user on the UI)
 	// the server will create and update tasks based on bugzilla changes and send TASK_INFO messages

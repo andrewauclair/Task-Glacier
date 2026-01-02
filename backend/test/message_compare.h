@@ -118,6 +118,22 @@ inline void verify_time_entry_modify(const TimeEntryModifyPacket& expected, cons
 	CHECK(expected.timeCategories == actual.timeCategories);
 }
 
+inline void verify_update_task_times(const UpdateTaskTimesMessage& expected, const UpdateTaskTimesMessage& actual, std::source_location location)
+{
+	CHECK(expected.requestID == actual.requestID);
+	CHECK(expected.taskID == actual.taskID);
+	CHECK(expected.sessionIndex == actual.sessionIndex);
+	CHECK(expected.times.start == actual.times.start);
+	CHECK(expected.times.stop == actual.times.stop);
+}
+
+inline void verify_task_state_change(const TaskStateChange& expected, const TaskStateChange& actual, std::source_location location)
+{
+	CHECK(expected.requestID == actual.requestID);
+	CHECK(expected.taskID == actual.taskID);
+	CHECK(expected.state == actual.state);
+}
+
 template<typename T>
 void verify_message(const T& expected, const Message& actual, std::source_location location = std::source_location::current())
 {
@@ -170,6 +186,18 @@ void verify_message(const T& expected, const Message& actual, std::source_locati
 	case UPDATE_TASK:
 	{
 		verify_update_task(*dynamic_cast<const UpdateTaskMessage*>(&expected), static_cast<const UpdateTaskMessage&>(actual), location);
+		break;
+	}
+	case TASK_STATE_CHANGE:
+		{
+		verify_task_state_change(*dynamic_cast<const TaskStateChange*>(&expected), static_cast<const TaskStateChange&>(actual), location);
+		break;
+		}
+	case EDIT_TASK_SESSION:
+	case ADD_TASK_SESSION:
+	case REMOVE_TASK_SESSION:
+	{
+		verify_update_task_times(*dynamic_cast<const UpdateTaskTimesMessage*>(&expected), static_cast<const UpdateTaskTimesMessage&>(actual), location);
 		break;
 	}
 	case SUCCESS_RESPONSE:
