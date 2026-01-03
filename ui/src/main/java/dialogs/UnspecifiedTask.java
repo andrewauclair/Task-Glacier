@@ -20,9 +20,11 @@ public class UnspecifiedTask extends JDialog {
     public int requestID = 0;
 
     public UnspecifiedTask(MainFrame mainFrame) {
+        super(mainFrame);
+
         openInstance = this;
 
-        setModal(true);
+        setModalityType(ModalityType.APPLICATION_MODAL);
 
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 

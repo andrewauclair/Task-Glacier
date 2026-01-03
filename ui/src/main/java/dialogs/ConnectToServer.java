@@ -10,9 +10,12 @@ import java.util.prefs.Preferences;
 
 public class ConnectToServer extends JDialog {
     public ConnectToServer(MainFrame mainFrame) {
+        super(mainFrame);
+
         setLayout(new GridBagLayout());
         setTitle("Connect");
-        setModal(true);
+
+        setModalityType(ModalityType.APPLICATION_MODAL);
 
         GridBagConstraints gbc = new GridBagConstraints();
 

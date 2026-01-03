@@ -14,7 +14,8 @@ class TimeEntryDialog extends JDialog {
 
     TimeEntryDialog(Window parent, TimeData timeData) {
         super(parent);
-        setModal(true);
+
+        setModalityType(ModalityType.APPLICATION_MODAL);
 
         DialogEscape.addEscapeHandler(this);
 

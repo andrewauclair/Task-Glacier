@@ -17,7 +17,9 @@ public class TaskPicker extends JDialog {
     public Task task = null;
 
     public TaskPicker(MainFrame mainFrame) {
-        setModal(true);
+        super(mainFrame);
+
+        setModalityType(ModalityType.APPLICATION_MODAL);
 
         JButton select = new JButton("Select");
         select.addActionListener(e -> {

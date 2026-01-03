@@ -12,10 +12,13 @@ import java.time.LocalDate;
 
 public class RequestDailyReportDialog extends JDialog {
     public RequestDailyReportDialog(MainFrame mainFrame) {
+        super(mainFrame);
+
         setTitle("Request Daily Report");
         
         setLayout(new GridBagLayout());
-        setModal(true);
+
+        setModalityType(ModalityType.APPLICATION_MODAL);
 
         DialogEscape.addEscapeHandler(this);
 

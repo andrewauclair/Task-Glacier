@@ -33,9 +33,12 @@ public class BugzillaConfiguration extends JDialog {
     private Map<String, BugzillaInstance> instances = new HashMap<>();
 
     public BugzillaConfiguration(MainFrame mainFrame) {
+        super(mainFrame);
+
         setLayout(new GridBagLayout());
         setTitle("Bugzilla Configuration");
-        setModal(true);
+
+        setModalityType(ModalityType.APPLICATION_MODAL);
 
         JSplitPane split = new JSplitPane();
         split.setLeftComponent(buildInstances());

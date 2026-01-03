@@ -17,7 +17,7 @@ public class AddTask extends JDialog {
         super(parentWindow);
         openInstance = this;
 
-        setModal(true);
+        setModalityType(ModalityType.APPLICATION_MODAL);
 
         // name, time tracking and project info
         // some of this info can be automatically filled

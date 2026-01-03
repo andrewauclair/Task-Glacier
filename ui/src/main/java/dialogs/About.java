@@ -10,9 +10,11 @@ public class About extends JDialog {
     private static final String uiVersion = "0.10.0";
 
     public About(MainFrame mainFrame) {
+        super(mainFrame);
+
         setSize(200, 200);
         setTitle("About");
-        setModal(true);
+        setModalityType(ModalityType.APPLICATION_MODAL);
 
         DialogEscape.addEscapeHandler(this);
 

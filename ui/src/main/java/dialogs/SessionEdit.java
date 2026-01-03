@@ -31,7 +31,9 @@ public class SessionEdit extends JDialog {
     JButton save = new JButton("Save");
 
     public SessionEdit(MainFrame mainFrame) {
-        setModal(true);
+        super(mainFrame);
+
+        setModalityType(ModalityType.APPLICATION_MODAL);
 
         setTitle("Add Session");
 

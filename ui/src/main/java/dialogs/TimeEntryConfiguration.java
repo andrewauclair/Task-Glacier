@@ -31,8 +31,12 @@ public class TimeEntryConfiguration extends JDialog {
     private JButton save = new JButton("Save");
 
     public TimeEntryConfiguration(MainFrame mainFrame) {
+        super(mainFrame);
+
         this.timeData = mainFrame.getTimeData();
+
         setModalityType(ModalityType.APPLICATION_MODAL);
+
         setTitle("Time Entry Configuration");
 
         DialogEscape.addEscapeHandler(this);

@@ -15,10 +15,13 @@ import java.util.Calendar;
 
 public class RequestWeeklyReportDialog extends JDialog {
     public RequestWeeklyReportDialog(MainFrame mainFrame) {
+        super(mainFrame);
+
         setTitle("Request Weekly Report");
 
         setLayout(new GridBagLayout());
-        setModal(true);
+
+        setModalityType(ModalityType.APPLICATION_MODAL);
 
         DialogEscape.addEscapeHandler(this);
 
