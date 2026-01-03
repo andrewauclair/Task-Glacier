@@ -16,6 +16,10 @@
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
 
+#ifdef _MSC_VER
+#include <Windows.h>
+#endif
+
 std::ofstream logfile;
 
 inline std::uint32_t read_u32(const std::vector<std::byte>& input, std::size_t index)
@@ -80,7 +84,7 @@ int main(int argc, char** argv)
 {
 	if (argc < 5)
 	{
-		std::cerr << "task-glacier <ip address> <port> <database> <logfile>\n";
+		std::cerr << "task-glacier <ip address> <port> <database> <logfile> <hidden>\n";
 		return -1;
 	}
 
@@ -98,6 +102,15 @@ int main(int argc, char** argv)
 	std::cout << ip_address << ' ' << port << ' ' << argv[3] << ' ' << argv[4] << '\n';
 
 	logfile << ip_address << ' ' << port << ' ' << argv[3] << ' ' << argv[4] << '\n';
+
+	bool hidden = argc > 5 && std::string(argv[5]) == "true";
+
+	if (hidden)
+	{
+#ifdef _MSC_VER
+		FreeConsole();
+#endif
+	}
 
 	auto acceptor = sockpp::tcp_acceptor(sockpp::inet_address(ip_address, port));
 
@@ -121,6 +134,8 @@ int main(int argc, char** argv)
 
 		while (socket->is_open())
 		{
+			auto now = clock.now();
+
 			std::vector<std::byte> input(4);
 			if (socket->read_n(input.data(), 4) == -1)
 			{
@@ -128,7 +143,7 @@ int main(int argc, char** argv)
 				std::cout << socket->last_error() << '\n';
 
 				logfile << "Error with socket\n";
-				logfile << socket->last_error() << '\n';
+				logfile << socket->last_error() << std::endl;
 
 				break;
 			}
@@ -142,7 +157,7 @@ int main(int argc, char** argv)
 				std::cout << socket->last_error() << '\n';
 
 				logfile << "Error with socket\n";
-				logfile << socket->last_error() << '\n';
+				logfile << socket->last_error() << std::endl;
 
 				break;
 			}
@@ -151,9 +166,9 @@ int main(int argc, char** argv)
 
 			if (result.packet)
 			{
-				std::cout << "[RX] " << *result.packet << '\n';
+				std::cout << std::format("[{:%m/:%d/:%y} {:%H:%M:%S}]", now, now) << " [RX] " << *result.packet << '\n';
 
-				logfile << "[RX] " << *result.packet << '\n';
+				logfile << "[RX] " << *result.packet << std::endl;
 
 				api.process_packet(*result.packet);
 			}
