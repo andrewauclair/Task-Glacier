@@ -1,15 +1,23 @@
 package dialogs;
 
+import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import data.Standards;
+import data.Task;
 import packets.BugzillaInfo;
 import taskglacier.MainFrame;
 import util.LabeledComponent;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.AbstractDocument;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.HashMap;
 import java.util.Map;
+
+import static taskglacier.MainFrame.mainFrame;
 
 public class BugzillaConfiguration extends JDialog {
     private DefaultTableModel instanceModel = new DefaultTableModel(0, 1);
@@ -398,5 +406,44 @@ public class BugzillaConfiguration extends JDialog {
         DefaultTableModel groupByModel = new DefaultTableModel(new Object[]{"Group By"}, 0);
         DefaultTableModel labelModel = new DefaultTableModel(new Object[]{"Label", "Bugzilla Field"}, 0);
         DefaultTableModel bugsModel = new DefaultTableModel(new Object[]{"Bugs"}, 0);
+
+        public BugzillaInstance() {
+            JToolBar toolBar = new JToolBar();
+            FlatSVGIcon searchIcon = new FlatSVGIcon(getClass().getResource("/search-svgrepo-com.svg")).derive(24, 24);
+
+            JButton search = new JButton(searchIcon);
+
+            toolBar.add(search);
+
+            search.addActionListener(e -> {
+                TaskPicker picker = new TaskPicker(mainFrame);
+                picker.setVisible(true);
+
+                if (picker.task != null) {
+                    rootTask.setText(String.valueOf(picker.task.id));
+                    rootTask.setToolTipText(picker.task.name);
+                }
+            });
+
+            rootTask.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
+            rootTask.addFocusListener(new FocusAdapter() {
+                @Override
+                public void focusLost(FocusEvent e) {
+                    int newTaskID = Integer.valueOf(rootTask.getText());
+                    Task parentTask = mainFrame.getTaskModel().getTask(newTaskID);
+
+                    if (newTaskID == 0) {
+                        rootTask.setToolTipText("Root");
+                    }
+                    else if (parentTask == null) {
+                        rootTask.setToolTipText("");
+                    }
+                    else {
+                        rootTask.setToolTipText(parentTask.name);
+                    }
+                }
+            });
+            ((AbstractDocument) rootTask.getDocument()).setDocumentFilter(new TaskIDFilter());
+        }
     }
 }
