@@ -19,7 +19,7 @@ struct PacketSenderImpl : PacketSender
 	{
 		std::cout << "[TX] " << *message << '\n';
 
-		logfile << "[TX] " << *message << '\n';
+		logfile << "[TX] " << *message << std::endl;
 
 		const auto output = message->pack();
 		socket->write_n(output.data(), output.size());
