@@ -17,9 +17,11 @@ struct PacketSenderImpl : PacketSender
 
 	void send(std::unique_ptr<Message> message) override
 	{
-		std::cout << "[TX] " << *message << '\n';
+		auto time = std::chrono::system_clock::now();
 
-		logfile << "[TX] " << *message << std::endl;
+		std::cout << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [TX] " << *message << '\n';
+
+		logfile << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [TX] " << *message << std::endl;
 
 		const auto output = message->pack();
 		socket->write_n(output.data(), output.size());
