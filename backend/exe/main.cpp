@@ -22,6 +22,14 @@
 
 std::ofstream logfile;
 
+void log_message(const std::string& message)
+{
+	auto time = std::chrono::system_clock::now();
+
+	std::cout << std::format("[{:%m/%d/%y %H:%M:%S}] ", time) << message << '\n';
+	logfile << std::format("[{:%m/%d/%y %H:%M:%S}] ", time) << message << '\n';
+}
+
 inline std::uint32_t read_u32(const std::vector<std::byte>& input, std::size_t index)
 {
 	std::array<std::byte, 4> bytes;
@@ -65,13 +73,13 @@ struct curlpp_ : cURL
 		}
 		catch (const curlpp::LogicError& e)
 		{
-			std::cout << e.what() << std::endl;
-			logfile << e.what() << std::endl;
+			log_message("cURL error");
+			log_message(e.what());
 		}
 		catch (const curlpp::RuntimeError& e)
 		{
-			std::cout << e.what() << std::endl;
-			logfile << e.what() << std::endl;
+			log_message("cURL error");
+			log_message(e.what());
 		}
 		return "";
 	}
@@ -99,9 +107,10 @@ int main(int argc, char** argv)
 
 	const int port = std::atoi(argv[2]);
 
-	std::cout << ip_address << ' ' << port << ' ' << argv[3] << ' ' << argv[4] << '\n';
+	std::stringstream arg_output;
+	arg_output << ip_address << ' ' << port << ' ' << argv[3] << ' ' << argv[4] << '\n';
 
-	logfile << ip_address << ' ' << port << ' ' << argv[3] << ' ' << argv[4] << '\n';
+	log_message(arg_output.str());
 
 	bool hidden = argc > 5 && std::string(argv[5]) == "true";
 
@@ -139,11 +148,8 @@ int main(int argc, char** argv)
 			std::vector<std::byte> input(4);
 			if (socket->read_n(input.data(), 4) == -1)
 			{
-				std::cout << "Error with socket\n";
-				std::cout << socket->last_error() << '\n';
-
-				logfile << "Error with socket\n";
-				logfile << socket->last_error() << std::endl;
+				log_message("Error with socket");
+				log_message(std::to_string(socket->last_error()));
 
 				break;
 			}
@@ -153,11 +159,8 @@ int main(int argc, char** argv)
 			input.resize(length);
 			if (socket->read_n(input.data() + 4, length - 4) == -1)
 			{
-				std::cout << "Error with socket\n";
-				std::cout << socket->last_error() << '\n';
-
-				logfile << "Error with socket\n";
-				logfile << socket->last_error() << std::endl;
+				log_message("Error with socket");
+				log_message(std::to_string(socket->last_error()));
 
 				break;
 			}
@@ -166,9 +169,10 @@ int main(int argc, char** argv)
 
 			if (result.packet)
 			{
-				std::cout << std::format("[{:%m/:%d/:%y} {:%H:%M:%S}]", now, now) << " [RX] " << *result.packet << '\n';
+				std::stringstream ss;
+				ss << "[RX] " << *result.packet;
 
-				logfile << "[RX] " << *result.packet << std::endl;
+				log_message(ss.str());
 
 				api.process_packet(*result.packet);
 			}
