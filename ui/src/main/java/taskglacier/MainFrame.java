@@ -284,6 +284,8 @@ public class MainFrame extends JFrame {
             setTitle("Task Glacier (Not Connected)");
 
             ((MenuBar) getJMenuBar()).disconnected();
+
+            taskModel.clear();
         }
     }
 

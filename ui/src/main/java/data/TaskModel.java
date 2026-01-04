@@ -179,6 +179,13 @@ public class TaskModel {
         }
     }
 
+    public void clear() {
+        for (Task task : tasks) {
+            listeners.forEach(listener -> listener.removeTask(task));
+        }
+        tasks.clear();
+    }
+
     public interface Listener {
         void addTask(Task task);
         void updatedTask(Task task);
