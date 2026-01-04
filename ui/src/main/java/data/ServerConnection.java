@@ -3,16 +3,23 @@ package data;
 import dialogs.About;
 import dialogs.AddTask;
 import dialogs.UnspecifiedTask;
+import io.github.andrewauclair.moderndocking.Dockable;
+import io.github.andrewauclair.moderndocking.app.Docking;
 import packets.BugzillaInfo;
 import packets.DailyReportMessage;
 import packets.ErrorMessage;
 import packets.FailureResponse;
 import packets.Packet;
 import packets.PacketType;
+import packets.RequestDailyReport;
+import packets.RequestID;
+import packets.RequestWeeklyReport;
 import packets.TaskInfo;
 import packets.TimeCategoriesMessage;
 import packets.Version;
 import packets.WeeklyReport;
+import panels.DailyReportPanel;
+import panels.WeeklyReportPanel;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
@@ -156,6 +163,29 @@ public class ServerConnection {
 
     public boolean sendPacket(Packet packet) {
         if (output != null) {
+            if (List.of(PacketType.START_TASK, PacketType.STOP_TASK, PacketType.FINISH_TASK, PacketType.UPDATE_TASK, PacketType.MOVE_TASK).contains(packet.type())) {
+                for (Dockable dockable : Docking.getDockables()) {
+                    if (dockable instanceof DailyReportPanel dailyReport) {
+                        RequestDailyReport request = new RequestDailyReport();
+                        request.requestID = RequestID.nextRequestID();
+                        request.month = dailyReport.getMonth();
+                        request.day = dailyReport.getDay();
+                        request.year = dailyReport.getYear();
+
+                        SwingUtilities.invokeLater(() -> sendPacket(request));
+                    }
+                    else if (dockable instanceof WeeklyReportPanel weeklyReport) {
+                        RequestWeeklyReport request = new RequestWeeklyReport();
+                        request.requestID = RequestID.nextRequestID();
+                        request.month = weeklyReport.getMonth();
+                        request.day = weeklyReport.getDay();
+                        request.year = weeklyReport.getYear();
+
+                        SwingUtilities.invokeLater(() -> sendPacket(request));
+                    }
+                }
+            }
+            
             try {
                 try (ByteArrayOutputStream output = new ByteArrayOutputStream(packet.size())) {
                     packet.writeToOutput(new DataOutputStream(output));
