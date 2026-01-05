@@ -127,7 +127,7 @@ jobs:
       with:
         name: Task Glacier
         path: |
-          ${{ github.workspace }}/ui/Task Glacier-0.10.0.exe
+          ${{ github.workspace }}/ui/Task Glacier-0.11.0.exe
           ${{ steps.strings.outputs.build-output-dir }}/bin/task-glacier-server.exe
           ${{ steps.strings.outputs.build-output-dir }}/bin/curlpp.dll
           ${{ steps.strings.outputs.build-output-dir }}/bin/libcurl.dll
