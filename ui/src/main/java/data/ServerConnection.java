@@ -134,10 +134,16 @@ public class ServerConnection {
                 }
                 else if (packetType == PacketType.SUCCESS_RESPONSE) {
                     SwingUtilities.invokeLater(() -> {
-                        if (AddTask.openInstance != null) {
-                            AddTask.openInstance.close();
+                        int requestID = ByteBuffer.wrap(bytes, 4, 4).getInt();
+
+                        if (AddTask.openInstance != null && AddTask.activeRequests.contains(requestID)) {
+                            AddTask.activeRequests.remove((Integer) requestID);
+
+                            if (AddTask.activeRequests.isEmpty()) {
+                                AddTask.openInstance.close();
+                            }
                         }
-                        if (UnspecifiedTask.openInstance != null) {
+                        if (UnspecifiedTask.openInstance != null && UnspecifiedTask.requestID == requestID) {
                             UnspecifiedTask.openInstance.close();
                         }
                     });

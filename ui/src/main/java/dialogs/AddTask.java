@@ -9,9 +9,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AddTask extends JDialog {
     public static AddTask openInstance = null;
+
+    public static List<Integer> activeRequests = new ArrayList<>();
 
     public AddTask(MainFrame mainFrame, Window parentWindow, int defaultParentID) {
         super(parentWindow);
@@ -48,13 +52,26 @@ public class AddTask extends JDialog {
             if (bulkSwitch.getText().equals("v")) {
                 String[] names = bulkAdd.getText().split(System.lineSeparator());
 
+                List<CreateTask> packets = new ArrayList<>();
+
                 for (String s : names) {
-                    CreateTask create = new CreateTask(s, parentID, RequestID.nextRequestID());
-                    mainFrame.getConnection().sendPacket(create);
+                    int requestID = RequestID.nextRequestID();
+                    CreateTask create = new CreateTask(s, parentID, requestID);
+                    packets.add(create);
+
+                    activeRequests.add(requestID);
+                }
+
+                for (CreateTask packet : packets) {
+                    mainFrame.getConnection().sendPacket(packet);
                 }
             }
             else {
-                CreateTask create = new CreateTask(name.getText(), parentID, RequestID.nextRequestID());
+                int requestID = RequestID.nextRequestID();
+                CreateTask create = new CreateTask(name.getText(), parentID, requestID);
+
+                activeRequests.add(requestID);
+
                 mainFrame.getConnection().sendPacket(create);
             }
         });

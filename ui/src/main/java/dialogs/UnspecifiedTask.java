@@ -17,7 +17,7 @@ import java.awt.event.KeyEvent;
 public class UnspecifiedTask extends JDialog {
     public static UnspecifiedTask openInstance = null;
 
-    public int requestID = 0;
+    public static int requestID = 0;
 
     public UnspecifiedTask(MainFrame mainFrame) {
         super(mainFrame);
@@ -113,6 +113,7 @@ public class UnspecifiedTask extends JDialog {
     }
 
     public void close() {
+        requestID = 0;
         openInstance = null;
         dispose();
     }
