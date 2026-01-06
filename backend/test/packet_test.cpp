@@ -235,7 +235,7 @@ TEST_CASE("Update Task", "[message]")
 
 TEST_CASE("Update Task Times", "[message]")
 {
-	auto update = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, RequestID(10), TaskID(5), TaskTimes(10ms, 20ms));
+	auto update = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, RequestID(10), TaskID(5), 10ms, 20ms);
 	update.sessionIndex = 2;
 
 	SECTION("pack")

@@ -1700,7 +1700,7 @@ TEST_CASE("Add Sessions", "[api][task]")
 
 		helper.expect_success(create);
 
-		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), 10000ms, 20000ms);
 
 		helper.expect_success(add);
 
@@ -1725,7 +1725,7 @@ TEST_CASE("Add Sessions", "[api][task]")
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
 
-		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), 10000ms, 20000ms);
 
 		helper.expect_success(add);
 
@@ -1757,7 +1757,7 @@ TEST_CASE("Add Sessions", "[api][task]")
 		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(4)));
 
 		// add new times that won't overlap
-		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), 10000ms, 20000ms);
 
 		helper.expect_success(add);
 
@@ -1776,7 +1776,7 @@ TEST_CASE("Add Sessions", "[api][task]")
 
 	SECTION("Failure - Unknown Task ID")
 	{
-		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), 10000ms, 20000ms);
 
 		helper.expect_failure(add, "Task with ID 1 does not exist.");
 	}
@@ -1792,22 +1792,22 @@ TEST_CASE("Add Sessions", "[api][task]")
 		auto stop = 1737345839870ms;
 
 		// overlap start time of first session (existing start time inside new session)
-		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(start - 50ms, start + 50ms));
+		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), start - 50ms, start + 50ms);
 
 		helper.expect_failure(add, "Unable to add session. Overlap detected.");
 
 		// overlap start time of first session (new start time inside existing session)
-		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(start + 50ms, stop + 50ms));
+		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), start + 50ms, stop + 50ms);
 
 		helper.expect_failure(add, "Unable to add session. Overlap detected.");
 
 		// overlap stop time of first session (existing stop time inside new session)
-		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(stop - 50ms, stop + 50ms));
+		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), stop - 50ms, stop + 50ms);
 
 		helper.expect_failure(add, "Unable to add session. Overlap detected.");
 
 		// overlap stop time of first session (new stop time inside existing session)
-		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(start - 50ms, start + 50ms));
+		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), start - 50ms, start + 50ms);
 
 		helper.expect_failure(add, "Unable to add session. Overlap detected.");
 
@@ -1843,24 +1843,24 @@ TEST_CASE("Add Sessions", "[api][task]")
 		auto stop = 1737349539870ms;
 
 		// overlap start time of task id 2 session
-		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(start - 50ms, start + 50ms));
+		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), start - 50ms, start + 50ms);
 
 		helper.expect_failure(add, "Unable to add session. Overlap detected.");
 
 		// overlap stop time of task id 2 session
-		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(stop - 50ms, stop + 50ms));
+		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), stop - 50ms, stop + 50ms);
 
 		helper.expect_failure(add, "Unable to add session. Overlap detected.");
 
 		auto active_start = 1737350439870ms;
 
 		// overlap active time of task id 4 session (stop time only)
-		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(active_start - 50ms, active_start + 1000s));
+		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), active_start - 50ms, active_start + 1000s);
 
 		helper.expect_failure(add, "Unable to add session. Overlap detected.");
 
 		// overlap active time of task id 4 session (start time and stop time)
-		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(active_start + 50ms, active_start + 1000s));
+		add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), active_start + 50ms, active_start + 1000s);
 
 		helper.expect_failure(add, "Unable to add session. Overlap detected.");
 
@@ -1889,7 +1889,7 @@ TEST_CASE("Add Sessions", "[api][task]")
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(3)));
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(4)));
 
-		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms));
+		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), 10000ms, std::nullopt);
 
 		helper.expect_failure(add, "New session must have a stop time.");
 
@@ -1923,14 +1923,14 @@ TEST_CASE("Edit Sessions", "[api][task]")
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
 
-		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 1737345839870ms));
+		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), 10000ms, 1737345839870ms);
 		edit.sessionIndex = 0;
 
 		helper.expect_success(edit);
 
 		edit.sessionIndex = 1;
-		edit.times.start = 20000ms;
-		edit.times.stop = 1737347639870ms;
+		edit.start = 20000ms;
+		edit.stop = 1737347639870ms;
 
 		helper.expect_success(edit);
 
@@ -1955,14 +1955,14 @@ TEST_CASE("Edit Sessions", "[api][task]")
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
 
-		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(5000ms, 10000ms));
+		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), 5000ms, 10000ms);
 		edit.sessionIndex = 0;
 
 		helper.expect_success(edit);
 
 		edit.sessionIndex = 1;
-		edit.times.start = 11000ms;
-		edit.times.stop = 20000ms;
+		edit.start = 11000ms;
+		edit.stop = 20000ms;
 
 		helper.expect_success(edit);
 
@@ -1981,7 +1981,7 @@ TEST_CASE("Edit Sessions", "[api][task]")
 
 	SECTION("Failure - Unknown Task ID")
 	{
-		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), 10000ms, 20000ms);
 
 		helper.expect_failure(edit, "Task with ID 1 does not exist.");
 	}
@@ -1994,7 +1994,7 @@ TEST_CASE("Edit Sessions", "[api][task]")
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
 
-		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(1737344939870ms, 1737345839870ms));
+		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), 1737344939870ms, 1737345839870ms);
 		edit.sessionIndex = 2;
 
 		helper.expect_failure(edit, "Invalid session index.");
@@ -2008,7 +2008,7 @@ TEST_CASE("Edit Sessions", "[api][task]")
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
 
-		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(20000ms, 10000ms));
+		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), 20000ms, 10000ms);
 		edit.sessionIndex = 0;
 
 		helper.expect_failure(edit, "Stop time cannot be before start time.");
@@ -2021,13 +2021,13 @@ TEST_CASE("Edit Sessions", "[api][task]")
 		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 
-		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms));
+		auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, helper.next_request_id(), TaskID(1), 10000ms, std::nullopt);
 		edit.sessionIndex = 0;
 
 		helper.expect_failure(edit, "Cannot remove stop time from session #1.");
 
 		edit.sessionIndex = 1;
-		edit.times.stop = 20000ms;
+		edit.stop = 20000ms;
 
 		helper.expect_failure(edit, "Cannot add stop time to session #2.");
 	}
@@ -2047,7 +2047,7 @@ TEST_CASE("Remove Sessions", "[api][task]")
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
 
-		auto remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+		auto remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, helper.next_request_id(), TaskID(1), 10000ms, 20000ms);
 		remove.sessionIndex = 0;
 
 		helper.expect_success(remove);
@@ -2072,7 +2072,7 @@ TEST_CASE("Remove Sessions", "[api][task]")
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
 
-		auto remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+		auto remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, helper.next_request_id(), TaskID(1), 10000ms, 20000ms);
 		remove.sessionIndex = 1;
 
 		helper.expect_success(remove);
@@ -2091,7 +2091,7 @@ TEST_CASE("Remove Sessions", "[api][task]")
 
 	SECTION("Failure - Unknown Task ID")
 	{
-		auto remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+		auto remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, helper.next_request_id(), TaskID(1), 10000ms, 20000ms);
 
 		helper.expect_failure(remove, "Task with ID 1 does not exist.");
 	}
@@ -2100,7 +2100,7 @@ TEST_CASE("Remove Sessions", "[api][task]")
 	{
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a"));
 
-		auto remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+		auto remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, helper.next_request_id(), TaskID(1), 10000ms, 20000ms);
 		remove.sessionIndex = 0;
 
 		helper.expect_failure(remove, "Invalid session index.");
@@ -2108,7 +2108,7 @@ TEST_CASE("Remove Sessions", "[api][task]")
 		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
 		helper.expect_success(TaskMessage(PacketType::STOP_TASK, helper.next_request_id(), TaskID(1)));
 
-		remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, helper.next_request_id(), TaskID(1), TaskTimes(10000ms, 20000ms));
+		remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, helper.next_request_id(), TaskID(1), 10000ms, 20000ms);
 		remove.sessionIndex = 1;
 
 		helper.expect_failure(remove, "Invalid session index.");

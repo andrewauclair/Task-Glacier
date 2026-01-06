@@ -753,7 +753,7 @@ TEST_CASE("Add Session - Write to Database", "[database]")
 
 	api.process_packet(create);
 
-	auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, RequestID(2), TaskID(1), TaskTimes(10000ms, 20000ms));
+	auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, RequestID(2), TaskID(1), 10000ms, 20000ms);
 
 	api.process_packet(add);
 
@@ -829,7 +829,7 @@ TEST_CASE("Edit Session - Write to Database", "[database]")
 	api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(3), TaskID(1)));
 	api.process_packet(TaskMessage(PacketType::STOP_TASK, RequestID(4), TaskID(1)));
 
-	auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, RequestID(1), TaskID(1), TaskTimes(10000ms, 20000ms));
+	auto edit = UpdateTaskTimesMessage(PacketType::EDIT_TASK_SESSION, RequestID(1), TaskID(1), 10000ms, 20000ms);
 	edit.sessionIndex = 0;
 
 	api.process_packet(edit);
@@ -907,7 +907,7 @@ TEST_CASE("Remove Session - Write to Database", "[database]")
 	api.process_packet(TaskMessage(PacketType::STOP_TASK, RequestID(4), TaskID(1)));
 	api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(5), TaskID(1)));
 
-	auto remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, RequestID(1), TaskID(1), TaskTimes(10000ms, 20000ms));
+	auto remove = UpdateTaskTimesMessage(PacketType::REMOVE_TASK_SESSION, RequestID(1), TaskID(1), 10000ms, 20000ms);
 	remove.sessionIndex = 0;
 
 	api.process_packet(remove);

@@ -211,9 +211,9 @@ std::vector<std::byte> UpdateTaskTimesMessage::pack() const
 	builder.add(requestID);
 	builder.add(taskID);
 	builder.add(sessionIndex);
-	builder.add(times.start);
-	builder.add(times.stop.has_value());
-	builder.add(times.stop.value_or(0ms));
+	builder.add(start);
+	builder.add(stop.has_value());
+	builder.add(stop.value_or(0ms));
 	
 	return builder.build();
 }
@@ -232,11 +232,9 @@ std::expected<UpdateTaskTimesMessage, UnpackError> UpdateTaskTimesMessage::unpac
 
 	try
 	{
-		TaskTimes times;
-		times.start = start.value();
-		times.stop = stopPresent.value() ? std::optional(stop.value()) : std::nullopt;
+		auto stopOpt = stopPresent.value() ? std::optional(stop.value()) : std::nullopt;
 
-		auto update = UpdateTaskTimesMessage(packetType.value(), requestID.value(), taskID.value(), times);
+		auto update = UpdateTaskTimesMessage(packetType.value(), requestID.value(), taskID.value(), start.value(), stopOpt);
 		update.sessionIndex = sessionIndex.value();
 
 		return update;

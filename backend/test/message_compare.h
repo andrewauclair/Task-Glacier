@@ -123,8 +123,8 @@ inline void verify_update_task_times(const UpdateTaskTimesMessage& expected, con
 	CHECK(expected.requestID == actual.requestID);
 	CHECK(expected.taskID == actual.taskID);
 	CHECK(expected.sessionIndex == actual.sessionIndex);
-	CHECK(expected.times.start == actual.times.start);
-	CHECK(expected.times.stop == actual.times.stop);
+	CHECK(expected.start == actual.start);
+	CHECK(expected.stop == actual.stop);
 }
 
 inline void verify_task_state_change(const TaskStateChange& expected, const TaskStateChange& actual, std::source_location location)

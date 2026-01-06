@@ -52,7 +52,7 @@ void API::process_packet(const Message& message)
 			break;
 		}
 
-		if (!update.times.stop.has_value())
+		if (!update.stop.has_value())
 		{
 			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "New session must have a stop time."));
 			break;
@@ -64,15 +64,15 @@ void API::process_packet(const Message& message)
 		{
 			for (const TaskTimes& times : task.m_times)
 			{
-				if (update.times.start >= times.start && (!times.stop.has_value() || update.times.start <= times.stop.value()))
+				if (update.start >= times.start && (!times.stop.has_value() || update.start <= times.stop.value()))
 				{
 					overlap_detected = true;
 				}
-				else if (times.start >= update.times.start && times.start <= update.times.stop.value())
+				else if (times.start >= update.start && times.start <= update.stop.value())
 				{
 					overlap_detected = true;
 				}
-				else if (update.times.stop.value() >= times.start && update.times.stop.value() <= times.stop.value())
+				else if (update.stop.value() >= times.start && update.stop.value() <= times.stop.value())
 				{
 					overlap_detected = true;
 				}
@@ -87,7 +87,7 @@ void API::process_packet(const Message& message)
 			break;
 		}
 
-		task->m_times.push_back(update.times);
+		task->m_times.push_back(TaskTimes{ update.start, update.stop });
 		task->m_times.back().timeEntry = task->timeEntry;
 
 		std::sort(task->m_times.begin(), task->m_times.end());
@@ -116,7 +116,7 @@ void API::process_packet(const Message& message)
 			break;
 		}
 
-		if (update.times.stop.has_value() && update.times.stop <= update.times.start)
+		if (update.stop.has_value() && update.stop <= update.start)
 		{
 			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Stop time cannot be before start time."));
 			break;
@@ -124,19 +124,19 @@ void API::process_packet(const Message& message)
 
 		TaskTimes& times = task->m_times.at(update.sessionIndex);
 
-		if (times.stop.has_value() && !update.times.stop.has_value())
+		if (times.stop.has_value() && !update.stop.has_value())
 		{
 			m_sender->send(std::make_unique<FailureResponse>(update.requestID, std::format("Cannot remove stop time from session #{}", update.sessionIndex + 1)));
 			break;
 		}
-		else if (!times.stop.has_value() && update.times.stop.has_value())
+		else if (!times.stop.has_value() && update.stop.has_value())
 		{
 			m_sender->send(std::make_unique<FailureResponse>(update.requestID, std::format("Cannot add stop time to session #{}", update.sessionIndex + 1)));
 			break;
 		}
 
-		times.start = update.times.start;
-		times.stop = update.times.stop;
+		times.start = update.start;
+		times.stop = update.stop;
 
 		m_database->write_task(*task, *m_sender);
 
