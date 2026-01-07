@@ -212,6 +212,10 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
         });
     }
 
+    public void expand() {
+        treeTableModel.expandTree();
+    }
+
     private void finishActiveTask() {
         TaskStateChange change = new TaskStateChange();
         change.packetType = PacketType.FINISH_TASK;
