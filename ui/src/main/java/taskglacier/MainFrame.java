@@ -166,6 +166,9 @@ public class MainFrame extends JFrame {
             }
             
             for (Dockable dockable : Docking.getDockables()) {
+                if (!Docking.isDocked(dockable)) {
+                    continue;
+                }
                 if (dockable instanceof DailyReportPanel dailyReport) {
                     RequestDailyReport request = new RequestDailyReport();
                     request.requestID = RequestID.nextRequestID();

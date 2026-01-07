@@ -171,6 +171,9 @@ public class ServerConnection {
         if (output != null) {
             if (List.of(PacketType.START_TASK, PacketType.STOP_TASK, PacketType.FINISH_TASK, PacketType.UPDATE_TASK, PacketType.MOVE_TASK).contains(packet.type())) {
                 for (Dockable dockable : Docking.getDockables()) {
+                    if (!Docking.isDocked(dockable)) {
+                        continue;
+                    }
                     if (dockable instanceof DailyReportPanel dailyReport) {
                         RequestDailyReport request = new RequestDailyReport();
                         request.requestID = RequestID.nextRequestID();
