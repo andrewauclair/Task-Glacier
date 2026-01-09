@@ -419,7 +419,15 @@ public class BugzillaConfiguration extends JDialog {
             toolBar.add(search);
 
             search.addActionListener(e -> {
-                TaskPicker picker = new TaskPicker(mainFrame);
+                int taskID = 0;
+                try {
+                    taskID = Integer.parseInt(rootTask.getText());
+                }
+                catch (NumberFormatException ignore) {
+                }
+
+                Task selectedRootTask = mainFrame.getTaskModel().getTask(taskID);
+                TaskPicker picker = new TaskPicker(mainFrame, selectedRootTask);
                 picker.setVisible(true);
 
                 if (picker.task != null) {
@@ -433,16 +441,16 @@ public class BugzillaConfiguration extends JDialog {
                 @Override
                 public void focusLost(FocusEvent e) {
                     int newTaskID = Integer.valueOf(rootTask.getText());
-                    Task parentTask = mainFrame.getTaskModel().getTask(newTaskID);
+                    Task selectedRootTask = mainFrame.getTaskModel().getTask(newTaskID);
 
                     if (newTaskID == 0) {
                         rootTask.setToolTipText("Root");
                     }
-                    else if (parentTask == null) {
+                    else if (selectedRootTask == null) {
                         rootTask.setToolTipText("");
                     }
                     else {
-                        rootTask.setToolTipText(parentTask.name);
+                        rootTask.setToolTipText(selectedRootTask.name);
                     }
                 }
             });

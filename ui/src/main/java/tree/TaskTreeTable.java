@@ -330,6 +330,17 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
         }
     }
 
+    public void setSelectedTask(Task task) {
+        DefaultMutableTreeNode node = findTaskNode(rootNode, task.id);
+
+        if (node != null) {
+            int index = treeTableModel.getModelIndexForTreeNode(node);
+
+            getSelectionModel().clearSelection();
+            getSelectionModel().setSelectionInterval(index, index);
+        }
+    }
+
     @Override
     public void configComplete() {
         treeTableModel.expandTree();

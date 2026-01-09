@@ -2,7 +2,10 @@ package tray;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import packets.RequestDailyReport;
+import packets.RequestID;
 import panels.Search;
+import raven.datetime.DatePicker;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
@@ -16,12 +19,14 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.time.LocalDate;
 import java.util.Objects;
 
 public class SystemTrayDisplay extends JFrame {
     private final TrayIcon trayIcon;
     private final RecentActivity activity;
     private final Search search;
+    public final SystemTrayDailyReport dailyReportPanel;
 
     // https://www.flaticon.com/free-icon/cognitive_8920590?term=cognitive&related_id=8920590
     // https://www.flaticon.com/free-icon/clipboard_1527478?term=task&page=1&position=53&origin=search&related_id=1527478
@@ -65,6 +70,7 @@ public class SystemTrayDisplay extends JFrame {
         this.trayIcon = trayIcon;
         activity = new RecentActivity(mainFrame);
         search = new Search(mainFrame);
+        dailyReportPanel = new SystemTrayDailyReport(mainFrame);
 
         addComponentListener(new ComponentAdapter() {
             // Give the window an elliptical shape.
@@ -86,10 +92,6 @@ public class SystemTrayDisplay extends JFrame {
             }
             else if (e != null) {
                 setVisible(true);
-
-                SwingUtilities.invokeLater(() -> {
-
-                });
 
                 Dimension scrnSize = Toolkit.getDefaultToolkit().getScreenSize();
                 Rectangle winSize = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
@@ -154,6 +156,8 @@ public class SystemTrayDisplay extends JFrame {
         JPanel stack = new JPanel(layout);
         stack.add(activity, "activity");
         stack.add(search, "search");
+        stack.add(dailyReportPanel, "daily-report");
+        
         layout.show(stack, "activity");
 
         addComponentListener(new ComponentAdapter() {
@@ -183,6 +187,29 @@ public class SystemTrayDisplay extends JFrame {
             public void changedUpdate(DocumentEvent e) {
                 updateFilter(layout, stack);
             }
+        });
+
+        dailyReport.addActionListener(e -> {
+            // request the daily report
+            DatePicker picker = new DatePicker();
+            picker.setSelectedDate(LocalDate.now());
+
+            LocalDate localDate = picker.getSelectedDate();
+
+            int year = localDate.getYear();
+            int month = localDate.getMonthValue();
+            int day = localDate.getDayOfMonth();
+
+            RequestDailyReport request = new RequestDailyReport();
+            request.requestID = RequestID.nextRequestID();
+            request.month = month;
+            request.day = day;
+            request.year = year;
+
+            mainFrame.getConnection().sendPacket(request);
+            
+            // display the system tray daily report panel, which is a simplified version of the full panel
+            layout.show(stack, "daily-report");
         });
 
         unspecifiedTask.addActionListener(e -> mainFrame.startUnspecifiedTask());

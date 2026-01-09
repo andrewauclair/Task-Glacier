@@ -348,6 +348,7 @@ public class MainFrame extends JFrame {
             panel = new DailyReportPanel(this, dailyReport.getReport().getDate());
         }
         panel.update(dailyReport);
+        systemTrayDisplay.dailyReportPanel.update(dailyReport);
         Docking.display(panel);
     }
 

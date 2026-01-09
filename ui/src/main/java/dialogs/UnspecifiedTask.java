@@ -2,6 +2,7 @@ package dialogs;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import data.Task;
 import packets.PacketType;
 import packets.RequestID;
 import packets.TaskStateChange;
@@ -13,6 +14,8 @@ import javax.swing.text.AbstractDocument;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+
+import static taskglacier.MainFrame.mainFrame;
 
 public class UnspecifiedTask extends JDialog {
     public static UnspecifiedTask openInstance = null;
@@ -70,7 +73,15 @@ public class UnspecifiedTask extends JDialog {
         done.setEnabled(false);
 
         search.addActionListener(e -> {
-            TaskPicker picker = new TaskPicker(mainFrame);
+            int id = 0;
+            try {
+                id = Integer.parseInt(taskID.getText());
+            }
+            catch (NumberFormatException ignore) {
+            }
+
+            Task selectedParent = mainFrame.getTaskModel().getTask(id);
+            TaskPicker picker = new TaskPicker(mainFrame, selectedParent);
             picker.setVisible(true);
 
             if (picker.task != null) {

@@ -16,15 +16,15 @@ import java.awt.*;
 public class TaskPicker extends JDialog {
     public Task task = null;
 
-    public TaskPicker(MainFrame mainFrame) {
+    public TaskPicker(MainFrame mainFrame, Task selectedTask) {
         super(mainFrame);
 
         setModalityType(ModalityType.APPLICATION_MODAL);
 
+        task = selectedTask;
+
         JButton select = new JButton("Select");
-        select.addActionListener(e -> {
-            TaskPicker.this.dispose();
-        });
+        select.addActionListener(e -> TaskPicker.this.dispose());
 
         Search search = new Search(mainFrame);
         search.newTable.addListSelectionListener(e -> {
@@ -40,6 +40,10 @@ public class TaskPicker extends JDialog {
 
             this.task = task;
         });
+
+        if (task != null) {
+            SwingUtilities.invokeLater(() -> search.newTable.setSelectedTask(task));
+        }
         JTextField searchText = new JTextField(30);
 
         setLayout(new GridBagLayout());

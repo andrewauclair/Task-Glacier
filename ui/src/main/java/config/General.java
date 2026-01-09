@@ -98,7 +98,15 @@ class General extends JPanel {
         gbc.gridy++;
 
         search.addActionListener(e -> {
-            TaskPicker picker = new TaskPicker(mainFrame);
+            int taskID = 0;
+            try {
+                taskID = Integer.parseInt(parent.getText());
+            }
+            catch (NumberFormatException ignore) {
+            }
+
+            Task selectedParent = mainFrame.getTaskModel().getTask(taskID);
+            TaskPicker picker = new TaskPicker(mainFrame, selectedParent);
             picker.setVisible(true);
 
             if (picker.task != null) {
