@@ -20,6 +20,7 @@ import java.util.Optional;
 import static taskglacier.MainFrame.mainFrame;
 
 class Sessions extends JPanel {
+    private final Task task;
     SessionTableModel sessionModel = new SessionTableModel();
     JTable sessionTable = new JTable(sessionModel);
 
@@ -53,12 +54,13 @@ class Sessions extends JPanel {
             if (sessionTable.getSelectedRow() != -1) {
                 SessionRow session = sessionModel.data.get(sessionTable.getSelectedRow());
 
-                SessionEdit edit = new SessionEdit(mainFrame, new TaskInfo.Session(session.start, session.stop, session.timeEntry));
+                SessionEdit edit = new SessionEdit(mainFrame, task.id, new TaskInfo.Session(session.start, session.stop, session.timeEntry),
+                        sessionTable.getSelectedRow());
                 edit.setVisible(true);
             }
         });
         addSession.addActionListener(e -> {
-            SessionEdit add = new SessionEdit(mainFrame);
+            SessionEdit add = new SessionEdit(mainFrame, task.id);
             add.setVisible(true);
 
             // add.session
@@ -84,6 +86,7 @@ class Sessions extends JPanel {
     }
 
     Sessions(Window parent, Task task) {
+        this.task = task;
         setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();

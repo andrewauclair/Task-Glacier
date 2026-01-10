@@ -1,6 +1,9 @@
 package dialogs;
 
+import packets.PacketType;
+import packets.RequestID;
 import packets.TaskInfo;
+import packets.UpdateTaskTimes;
 import raven.datetime.DatePicker;
 import raven.datetime.TimePicker;
 import taskglacier.MainFrame;
@@ -8,11 +11,14 @@ import util.LabeledComponent;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 public class SessionEdit extends JDialog {
     public TaskInfo.Session session = null;
+    private int sessionIndex = 0;
 
     private DatePicker startDatePicker = new DatePicker();
     private DatePicker stopDatePicker = new DatePicker();
@@ -29,9 +35,12 @@ public class SessionEdit extends JDialog {
     JCheckBox stopPresent = new JCheckBox("Include Stop");
 
     JButton save = new JButton("Save");
+    boolean newSession = true;
+    private int taskID;
 
-    public SessionEdit(MainFrame mainFrame) {
+    public SessionEdit(MainFrame mainFrame, int taskID) {
         super(mainFrame);
+        this.taskID = taskID;
 
         setModalityType(ModalityType.APPLICATION_MODAL);
 
@@ -95,6 +104,23 @@ public class SessionEdit extends JDialog {
 
         save.addActionListener(e -> {
             // send updated session to server
+            PacketType type = session != null ? PacketType.EDIT_TASK_SESSION : PacketType.ADD_TASK_SESSION;
+
+            startDatePicker.getSelectedDate();
+            startTimePicker.getSelectedTime();
+
+            ZonedDateTime startDate = ZonedDateTime.of(startDatePicker.getSelectedDate(), startTimePicker.getSelectedTime(), ZoneId.systemDefault());
+            ZonedDateTime stopDate = ZonedDateTime.of(stopDatePicker.getSelectedDate(), stopTimePicker.getSelectedTime(), ZoneId.systemDefault());
+
+            Instant startTime = startDate.toInstant();
+            Optional<Instant> stopTime = Optional.of(stopDate.toInstant());
+
+            if (!stopPresent.isSelected()) {
+                stopTime = Optional.empty();
+            }
+
+            UpdateTaskTimes packet = new UpdateTaskTimes(type, RequestID.nextRequestID(), taskID, sessionIndex, startTime, stopTime);
+            mainFrame.getConnection().sendPacket(packet);
         });
 
         startDate.addPropertyChangeListener(e -> updateSave());
@@ -125,12 +151,14 @@ public class SessionEdit extends JDialog {
         stopTime.setEnabled(false);
     }
 
-    public SessionEdit(MainFrame mainFrame, TaskInfo.Session session) {
-        this(mainFrame);
+    public SessionEdit(MainFrame mainFrame, int taskID, TaskInfo.Session session, int sessionIndex) {
+        this(mainFrame, taskID);
 
         setTitle("Edit Session");
 
         this.session = session;
+        this.sessionIndex = sessionIndex;
+        newSession = false;
 
         ZonedDateTime startDateTime = session.startTime.atZone(ZoneId.systemDefault());
         startDatePicker.setSelectedDate(startDateTime.toLocalDate());
