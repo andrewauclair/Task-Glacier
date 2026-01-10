@@ -1,20 +1,34 @@
 package tray;
 
+import data.TimeData;
 import packets.DailyReportMessage;
-import packets.RequestDailyReport;
-import packets.RequestID;
-import raven.datetime.DatePicker;
 import taskglacier.MainFrame;
 import tree.ElapsedTimeCellRenderer;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.time.Instant;
-import java.time.LocalDate;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 public class SystemTrayDailyReport extends JPanel {
+    private static class Value {
+        TimeData.TimeCategory category;
+        TimeData.TimeCode code;
+        long minutes;
+
+        public int getCategoryID() {
+            return category.id;
+        }
+
+        public long getMinutes() {
+            return minutes;
+        }
+    }
+
     private DefaultTableModel model = new DefaultTableModel(0, 2) {
         @Override
         public Class<?> getColumnClass(int columnIndex) {
@@ -41,12 +55,27 @@ public class SystemTrayDailyReport extends JPanel {
 
         model.setRowCount(0);
 
-        report.timesPerTimeEntry.forEach((timeEntry, instant) -> {
-            long minutes = TimeUnit.MILLISECONDS.toMinutes(instant.toEpochMilli());
+        List<Value> values = new ArrayList<>();
 
-            model.addRow(new Object[] { timeEntry.category.name + " - " + timeEntry.code.name, minutes });
+        report.timesPerTimeEntry.forEach((timeEntry, instant) -> {
+            Value value = new Value();
+
+            value.category = timeEntry.category;
+            value.code = timeEntry.code;
+            value.minutes = TimeUnit.MILLISECONDS.toMinutes(instant.toEpochMilli());
+
+            values.add(value);
         });
 
+        Collections.sort(values, Comparator.comparing(Value::getCategoryID)
+                .reversed()
+                .thenComparing(Value::getMinutes)
+                .reversed()
+        );
+
+        for (Value value : values) {
+            model.addRow(new Object[] { value.category.name + " - " + value.code.name, value.minutes });
+        }
         model.fireTableDataChanged();
     }
 }
