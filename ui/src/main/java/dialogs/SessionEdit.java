@@ -17,6 +17,9 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 
 public class SessionEdit extends JDialog {
+    public static SessionEdit openInstance = null;
+    public static int requestID = 0;
+
     public TaskInfo.Session session = null;
     private int sessionIndex = 0;
 
@@ -119,7 +122,10 @@ public class SessionEdit extends JDialog {
                 stopTime = Optional.empty();
             }
 
-            UpdateTaskTimes packet = new UpdateTaskTimes(type, RequestID.nextRequestID(), taskID, sessionIndex, startTime, stopTime);
+            requestID = RequestID.nextRequestID();
+            openInstance = this;
+
+            UpdateTaskTimes packet = new UpdateTaskTimes(type, requestID, taskID, sessionIndex, startTime, stopTime);
             mainFrame.getConnection().sendPacket(packet);
         });
 
@@ -174,6 +180,12 @@ public class SessionEdit extends JDialog {
             stopDatePicker.setSelectedDate(stopDateTime.toLocalDate());
             stopTimePicker.setSelectedTime(stopDateTime.toLocalTime());
         }
+    }
+
+    public void close() {
+        openInstance = null;
+        requestID = 0;
+        dispose();
     }
 
     private JPanel createStartPanel() {

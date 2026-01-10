@@ -1729,8 +1729,6 @@ TEST_CASE("Add Sessions", "[api][task]")
 
 		helper.expect_success(add);
 
-		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
-
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
@@ -1760,8 +1758,6 @@ TEST_CASE("Add Sessions", "[api][task]")
 		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), 10000ms, 20000ms);
 
 		helper.expect_success(add);
-
-		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
 
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
@@ -1934,8 +1930,6 @@ TEST_CASE("Edit Sessions", "[api][task]")
 
 		helper.expect_success(edit);
 
-		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
-
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
@@ -1965,8 +1959,6 @@ TEST_CASE("Edit Sessions", "[api][task]")
 		edit.stop = 20000ms;
 
 		helper.expect_success(edit);
-
-		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
 
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
@@ -2052,8 +2044,6 @@ TEST_CASE("Remove Sessions", "[api][task]")
 
 		helper.expect_success(remove);
 
-		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
-
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
@@ -2076,8 +2066,6 @@ TEST_CASE("Remove Sessions", "[api][task]")
 		remove.sessionIndex = 1;
 
 		helper.expect_success(remove);
-
-		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
 
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 

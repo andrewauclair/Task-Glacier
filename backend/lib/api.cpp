@@ -95,6 +95,7 @@ void API::process_packet(const Message& message)
 		m_database->write_task(*task, *m_sender);
 
 		m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
+		send_task_info(*task, false);
 
 		break;
 	}
@@ -141,6 +142,7 @@ void API::process_packet(const Message& message)
 		m_database->write_task(*task, *m_sender);
 
 		m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
+		send_task_info(*task, false);
 
 		break;
 	}
@@ -169,6 +171,7 @@ void API::process_packet(const Message& message)
 		m_database->write_task(*task, *m_sender);
 
 		m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
+		send_task_info(*task, false);
 
 		break;
 	}

@@ -2,6 +2,7 @@ package data;
 
 import dialogs.About;
 import dialogs.AddTask;
+import dialogs.SessionEdit;
 import dialogs.UnspecifiedTask;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.app.Docking;
@@ -145,6 +146,9 @@ public class ServerConnection {
                         }
                         if (UnspecifiedTask.openInstance != null && UnspecifiedTask.requestID == requestID) {
                             UnspecifiedTask.openInstance.close();
+                        }
+                        if (SessionEdit.openInstance != null && SessionEdit.requestID == requestID) {
+                            SessionEdit.openInstance.close();
                         }
                     });
                 }
