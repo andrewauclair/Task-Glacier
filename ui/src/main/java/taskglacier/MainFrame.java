@@ -9,12 +9,15 @@ import data.TimeData;
 import dialogs.ConnectToServer;
 import dialogs.UnspecifiedTask;
 import io.github.andrewauclair.moderndocking.Dockable;
+import io.github.andrewauclair.moderndocking.DockingRegion;
 import io.github.andrewauclair.moderndocking.app.AppState;
 import io.github.andrewauclair.moderndocking.app.Docking;
 import io.github.andrewauclair.moderndocking.app.RootDockingPanel;
 import io.github.andrewauclair.moderndocking.app.WindowLayoutBuilder;
+import io.github.andrewauclair.moderndocking.event.DockingEvent;
 import io.github.andrewauclair.moderndocking.exception.DockingLayoutException;
 import io.github.andrewauclair.moderndocking.ext.ui.DockingUI;
+import io.github.andrewauclair.moderndocking.internal.DockingListeners;
 import io.github.andrewauclair.moderndocking.layouts.DockingLayouts;
 import packets.Basic;
 import packets.BugzillaInfo;
@@ -41,6 +44,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -57,6 +61,8 @@ public class MainFrame extends JFrame {
     private ServerConnection connection = null;
     private TaskModel taskModel = new TaskModel();
     private SystemTrayDisplay systemTrayDisplay = new SystemTrayDisplay(this, trayIcon);
+
+    private DailyReportPanel dailyReportToday;
 
     public MainFrame() throws IOException {
         mainFrame = this;
@@ -126,10 +132,12 @@ public class MainFrame extends JFrame {
 //            }
 //        });
         new TasksList(this);
-
+        dailyReportToday = new DailyReportPanel(this);
+        
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
         WindowLayoutBuilder builder = new WindowLayoutBuilder("tasks");
+        builder.dock("daily-report-today", "tasks", DockingRegion.SOUTH);
 
         AppState.setDefaultApplicationLayout(builder.buildApplicationLayout());
         DockingLayouts.addLayout("default", builder.buildApplicationLayout());
@@ -193,6 +201,12 @@ public class MainFrame extends JFrame {
 
         timer.start();
 
+        DockingListeners.addDockingListener(dockingEvent -> {
+            if (!dockingEvent.isTemporary() && dockingEvent.getID() == DockingEvent.ID.UNDOCKED && dockingEvent.getDockable() instanceof DailyReportPanel) {
+                // unregister the daily report panel
+//                SwingUtilities.invokeLater(() -> Docking.deregisterDockable(dockingEvent.getDockable()));
+            }
+        });
         // if we're connected, we'll wait for the request config to complete before restoring
         restoreLayout();
     }
@@ -329,11 +343,22 @@ public class MainFrame extends JFrame {
             JOptionPane.showMessageDialog(MainFrame.this, String.format("Daily Report for %s not found", name));
             return;
         }
+
+        LocalDate now = LocalDate.now();
+
+        int month = now.getMonthValue();
+        int day = now.getDayOfMonth();
+        int year = now.getYear();
+
         DailyReportPanel panel = null;
 
         String persistentID = String.format("daily-report-%d-%d-%d", dailyReport.getReport().month, dailyReport.getReport().day, dailyReport.getReport().year);
+        boolean isToday = dailyReport.getReport().month == month && dailyReport.getReport().day == day && dailyReport.getReport().year == year;
 
-        if (Docking.isDockableRegistered(persistentID)) {
+        if (isToday) {
+            panel = dailyReportToday;
+        }
+        else if (Docking.isDockableRegistered(persistentID)) {
             for (Dockable dockable : Docking.getDockables()) {
                 if (dockable.getPersistentID().equals(persistentID)) {
                     panel = (DailyReportPanel) dockable;

@@ -19,16 +19,41 @@ public class DailyReportPanel extends JPanel implements Dockable {
     DailyReportTreeTable newTable = new DailyReportTreeTable();
     private MainFrame mainFrame;
 
+    private boolean today = false;
+
     @DockingProperty(name = "month", required = true)
     private int month;
     @DockingProperty(name = "day", required = true)
     private int day;
     @DockingProperty(name = "year", required = true)
     private int year;
+
     private DailyReportMessage.DailyReport report = null;
+
     private String persistentID;
     private String titleText;
     private String tabText;
+
+    // represents the current day always
+    public DailyReportPanel(MainFrame mainFrame) {
+        this.mainFrame = mainFrame;
+
+        today = true;
+
+        LocalDate now = LocalDate.now();
+
+        month = now.getMonthValue();
+        day = now.getDayOfMonth();
+        year = now.getYear();
+
+        persistentID = "daily-report-today";
+        titleText = "Daily Report (Today)";
+        tabText = "Daily Report (Today)";
+
+        Docking.registerDockable(this);
+
+        buildUI();
+    }
 
     public DailyReportPanel(MainFrame mainFrame, LocalDate date) {
         this.mainFrame = mainFrame;
@@ -55,21 +80,36 @@ public class DailyReportPanel extends JPanel implements Dockable {
         buildUI();
     }
 
+    private void refreshTodayDate() {
+        if (!today) {
+            return;
+        }
+        LocalDate now = LocalDate.now();
+
+        month = now.getMonthValue();
+        day = now.getDayOfMonth();
+        year = now.getYear();
+    }
     public int getMonth() {
+        refreshTodayDate();
         return month;
     }
 
     public int getDay() {
+        refreshTodayDate();
         return day;
     }
 
     public int getYear() {
+        refreshTodayDate();
         return year;
     }
 
     @Override
     public void updateProperties() {
         mainFrame = MainFrame.mainFrame;
+
+        refreshTodayDate();
 
         if (mainFrame.isConnected()) {
             RequestDailyReport request = new RequestDailyReport();

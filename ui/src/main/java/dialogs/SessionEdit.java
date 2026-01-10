@@ -8,8 +8,8 @@ import util.LabeledComponent;
 
 import javax.swing.*;
 import java.awt.*;
-import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 public class SessionEdit extends JDialog {
     public TaskInfo.Session session = null;
@@ -46,8 +46,9 @@ public class SessionEdit extends JDialog {
         startDatePicker.setEditor(startDate);
         stopDatePicker.setEditor(stopDate);
 
-        startTime.setText("--:-- --");
-        stopTime.setText("--:-- --");
+        startTime.setText("--:--:-- --");
+        stopTime.setText("--:--:-- --");
+
 
         startTimePicker.setEditor(startTime);
         stopTimePicker.setEditor(stopTime);
@@ -93,10 +94,7 @@ public class SessionEdit extends JDialog {
         save.setEnabled(false);
 
         save.addActionListener(e -> {
-            // we'll need a bunch of verification for this
-            // 1. we'll have to make sure that stop (if present) is after the start
-            // 2. verify that this session doesn't overlap with any other session in this task
-            // 3. verify that this session doesn't overlap with any session in any other task
+            // send updated session to server
         });
 
         startDate.addPropertyChangeListener(e -> updateSave());
@@ -132,12 +130,21 @@ public class SessionEdit extends JDialog {
 
         setTitle("Edit Session");
 
-        LocalDate start = session.startTime.atZone(ZoneId.systemDefault()).toLocalDate();
-        startDatePicker.setSelectedDate(start);
+        this.session = session;
+
+        ZonedDateTime startDateTime = session.startTime.atZone(ZoneId.systemDefault());
+        startDatePicker.setSelectedDate(startDateTime.toLocalDate());
+        startTimePicker.setSelectedTime(startDateTime.toLocalTime());
+
+        stopPresent.setSelected(session.stopTime.isPresent());
 
         if (session.stopTime.isPresent()) {
-            LocalDate stop = session.stopTime.get().atZone(ZoneId.systemDefault()).toLocalDate();
-            stopDatePicker.setSelectedDate(stop);
+            stopDate.setEnabled(true);
+            stopTime.setEnabled(true);
+
+            ZonedDateTime stopDateTime = session.stopTime.get().atZone(ZoneId.systemDefault());
+            stopDatePicker.setSelectedDate(stopDateTime.toLocalDate());
+            stopTimePicker.setSelectedTime(stopDateTime.toLocalTime());
         }
     }
 
