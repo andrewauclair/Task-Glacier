@@ -1,6 +1,9 @@
 package dialogs;
 
+import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import data.Standards;
+import data.Task;
 import packets.CreateTask;
 import packets.RequestID;
 import taskglacier.MainFrame;
@@ -11,6 +14,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+
+import static taskglacier.MainFrame.mainFrame;
 
 public class AddTask extends JDialog {
     public static AddTask openInstance = null;
@@ -100,8 +105,35 @@ public class AddTask extends JDialog {
         gbc.gridy++;
         gbc.gridx = 0;
         gbc.gridwidth = 2;
+
+        JToolBar toolBar = new JToolBar();
+        FlatSVGIcon searchIcon = new FlatSVGIcon(getClass().getResource("/search-svgrepo-com.svg")).derive(24, 24);
+
+        JButton search = new JButton(searchIcon);
+
+        toolBar.add(search);
+
+        parent.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
+
         add(createFlow("Parent: ", parent), gbc);
 
+        search.addActionListener(e -> {
+            int taskID = 0;
+            try {
+                taskID = Integer.parseInt(parent.getText());
+            }
+            catch (NumberFormatException ignore) {
+            }
+
+            Task selectedParent = mainFrame.getTaskModel().getTask(taskID);
+            TaskPicker picker = new TaskPicker(mainFrame, selectedParent);
+            picker.setVisible(true);
+
+            if (picker.task != null) {
+                parent.setText(String.valueOf(picker.task.id));
+                parent.setToolTipText(picker.task.name);
+            }
+        });
 
         gbc.gridy++;
 
