@@ -12,9 +12,9 @@ import java.awt.*;
 public class Search extends JPanel {
     public TaskTreeTable newTable;
 
-    public Search(MainFrame mainFrame) {
+    public Search(MainFrame mainFrame, boolean readOnly) {
         Task rootObject = new Task(0, 0, "");
-        newTable = new TaskTreeTable(mainFrame, rootObject, 0, false, false, ListSelectionModel.SINGLE_SELECTION);
+        newTable = new TaskTreeTable(mainFrame, rootObject, 0, false, readOnly, ListSelectionModel.SINGLE_SELECTION);
         SwingUtilities.invokeLater(() -> newTable.expand());
 
         setLayout(new GridBagLayout());

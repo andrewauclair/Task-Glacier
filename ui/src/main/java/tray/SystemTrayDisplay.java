@@ -69,7 +69,7 @@ public class SystemTrayDisplay extends JFrame {
     public SystemTrayDisplay(MainFrame mainFrame, TrayIcon trayIcon) {
         this.trayIcon = trayIcon;
         activity = new RecentActivity(mainFrame);
-        search = new Search(mainFrame);
+        search = new Search(mainFrame, false);
         dailyReportPanel = new SystemTrayDailyReport(mainFrame);
 
         addComponentListener(new ComponentAdapter() {

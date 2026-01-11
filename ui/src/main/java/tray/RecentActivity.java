@@ -1,5 +1,6 @@
 package tray;
 
+import com.formdev.flatlaf.FlatIconColors;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import data.Task;
 import data.TaskModel;
@@ -34,6 +35,11 @@ class RecentActivity extends JPanel implements TaskModel.Listener {
 
     public RecentActivity(MainFrame mainFrame) {
         super(new BorderLayout());
+
+        activeIcon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor(FlatIconColors.OBJECTS_GREEN.key)));
+        finishIcon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor(FlatIconColors.OBJECTS_PURPLE.key)));
+        pendingIcon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor(FlatIconColors.OBJECTS_YELLOW.key)));
+
         // build up a history of the last X task changes
 
         mainFrame.getTaskModel().addListener(this);

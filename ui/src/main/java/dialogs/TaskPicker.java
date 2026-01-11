@@ -12,6 +12,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class TaskPicker extends JDialog {
     public Task task = null;
@@ -26,7 +28,7 @@ public class TaskPicker extends JDialog {
         JButton select = new JButton("Select");
         select.addActionListener(e -> TaskPicker.this.dispose());
 
-        Search search = new Search(mainFrame);
+        Search search = new Search(mainFrame, true);
         search.newTable.addListSelectionListener(e -> {
             select.setEnabled(search.newTable.getSelectedRowCount() != 0);
 
@@ -44,6 +46,15 @@ public class TaskPicker extends JDialog {
         if (task != null) {
             SwingUtilities.invokeLater(() -> search.newTable.setSelectedTask(task));
         }
+
+        search.newTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() >= 2 && search.newTable.getSelectedRow() != -1) {
+                    select.doClick();
+                }
+            }
+        });
         JTextField searchText = new JTextField(30);
 
         setLayout(new GridBagLayout());
