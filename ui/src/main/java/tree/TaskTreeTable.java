@@ -24,6 +24,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
+import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseAdapter;
@@ -336,8 +337,14 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
         if (node != null) {
             int index = treeTableModel.getModelIndexForTreeNode(node);
 
-            getSelectionModel().clearSelection();
-            getSelectionModel().setSelectionInterval(index, index);
+            index = convertRowIndexToView(index);
+
+            setRowSelectionInterval(index, index);
+
+            Rectangle cellRect = getCellRect(index, 0, true);
+            cellRect.height += getParent().getHeight() / 2;
+
+            scrollRectToVisible(cellRect);
         }
     }
 
