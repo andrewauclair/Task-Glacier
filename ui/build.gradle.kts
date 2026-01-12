@@ -17,6 +17,7 @@ sourceSets.main {
 dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation("io.github.andrewauclair:modern-docking-api:1.4")
     implementation("io.github.andrewauclair:modern-docking-single-app:1.4")
     implementation("io.github.andrewauclair:modern-docking-ui:1.4")
