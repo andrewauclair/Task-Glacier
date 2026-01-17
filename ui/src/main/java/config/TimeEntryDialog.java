@@ -15,6 +15,8 @@ class TimeEntryDialog extends JDialog {
     TimeEntryDialog(Window parent, TimeData timeData) {
         super(parent);
 
+        setTitle("Time Entry Selection");
+
         setModalityType(ModalityType.APPLICATION_MODAL);
 
         DialogEscape.addEscapeHandler(this);
@@ -41,6 +43,11 @@ class TimeEntryDialog extends JDialog {
                 }
                 timeCode.setSelectedItem(null);
             }
+
+            SwingUtilities.invokeLater(() -> {
+                pack();
+                setLocationRelativeTo(parent);
+            });
         });
 
         timeCode.addActionListener(e -> add.setEnabled(true));
@@ -52,15 +59,17 @@ class TimeEntryDialog extends JDialog {
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.NORTHWEST;
-        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.insets = new Insets(15, 15, 5, 15);
         gbc.gridx = 0;
         gbc.gridy = 0;
 
         add(new LabeledComponent("Time Category", timeCategory), gbc);
         gbc.gridy++;
+        gbc.insets = new Insets(5, 15, 5, 15);
         add(new LabeledComponent("Time Code", timeCode), gbc);
         gbc.gridy++;
         gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = new Insets(5, 15, 15, 15);
         add(add, gbc);
 
         add.addActionListener(e -> {
