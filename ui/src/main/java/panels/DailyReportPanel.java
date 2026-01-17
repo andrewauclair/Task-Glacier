@@ -178,4 +178,9 @@ public class DailyReportPanel extends JPanel implements Dockable {
     public boolean isWrappableInScrollpane() {
         return false;
     }
+
+    @Override
+    public boolean isClosable() {
+        return !today;
+    }
 }
