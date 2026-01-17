@@ -71,7 +71,13 @@ class RecentActivity extends JPanel implements TaskModel.Listener {
             gbc.gridx++;
             gbc.gridheight = 1;
 
-            JLabel name = new JLabel(history.task.name);
+            int min = Math.min(history.task.name.length(), 55);
+            String nameText = history.task.name.substring(0, min);
+
+            if (min != history.task.name.length()) {
+                nameText += "...";
+            }
+            JLabel name = new JLabel(nameText);
             panel.add(name, gbc);
             gbc.gridy++;
 
