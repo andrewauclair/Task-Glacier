@@ -7,6 +7,7 @@ import data.ServerConnection;
 import data.TaskModel;
 import data.TimeData;
 import dialogs.ConnectToServer;
+import dialogs.RequestDailyReportDialog;
 import dialogs.UnspecifiedTask;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingRegion;
@@ -338,7 +339,13 @@ public class MainFrame extends JFrame {
     }
 
     public void receivedDailyReport(DailyReportMessage dailyReport) {
-        if (!dailyReport.isReportFound()) {
+        boolean userRequested = RequestDailyReportDialog.requestID != 0;
+
+        if (dailyReport.getRequestID() == RequestDailyReportDialog.requestID) {
+            RequestDailyReportDialog.requestID = 0;
+        }
+
+        if (!dailyReport.isReportFound() && userRequested) {
             String name = String.format("%d/%d/%d", dailyReport.getReport().month, dailyReport.getReport().day, dailyReport.getReport().year);
             JOptionPane.showMessageDialog(MainFrame.this, String.format("Daily Report for %s not found", name));
             return;

@@ -11,6 +11,8 @@ import java.awt.*;
 import java.time.LocalDate;
 
 public class RequestDailyReportDialog extends JDialog {
+    public static int requestID = 0;
+
     public RequestDailyReportDialog(MainFrame mainFrame) {
         super(mainFrame);
 
@@ -53,8 +55,10 @@ public class RequestDailyReportDialog extends JDialog {
             int month = localDate.getMonthValue();
             int day = localDate.getDayOfMonth();
 
+            requestID = RequestID.nextRequestID();
+
             RequestDailyReport request = new RequestDailyReport();
-            request.requestID = RequestID.nextRequestID();
+            request.requestID = requestID;
             request.month = month;
             request.day = day;
             request.year = year;
