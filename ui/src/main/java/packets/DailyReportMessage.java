@@ -96,6 +96,10 @@ public class DailyReportMessage implements Packet {
     public void writeToOutput(DataOutputStream output) throws IOException {
     }
 
+    public int getRequestID() {
+        return requestID;
+    }
+
     public static class DailyReport {
         public boolean found;
 
