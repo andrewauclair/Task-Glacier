@@ -122,7 +122,7 @@ class RecentActivity extends JPanel implements TaskModel.Listener {
 
     @Override
     public void removeTask(Task task) {
-        // TODO we'll have to manage the history better and sort it
+        // nothing needed here. tasks are only ever removed in order to add them again and adding handlings the logic of duplicate tasks
     }
 
     @Override

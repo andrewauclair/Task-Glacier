@@ -113,13 +113,14 @@ public class SessionEdit extends JDialog {
             startTimePicker.getSelectedTime();
 
             ZonedDateTime startDate = ZonedDateTime.of(startDatePicker.getSelectedDate(), startTimePicker.getSelectedTime(), ZoneId.systemDefault());
-            ZonedDateTime stopDate = ZonedDateTime.of(stopDatePicker.getSelectedDate(), stopTimePicker.getSelectedTime(), ZoneId.systemDefault());
 
             Instant startTime = startDate.toInstant();
-            Optional<Instant> stopTime = Optional.of(stopDate.toInstant());
+            Optional<Instant> stopTime = Optional.empty();
 
-            if (!stopPresent.isSelected()) {
-                stopTime = Optional.empty();
+            if (stopPresent.isSelected()) {
+                ZonedDateTime stopDate = ZonedDateTime.of(stopDatePicker.getSelectedDate(), stopTimePicker.getSelectedTime(), ZoneId.systemDefault());
+
+                stopTime = Optional.of(stopDate.toInstant());
             }
 
             requestID = RequestID.nextRequestID();
