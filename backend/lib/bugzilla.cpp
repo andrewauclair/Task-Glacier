@@ -43,31 +43,34 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 
 		auto result = m_curl->execute_request(request);
 
-		simdjson::dom::parser parser;
-		auto json = simdjson::padded_string(result);
-		simdjson::dom::element doc = parser.parse(json);
-
-		for (auto field : doc["fields"])
+		if (result)
 		{
-			auto name = std::string(std::string_view(field["name"]));
+			simdjson::dom::parser parser;
+			auto json = simdjson::padded_string(result.value());
+			simdjson::dom::element doc = parser.parse(json);
 
-			std::vector<std::string> values;
-
-			if (field.at_key("values").error() != simdjson::error_code::NO_SUCH_FIELD)
+			for (auto field : doc["fields"])
 			{
-				for (auto value : field["values"])
+				auto name = std::string(std::string_view(field["name"]));
+
+				std::vector<std::string> values;
+
+				if (field.at_key("values").error() != simdjson::error_code::NO_SUCH_FIELD)
 				{
-					try
+					for (auto value : field["values"])
 					{
-						values.emplace_back(std::string_view(value["name"]));
-					}
-					catch (const simdjson::simdjson_error& ignore)
-					{
+						try
+						{
+							values.emplace_back(std::string_view(value["name"]));
+						}
+						catch (const simdjson::simdjson_error& ignore)
+						{
+						}
 					}
 				}
-			}
 
-			m_bugzilla.at(info.name).fields[name] = values;
+				m_bugzilla.at(info.name).fields[name] = values;
+			}
 		}
 	}
 
@@ -200,12 +203,14 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 		{
 			const bool initial_refresh = !info.lastBugzillaRefresh.has_value();
 
-			const auto refresh = [&](const std::string& requestAddress)
+			const auto refresh = [&](const std::string& requestAddress) -> bool
 			{
 					auto result = m_curl->execute_request(requestAddress);
 
+					if (!result) return false;
+
 					simdjson::dom::parser parser;
-					auto json = simdjson::padded_string(result);
+					auto json = simdjson::padded_string(result.value());
 					simdjson::dom::element doc = parser.parse(json);
 
 					std::vector<TaskID> bugTasks;
@@ -321,6 +326,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 							api.send_task_info(*task, false);
 						}
 					}
+					return true;
 			};
 
 			// find all bugs that are not resolved
@@ -345,13 +351,16 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 				requestAddress += "&resolution=---";
 			}
 
-			refresh(requestAddress);
+			bool assignedSuccess = refresh(requestAddress);
 			requestAddress.replace(requestAddress.find("assigned_to"), std::string("assigned_to").length(), "cc");
-			refresh(requestAddress);
+			bool ccSuccess = refresh(requestAddress);
 
-			info.lastBugzillaRefresh = now;
+			if (assignedSuccess && ccSuccess)
+			{
+				info.lastBugzillaRefresh = now;
 
-			database.write_bugzilla_instance(info, *m_sender);
+				database.write_bugzilla_instance(info, *m_sender);
+			}
 		}
 	}
 }

@@ -55,7 +55,7 @@ private:
 struct curlpp_ : cURL
 {
 	// TODO probably return a JSON object
-	std::string execute_request(const std::string& url) override
+	std::optional<std::string> execute_request(const std::string& url) override
 	{
 		try {
 			curlpp::Cleanup cleaner;
@@ -65,11 +65,14 @@ struct curlpp_ : cURL
 
 			curlpp::Easy request;
 
+			std::ostringstream os;
+			curlpp::options::WriteStream ws(&os);
+			request.setOpt(ws);
 			request.setOpt(new curlpp::options::Url(url));
 			request.setOpt(new curlpp::options::Verbose(true));
 
 			request.perform();
-			return ss.str();
+			return std::optional<std::string>(os.str());
 		}
 		catch (const curlpp::LogicError& e)
 		{
@@ -81,7 +84,7 @@ struct curlpp_ : cURL
 			log_message("cURL error");
 			log_message(e.what());
 		}
-		return "";
+		return std::nullopt;
 	}
 };
 

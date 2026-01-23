@@ -32,7 +32,7 @@ struct curlTest : cURL
 		requests.clear();
 	}
 
-	std::string execute_request(const std::string& request) override
+	std::optional<std::string> execute_request(const std::string& request) override
 	{
 		requests.push_back(request);
 
