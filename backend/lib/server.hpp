@@ -127,7 +127,9 @@ public:
 
 	std::optional<std::string> reparent_task(TaskID id, TaskID new_parent_id);
 	std::optional<std::string> rename_task(TaskID id, std::string_view name);
-	
+
+	void fill_session_time_entry(const Task& task, TaskTimes& times);
+
 	std::expected<TaskState, std::string> task_state(TaskID id);
 
 	void load_task(const Task& task);

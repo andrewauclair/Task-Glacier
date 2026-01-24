@@ -115,7 +115,8 @@ void API::process_packet(const Message& message)
 		else
 		{
 			task->m_times.push_back(TaskTimes{ update.start, update.stop });
-			task->m_times.back().timeEntry = task->timeEntry;
+
+			m_app.fill_session_time_entry(*task, task->m_times.back());
 
 			std::sort(task->m_times.begin(), task->m_times.end());
 
@@ -310,7 +311,7 @@ void API::create_task(const CreateTaskMessage& message)
 	{
 		auto* task = m_app.find_task(result.value());
 
-		m_app.configure_task_time_entry(task->taskID(), message.timeEntry);
+		m_app.configure_task_time_entry(task->taskID(), message.timeEntry); 
 
 		m_sender->send(std::make_unique<SuccessResponse>(message.requestID));
 

@@ -211,55 +211,7 @@ std::optional<std::string> MicroTask::start_task(TaskID id, std::chrono::millise
 		task->state = TaskState::ACTIVE;
 		TaskTimes& times = task->m_times.emplace_back(startTime);
 
-		for (const TimeCategory& category : m_timeCategories)
-		{
-			const auto findCategory = [category](const Task* task)
-				{
-					auto result = std::find_if(task->timeEntry.begin(), task->timeEntry.end(), [&](const TimeEntry& entry) { return entry.categoryID == category.id; });
-
-					return result;
-				};
-
-			auto taskResult = findCategory(task);
-
-			// check if the task has this category, if it does not, move onto the parent
-			// if not found in the parent, fill with unknown
-			if (taskResult != task->timeEntry.end())
-			{
-				times.timeEntry.push_back(*taskResult);
-			}
-			else
-			{
-				// didn't find the category in the task, check the parents
-				auto* parent = find_task(task->parentID());
-
-				while (parent && findCategory(parent) == parent->timeEntry.end())
-				{
-					parent = find_task(parent->parentID());
-				}
-
-				if (parent)
-				{
-					auto result = findCategory(parent);
-
-					// if we found a parent with the category, use its time code
-					if (result != parent->timeEntry.end())
-					{
-						times.timeEntry.push_back(*result);
-					}
-					else
-					{
-						// if we didn't find a parent with the category, use unknown
-						times.timeEntry.emplace_back(category.id, TimeCodeID(0));
-					}
-				}
-				else
-				{
-					// if we didn't find a parent with the category, use unknown
-					times.timeEntry.emplace_back(category.id, TimeCodeID(0));
-				}
-			}
-		}
+		fill_session_time_entry(*task, times);
 
 		m_activeTask = task;
 
@@ -383,6 +335,59 @@ std::optional<std::string> MicroTask::rename_task(TaskID id, std::string_view na
 		return std::nullopt;
 	}
 	return std::format("Task with ID {} does not exist.", id);
+}
+
+void MicroTask::fill_session_time_entry(const Task& task, TaskTimes& times)
+{
+	for (const TimeCategory& category : m_timeCategories)
+	{
+		const auto findCategory = [category](const Task* task)
+			{
+				auto result = std::find_if(task->timeEntry.begin(), task->timeEntry.end(), [&](const TimeEntry& entry) { return entry.categoryID == category.id; });
+
+				return result;
+			};
+
+		auto taskResult = findCategory(&task);
+
+		// check if the task has this category, if it does not, move onto the parent
+		// if not found in the parent, fill with unknown
+		if (taskResult != task.timeEntry.end())
+		{
+			times.timeEntry.push_back(*taskResult);
+		}
+		else
+		{
+			// didn't find the category in the task, check the parents
+			auto* parent = find_task(task.parentID());
+
+			while (parent && findCategory(parent) == parent->timeEntry.end())
+			{
+				parent = find_task(parent->parentID());
+			}
+
+			if (parent)
+			{
+				auto result = findCategory(parent);
+
+				// if we found a parent with the category, use its time code
+				if (result != parent->timeEntry.end())
+				{
+					times.timeEntry.push_back(*result);
+				}
+				else
+				{
+					// if we didn't find a parent with the category, use unknown
+					times.timeEntry.emplace_back(category.id, TimeCodeID(0));
+				}
+			}
+			else
+			{
+				// if we didn't find a parent with the category, use unknown
+				times.timeEntry.emplace_back(category.id, TimeCodeID(0));
+			}
+		}
+	}
 }
 
 std::expected<TaskState, std::string> MicroTask::task_state(TaskID id)
