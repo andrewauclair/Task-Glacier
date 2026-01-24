@@ -214,6 +214,7 @@ std::vector<std::byte> UpdateTaskTimesMessage::pack() const
 	builder.add(start);
 	builder.add(stop.has_value());
 	builder.add(stop.value_or(0ms));
+	builder.add(checkForOverlaps);
 	
 	return builder.build();
 }
@@ -229,6 +230,7 @@ std::expected<UpdateTaskTimesMessage, UnpackError> UpdateTaskTimesMessage::unpac
 	const auto start = parser.parse_next<std::chrono::milliseconds>();
 	const auto stopPresent = parser.parse_next<bool>();
 	const auto stop = parser.parse_next<std::chrono::milliseconds>();
+	const auto checkForOverlaps = parser.parse_next<bool>();
 
 	try
 	{
@@ -236,6 +238,7 @@ std::expected<UpdateTaskTimesMessage, UnpackError> UpdateTaskTimesMessage::unpac
 
 		auto update = UpdateTaskTimesMessage(packetType.value(), requestID.value(), taskID.value(), start.value(), stopOpt);
 		update.sessionIndex = sessionIndex.value();
+		update.checkForOverlaps = checkForOverlaps.value();
 
 		return update;
 	}

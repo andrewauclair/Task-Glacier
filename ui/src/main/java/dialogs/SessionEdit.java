@@ -14,6 +14,7 @@ import java.awt.*;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.Optional;
 
 public class SessionEdit extends JDialog {
@@ -21,7 +22,6 @@ public class SessionEdit extends JDialog {
     public static int requestID = 0;
 
     public TaskInfo.Session session = null;
-    private int sessionIndex = 0;
 
     private DatePicker startDatePicker = new DatePicker();
     private DatePicker stopDatePicker = new DatePicker();
@@ -37,13 +37,15 @@ public class SessionEdit extends JDialog {
 
     JCheckBox stopPresent = new JCheckBox("Include Stop");
 
-    JButton save = new JButton("Save");
+    JButton ok = new JButton("OK");
+    JButton cancel = new JButton("Cancel");
+    JButton apply = new JButton("Apply");
+
     boolean newSession = true;
-    private int taskID;
+    int sessionIndex = 0;
 
     public SessionEdit(MainFrame mainFrame, int taskID) {
         super(mainFrame);
-        this.taskID = taskID;
 
         setModalityType(ModalityType.APPLICATION_MODAL);
 
@@ -60,7 +62,6 @@ public class SessionEdit extends JDialog {
 
         startTime.setText("--:--:-- --");
         stopTime.setText("--:--:-- --");
-
 
         startTimePicker.setEditor(startTime);
         stopTimePicker.setEditor(stopTime);
@@ -103,15 +104,16 @@ public class SessionEdit extends JDialog {
         add(createStopPanel(), gbc);
         gbc.gridy++;
 
-        save.setEnabled(false);
+        ok.addActionListener(e -> {
+            apply.doClick();
+            cancel.doClick();
+        });
 
-        save.addActionListener(e -> {
-            // send updated session to server
-            PacketType type = session != null ? PacketType.EDIT_TASK_SESSION : PacketType.ADD_TASK_SESSION;
+        cancel.addActionListener(e -> dispose());
 
-            startDatePicker.getSelectedDate();
-            startTimePicker.getSelectedTime();
+        apply.setEnabled(false);
 
+        apply.addActionListener(e -> {
             ZonedDateTime startDate = ZonedDateTime.of(startDatePicker.getSelectedDate(), startTimePicker.getSelectedTime(), ZoneId.systemDefault());
 
             Instant startTime = startDate.toInstant();
@@ -126,23 +128,27 @@ public class SessionEdit extends JDialog {
             requestID = RequestID.nextRequestID();
             openInstance = this;
 
-            UpdateTaskTimes packet = new UpdateTaskTimes(type, requestID, taskID, sessionIndex, startTime, stopTime);
+            UpdateTaskTimes packet = new UpdateTaskTimes(newSession ? PacketType.ADD_TASK_SESSION : PacketType.EDIT_TASK_SESSION, requestID, taskID, sessionIndex, startTime,
+                    stopTime);
+            packet.checkForOverlap = true;
             mainFrame.getConnection().sendPacket(packet);
         });
 
-        startDate.addPropertyChangeListener(e -> updateSave());
-        startTime.addPropertyChangeListener(e -> updateSave());
-        stopPresent.addActionListener(e -> updateSave());
-        stopDate.addPropertyChangeListener(e -> updateSave());
-        stopTime.addPropertyChangeListener(e -> updateSave());
+        startDate.addPropertyChangeListener(e -> updateApply());
+        startTime.addPropertyChangeListener(e -> updateApply());
+        stopPresent.addActionListener(e -> updateApply());
+        stopDate.addPropertyChangeListener(e -> updateApply());
+        stopTime.addPropertyChangeListener(e -> updateApply());
 
         gbc.weightx = 0;
         gbc.weighty = 0;
 
         gbc.anchor = GridBagConstraints.SOUTHEAST;
         gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
 
-        add(save, gbc);
+        add(createButtonPanel(), gbc);
 
         setSize(400, 200);
 
@@ -183,10 +189,23 @@ public class SessionEdit extends JDialog {
         }
     }
 
-    public void close() {
-        openInstance = null;
+    public void successResponse() {
         requestID = 0;
-        dispose();
+
+        apply.setEnabled(false);
+
+        ZonedDateTime startDate = ZonedDateTime.of(startDatePicker.getSelectedDate(), startTimePicker.getSelectedTime(), ZoneId.systemDefault());
+
+        Instant startTime = startDate.toInstant();
+        Optional<Instant> stopTime = Optional.empty();
+
+        if (stopPresent.isSelected()) {
+            ZonedDateTime stopDate = ZonedDateTime.of(stopDatePicker.getSelectedDate(), stopTimePicker.getSelectedTime(), ZoneId.systemDefault());
+
+            stopTime = Optional.of(stopDate.toInstant());
+        }
+
+        session = new TaskInfo.Session(startTime, stopTime, Collections.emptyList());
     }
 
     private JPanel createStartPanel() {
@@ -233,10 +252,34 @@ public class SessionEdit extends JDialog {
         return panel;
     }
 
-    private void updateSave() {
+    private JPanel createButtonPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+
+        panel.add(ok, gbc);
+        gbc.gridx++;
+
+        panel.add(cancel, gbc);
+        gbc.gridx++;
+
+        panel.add(apply, gbc);
+        gbc.gridx++;
+
+        return panel;
+    }
+
+    private void updateApply() {
         boolean startValid = startDatePicker.isDateSelected() && startTimePicker.isTimeSelected();
         boolean stopValid = !stopPresent.isSelected() || (stopDatePicker.isDateSelected() && stopTimePicker.isTimeSelected());
 
-        save.setEnabled(startValid && stopValid);
+        apply.setEnabled(startValid && stopValid);
     }
 }

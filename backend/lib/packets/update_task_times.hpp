@@ -15,6 +15,8 @@ struct UpdateTaskTimesMessage : RequestMessage
 	std::chrono::milliseconds start = std::chrono::milliseconds(0);
 	std::optional<std::chrono::milliseconds> stop;
 
+	bool checkForOverlaps = false; // tells the server to check for overlaps and not apply the change
+
 	UpdateTaskTimesMessage(PacketType type, RequestID requestID, TaskID taskID, std::chrono::milliseconds start, std::optional<std::chrono::milliseconds> stop) : RequestMessage(type, requestID), taskID(taskID), start(start), stop(stop)
 	{
 		assert(type == PacketType::ADD_TASK_SESSION || type == PacketType::EDIT_TASK_SESSION || type == PacketType::REMOVE_TASK_SESSION);

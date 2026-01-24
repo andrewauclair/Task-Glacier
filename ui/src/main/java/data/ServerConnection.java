@@ -148,7 +148,7 @@ public class ServerConnection {
                             UnspecifiedTask.openInstance.close();
                         }
                         if (SessionEdit.openInstance != null && SessionEdit.requestID == requestID) {
-                            SessionEdit.openInstance.close();
+                            SessionEdit.openInstance.successResponse();
                         }
                     });
                 }

@@ -7,13 +7,15 @@ import java.util.Optional;
 
 public class UpdateTaskTimes implements Packet {
     PacketType type;
-    int requestID;
+    public int requestID;
     int taskID;
 
-    int sessionIndex;
+    public int sessionIndex;
 
     Instant start;
     Optional<Instant> stop;
+
+    public boolean checkForOverlap = false;
 
     public UpdateTaskTimes(PacketType type, int requestID, int taskID, int sessionIndex, Instant start, Optional<Instant> stop) {
         this.type = type;
@@ -36,7 +38,7 @@ public class UpdateTaskTimes implements Packet {
 
     @Override
     public void writeToOutput(DataOutputStream output) throws IOException {
-        output.writeInt(37);
+        output.writeInt(38);
         output.writeInt(type.value());
         output.writeInt(requestID);
         output.writeInt(taskID);
@@ -44,5 +46,6 @@ public class UpdateTaskTimes implements Packet {
         output.writeLong(start.toEpochMilli());
         output.writeByte(stop.isPresent() ? 1 : 0);
         output.writeLong(stop.orElse(Instant.ofEpochMilli(0)).toEpochMilli());
+        output.writeByte(checkForOverlap ? 1 : 0);
     }
 }

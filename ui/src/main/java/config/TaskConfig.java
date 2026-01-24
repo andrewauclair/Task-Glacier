@@ -109,11 +109,16 @@ public class TaskConfig extends JDialog {
             // send any packets that are necessary
             UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task.id, Integer.parseInt(general.parent.getText()), general.description.getText());
             update.indexInParent = task.indexInParent;
+            update.sessions = task.sessions;
+            
             general.save(task, update);
             timeEntry.save(task, update);
-            sessions.save(task, update);
 
             mainFrame.getConnection().sendPacket(update);
+
+            sessions.save(mainFrame.getConnection());
+
+
 
             dispose();
         });
