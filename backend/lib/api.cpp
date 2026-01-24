@@ -58,12 +58,26 @@ void API::process_packet(const Message& message)
 			break;
 		}
 
-		bool overlap_detected = false;
-
-		const auto detect = [update, &overlap_detected](const Task& task)
+		if (update.stop.has_value() && update.stop <= update.start)
 		{
+			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Stop time cannot be before start time."));
+			break;
+		}
+
+		const Task* overlap_task = nullptr;
+		const TaskTimes* overlap_time = nullptr;
+
+		const auto detect = [update, &overlap_task, &overlap_time](const Task& task)
+		{
+			if (overlap_task)
+			{
+				return;
+			}
+
 			for (const TaskTimes& times : task.m_times)
 			{
+				bool overlap_detected = false;
+
 				if (update.start >= times.start && (!times.stop.has_value() || update.start <= times.stop.value()))
 				{
 					overlap_detected = true;
@@ -76,27 +90,40 @@ void API::process_packet(const Message& message)
 				{
 					overlap_detected = true;
 				}
+
+				if (overlap_detected)
+				{
+					overlap_task = &task;
+					overlap_time = &times;
+					break;
+				}
 			}
 		};
 
 		m_app.for_each_task_sorted(detect);
 
-		if (overlap_detected)
+		if (overlap_task)
 		{
-			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Unable to add session. Overlap detected."));
+			m_sender->send(std::make_unique<FailureResponse>(update.requestID, std::format("Overlap detected with '{}'.", overlap_task->m_name)));
 			break;
 		}
 
-		task->m_times.push_back(TaskTimes{ update.start, update.stop });
-		task->m_times.back().timeEntry = task->timeEntry;
+		if (update.checkForOverlaps)
+		{
+			m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
+		}
+		else
+		{
+			task->m_times.push_back(TaskTimes{ update.start, update.stop });
+			task->m_times.back().timeEntry = task->timeEntry;
 
-		std::sort(task->m_times.begin(), task->m_times.end());
+			std::sort(task->m_times.begin(), task->m_times.end());
 
-		m_database->write_task(*task, *m_sender);
+			m_database->write_task(*task, *m_sender);
 
-		m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
-		send_task_info(*task, false);
-
+			m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
+			send_task_info(*task, false);
+		}
 		break;
 	}
 	case PacketType::EDIT_TASK_SESSION:
@@ -127,23 +154,77 @@ void API::process_packet(const Message& message)
 
 		if (times.stop.has_value() && !update.stop.has_value())
 		{
-			m_sender->send(std::make_unique<FailureResponse>(update.requestID, std::format("Cannot remove stop time from session #{}", update.sessionIndex + 1)));
+			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Cannot remove stop time."));
 			break;
 		}
 		else if (!times.stop.has_value() && update.stop.has_value())
 		{
-			m_sender->send(std::make_unique<FailureResponse>(update.requestID, std::format("Cannot add stop time to session #{}", update.sessionIndex + 1)));
+			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Cannot add stop time."));
 			break;
 		}
 
-		times.start = update.start;
-		times.stop = update.stop;
+		const Task* overlap_task = nullptr;
+		const TaskTimes* overlap_time = nullptr;
 
-		m_database->write_task(*task, *m_sender);
+		const auto detect = [task, update, &overlap_task, &overlap_time](const Task& other_task)
+		{
+			if (task == &other_task)
+			{
+				return;
+			}
+			if (overlap_task)
+			{
+				return;
+			}
 
-		m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
-		send_task_info(*task, false);
+			for (const TaskTimes& times : other_task.m_times)
+			{
+				bool overlap_detected = false;
 
+				if (update.start >= times.start && (!times.stop.has_value() || update.start <= times.stop.value()))
+				{
+					overlap_detected = true;
+				}
+				else if (times.start >= update.start && times.start <= update.stop.value())
+				{
+					overlap_detected = true;
+				}
+				else if (update.stop.value() >= times.start && update.stop.value() <= times.stop.value())
+				{
+					overlap_detected = true;
+				}
+
+				if (overlap_detected)
+				{
+					overlap_task = &other_task;
+					overlap_time = &times;
+					break;
+				}
+			}
+		};
+
+		m_app.for_each_task_sorted(detect);
+
+		if (overlap_task)
+		{
+			m_sender->send(std::make_unique<FailureResponse>(update.requestID, std::format("Overlap detected with '{}'.", overlap_task->m_name)));
+			break;
+		}
+
+		if (update.checkForOverlaps)
+		{
+			m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
+		}
+		else
+		{
+			times.start = update.start;
+			times.stop = update.stop;
+
+			m_database->write_task(*task, *m_sender);
+
+			m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
+			send_task_info(*task, false);
+		}
 		break;
 	}
 	case PacketType::REMOVE_TASK_SESSION:
@@ -263,7 +344,16 @@ void API::start_task(const TaskMessage& message)
 
 	if (currentActiveTask && currentActiveTask->taskID() == UNSPECIFIED_TASK)
 	{
-		m_sender->send(std::make_unique<FailureResponse>(message.requestID, std::format("Cannot start task with ID {}. Unspecified task is active.", message.taskID)));
+		std::string failure;
+		if (message.taskID == UNSPECIFIED_TASK)
+		{
+			failure = "Unspecified task is already active.";
+		}
+		else
+		{
+			failure = std::format("Cannot start task with ID {}. Unspecified task is active.", message.taskID);
+		}
+		m_sender->send(std::make_unique<FailureResponse>(message.requestID, failure));
 
 		return;
 	}

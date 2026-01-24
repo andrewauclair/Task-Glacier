@@ -240,23 +240,24 @@ TEST_CASE("Update Task Times", "[message]")
 
 	SECTION("pack")
 	{
-		auto verifier = PacketVerifier(update.pack(), 37);
+		auto verifier = PacketVerifier(update.pack(), 38);
 
 		verifier
-			.verify_value<std::uint32_t>(37, "packet length")
+			.verify_value<std::uint32_t>(38, "packet length")
 			.verify_value<std::uint32_t>(10, "packet ID")
 			.verify_value<std::uint32_t>(10, "request ID")
 			.verify_value<std::uint32_t>(5, "task ID")
 			.verify_value<std::uint32_t>(2, "session index")
 			.verify_value<std::int64_t>(10, "start time")
 			.verify_value<bool>(true, "stop present")
-			.verify_value<std::int64_t>(20, "stop time");
+			.verify_value<std::int64_t>(20, "stop time")
+			.verify_value<bool>(false, "check for overlap");
 	}
 
 	SECTION("Unpack")
 	{
 		PacketTestHelper helper;
-		helper.expect_packet<UpdateTaskTimesMessage>(update, 37);
+		helper.expect_packet<UpdateTaskTimesMessage>(update, 38);
 	}
 }
 

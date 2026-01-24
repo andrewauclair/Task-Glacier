@@ -1,14 +1,19 @@
 package config;
 
+import data.ServerConnection;
 import data.Task;
 import data.TimeData;
 import dialogs.SessionEdit;
+import packets.PacketType;
+import packets.RequestID;
 import packets.TaskInfo;
 import packets.UpdateTask;
+import packets.UpdateTaskTimes;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -52,19 +57,46 @@ class Sessions extends JPanel {
 
         editSession.addActionListener(e -> {
             if (sessionTable.getSelectedRow() != -1) {
-                SessionRow session = sessionModel.data.get(sessionTable.getSelectedRow());
+                int row = sessionTable.convertRowIndexToModel(sessionTable.getSelectedRow());
 
-                SessionEdit edit = new SessionEdit(mainFrame, task.id, new TaskInfo.Session(session.start, session.stop, session.timeEntry),
-                        sessionTable.getSelectedRow());
+                SessionRow session = sessionModel.data.get(row);
+
+                SessionEdit edit = new SessionEdit(mainFrame, task.id, new TaskInfo.Session(session.start, session.stop, session.timeEntry), row);
                 edit.setVisible(true);
+
+                session.start = edit.session.startTime;
+                session.stop = edit.session.stopTime;
+                session.modified = true;
+
+                sessionModel.fireTableRowsUpdated(row, row);
             }
         });
+
         addSession.addActionListener(e -> {
             SessionEdit add = new SessionEdit(mainFrame, task.id);
             add.setVisible(true);
 
             // add.session
+            if (add.session != null) {
+                SessionRow row = new SessionRow();
+
+                row.start = add.session.startTime;
+                row.stop = add.session.stopTime;
+                row.timeEntry = new ArrayList<>(task.timeEntry);
+                row.added = true;
+
+                sessionModel.data.add(row);
+                sessionModel.fireTableRowsInserted(sessionModel.data.size() - 1, sessionModel.data.size() - 1);
+            }
         });
+
+        removeSession.addActionListener(e -> {
+            int row = sessionTable.convertRowIndexToModel(sessionTable.getSelectedRow());
+            sessionModel.data.get(row).removed = true;
+
+            sessionModel.fireTableRowsUpdated(row, row);
+        });
+
         return panel;
     }
 
@@ -180,6 +212,18 @@ class Sessions extends JPanel {
             }
         });
 
+        TableRowSorter<SessionTableModel> sorter = new TableRowSorter<>(sessionModel);
+
+        sorter.setRowFilter(new RowFilter<>() {
+            @Override
+            public boolean include(Entry<? extends SessionTableModel, ? extends Integer> entry) {
+                return !entry.getModel().data.get(entry.getIdentifier()).removed;
+            }
+        });
+        sorter.setSortsOnUpdates(true);
+
+        sessionTable.setRowSorter(sorter);
+
         timeEntryTable.getSelectionModel().addListSelectionListener(e -> {
             removeTimeEntry.setEnabled(timeEntryTable.getSelectedRow() != -1);
         });
@@ -275,10 +319,39 @@ class Sessions extends JPanel {
         }
     }
 
+    public void save(ServerConnection connection) {
+        List<UpdateTaskTimes> removes = new ArrayList<>();
+
+        for (SessionRow row : sessionModel.data) {
+            if (row.removed) {
+                removes.add(new UpdateTaskTimes(PacketType.REMOVE_TASK_SESSION, 0, task.id, sessionModel.data.indexOf(row), row.start
+                        , row.stop));
+            }
+            else if (row.modified) {
+                connection.sendPacket(new UpdateTaskTimes(PacketType.EDIT_TASK_SESSION, RequestID.nextRequestID(), task.id, sessionModel.data.indexOf(row),
+                        row.start, row.stop));
+            }
+            else if (row.added) {
+                connection.sendPacket(new UpdateTaskTimes(PacketType.ADD_TASK_SESSION, RequestID.nextRequestID(), task.id, 0, row.start, row.stop));
+            }
+        }
+
+        removes.sort((o1, o2) -> Integer.compare(o2.sessionIndex, o1.sessionIndex));
+
+        for (UpdateTaskTimes remove : removes) {
+            remove.requestID = RequestID.nextRequestID();
+            connection.sendPacket(remove);
+        }
+    }
+
     class SessionRow {
         Instant start;
         Optional<Instant> stop;
         List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
+
+        boolean modified = false;
+        boolean added = false;
+        boolean removed = false;
     }
 
     class SessionTableModel extends AbstractTableModel {

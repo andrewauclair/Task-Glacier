@@ -43,6 +43,7 @@ inline void verify_success_response(const SuccessResponse& expected, const Succe
 inline void verify_failure_response(const FailureResponse& expected, const FailureResponse& actual, std::source_location location)
 {
 	CHECK(expected.requestID == actual.requestID);
+	CHECK(expected.message == actual.message);
 }
 
 inline void verify_task_info(const TaskInfoMessage& expected, const TaskInfoMessage& actual, std::source_location location)
