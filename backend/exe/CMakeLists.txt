@@ -2,7 +2,7 @@
 
 FetchContent_Declare(
     curlpp
-    GIT_SHALLOW     TRUE
+    GIT_SHALLOW     FALSE
     GIT_REPOSITORY  https://github.com/jpbarrette/curlpp.git
     GIT_TAG         d080e301ec71061c46049d23fedfb8106be3153f
 )
