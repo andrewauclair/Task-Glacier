@@ -4,6 +4,7 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import data.Standards;
 import data.Task;
+import packets.Basic;
 import packets.CreateTask;
 import packets.RequestID;
 import taskglacier.MainFrame;
@@ -21,6 +22,8 @@ public class AddTask extends JDialog {
     public static AddTask openInstance = null;
 
     public static List<Integer> activeRequests = new ArrayList<>();
+
+    private long startTime = 0;
 
     public AddTask(MainFrame mainFrame, Window parentWindow, int defaultParentID) {
         super(parentWindow);
@@ -53,6 +56,8 @@ public class AddTask extends JDialog {
         setTitle("Add Task");
 
         add.addActionListener(e -> {
+            startTime = System.currentTimeMillis();
+
             int parentID = Integer.parseInt(parent.getText());
             if (bulkSwitch.getText().equals("v")) {
                 String[] names = bulkAdd.getText().split(System.lineSeparator());
@@ -67,9 +72,13 @@ public class AddTask extends JDialog {
                     activeRequests.add(requestID);
                 }
 
+                mainFrame.getConnection().sendPacket(Basic.BulkUpdateStart());
+
                 for (CreateTask packet : packets) {
                     mainFrame.getConnection().sendPacket(packet);
                 }
+
+                mainFrame.getConnection().sendPacket(Basic.BulkUpdateFinish());
             }
             else {
                 int requestID = RequestID.nextRequestID();
@@ -151,6 +160,11 @@ public class AddTask extends JDialog {
     }
 
     public void close() {
+        long stopTime = System.currentTimeMillis();
+        var diff = stopTime - startTime;
+
+        JOptionPane.showMessageDialog(this, String.format("%dms", diff), "Success", JOptionPane.INFORMATION_MESSAGE);
+
         openInstance = null;
         AddTask.this.dispose();
     }
