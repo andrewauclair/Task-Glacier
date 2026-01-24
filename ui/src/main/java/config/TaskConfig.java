@@ -110,7 +110,7 @@ public class TaskConfig extends JDialog {
             UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task.id, Integer.parseInt(general.parent.getText()), general.description.getText());
             update.indexInParent = task.indexInParent;
             update.sessions = task.sessions;
-            
+
             general.save(task, update);
             timeEntry.save(task, update);
 

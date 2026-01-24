@@ -1805,6 +1805,36 @@ TEST_CASE("Add Sessions", "[api][task]")
 		helper.required_messages({ &taskInfo });
 	}
 
+	SECTION("Success - Use Unknown from Each Time Category When Task has no Time Entry")
+	{
+		auto modify = TimeEntryModifyPacket(helper.next_request_id(), TimeCategoryModType::ADD, {});
+		auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
+		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
+		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
+
+		auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B");
+		newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
+		newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
+
+		helper.expect_success(modify);
+
+		auto create = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a");
+		helper.expect_success(create);
+
+		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), 10000ms, 20000ms);
+
+		helper.expect_success(add);
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.times.emplace_back(10000ms, 20000ms, std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(0)}, TimeEntry{TimeCategoryID(2), TimeCodeID(0)} });
+		taskInfo.state = TaskState::PENDING;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
+	}
+
 	SECTION("Failure - Unknown Task ID")
 	{
 		auto add = UpdateTaskTimesMessage(PacketType::ADD_TASK_SESSION, helper.next_request_id(), TaskID(1), 10000ms, 20000ms);

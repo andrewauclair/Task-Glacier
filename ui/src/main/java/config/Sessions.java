@@ -321,6 +321,7 @@ class Sessions extends JPanel {
 
     public void save(ServerConnection connection) {
         List<UpdateTaskTimes> removes = new ArrayList<>();
+        List<UpdateTaskTimes> adds = new ArrayList<>();
 
         for (SessionRow row : sessionModel.data) {
             if (row.removed) {
@@ -332,7 +333,7 @@ class Sessions extends JPanel {
                         row.start, row.stop));
             }
             else if (row.added) {
-                connection.sendPacket(new UpdateTaskTimes(PacketType.ADD_TASK_SESSION, RequestID.nextRequestID(), task.id, 0, row.start, row.stop));
+                adds.add(new UpdateTaskTimes(PacketType.ADD_TASK_SESSION, 0, task.id, 0, row.start, row.stop));
             }
         }
 
@@ -341,6 +342,11 @@ class Sessions extends JPanel {
         for (UpdateTaskTimes remove : removes) {
             remove.requestID = RequestID.nextRequestID();
             connection.sendPacket(remove);
+        }
+
+        for (UpdateTaskTimes add : adds) {
+            add.requestID = RequestID.nextRequestID();
+            connection.sendPacket(add);
         }
     }
 
