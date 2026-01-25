@@ -193,12 +193,6 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 			}
 		}
 
-		// TODO eventually we'll have to send back a failure if we weren't able to contact bugzilla
-		if (request.requestID != RequestID(0))
-		{
-			m_sender->send(std::make_unique<SuccessResponse>(request.requestID));
-		}
-
 		for (auto&& [instanceName, info] : m_bugzilla)
 		{
 			const bool initial_refresh = !info.lastBugzillaRefresh.has_value();
@@ -287,7 +281,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 
 							if (sendInfo)
 							{
-								api.send_task_info(*task, false);
+								//api.send_task_info(*task, false);
 							}
 						}
 						else if (parent)
@@ -296,7 +290,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 
 							auto* task = app.find_task(result.value());
 
-							api.send_task_info(*task, true);
+							//api.send_task_info(*task, true);
 
 							//info.bugToTaskID[i] = task->taskID();
 							info.bugToTaskID.emplace(i, task->taskID());
@@ -323,7 +317,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 
 						if (task && task->state != state)
 						{
-							api.send_task_info(*task, false);
+							//api.send_task_info(*task, false);
 						}
 					}
 					return true;
