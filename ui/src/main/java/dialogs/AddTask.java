@@ -23,8 +23,6 @@ public class AddTask extends JDialog {
 
     public static List<Integer> activeRequests = new ArrayList<>();
 
-    private long startTime = 0;
-
     public AddTask(MainFrame mainFrame, Window parentWindow, int defaultParentID) {
         super(parentWindow);
         openInstance = this;
@@ -56,8 +54,6 @@ public class AddTask extends JDialog {
         setTitle("Add Task");
 
         add.addActionListener(e -> {
-            startTime = System.currentTimeMillis();
-
             int parentID = Integer.parseInt(parent.getText());
             if (bulkSwitch.getText().equals("v")) {
                 String[] names = bulkAdd.getText().split(System.lineSeparator());
@@ -160,11 +156,6 @@ public class AddTask extends JDialog {
     }
 
     public void close() {
-        long stopTime = System.currentTimeMillis();
-        var diff = stopTime - startTime;
-
-        JOptionPane.showMessageDialog(this, String.format("%dms", diff), "Success", JOptionPane.INFORMATION_MESSAGE);
-
         openInstance = null;
         AddTask.this.dispose();
     }

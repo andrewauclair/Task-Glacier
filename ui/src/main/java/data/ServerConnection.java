@@ -86,7 +86,13 @@ public class ServerConnection {
                 if (packetType == PacketType.TASK_INFO) {
                     TaskInfo info = TaskInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
 
-                    SwingUtilities.invokeLater(() -> mainFrame.getTaskModel().receiveInfo(info));
+                    SwingUtilities.invokeLater(() -> {
+                        mainFrame.getTaskModel().receiveInfo(info);
+
+                        if (info.newTask && UnspecifiedTask.openInstance != null) {
+                            UnspecifiedTask.openInstance.setSelectedTask(info.taskID);
+                        }
+                    });
                 }
                 else if (packetType == PacketType.REQUEST_CONFIGURATION_COMPLETE) {
                     SwingUtilities.invokeLater(MainFrame::restoreLayout);
