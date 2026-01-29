@@ -381,7 +381,6 @@ public class MainFrame extends JFrame {
         }
         panel.update(dailyReport);
         systemTrayDisplay.dailyReportPanel.update(dailyReport);
-        Docking.display(panel);
     }
 
     public void receivedWeeklyReport(WeeklyReport weeklyReport) {
@@ -406,7 +405,6 @@ public class MainFrame extends JFrame {
             panel = new WeeklyReportPanel(this, dailyReport.getDate());
         }
         panel.update(weeklyReport);
-        Docking.display(panel);
     }
 
     public TimeData getTimeData() {
