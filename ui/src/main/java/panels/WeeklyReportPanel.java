@@ -16,6 +16,7 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -25,10 +26,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static java.time.temporal.TemporalAdjusters.previous;
+
 public class WeeklyReportPanel extends JPanel implements Dockable {
     TableModel model = new TableModel();
     WeeklyReportTreeTable newTable = new WeeklyReportTreeTable();
     private MainFrame mainFrame;
+
+    private boolean currentWeek = false;
 
     @DockingProperty(name = "month", required = true)
     private int month;
@@ -40,6 +45,29 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
     private String titleText;
     private String tabText;
     private WeeklyReport report = null;
+
+    // represents the current week always
+    public WeeklyReportPanel(MainFrame mainFrame) {
+        this.mainFrame = mainFrame;
+
+        currentWeek = true;
+
+        LocalDate now = LocalDate.now();
+
+        LocalDate sunday = now.with(previous(DayOfWeek.SUNDAY));
+
+        month = sunday.getMonthValue();
+        day = sunday.getDayOfMonth();
+        year = sunday.getYear();
+
+        persistentID = "weekly-report-current";
+        titleText = "Weekly Report (Current)";
+        tabText = "Weekly Report (Current)";
+
+        Docking.registerDockable(this);
+
+        buildUI();
+    }
 
     public WeeklyReportPanel(MainFrame mainFrame, LocalDate date) {
         this.mainFrame = mainFrame;
@@ -66,21 +94,40 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
         buildUI();
     }
 
+    private void refreshDate() {
+        if (!currentWeek) {
+            return;
+        }
+
+        LocalDate now = LocalDate.now();
+
+        LocalDate sunday = now.with(previous(DayOfWeek.SUNDAY));
+
+        month = sunday.getMonthValue();
+        day = sunday.getDayOfMonth();
+        year = sunday.getYear();
+    }
+
     public int getMonth() {
+        refreshDate();
         return month;
     }
 
     public int getDay() {
+        refreshDate();
         return day;
     }
 
     public int getYear() {
+        refreshDate();
         return year;
     }
 
     @Override
     public void updateProperties() {
         mainFrame = MainFrame.mainFrame;
+
+        refreshDate();
 
         RequestWeeklyReport request = new RequestWeeklyReport();
         request.requestID = RequestID.nextRequestID();

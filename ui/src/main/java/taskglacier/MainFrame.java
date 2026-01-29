@@ -45,11 +45,14 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.prefs.Preferences;
+
+import static java.time.temporal.TemporalAdjusters.previous;
 
 public class MainFrame extends JFrame {
     public static Map<String, BugzillaInfo> bugzillaInfo = new HashMap<>();
@@ -64,6 +67,7 @@ public class MainFrame extends JFrame {
     private SystemTrayDisplay systemTrayDisplay = new SystemTrayDisplay(this, trayIcon);
 
     private DailyReportPanel dailyReportToday;
+    private WeeklyReportPanel weeklyReportCurrent;
 
     public MainFrame() throws IOException {
         mainFrame = this;
@@ -87,7 +91,6 @@ public class MainFrame extends JFrame {
         gbc.fill = GridBagConstraints.BOTH;
 
         RootDockingPanel root = new RootDockingPanel();
-//        root.setVisible(false);
         add(root, gbc);
 
         setTitle("Task Glacier (Not Connected)");
@@ -134,11 +137,13 @@ public class MainFrame extends JFrame {
 //        });
         new TasksList(this);
         dailyReportToday = new DailyReportPanel(this);
+        weeklyReportCurrent = new WeeklyReportPanel(this);
         
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
         WindowLayoutBuilder builder = new WindowLayoutBuilder("tasks");
         builder.dock("daily-report-today", "tasks", DockingRegion.SOUTH);
+        builder.dock("weekly-report-current", "daily-report-today", DockingRegion.CENTER);
 
         AppState.setDefaultApplicationLayout(builder.buildApplicationLayout());
         DockingLayouts.addLayout("default", builder.buildApplicationLayout());
@@ -388,9 +393,21 @@ public class MainFrame extends JFrame {
 
         DailyReportMessage.DailyReport dailyReport = weeklyReport.reports[0];
 
-        String persistentID = String.format("weekly-report-%d-%d-%d", dailyReport.month, dailyReport.day, dailyReport.year);
+        LocalDate now = LocalDate.now();
 
-        if (Docking.isDockableRegistered(persistentID)) {
+        LocalDate sunday = now.with(previous(DayOfWeek.SUNDAY));
+
+        int month = sunday.getMonthValue();
+        int day = sunday.getDayOfMonth();
+        int year = sunday.getYear();
+
+        String persistentID = String.format("weekly-report-%d-%d-%d", dailyReport.month, dailyReport.day, dailyReport.year);
+        boolean isCurrentWeek = dailyReport.month == month && dailyReport.day == day && dailyReport.year == year;
+
+        if (isCurrentWeek) {
+            panel = weeklyReportCurrent;
+        }
+        else if (Docking.isDockableRegistered(persistentID)) {
             for (Dockable dockable : Docking.getDockables()) {
                 if (dockable.getPersistentID().equals(persistentID)) {
                     panel = (WeeklyReportPanel) dockable;

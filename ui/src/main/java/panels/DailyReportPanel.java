@@ -15,7 +15,6 @@ import java.awt.*;
 import java.time.LocalDate;
 
 public class DailyReportPanel extends JPanel implements Dockable {
-    JLabel date = new JLabel();
     DailyReportTreeTable newTable = new DailyReportTreeTable();
     private MainFrame mainFrame;
 
@@ -90,6 +89,7 @@ public class DailyReportPanel extends JPanel implements Dockable {
         day = now.getDayOfMonth();
         year = now.getYear();
     }
+
     public int getMonth() {
         refreshTodayDate();
         return month;
@@ -155,8 +155,6 @@ public class DailyReportPanel extends JPanel implements Dockable {
         report = message.getReport();
 
         newTable.update(report);
-
-        date.setText(String.format("%d/%d/%d", report.month, report.day, report.year));
     }
 
     @Override
