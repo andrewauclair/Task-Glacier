@@ -21,6 +21,8 @@ public class UnspecifiedTask extends JDialog {
     public static UnspecifiedTask openInstance = null;
 
     public static int requestID = 0;
+    private final JTextField taskID = new JTextField(6);
+    private final JButton done = new JButton("Done");
 
     public UnspecifiedTask(MainFrame mainFrame) {
         super(mainFrame);
@@ -37,8 +39,6 @@ public class UnspecifiedTask extends JDialog {
             AddTask add = new AddTask(mainFrame, this, 0);
             add.setVisible(true);
         });
-
-        JTextField taskID = new JTextField(6);
 
         JToolBar toolBar = new JToolBar();
         FlatSVGIcon searchIcon = new FlatSVGIcon(getClass().getResource("/search-svgrepo-com.svg")).derive(24, 24);
@@ -69,7 +69,6 @@ public class UnspecifiedTask extends JDialog {
         add(create, gbc);
         gbc.gridy++;
 
-        JButton done = new JButton("Done");
         done.setEnabled(false);
 
         search.addActionListener(e -> {
@@ -127,5 +126,14 @@ public class UnspecifiedTask extends JDialog {
         requestID = 0;
         openInstance = null;
         dispose();
+    }
+
+    public void setSelectedTask(int taskID) {
+        Task task = mainFrame.getTaskModel().getTask(taskID);
+
+        this.taskID.setText(String.valueOf(task.id));
+        this.taskID.setToolTipText(task.name);
+
+        done.setEnabled(true);
     }
 }

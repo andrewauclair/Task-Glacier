@@ -4,6 +4,7 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import data.Standards;
 import data.Task;
+import packets.Basic;
 import packets.CreateTask;
 import packets.RequestID;
 import taskglacier.MainFrame;
@@ -67,9 +68,13 @@ public class AddTask extends JDialog {
                     activeRequests.add(requestID);
                 }
 
+                mainFrame.getConnection().sendPacket(Basic.BulkUpdateStart());
+
                 for (CreateTask packet : packets) {
                     mainFrame.getConnection().sendPacket(packet);
                 }
+
+                mainFrame.getConnection().sendPacket(Basic.BulkUpdateFinish());
             }
             else {
                 int requestID = RequestID.nextRequestID();
