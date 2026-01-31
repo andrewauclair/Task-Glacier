@@ -193,6 +193,13 @@ public:
 
 				auto all_tasks = find_tasks_with_parent(parent);
 
+				std::sort(all_tasks.begin(), all_tasks.end(),
+					[](Task* a, Task* b)
+					{
+						return a->taskID() < b->taskID();
+					}
+				);
+
 				for (auto&& task : all_tasks)
 				{
 					// skip the unspecified task

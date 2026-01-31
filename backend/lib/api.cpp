@@ -578,7 +578,9 @@ void API::handle_basic(const BasicMessage& message)
 	{
 		TimeEntryDataPacket data({});
 
-		for (auto&& category : m_app.timeCategories())
+		auto& time_categories = m_app.timeCategories();
+		
+		for (auto&& category : time_categories)
 		{
 			TimeCategory packet = TimeCategory(category.id, category.name);
 
@@ -805,7 +807,14 @@ DailyReportMessage API::create_daily_report(RequestID requestID, int month, int 
 	if (report.report.found)
 	{
 		bool first = true;
-		
+
+		std::sort(tasks.begin(), tasks.end(),
+			[](MicroTask::FindTasksOnDay& a, MicroTask::FindTasksOnDay& b)
+			{
+				return a.task->taskID() < b.task->taskID();
+			}
+		);
+
 		for (auto&& task : tasks)
 		{
 			report.report.times.emplace_back(task.task->taskID(), task.time.startStopIndex);
