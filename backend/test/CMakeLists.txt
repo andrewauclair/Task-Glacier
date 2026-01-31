@@ -16,3 +16,7 @@ target_link_libraries(task-glacier-tests PRIVATE
 	cpptrace::cpptrace
 	Catch2::Catch2WithMain
 )
+
+include(CTest)
+include(Catch)
+catch_discover_tests(task-glacier-tests)
