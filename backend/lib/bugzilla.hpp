@@ -20,6 +20,7 @@
 class MicroTask;
 class API;
 class Database;
+class Task;
 
 struct BugzillaInstance
 {
@@ -53,15 +54,19 @@ public:
 	void receive_info(const BugzillaInfoMessage& info, MicroTask& app, API& api, Database& database);
 	void send_info();
 
-	void refresh(const RequestMessage& request, MicroTask& app, API& api, Database& database);
+	void perform_refresh(const RequestMessage& request, MicroTask& app, API& api, Database& database);
 
+private:
+	std::pair<std::vector<Task*>, std::vector<Task*>> refresh(const RequestMessage& request, MicroTask& app, API& api, Database& database);
+
+public:
 	void load_instance(const BugzillaInstance& instance);
 	void next_instance_id(BugzillaInstanceID next);
 
 private:
 	void build_group_by_task(BugzillaInstance& instance, MicroTask& app, API& api, TaskID parent, std::span<const std::string> groupTaskBy);
 
-	class Task* parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, API& api, const simdjson::dom::element& bug, TaskID currentParent, std::span<const std::string> groupTaskBy);
+	class Task* parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, API& api, const simdjson::dom::element& bug, TaskID currentParent, std::span<const std::string> groupTaskBy, std::vector<Task*>& new_tasks);
 
 	const Clock* m_clock;
 	cURL* m_curl;

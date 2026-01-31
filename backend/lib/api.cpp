@@ -299,20 +299,7 @@ void API::process_packet(const Message& message)
 	{
 		const auto& request = static_cast<const RequestMessage&>(message);
 
-		m_app.start_bulk_update();
-
-		try
-		{
-			m_bugzilla.refresh(request, m_app, *this, *m_database);
-
-			m_sender->send(std::make_unique<SuccessResponse>(request.requestID));
-		}
-		catch (const std::exception& e)
-		{
-			m_sender->send(std::make_unique<FailureResponse>(request.requestID, e.what()));
-		}
-
-		m_app.finish_bulk_update();
+		m_bugzilla.perform_refresh(request, m_app, *this, *m_database);
 
 		break;
 	}

@@ -240,7 +240,7 @@ TEST_CASE("Load Database", "[database]")
 
 		helper.api.process_packet(configure);
 
-		REQUIRE(helper.sender.output.size() == 15);
+		REQUIRE(helper.sender.output.size() == 17);
 		CHECK(dynamic_cast<BugzillaInfoMessage*>(helper.sender.output[1].get())->instanceID == BugzillaInstanceID(2));
 
 		// test next task ID

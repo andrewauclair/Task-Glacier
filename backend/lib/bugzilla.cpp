@@ -76,7 +76,7 @@ void Bugzilla::receive_info(const BugzillaInfoMessage& info, MicroTask& app, API
 
 	RequestMessage request(PacketType::BUGZILLA_REFRESH, RequestID(0));
 
-	refresh(request, app, api, database);
+	perform_refresh(request, app, api, database);
 }
 
 void Bugzilla::build_group_by_task(BugzillaInstance& instance, MicroTask& app, API& api, TaskID parent, std::span<const std::string> groupTaskBy)
@@ -115,7 +115,7 @@ void Bugzilla::build_group_by_task(BugzillaInstance& instance, MicroTask& app, A
 	}
 }
 
-Task* Bugzilla::parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, API& api, const simdjson::dom::element& bug, TaskID currentParent, std::span<const std::string> groupTaskBy)
+Task* Bugzilla::parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, API& api, const simdjson::dom::element& bug, TaskID currentParent, std::span<const std::string> groupTaskBy, std::vector<Task*>& new_tasks)
 {
 	auto field = groupTaskBy[0];
 	groupTaskBy = groupTaskBy.subspan(1);
@@ -151,14 +151,15 @@ Task* Bugzilla::parent_task_for_bug(BugzillaInstance& instance, MicroTask& app, 
 
 		task = app.find_task(result.value());
 
-		api.send_task_info(*task, true);
+		//api.send_task_info(*task, true);
+		new_tasks.push_back(task);
 	}
 
 	if (groupTaskBy.empty())
 	{
 		return task;
 	}
-	return parent_task_for_bug(instance, app, api, bug, task->taskID(), groupTaskBy);
+	return parent_task_for_bug(instance, app, api, bug, task->taskID(), groupTaskBy, new_tasks);
 }
 
 void Bugzilla::send_info()
@@ -175,8 +176,47 @@ void Bugzilla::send_info()
 	}
 }
 
-void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, Database& database)
+void Bugzilla::perform_refresh(const RequestMessage& request, MicroTask& app, API& api, Database& database)
 {
+	try
+	{
+		std::pair<std::vector<Task*>, std::vector<Task*>> task_updates = refresh(request, app, api, database);
+
+		if (request.requestID != RequestID(0))
+		{
+			m_sender->send(std::make_unique<SuccessResponse>(request.requestID));
+		}
+
+		if (!task_updates.first.empty() || !task_updates.second.empty())
+		{
+			m_sender->send(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_START));
+		}
+
+		for (Task* task : task_updates.first)
+		{
+			api.send_task_info(*task, true);
+		}
+
+		for (Task* task : task_updates.second)
+		{
+			api.send_task_info(*task, false);
+		}
+
+		if (!task_updates.first.empty() || !task_updates.second.empty())
+		{
+			m_sender->send(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_FINISH));
+		}
+	}
+	catch (const std::exception& e)
+	{
+		m_sender->send(std::make_unique<FailureResponse>(request.requestID, e.what()));
+	}
+}
+
+std::pair<std::vector<Task*>, std::vector<Task*>> Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, Database& database)
+{
+	std::pair<std::vector<Task*>, std::vector<Task*>> tasks_changed;
+
 	if (m_curl)
 	{
 		const auto now = m_clock->now();
@@ -189,7 +229,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 				{
 					m_sender->send(std::make_unique<FailureResponse>(request.requestID, std::format("Root task {} does not exist", info.bugzillaRootTaskID)));
 				}
-				return;
+				return tasks_changed;
 			}
 		}
 
@@ -229,7 +269,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 
 						if (!info.bugzillaGroupTasksBy.empty())
 						{
-							parent = parent_task_for_bug(info, app, api, bug, info.bugzillaRootTaskID, info.bugzillaGroupTasksBy);
+							parent = parent_task_for_bug(info, app, api, bug, info.bugzillaRootTaskID, info.bugzillaGroupTasksBy, tasks_changed.first);
 						}
 
 						[&]()
@@ -282,6 +322,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 							if (sendInfo)
 							{
 								//api.send_task_info(*task, false);
+								tasks_changed.second.push_back(task);
 							}
 						}
 						else if (parent)
@@ -291,6 +332,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 							auto* task = app.find_task(result.value());
 
 							//api.send_task_info(*task, true);
+							tasks_changed.first.push_back(task);
 
 							//info.bugToTaskID[i] = task->taskID();
 							info.bugToTaskID.emplace(i, task->taskID());
@@ -318,12 +360,12 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 						if (task && task->state != state)
 						{
 							//api.send_task_info(*task, false);
+							tasks_changed.second.push_back(task);
 						}
 					}
 					return true;
 			};
 
-			// find all bugs that are not resolved
 			std::string requestAddress = info.bugzillaURL + "/rest/bug?assigned_to=" + info.bugzillaUsername + "&api_key=" + info.bugzillaApiKey;
 
 			// not the initial refresh and not an internal request. only get latest changes
@@ -342,6 +384,7 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 			}
 			else
 			{
+				// find all bugs that are not resolved for the initial refresh
 				requestAddress += "&resolution=---";
 			}
 
@@ -357,6 +400,8 @@ void Bugzilla::refresh(const RequestMessage& request, MicroTask& app, API& api, 
 			}
 		}
 	}
+
+	return tasks_changed;
 }
 
 void Bugzilla::load_instance(const BugzillaInstance& instance)
