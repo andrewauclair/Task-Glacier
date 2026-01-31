@@ -87,6 +87,8 @@ struct nullDatabase : Database
 
 	void start_transaction(PacketSender& sender) override {}
 	void finish_transaction(PacketSender& sender) override {}
+
+	bool transaction_in_progress() const override { return false; }
 };
 
 struct TestPacketSender : PacketSender

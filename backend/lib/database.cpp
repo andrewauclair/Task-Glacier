@@ -562,6 +562,7 @@ void DatabaseImpl::start_transaction(PacketSender& sender)
 	try
 	{
 		start.exec();
+		m_transaction_in_progress = true;
 	}
 	catch (const std::exception& e)
 	{
@@ -576,11 +577,17 @@ void DatabaseImpl::finish_transaction(PacketSender& sender)
 	try
 	{
 		start.exec();
+		m_transaction_in_progress = false;
 	}
 	catch (const std::exception& e)
 	{
 		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
+}
+
+bool DatabaseImpl::transaction_in_progress() const
+{
+	return m_transaction_in_progress;
 }
 
 void DatabaseImpl::write_bugzilla_group_by(const BugzillaInstance& instance, PacketSender& sender)

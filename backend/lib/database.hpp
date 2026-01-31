@@ -54,6 +54,8 @@ struct Database
 
 	virtual void start_transaction(PacketSender& sender) = 0;
 	virtual void finish_transaction(PacketSender& sender) = 0;
+
+	virtual bool transaction_in_progress() const = 0;
 };
 
 struct DatabaseImpl : Database
@@ -92,6 +94,9 @@ struct DatabaseImpl : Database
 
 	void start_transaction(PacketSender& sender) override;
 	void finish_transaction(PacketSender& sender) override;
+
+	bool transaction_in_progress() const override;
+
 private:
 	void load_time_entry(MicroTask& app);
 	void load_tasks(MicroTask& app);
@@ -105,4 +110,5 @@ private:
 	void write_bugzilla_bug_to_task(const BugzillaInstance& instance, PacketSender& sender);
 
 	SQLite::Database m_database;
+	bool m_transaction_in_progress = false;
 };

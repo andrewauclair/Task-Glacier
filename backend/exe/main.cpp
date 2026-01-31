@@ -168,7 +168,22 @@ int main(int argc, char** argv)
 				break;
 			}
 
-			const auto result = parse_packet(input);
+			ParseResult result;
+			
+			try
+			{
+				result = parse_packet(input);
+			}
+			catch (const std::exception& e)
+			{
+				std::cout << e.what() << std::endl;
+				log_message(e.what());
+			}
+			catch (...)
+			{
+				std::cout << "parse_packet failed with unknown exception" << std::endl;
+				log_message("parse_packet failed with unknown exception");
+			}
 
 			if (result.packet)
 			{
