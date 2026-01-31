@@ -339,6 +339,11 @@ std::optional<std::string> MicroTask::rename_task(TaskID id, std::string_view na
 
 void MicroTask::fill_session_time_entry(const Task& task, TaskTimes& times)
 {
+	if (m_timeCategories.empty())
+	{
+		times.timeEntry.push_back(TimeEntry{ TimeCategoryID(0), TimeCodeID(0) });
+	}
+
 	for (const TimeCategory& category : m_timeCategories)
 	{
 		const auto findCategory = [category](const Task* task)

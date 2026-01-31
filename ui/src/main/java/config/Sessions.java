@@ -259,6 +259,15 @@ class Sessions extends JPanel {
                     session.timeEntry.set(sessionRow, entry);
                     timeEntryModel.fireTableRowsUpdated(row, row);
                 }
+
+                // if we have unknown - unknown, remove it
+                for (int i = 0; i < timeEntryModel.data.size(); i++) {
+                    if (timeEntryModel.data.get(i).category.id == 0) {
+                        timeEntryModel.data.remove(i);
+                        timeEntryModel.fireTableRowsDeleted(i, i);
+                        break;
+                    }
+                }
             }
         });
 

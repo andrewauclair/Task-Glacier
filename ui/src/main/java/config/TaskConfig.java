@@ -116,7 +116,7 @@ public class TaskConfig extends JDialog {
             general.save(task, update);
             timeEntry.save(task, update);
             sessions.save(task, update);
-            
+
             mainFrame.getConnection().sendPacket(update);
 
             sessions.save(mainFrame.getConnection());

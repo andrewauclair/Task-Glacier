@@ -98,7 +98,7 @@ TEST_CASE("Start Task", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(std::chrono::milliseconds(1737345839870));
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737345839870), std::nullopt));
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
 
@@ -116,14 +116,14 @@ TEST_CASE("Start Task", "[api][task]")
 		auto taskInfo1 = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
 		
 		taskInfo1.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo1.times.emplace_back(std::chrono::milliseconds(1737345839870), std::chrono::milliseconds(1737346739870));
+		taskInfo1.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737345839870), std::chrono::milliseconds(1737346739870)));
 		taskInfo1.state = TaskState::PENDING;
 		taskInfo1.newTask = false;
 
 		auto taskInfo2 = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
 
 		taskInfo2.createTime = std::chrono::milliseconds(1737344939870);
-		taskInfo2.times.emplace_back(std::chrono::milliseconds(1737346739870));
+		taskInfo2.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737346739870), std::nullopt));
 		taskInfo2.state = TaskState::ACTIVE;
 		taskInfo2.newTask = false;
 		taskInfo2.indexInParent = 1;
@@ -149,7 +149,7 @@ TEST_CASE("Start Task", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(std::chrono::milliseconds(1737344939870));
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737344939870), std::nullopt));
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
 
@@ -386,6 +386,31 @@ TEST_CASE("Start Task - Time Entry", "[api][task]")
 	}
 }
 
+TEST_CASE("Start Task - Empty Time Entry", "[api][task]")
+{
+	TestHelper<nullDatabase> helper;
+
+	CreateTaskMessage create(NO_PARENT, helper.next_request_id(), "test 1");
+	
+	helper.expect_success(create);
+
+	helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+	auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
+
+	taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+
+	TaskTimes times;
+	times.start = std::chrono::milliseconds(1737344939870);
+	times.timeEntry = std::vector{ TimeEntry{ TimeCategoryID(0), TimeCodeID(0) } };
+
+	taskInfo.times.push_back(times);
+	taskInfo.state = TaskState::ACTIVE;
+	taskInfo.newTask = false;
+
+	helper.required_messages({ &taskInfo });
+}
+
 TEST_CASE("Stop Task", "[api][task]")
 {
 	TestHelper<nullDatabase> helper;
@@ -400,7 +425,7 @@ TEST_CASE("Stop Task", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(std::chrono::milliseconds(1737344939870), std::chrono::milliseconds(1737345839870));
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737344939870), std::chrono::milliseconds(1737345839870)));
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 
@@ -420,7 +445,7 @@ TEST_CASE("Stop Task", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344939870);
-		taskInfo.times.emplace_back(std::chrono::milliseconds(1737348539870));
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737348539870), std::nullopt));
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
 		taskInfo.indexInParent = 1;
@@ -433,7 +458,7 @@ TEST_CASE("Stop Task", "[api][task]")
 		taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(std::chrono::milliseconds(1737345839870), std::chrono::milliseconds(1737346739870));
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737345839870), std::chrono::milliseconds(1737346739870)));
 		taskInfo.finishTime = std::chrono::milliseconds(1737347639870);
 		taskInfo.state = TaskState::FINISHED;
 		taskInfo.newTask = false;
@@ -521,7 +546,7 @@ TEST_CASE("Finish Task", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(std::chrono::milliseconds(1737344939870), std::chrono::milliseconds(1737345839870));
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737344939870), std::chrono::milliseconds(1737345839870)));
 		taskInfo.finishTime = std::chrono::milliseconds(1737345839870);
 		taskInfo.state = TaskState::FINISHED;
 		taskInfo.newTask = false;
@@ -556,7 +581,7 @@ TEST_CASE("Finish Task", "[api][task]")
 			taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
 
 			taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-			taskInfo.times.emplace_back(std::chrono::milliseconds(1737345839870));
+			taskInfo.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737345839870), std::nullopt));
 			taskInfo.state = TaskState::ACTIVE;
 			taskInfo.newTask = false;
 
@@ -591,7 +616,7 @@ TEST_CASE("Finish Task", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(2), NO_PARENT, "test 2");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344939870);
-		taskInfo.times.emplace_back(std::chrono::milliseconds(1737347639870));
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737347639870), std::nullopt));
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
 		taskInfo.indexInParent = 1;
@@ -604,7 +629,7 @@ TEST_CASE("Finish Task", "[api][task]")
 		taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(std::chrono::milliseconds(1737345839870), std::chrono::milliseconds(1737346739870));
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737345839870), std::chrono::milliseconds(1737346739870)));
 		taskInfo.finishTime = std::chrono::milliseconds(1737346739870);
 		taskInfo.state = TaskState::FINISHED;
 		taskInfo.newTask = false;
@@ -625,14 +650,14 @@ TEST_CASE("Finish Task", "[api][task]")
 		auto taskInfo1 = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
 
 		taskInfo1.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo1.times.emplace_back(std::chrono::milliseconds(1737346739870), std::chrono::milliseconds(1737348539870));
+		taskInfo1.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737346739870), std::chrono::milliseconds(1737348539870)));
 		taskInfo1.state = TaskState::PENDING;
 		taskInfo1.newTask = false;
 
 		auto taskInfo3 = TaskInfoMessage(TaskID(3), NO_PARENT, "test 3");
 
 		taskInfo3.createTime = std::chrono::milliseconds(1737345839870);
-		taskInfo3.times.emplace_back(std::chrono::milliseconds(1737348539870));
+		taskInfo3.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737348539870), std::nullopt));
 		taskInfo3.state = TaskState::ACTIVE;
 		taskInfo3.newTask = false;
 		taskInfo3.indexInParent = 2;
@@ -1523,7 +1548,7 @@ TEST_CASE("Start Unspecified Task", "[api][task]")
 		auto taskInfo1 = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
 
 		taskInfo1.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo1.times.emplace_back(std::chrono::milliseconds(1737344939870), std::chrono::milliseconds(1737345839870));
+		taskInfo1.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737344939870), std::chrono::milliseconds(1737345839870)));
 		taskInfo1.state = TaskState::PENDING;
 		taskInfo1.newTask = false;
 
@@ -1574,7 +1599,7 @@ TEST_CASE("Stop Unspecified Task", "[api][task]")
 	auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
 
 	taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-	taskInfo.times.emplace_back(std::chrono::milliseconds(1737344939870));
+	taskInfo.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737344939870), std::nullopt));
 	taskInfo.state = TaskState::ACTIVE;
 	taskInfo.newTask = false;
 
@@ -1601,8 +1626,8 @@ TEST_CASE("Starting Unspecified Task Multiple Times Clears Times", "[api][task]"
 	auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test 1");
 
 	taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-	taskInfo.times.emplace_back(std::chrono::milliseconds(1737344939870), std::chrono::milliseconds(1737346739870));
-	taskInfo.times.emplace_back(std::chrono::milliseconds(1737346739870));
+	taskInfo.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737344939870), std::chrono::milliseconds(1737346739870)));
+	taskInfo.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737346739870), std::nullopt));
 	taskInfo.state = TaskState::ACTIVE;
 	taskInfo.newTask = false;
 
@@ -1624,7 +1649,7 @@ TEST_CASE("Prevent Reparenting Mistakes", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(std::chrono::milliseconds(1737344939870));
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737344939870), std::nullopt));
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
 
@@ -1646,7 +1671,7 @@ TEST_CASE("Prevent Reparenting Mistakes", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(std::chrono::milliseconds(1737346739870));
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737346739870), std::nullopt));
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
 
@@ -1669,7 +1694,7 @@ TEST_CASE("Prevent Reparenting Mistakes", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(std::chrono::milliseconds(1737347639870));
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(std::chrono::milliseconds(1737347639870), std::nullopt));
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
 
@@ -1708,7 +1733,7 @@ TEST_CASE("Add Sessions", "[api][task]")
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.timeEntry = create.timeEntry;
-		taskInfo.times.emplace_back(10000ms, 20000ms);
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(10000ms, 20000ms));
 		taskInfo.times.back().timeEntry = create.timeEntry;
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
@@ -1730,8 +1755,8 @@ TEST_CASE("Add Sessions", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(10000ms, 20000ms);
-		taskInfo.times.emplace_back(1737344939870ms, 1737345839870ms);
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(10000ms, 20000ms));
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(1737344939870ms, 1737345839870ms));
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 
@@ -1760,8 +1785,8 @@ TEST_CASE("Add Sessions", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(10000ms, 20000ms);
-		taskInfo.times.emplace_back(1737347639870ms, 1737348539870ms);
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(10000ms, 20000ms));
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(1737347639870ms, 1737348539870ms));
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 
@@ -1889,7 +1914,7 @@ TEST_CASE("Add Sessions", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(1737344939870ms, 1737345839870ms);
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(1737344939870ms, 1737345839870ms));
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 
@@ -1942,7 +1967,7 @@ TEST_CASE("Add Sessions", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(1737347639870ms, 1737348539870ms);
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(1737347639870ms, 1737348539870ms));
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 
@@ -1971,7 +1996,7 @@ TEST_CASE("Add Sessions", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(1737347639870ms, 1737348539870ms);
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(1737347639870ms, 1737348539870ms));
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 
@@ -2010,8 +2035,8 @@ TEST_CASE("Edit Sessions", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(10000ms, 1737345839870ms);
-		taskInfo.times.emplace_back(20000ms, 1737347639870ms);
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(10000ms, 1737345839870ms));
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(20000ms, 1737347639870ms));
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 
@@ -2040,8 +2065,8 @@ TEST_CASE("Edit Sessions", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(5000ms, 10000ms);
-		taskInfo.times.emplace_back(11000ms, 20000ms);
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(5000ms, 10000ms));
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(11000ms, 20000ms));
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 
@@ -2069,8 +2094,8 @@ TEST_CASE("Edit Sessions", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(1737344939870ms, 1737345839870ms);
-		taskInfo.times.emplace_back(1737346739870ms, 1737347639870ms);
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(1737344939870ms, 1737345839870ms));
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(1737346739870ms, 1737347639870ms));
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 
@@ -2170,7 +2195,7 @@ TEST_CASE("Edit Sessions", "[api][task]")
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.state = TaskState::PENDING;
-		taskInfo.times.emplace_back(1737347639870ms, 1737348539870ms);
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(1737347639870ms, 1737348539870ms));
 		taskInfo.newTask = false;
 		helper.required_messages({ &taskInfo });
 	}
@@ -2198,7 +2223,7 @@ TEST_CASE("Remove Sessions", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(1737346739870ms, 1737347639870ms);
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(1737346739870ms, 1737347639870ms));
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 
@@ -2221,7 +2246,7 @@ TEST_CASE("Remove Sessions", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(1737344939870ms, 1737345839870ms);
+		taskInfo.times.push_back(create_times_with_unknown_time_entry(1737344939870ms, 1737345839870ms));
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 

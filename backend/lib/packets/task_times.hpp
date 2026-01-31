@@ -38,3 +38,8 @@ struct TaskTimes
 		return out;
 	}
 };
+
+inline TaskTimes create_times_with_unknown_time_entry(std::chrono::milliseconds start, std::optional<std::chrono::milliseconds> stop)
+{
+	return TaskTimes(start, stop, std::vector{ TimeEntry{ TimeCategoryID(0), TimeCodeID(0) } });
+}
