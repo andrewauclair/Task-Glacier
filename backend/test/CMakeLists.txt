@@ -17,6 +17,9 @@ target_link_libraries(task-glacier-tests PRIVATE
 	Catch2::Catch2WithMain
 )
 
+list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
+message("------- module path -----------: " ${CMAKE_MODULE_PATH})
+
 include(CTest)
 include(Catch)
 catch_discover_tests(task-glacier-tests)
