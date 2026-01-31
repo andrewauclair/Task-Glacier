@@ -48,8 +48,8 @@ inline void verify_failure_response(const FailureResponse& expected, const Failu
 
 inline void verify_task_info(const TaskInfoMessage& expected, const TaskInfoMessage& actual, std::source_location location)
 {
-	CHECK(expected.taskID == actual.taskID);
-	CHECK(expected.parentID == actual.parentID);
+	CHECK(expected.taskID._val == actual.taskID._val);
+	CHECK(expected.parentID._val == actual.parentID._val);
 	CHECK(expected.state == actual.state);
 	CHECK(expected.newTask == actual.newTask);
 	CHECK(expected.indexInParent == actual.indexInParent);
@@ -57,7 +57,14 @@ inline void verify_task_info(const TaskInfoMessage& expected, const TaskInfoMess
 	CHECK(expected.locked == actual.locked);
 	CHECK(expected.name == actual.name);
 	CHECK(expected.createTime == actual.createTime);
-	CHECK(expected.finishTime == actual.finishTime);
+
+	CHECK(expected.finishTime.has_value() == actual.finishTime.has_value());
+
+	if (expected.finishTime.has_value() && actual.finishTime.has_value())
+	{
+		CHECK(expected.finishTime.value() == actual.finishTime.value());
+	}
+
 	CHECK(expected.times == actual.times);
 	CHECK(expected.labels == actual.labels);
 	CHECK(expected.timeEntry == actual.timeEntry);

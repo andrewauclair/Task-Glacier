@@ -429,14 +429,19 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 		p1.newTask = p2.newTask = p3.newTask = p4.newTask = p1_critical.newTask = p2_minor.newTask = p3_blocker.newTask = p4_nitpick.newTask = true;
 
+		auto bulkStart = BasicMessage(PacketType::BULK_TASK_INFO_START);
+		auto bulkFinish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
 		helper.required_messages(
 			{
+				&bulkStart,
 				&p2, &p2_minor, &taskInfo4, &taskInfo5, 
 				&p1, &p1_critical, &taskInfo8, 
 				&p3, &p3_blocker, 
 				&taskInfo11, 
 				&p4, &p4_nitpick,
-				&taskInfo14
+				&taskInfo14,
+				&bulkFinish
 			});
 
 		SECTION("Refreshing Again Does Not Add New Tasks")
@@ -473,7 +478,10 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			taskInfo14.newTask = false;
 			taskInfo14.name = "70 - bug 5 rename";
 
-			helper.required_messages({ &taskInfo4, &taskInfo8, &taskInfo14 });
+			auto bulkStart = BasicMessage(PacketType::BULK_TASK_INFO_START);
+			auto bulkFinish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
+			helper.required_messages({ &bulkStart, &taskInfo4, &taskInfo8, &taskInfo14, &bulkFinish });
 		}
 
 		SECTION("New Bugs Are Added")
@@ -490,7 +498,10 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 			setup_task_pending(taskInfo27, 1737359339870ms);
 
-			helper.required_messages({ &taskInfo27 });
+			auto bulkStart = BasicMessage(PacketType::BULK_TASK_INFO_START);
+			auto bulkFinish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
+			helper.required_messages({ &bulkStart, &taskInfo27, &bulkFinish });
 		}
 
 		SECTION("Resolved Bugs Are Finished")
@@ -507,8 +518,11 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			taskInfo4.state = TaskState::FINISHED;
 			taskInfo4.finishTime = 1737359339870ms;
 
+			auto bulkStart = BasicMessage(PacketType::BULK_TASK_INFO_START);
+			auto bulkFinish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
 			// Catch 2 hates this
-			helper.required_messages({ &taskInfo4, &taskInfo4 });
+			helper.required_messages({ &bulkStart, &taskInfo4, &taskInfo4, &bulkFinish });
 		}
 
 		SECTION("Creating New Grouping Tasks - Moving Bug to New Group By")
@@ -539,7 +553,10 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 				p5.indexInParent = 4;
 
-				helper.required_messages({ &p5, &p5_nitpick, &taskInfo14, &p4, &p4_nitpick });
+				auto bulkStart = BasicMessage(PacketType::BULK_TASK_INFO_START);
+				auto bulkFinish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
+				helper.required_messages({ &bulkStart, &p5, &p5_nitpick, &taskInfo14, &p4, &p4_nitpick, &bulkFinish });
 			}
 
 			SECTION("Change Severity (Second Layer of Grouping)")
@@ -563,7 +580,10 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 				
 				p4_minor2.indexInParent = 1;
 
-				helper.required_messages({ &p4_minor2, &taskInfo14, &p4_nitpick });
+				auto bulkStart = BasicMessage(PacketType::BULK_TASK_INFO_START);
+				auto bulkFinish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
+				helper.required_messages({ &bulkStart, &p4_minor2, &taskInfo14, &p4_nitpick, &bulkFinish });
 			}
 		}
 
@@ -593,7 +613,10 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 				setup_task_pending(taskInfo29, 1737361139870ms);
 
-				helper.required_messages({ &p5, &p5_nitpick, &taskInfo29 });
+				auto bulkStart = BasicMessage(PacketType::BULK_TASK_INFO_START);
+				auto bulkFinish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
+				helper.required_messages({ &bulkStart, &p5, &p5_nitpick, &taskInfo29, &bulkFinish });
 			}
 
 			SECTION("Change Severity (Second Layer of Grouping)")
@@ -617,7 +640,10 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 				setup_task_pending(taskInfo28, 1737360239870ms);
 
-				helper.required_messages({ &p4_minor2, &taskInfo28 });
+				auto bulkStart = BasicMessage(PacketType::BULK_TASK_INFO_START);
+				auto bulkFinish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
+				helper.required_messages({ &bulkStart, &p4_minor2, &taskInfo28, &bulkFinish });
 			}
 		}
 
@@ -648,7 +674,10 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			p1_critical.newTask = false;
 			p1_critical.finishTime = 1737361139870ms;
 
-			helper.required_messages({ &p2_critical, &taskInfo24, &p1, &p1_critical });
+			auto bulkStart = BasicMessage(PacketType::BULK_TASK_INFO_START);
+			auto bulkFinish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
+			helper.required_messages({ &bulkStart, &p2_critical, &taskInfo24, &p1, &p1_critical, &bulkFinish });
 		}
 
 		SECTION("Finishing Old Grouping Tasks - Last Bug is Finished")
@@ -665,14 +694,17 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			taskInfo8.newTask = false;
 
 			p1.state = TaskState::FINISHED;
-			p1.finishTime = 1737360239870ms;
+			p1.finishTime = 1737362039870ms;
 			p1.newTask = false;
 			
 			p1_critical.state = TaskState::FINISHED;
-			p1_critical.finishTime = 1737361139870ms;
+			p1_critical.finishTime = 1737362939870ms;
 			p1_critical.newTask = false;
 
-			helper.required_messages({ &taskInfo8, &p1, &p1_critical, &taskInfo8 });
+			auto bulkStart = BasicMessage(PacketType::BULK_TASK_INFO_START);
+			auto bulkFinish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
+			helper.required_messages({ &bulkStart, &taskInfo8, &p1, &p1_critical, &taskInfo8, &bulkFinish });
 		}
 
 		SECTION("Building a Totally New Grouping")
@@ -747,14 +779,20 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			blocker.indexInParent = 6;
 			nitpick.indexInParent = 7;
 
+			auto bulkStart = BasicMessage(PacketType::BULK_TASK_INFO_START);
+			auto bulkFinish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
 			helper.required_messages(
 				{
 					&configure,
 
-					&minor, &minor_p2, &taskInfo4, &taskInfo5,
-					&critical, &critical_p1, &taskInfo8, 
-					&blocker, &blocker_p3, &taskInfo11, 
-					&nitpick, &nitpick_p4, &taskInfo14,
+					&bulkStart,
+					&minor, &minor_p2, &critical, &critical_p1, &blocker, &blocker_p3, &nitpick, &nitpick_p4, 
+					&taskInfo4, &taskInfo5, &taskInfo8, 
+					
+					
+					&taskInfo11, 
+					&taskInfo14,
 					
 					&p2,
 					&p2_minor,
@@ -763,7 +801,9 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 					&p3,
 					&p3_blocker,
 					&p4,
-					&p4_nitpick
+					&p4_nitpick,
+
+					&bulkFinish
 				});
 		}
 	}
@@ -823,12 +863,17 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 		p1.newTask = p2.newTask = p3.newTask = p4.newTask = p1_critical.newTask = p2_minor.newTask = p3_blocker.newTask = p4_nitpick.newTask = true;
 
+		auto bulkStart = BasicMessage(PacketType::BULK_TASK_INFO_START);
+		auto bulkFinish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
 		helper.required_messages(
 			{
+				&bulkStart,
 				&p2, &p2_minor, &taskInfo4, &taskInfo5, 
 				&p1, &p1_critical, &taskInfo8, 
 				&p3, &p3_blocker, &taskInfo11, 
-				&p4, &p4_nitpick, &taskInfo14
+				&p4, &p4_nitpick, &taskInfo14,
+				&bulkFinish
 			});
 	}
 }
