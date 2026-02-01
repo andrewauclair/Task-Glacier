@@ -120,8 +120,12 @@ public class SystemTrayDisplay extends JFrame {
 
         addWindowFocusListener(new WindowAdapter() {
             @Override
+            public void windowGainedFocus(WindowEvent e) {
+                searchText.requestFocus();
+            }
+
+            @Override
             public void windowLostFocus(WindowEvent e) {
-                System.out.println("SystemTrayDisplay.windowLostFocus");
                 if (!timer.isRunning()) {
                     timer.restart();
                 }
