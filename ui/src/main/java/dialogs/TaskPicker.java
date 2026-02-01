@@ -105,6 +105,8 @@ public class TaskPicker extends JDialog {
             }
         });
 
+        SwingUtilities.invokeLater(searchText::requestFocusInWindow);
+
         setSize(550, 400);
 
         // center on the main frame
