@@ -423,7 +423,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
             if (!mainFrame.isConnected()) {
                 return false;
             }
-            
+
             mainFrame.getConnection().sendPacket(Basic.BulkUpdateStart());
 
             // send to server

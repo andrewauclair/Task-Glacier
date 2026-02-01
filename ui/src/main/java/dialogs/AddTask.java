@@ -31,9 +31,31 @@ public class AddTask extends JDialog {
 
         // name, time tracking and project info
         // some of this info can be automatically filled
-        JTextField name = new JTextField(50);
+        JTextPane name = new JTextPane();
         JTextPane bulkAdd = new JTextPane();
 
+        name.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                SwingUtilities.invokeLater(() -> {
+                    pack();
+
+                    // center on the main frame
+                    setLocationRelativeTo(mainFrame);
+                });
+            }
+        });
+        bulkAdd.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                SwingUtilities.invokeLater(() -> {
+                    pack();
+
+                    // center on the main frame
+                    setLocationRelativeTo(mainFrame);
+                });
+            }
+        });
         bulkAdd.setVisible(false);
 
         JTextField parent = new JTextField();
@@ -54,6 +76,8 @@ public class AddTask extends JDialog {
         setTitle("Add Task");
 
         add.addActionListener(e -> {
+            add.setEnabled(false);
+
             int parentID = Integer.parseInt(parent.getText());
             if (bulkSwitch.getText().equals("v")) {
                 String[] names = bulkAdd.getText().split(System.lineSeparator());
@@ -153,6 +177,7 @@ public class AddTask extends JDialog {
 
     public void failureResponse(String message) {
         JOptionPane.showMessageDialog(this, message, "Failure", JOptionPane.ERROR_MESSAGE);
+        close();
     }
 
     public void close() {
