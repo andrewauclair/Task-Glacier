@@ -135,7 +135,9 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
         request.day = day;
         request.year = year;
 
-        mainFrame.getConnection().sendPacketWhenReady(request);
+        if (mainFrame.getConnection() != null) {
+            mainFrame.getConnection().sendPacketWhenReady(request);
+        }
     }
 
     private void buildUI() {
