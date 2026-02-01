@@ -379,11 +379,11 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 		const auto refresh = RequestMessage(PacketType::BUGZILLA_REFRESH, helper.next_request_id());
 
-		helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
-			"{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
-			"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
-			"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
-			"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+		helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"assigned_to\": \"test\", \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+			"{ \"id\": 55, \"assigned_to\": \"test\", \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+			"{ \"id\": 60, \"assigned_to\": \"test\", \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
+			"{ \"id\": 65, \"assigned_to\": \"test\", \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
+			"{ \"id\": 70, \"assigned_to\": \"test\", \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
 		helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 		helper.expect_success(refresh);
@@ -460,11 +460,11 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 		{
 			helper.clear_message_output();
 
-			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1 rename\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
-				"{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
-				"{ \"id\": 60, \"summary\": \"bug 3 rename\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
-				"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
-				"{ \"id\": 70, \"summary\": \"bug 5 rename\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"assigned_to\": \"test\", \"summary\": \"bug 1 rename\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+				"{ \"id\": 55, \"assigned_to\": \"test\", \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+				"{ \"id\": 60, \"assigned_to\": \"test\", \"summary\": \"bug 3 rename\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
+				"{ \"id\": 65, \"assigned_to\": \"test\", \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
+				"{ \"id\": 70, \"assigned_to\": \"test\", \"summary\": \"bug 5 rename\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
 			helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 			helper.expect_success(refresh);
@@ -484,11 +484,39 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			helper.required_messages({ &bulkStart, &taskInfo4, &taskInfo8, &taskInfo14, &bulkFinish });
 		}
 
+		SECTION("CC Bugs Start with (cc) when Renaming")
+		{
+			helper.clear_message_output();
+
+			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"assigned_to\": \"other\", \"summary\": \"bug 1 rename\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+				"{ \"id\": 55, \"assigned_to\": \"test\", \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+				"{ \"id\": 60, \"assigned_to\": \"test\", \"summary\": \"bug 3 rename\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
+				"{ \"id\": 65, \"assigned_to\": \"test\", \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
+				"{ \"id\": 70, \"assigned_to\": \"test\", \"summary\": \"bug 5 rename\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+			helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
+
+			helper.expect_success(refresh);
+
+			taskInfo4.newTask = false;
+			taskInfo4.name = "50 - (cc) bug 1 rename";
+
+			taskInfo8.newTask = false;
+			taskInfo8.name = "60 - bug 3 rename";
+
+			taskInfo14.newTask = false;
+			taskInfo14.name = "70 - bug 5 rename";
+
+			auto bulkStart = BasicMessage(PacketType::BULK_TASK_INFO_START);
+			auto bulkFinish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
+			helper.required_messages({ &bulkStart, &taskInfo4, &taskInfo8, &taskInfo14, &bulkFinish });
+		}
+
 		SECTION("New Bugs Are Added")
 		{
 			helper.clear_message_output();
 
-			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 75, \"summary\": \"bug 6\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 75, \"assigned_to\": \"test\", \"summary\": \"bug 6\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
 			helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 			helper.expect_success(refresh);
@@ -504,11 +532,31 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			helper.required_messages({ &bulkStart, &taskInfo27, &bulkFinish });
 		}
 
+		SECTION("New CC Bugs Are Maked with (cc)")
+		{
+			helper.clear_message_output();
+
+			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 75, \"assigned_to\": \"other\", \"summary\": \"bug 6\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+			helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
+
+			helper.expect_success(refresh);
+
+			auto taskInfo27 = TaskInfoMessage(TaskID(15), TaskID(13), "75 - (cc) bug 6");
+			taskInfo27.indexInParent = 1;
+
+			setup_task_pending(taskInfo27, 1737359339870ms);
+
+			auto bulkStart = BasicMessage(PacketType::BULK_TASK_INFO_START);
+			auto bulkFinish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
+
+			helper.required_messages({ &bulkStart, &taskInfo27, &bulkFinish });
+		}
+
 		SECTION("Resolved Bugs Are Finished")
 		{
 			helper.clear_message_output();
 
-			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1 rename\", \"status\": \"RESOLVED\", \"priority\": \"P2\", \"severity\": \"Minor\" } ] }");
+			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"assigned_to\": \"test\", \"summary\": \"bug 1 rename\", \"status\": \"RESOLVED\", \"priority\": \"P2\", \"severity\": \"Minor\" } ] }");
 			helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 			helper.expect_success(refresh);
@@ -531,7 +579,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			{
 				helper.clear_message_output();
 
-				helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P5\", \"severity\": \"Nitpick\" } ] }");
+				helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 70, \"assigned_to\": \"test\", \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P5\", \"severity\": \"Nitpick\" } ] }");
 				helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 				helper.expect_success(refresh);
@@ -563,7 +611,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			{
 				helper.clear_message_output();
 
-				helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Minor2\" } ] }");
+				helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 70, \"assigned_to\": \"test\", \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Minor2\" } ] }");
 				helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 				helper.expect_success(refresh);
@@ -593,7 +641,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			{
 				helper.clear_message_output();
 
-				helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 75, \"summary\": \"bug 6\", \"status\": \"Confirmed\", \"priority\": \"P5\", \"severity\": \"Nitpick\" } ] }");
+				helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 75, \"assigned_to\": \"test\", \"summary\": \"bug 6\", \"status\": \"Confirmed\", \"priority\": \"P5\", \"severity\": \"Nitpick\" } ] }");
 				helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 				helper.expect_success(refresh);
@@ -623,7 +671,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 			{
 				helper.clear_message_output();
 
-				helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 75, \"summary\": \"bug 6\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Minor2\" } ] }");
+				helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 75, \"assigned_to\": \"test\", \"summary\": \"bug 6\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Minor2\" } ] }");
 				helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 				helper.expect_success(refresh);
@@ -651,7 +699,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 		{
 			helper.clear_message_output();
 
-			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Confirmed\", \"priority\": \"P2\", \"severity\": \"Critical\" } ] }");
+			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 60, \"assigned_to\": \"test\", \"summary\": \"bug 3\", \"status\": \"Confirmed\", \"priority\": \"P2\", \"severity\": \"Critical\" } ] }");
 			helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 			helper.expect_success(refresh);
@@ -684,7 +732,7 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 		{
 			helper.clear_message_output();
 
-			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 60, \"summary\": \"bug 3\", \"status\": \"RESOLVED\", \"priority\": \"P1\", \"severity\": \"Critical\" } ] }");
+			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 60, \"assigned_to\": \"test\", \"summary\": \"bug 3\", \"status\": \"RESOLVED\", \"priority\": \"P1\", \"severity\": \"Critical\" } ] }");
 			helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 			helper.expect_success(refresh);
@@ -719,11 +767,11 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 			helper.curl.requestResponse.emplace_back(fieldsResponse);
 
-			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
-				"{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
-				"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
-				"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
-				"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+			helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"assigned_to\": \"test\", \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+				"{ \"id\": 55, \"assigned_to\": \"test\", \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+				"{ \"id\": 60, \"assigned_to\": \"test\", \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
+				"{ \"id\": 65, \"assigned_to\": \"test\", \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
+				"{ \"id\": 70, \"assigned_to\": \"test\", \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
 			helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 			helper.api.process_packet(configure);
@@ -814,11 +862,11 @@ TEST_CASE("Bugzilla Refresh", "[bugzilla][api]")
 
 		const auto refresh = RequestMessage(PacketType::BUGZILLA_REFRESH, helper.next_request_id());
 
-		helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": [ \"Minor\" ] },"
-						"{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": [ \"Minor\" ] },"
-						"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": [ \"Critical\" ] },"
-						"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": [ \"Blocker\" ] },"
-						"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": [ \"Nitpick\" ] } ] }");
+		helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"assigned_to\": \"test\", \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": [ \"Minor\" ] },"
+						"{ \"id\": 55, \"assigned_to\": \"test\", \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": [ \"Minor\" ] },"
+						"{ \"id\": 60, \"assigned_to\": \"test\", \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": [ \"Critical\" ] },"
+						"{ \"id\": 65, \"assigned_to\": \"test\", \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": [ \"Blocker\" ] },"
+						"{ \"id\": 70, \"assigned_to\": \"test\", \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": [ \"Nitpick\" ] } ] }");
 		helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 		helper.expect_success(refresh);

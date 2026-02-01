@@ -286,13 +286,15 @@ std::pair<std::vector<Task*>, std::vector<Task*>> Bugzilla::refresh(const Reques
 							}();
 
 						auto id = bug["id"];
-						int i = id.get_int64();
+						int bug_id = id.get_int64();
 
-						auto iter = info.bugToTaskID.find(i);
+						bool cc_only = std::string_view(bug["assigned_to"]) != info.bugzillaUsername;
+
+						auto iter = info.bugToTaskID.find(bug_id);
 
 						if (iter != info.bugToTaskID.end())
 						{
-							auto name = std::format("{} - {}", i, std::string_view(bug["summary"]));
+							auto name = std::format("{} - {}{}", bug_id, cc_only ? "(cc) " : "", std::string_view(bug["summary"]));
 
 							Task* task = app.find_task(iter->second);
 
@@ -327,7 +329,7 @@ std::pair<std::vector<Task*>, std::vector<Task*>> Bugzilla::refresh(const Reques
 						}
 						else if (parent)
 						{
-							const auto result = app.create_task(std::format("{} - {}", i, std::string_view(bug["summary"])), parent->taskID(), true);
+							const auto result = app.create_task(std::format("{} - {}{}", bug_id, cc_only ? "(cc) " : "", std::string_view(bug["summary"])), parent->taskID(), true);
 
 							auto* task = app.find_task(result.value());
 
@@ -335,7 +337,7 @@ std::pair<std::vector<Task*>, std::vector<Task*>> Bugzilla::refresh(const Reques
 							tasks_changed.first.push_back(task);
 
 							//info.bugToTaskID[i] = task->taskID();
-							info.bugToTaskID.emplace(i, task->taskID());
+							info.bugToTaskID.emplace(bug_id, task->taskID());
 						}
 					}
 

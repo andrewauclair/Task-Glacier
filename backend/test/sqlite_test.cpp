@@ -200,11 +200,11 @@ TEST_CASE("Load Database", "[database]")
 	)bugs_data";
 
 		helper.curl.requestResponse.emplace_back(fieldsResponse);
-		helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
-			"{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
-			"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
-			"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
-			"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+		helper.curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"assigned_to\": \"test\", \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+			"{ \"id\": 55, \"assigned_to\": \"test\", \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+			"{ \"id\": 60, \"assigned_to\": \"test\", \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
+			"{ \"id\": 65, \"assigned_to\": \"test\", \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
+			"{ \"id\": 70, \"assigned_to\": \"test\", \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
 		helper.curl.requestResponse.push_back(helper.curl.requestResponse.back());
 
 		helper.api.process_packet(configure);
@@ -1664,11 +1664,11 @@ TEST_CASE("Write Bugzilla Bug ID to Task ID to Database", "[database]")
 	)bugs_data";
 
 	curl.requestResponse.emplace_back(fieldsResponse);
-	curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
-		"{ \"id\": 55, \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
-		"{ \"id\": 60, \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
-		"{ \"id\": 65, \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
-		"{ \"id\": 70, \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
+	curl.requestResponse.emplace_back("{ \"bugs\": [ { \"id\": 50, \"assigned_to\": \"test\", \"summary\": \"bug 1\", \"status\": \"Assigned\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+		"{ \"id\": 55, \"assigned_to\": \"test\", \"summary\": \"bug 2\", \"status\": \"Changes Made\", \"priority\": \"P2\", \"severity\": \"Minor\" },"
+		"{ \"id\": 60, \"assigned_to\": \"test\", \"summary\": \"bug 3\", \"status\": \"Changes Made\", \"priority\": \"P1\", \"severity\": \"Critical\" },"
+		"{ \"id\": 65, \"assigned_to\": \"test\", \"summary\": \"bug 4\", \"status\": \"Reviewed\", \"priority\": \"P3\", \"severity\": \"Blocker\" },"
+		"{ \"id\": 70, \"assigned_to\": \"test\", \"summary\": \"bug 5\", \"status\": \"Confirmed\", \"priority\": \"P4\", \"severity\": \"Nitpick\" } ] }");
 	curl.requestResponse.push_back(curl.requestResponse.back());
 
 	api.process_packet(configure);
