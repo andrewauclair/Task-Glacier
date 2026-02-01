@@ -429,6 +429,10 @@ public class MainFrame extends JFrame {
     }
 
     public void startUnspecifiedTask() {
+        if (!isConnected()) {
+            return;
+        }
+
         TaskStateChange startUnspecified = new TaskStateChange();
 
         startUnspecified.packetType = PacketType.START_UNSPECIFIED_TASK;

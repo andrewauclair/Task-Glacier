@@ -129,13 +129,13 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
 
         refreshDate();
 
-        RequestWeeklyReport request = new RequestWeeklyReport();
-        request.requestID = RequestID.nextRequestID();
-        request.month = month;
-        request.day = day;
-        request.year = year;
+        if (mainFrame.isConnected()) {
+            RequestWeeklyReport request = new RequestWeeklyReport();
+            request.requestID = RequestID.nextRequestID();
+            request.month = month;
+            request.day = day;
+            request.year = year;
 
-        if (mainFrame.getConnection() != null) {
             mainFrame.getConnection().sendPacketWhenReady(request);
         }
     }

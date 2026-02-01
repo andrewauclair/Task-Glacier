@@ -200,14 +200,16 @@ public class SystemTrayDisplay extends JFrame {
             int month = localDate.getMonthValue();
             int day = localDate.getDayOfMonth();
 
-            RequestDailyReport request = new RequestDailyReport();
-            request.requestID = RequestID.nextRequestID();
-            request.month = month;
-            request.day = day;
-            request.year = year;
+            if (mainFrame.isConnected()) {
+                RequestDailyReport request = new RequestDailyReport();
+                request.requestID = RequestID.nextRequestID();
+                request.month = month;
+                request.day = day;
+                request.year = year;
 
-            mainFrame.getConnection().sendPacket(request);
-            
+                mainFrame.getConnection().sendPacket(request);
+            }
+
             // display the system tray daily report panel, which is a simplified version of the full panel
             layout.show(stack, "daily-report");
         });

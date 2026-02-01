@@ -218,10 +218,12 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
     }
 
     private void finishActiveTask() {
-        TaskStateChange change = new TaskStateChange();
-        change.packetType = PacketType.FINISH_TASK;
-        change.taskID = mainFrame.getTaskModel().getActiveTaskID().get();
-        mainFrame.getConnection().sendPacket(change);
+        if (mainFrame.isConnected()) {
+            TaskStateChange change = new TaskStateChange();
+            change.packetType = PacketType.FINISH_TASK;
+            change.taskID = mainFrame.getTaskModel().getActiveTaskID().get();
+            mainFrame.getConnection().sendPacket(change);
+        }
     }
 
     private void changeTaskState(PacketType type) {
@@ -233,10 +235,12 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
 
         Task task = (Task) ((DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(selectedRow)).getUserObject();
 
-        TaskStateChange change = new TaskStateChange();
-        change.packetType = type;
-        change.taskID = task.id;
-        mainFrame.getConnection().sendPacket(change);
+        if (mainFrame.isConnected()) {
+            TaskStateChange change = new TaskStateChange();
+            change.packetType = type;
+            change.taskID = task.id;
+            mainFrame.getConnection().sendPacket(change);
+        }
     }
 
     private boolean childrenHaveMatch(Task obj, String text) {
@@ -416,6 +420,10 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
 
         @Override
         public boolean importData(TransferSupport support) {
+            if (!mainFrame.isConnected()) {
+                return false;
+            }
+            
             mainFrame.getConnection().sendPacket(Basic.BulkUpdateStart());
 
             // send to server
