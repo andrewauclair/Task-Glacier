@@ -20,7 +20,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class MenuBar extends JMenuBar {
-    private final JMenuItem add;
+    private final JMenuItem add = new JMenuItem("Add...");
+    private final JMenuItem addBulk = new JMenuItem("Add Bulk...");
 
     private final JMenuItem connect = new JMenuItem("Connect...");
     private final JMenuItem disconnect = new JMenuItem("Disconnect");
@@ -48,10 +49,13 @@ public class MenuBar extends JMenuBar {
         JMenu task = new JMenu("Task");
         task.setMnemonic('T');
 
-        add = new JMenuItem("Add...");
         add.setEnabled(false);
-        add.addActionListener(e -> new AddTask(mainFrame, mainFrame, 0).setVisible(true));
+        add.addActionListener(e -> new AddTask(mainFrame, mainFrame, 0, false).setVisible(true));
         task.add(add);
+
+        addBulk.setEnabled(false);
+        addBulk.addActionListener(e -> new AddTask(mainFrame, mainFrame, 0, true).setVisible(true));
+        task.add(addBulk);
 
         JMenuItem timeEntry = new JMenuItem("Time Entry Configuration...");
         task.add(timeEntry);
@@ -572,6 +576,7 @@ public class MenuBar extends JMenuBar {
 
     public void connected() {
         add.setEnabled(true);
+        addBulk.setEnabled(true);
         connect.setEnabled(false);
         disconnect.setEnabled(true);
         requestDailyReport.setEnabled(true);

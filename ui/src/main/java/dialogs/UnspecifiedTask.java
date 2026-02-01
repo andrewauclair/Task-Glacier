@@ -36,7 +36,7 @@ public class UnspecifiedTask extends JDialog {
         JButton create = new JButton("Create New Task...");
 
         create.addActionListener(e -> {
-            AddTask add = new AddTask(mainFrame, this, 0);
+            AddTask add = new AddTask(mainFrame, this, 0, false);
             add.setVisible(true);
         });
 

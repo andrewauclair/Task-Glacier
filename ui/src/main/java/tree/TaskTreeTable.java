@@ -105,7 +105,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
         stop.addActionListener(e -> changeTaskState(PacketType.STOP_TASK));
         finish.addActionListener(e -> changeTaskState(PacketType.FINISH_TASK));
 
-        add.addActionListener(e -> new AddTask(mainFrame, mainFrame, 0).setVisible(true));
+        add.addActionListener(e -> new AddTask(mainFrame, mainFrame, 0, false).setVisible(true));
 
         addSubTask.addActionListener(e -> {
             int selectedRow = getSelectedRow();
@@ -116,7 +116,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
 
             Task task = (Task) ((DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(selectedRow)).getUserObject();
 
-            new AddTask(mainFrame, mainFrame, task.id).setVisible(true);
+            new AddTask(mainFrame, mainFrame, task.id, false).setVisible(true);
         });
 
         openInNewWindow.addActionListener(e -> {

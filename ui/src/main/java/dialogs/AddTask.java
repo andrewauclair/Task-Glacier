@@ -23,7 +23,7 @@ public class AddTask extends JDialog {
 
     public static List<Integer> activeRequests = new ArrayList<>();
 
-    public AddTask(MainFrame mainFrame, Window parentWindow, int defaultParentID) {
+    public AddTask(MainFrame mainFrame, Window parentWindow, int defaultParentID, boolean bulk) {
         super(parentWindow);
         openInstance = this;
 
@@ -32,7 +32,6 @@ public class AddTask extends JDialog {
         // name, time tracking and project info
         // some of this info can be automatically filled
         JTextPane name = new JTextPane();
-        JTextPane bulkAdd = new JTextPane();
 
         name.addKeyListener(new KeyAdapter() {
             @Override
@@ -45,31 +44,11 @@ public class AddTask extends JDialog {
                 });
             }
         });
-        bulkAdd.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyReleased(KeyEvent e) {
-                SwingUtilities.invokeLater(() -> {
-                    pack();
-
-                    // center on the main frame
-                    setLocationRelativeTo(mainFrame);
-                });
-            }
-        });
-        bulkAdd.setVisible(false);
 
         JTextField parent = new JTextField();
         parent.setText(String.valueOf(defaultParentID));
 
-        JButton bulkSwitch = new JButton("^");
-        JPanel flow = createFlow("Name: ", name);
-        bulkSwitch.addActionListener(e -> {
-            if (bulkSwitch.getText().equals("^")) {
-                bulkSwitch.setText("v");
-                flow.setVisible(false);
-                bulkAdd.setVisible(true);
-            }
-        });
+        JPanel flow = createFlow(bulk ? "Name(s): " : "Name: ", name);
 
         JButton add = new JButton("Add");
 
@@ -79,8 +58,8 @@ public class AddTask extends JDialog {
             add.setEnabled(false);
 
             int parentID = Integer.parseInt(parent.getText());
-            if (bulkSwitch.getText().equals("v")) {
-                String[] names = bulkAdd.getText().split(System.lineSeparator());
+            if (bulk) {
+                String[] names = name.getText().split(System.lineSeparator());
 
                 List<CreateTask> packets = new ArrayList<>();
 
@@ -110,16 +89,18 @@ public class AddTask extends JDialog {
             }
         });
 
-        KeyAdapter enterAction = new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    add.doClick();
+        if (!bulk) {
+            KeyAdapter enterAction = new KeyAdapter() {
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                        add.doClick();
+                    }
                 }
-            }
-        };
-        name.addKeyListener(enterAction);
-
+            };
+            name.addKeyListener(enterAction);
+        }
+        
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -128,11 +109,7 @@ public class AddTask extends JDialog {
 
 
         add(flow, gbc);
-        add(bulkAdd, gbc);
-        gbc.gridx++;
-        add(bulkSwitch, gbc);
         gbc.gridy++;
-        gbc.gridx = 0;
         gbc.gridwidth = 2;
 
         JToolBar toolBar = new JToolBar();
