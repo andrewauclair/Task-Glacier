@@ -65,9 +65,6 @@ public class TasksList extends JPanel implements Dockable {
         mainFrame = MainFrame.mainFrame;
 
         Docking.registerDockable(this);
-
-        Task rootObject = new Task(0, 0, "");
-        configure(rootObject);
     }
 
     @Override
@@ -76,6 +73,8 @@ public class TasksList extends JPanel implements Dockable {
         mainFrame = MainFrame.mainFrame;
 
         if (allTasks) {
+            Task rootObject = new Task(0, 0, "");
+            configure(rootObject);
         }
         else {
             Task task = mainFrame.getTaskModel().getTask(taskID);
@@ -83,12 +82,13 @@ public class TasksList extends JPanel implements Dockable {
             if (task != null) {
                 configure(task);
             }
-            else {
-            }
         }
     }
 
     private void configure(Task rootObject) {
+        if (taskTable != null) {
+            System.out.println("already have a task table");
+        }
         taskTable = new TaskTreeTable(mainFrame, rootObject, taskID, false, false, ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         // Register the keyboard shortcut
