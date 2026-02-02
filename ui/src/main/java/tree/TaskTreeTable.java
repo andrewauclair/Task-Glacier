@@ -307,7 +307,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
     public void removeTask(Task task) {
         DefaultMutableTreeNode node = findTaskNode(rootNode, task.id);
 
-        if (node != null) {
+        if (node != null && node.getParent() != null) {
             treeModel.removeNodeFromParent(node);
         }
     }
