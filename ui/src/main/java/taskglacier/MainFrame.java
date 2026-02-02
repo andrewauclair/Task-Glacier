@@ -8,6 +8,7 @@ import data.TaskModel;
 import data.TimeData;
 import dialogs.ConnectToServer;
 import dialogs.RequestDailyReportDialog;
+import dialogs.RequestWeeklyReportDialog;
 import dialogs.UnspecifiedTask;
 import io.github.andrewauclair.moderndocking.Dockable;
 import io.github.andrewauclair.moderndocking.DockingRegion;
@@ -401,12 +402,18 @@ public class MainFrame extends JFrame {
         panel.update(dailyReport);
         systemTrayDisplay.dailyReportPanel.update(dailyReport);
 
-        if (!isToday) {
+        if (userRequested) {
             Docking.display(panel);
         }
     }
 
     public void receivedWeeklyReport(WeeklyReport weeklyReport) {
+        boolean userRequested = RequestWeeklyReportDialog.requestID != 0;
+
+        if (weeklyReport.getRequestID() == RequestWeeklyReportDialog.requestID) {
+            RequestWeeklyReportDialog.requestID = 0;
+        }
+
         WeeklyReportPanel panel = null;
 
         DailyReportMessage.DailyReport dailyReport = weeklyReport.reports[0];
@@ -441,7 +448,7 @@ public class MainFrame extends JFrame {
         }
         panel.update(weeklyReport);
 
-        if (!isCurrentWeek) {
+        if (userRequested) {
             Docking.display(panel);
         }
     }

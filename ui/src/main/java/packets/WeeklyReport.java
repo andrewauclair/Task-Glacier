@@ -89,4 +89,8 @@ public class WeeklyReport implements Packet {
     public void writeToOutput(DataOutputStream output) throws IOException {
 
     }
+
+    public int getRequestID() {
+        return requestID;
+    }
 }

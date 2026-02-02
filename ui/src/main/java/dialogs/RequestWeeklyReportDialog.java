@@ -14,6 +14,8 @@ import java.time.ZoneId;
 import java.util.Calendar;
 
 public class RequestWeeklyReportDialog extends JDialog {
+    public static int requestID = 0;
+
     public RequestWeeklyReportDialog(MainFrame mainFrame) {
         super(mainFrame);
 
@@ -62,8 +64,10 @@ public class RequestWeeklyReportDialog extends JDialog {
             int month = localDate.getMonthValue();
             int day = localDate.getDayOfMonth();
 
+            requestID = RequestID.nextRequestID();
+            
             RequestWeeklyReport request = new RequestWeeklyReport();
-            request.requestID = RequestID.nextRequestID();
+            request.requestID = requestID;
             request.month = month;
             request.day = day;
             request.year = year;
