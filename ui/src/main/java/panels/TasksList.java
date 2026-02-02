@@ -88,6 +88,7 @@ public class TasksList extends JPanel implements Dockable {
     private void configure(Task rootObject) {
         if (taskTable != null) {
             System.out.println("already have a task table");
+            return;
         }
         taskTable = new TaskTreeTable(mainFrame, rootObject, taskID, false, false, ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
