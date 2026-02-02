@@ -178,28 +178,42 @@ public class MainFrame extends JFrame {
             if (!isConnected()) {
                 return;
             }
-            
+
+            LocalDate now = LocalDate.now();
+
+            int month = now.getMonthValue();
+            int day = now.getDayOfMonth();
+            int year = now.getYear();
+
             for (Dockable dockable : Docking.getDockables()) {
                 if (!Docking.isDocked(dockable)) {
                     continue;
                 }
                 if (dockable instanceof DailyReportPanel dailyReport) {
-                    RequestDailyReport request = new RequestDailyReport();
-                    request.requestID = RequestID.nextRequestID();
-                    request.month = dailyReport.getMonth();
-                    request.day = dailyReport.getDay();
-                    request.year = dailyReport.getYear();
+                    boolean isToday = dailyReport.getMonth() == month && dailyReport.getDay() == day && dailyReport.getYear() == year;
 
-                    mainFrame.getConnection().sendPacket(request);
+                    if (isToday) {
+                        RequestDailyReport request = new RequestDailyReport();
+                        request.requestID = RequestID.nextRequestID();
+                        request.month = dailyReport.getMonth();
+                        request.day = dailyReport.getDay();
+                        request.year = dailyReport.getYear();
+
+                        mainFrame.getConnection().sendPacket(request);
+                    }
                 }
                 else if (dockable instanceof WeeklyReportPanel weeklyReport) {
-                    RequestWeeklyReport request = new RequestWeeklyReport();
-                    request.requestID = RequestID.nextRequestID();
-                    request.month = weeklyReport.getMonth();
-                    request.day = weeklyReport.getDay();
-                    request.year = weeklyReport.getYear();
+                    boolean isCurrentWeek = weeklyReport.getMonth() == month && weeklyReport.getDay() == day && weeklyReport.getYear() == year;
 
-                    mainFrame.getConnection().sendPacket(request);
+                    if (isCurrentWeek) {
+                        RequestWeeklyReport request = new RequestWeeklyReport();
+                        request.requestID = RequestID.nextRequestID();
+                        request.month = weeklyReport.getMonth();
+                        request.day = weeklyReport.getDay();
+                        request.year = weeklyReport.getYear();
+
+                        mainFrame.getConnection().sendPacket(request);
+                    }
                 }
             }
         });
@@ -386,6 +400,10 @@ public class MainFrame extends JFrame {
         }
         panel.update(dailyReport);
         systemTrayDisplay.dailyReportPanel.update(dailyReport);
+
+        if (!isToday) {
+            Docking.display(panel);
+        }
     }
 
     public void receivedWeeklyReport(WeeklyReport weeklyReport) {
@@ -422,6 +440,10 @@ public class MainFrame extends JFrame {
             panel = new WeeklyReportPanel(this, dailyReport.getDate());
         }
         panel.update(weeklyReport);
+
+        if (!isCurrentWeek) {
+            Docking.display(panel);
+        }
     }
 
     public TimeData getTimeData() {
