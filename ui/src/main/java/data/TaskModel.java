@@ -145,6 +145,25 @@ public class TaskModel {
 
             if (parentChanged) {
                 listeners.forEach(listener -> listener.addTask(task));
+
+                List<Task> tasks = new ArrayList<>();
+
+                for (Task child : task.children) {
+                    tasks.add(child);
+                }
+
+                while (!tasks.isEmpty()) {
+                    List<Task> next = new ArrayList<>();
+
+                    for (Task child : tasks) {
+                        listeners.forEach(listener -> listener.addTask(child));
+
+                        for (Task children : child.children) {
+                            next.add(children);
+                        }
+                    }
+                    tasks = next;
+                }
             }
             else {
                 listeners.forEach(listener -> listener.updatedTask(first.get()));
