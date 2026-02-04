@@ -139,11 +139,16 @@ public class TasksList extends JPanel implements Dockable {
     public void setSearchText(final String search) {
         taskTable.setNodeFilter(treeNode -> {
             Task obj = TreeUtils.getUserObject(treeNode);
-            boolean includeFinish = search.startsWith("finish: ");
+            boolean includeFinish = search.startsWith("finish:");
             String text = search;
 
             if (includeFinish) {
-                text = text.substring("finish: ".length());
+                if (search.startsWith("finish: ")) {
+                    text = text.substring("finish: ".length());
+                }
+                else {
+                    text = text.substring("finish:".length());
+                }
                 return !childrenHaveMatch(obj, text);
             }
             return obj.state == TaskState.FINISHED || !childrenHaveMatch(obj, text);
