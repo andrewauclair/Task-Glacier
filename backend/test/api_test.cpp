@@ -737,7 +737,6 @@ TEST_CASE("Modify Task", "[api][task]")
 		UpdateTaskMessage update(helper.next_request_id(), TaskID(1), NO_PARENT, "test");
 		update.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
 
-		// TODO validate that time codes are valid
 		helper.expect_success(update);
 
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
@@ -746,6 +745,125 @@ TEST_CASE("Modify Task", "[api][task]")
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 		taskInfo.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+
+		helper.required_messages({ &taskInfo });
+	}
+
+	SECTION("Success - Change Finished Task to Pending")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+		helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto update = UpdateTaskMessage(helper.next_request_id(), TaskID(1), NO_PARENT, "test");
+		update.state = TaskState::PENDING;
+		helper.expect_success(update);
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.state = TaskState::PENDING;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
+	}
+
+	SECTION("Failure - Cannot Change Task State from Pending to Active")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+
+		auto update = UpdateTaskMessage(helper.next_request_id(), TaskID(1), NO_PARENT, "test");
+		update.state = TaskState::ACTIVE;
+		helper.expect_failure(update, "Illegal task state change");
+
+		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.state = TaskState::PENDING;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
+	}
+
+	SECTION("Failure - Cannot Change Task State from Pending to Finished")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+
+		auto update = UpdateTaskMessage(helper.next_request_id(), TaskID(1), NO_PARENT, "test");
+		update.state = TaskState::FINISHED;
+		helper.expect_failure(update, "Illegal task state change");
+
+		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.state = TaskState::PENDING;
+		taskInfo.newTask = false;
+
+		helper.required_messages({ &taskInfo });
+	}
+
+	SECTION("Failure - Cannot Change Task State from Active to Finished")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto update = UpdateTaskMessage(helper.next_request_id(), TaskID(1), NO_PARENT, "test");
+		update.state = TaskState::FINISHED;
+		helper.expect_failure(update, "Illegal task state change");
+
+		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.state = TaskState::ACTIVE;
+		taskInfo.newTask = false;
+		taskInfo.times.emplace_back(1737344939870ms, std::nullopt, std::vector{ TimeEntry{TimeCategoryID(0), TimeCodeID(0)} });
+
+		helper.required_messages({ &taskInfo });
+	}
+
+	SECTION("Failure - Cannot Change Task State from Active to Pending")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+		helper.expect_success(TaskMessage(PacketType::START_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto update = UpdateTaskMessage(helper.next_request_id(), TaskID(1), NO_PARENT, "test");
+		update.state = TaskState::PENDING;
+		helper.expect_failure(update, "Illegal task state change");
+
+		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.state = TaskState::ACTIVE;
+		taskInfo.newTask = false;
+		taskInfo.times.emplace_back(1737344939870ms, std::nullopt, std::vector{ TimeEntry{TimeCategoryID(0), TimeCodeID(0)} });
+
+		helper.required_messages({ &taskInfo });
+	}
+
+	SECTION("Failure - Cannot Change Task State from Finished to Active")
+	{
+		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
+		helper.expect_success(TaskMessage(PacketType::FINISH_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto update = UpdateTaskMessage(helper.next_request_id(), TaskID(1), NO_PARENT, "test");
+		update.state = TaskState::ACTIVE;
+		helper.expect_failure(update, "Illegal task state change");
+
+		helper.expect_success(TaskMessage(PacketType::REQUEST_TASK, helper.next_request_id(), TaskID(1)));
+
+		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "test");
+
+		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
+		taskInfo.state = TaskState::FINISHED;
+		taskInfo.newTask = false;
+		taskInfo.finishTime = 1737344939870ms;
 
 		helper.required_messages({ &taskInfo });
 	}

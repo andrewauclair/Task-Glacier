@@ -494,6 +494,20 @@ void API::update_task(const UpdateTaskMessage& message)
 	{
 		result = m_app.reparent_task(message.taskID, message.parentID);
 	}
+	else if (message.state != task->state)
+	{
+		if (task->state == TaskState::FINISHED && message.state == TaskState::PENDING)
+		{
+			task->state = message.state;
+			task->m_finishTime = std::nullopt;
+
+			m_database->write_task(*task, *m_sender);
+		}
+		else
+		{
+			result = "Illegal task state change";
+		}
+	}
 	else // assume time entry changed
 	{
 		// TODO validation of time codes, make sure they exist

@@ -4,6 +4,7 @@
 #include "task_id.hpp"
 #include "task_times.hpp"
 #include "time_entry.hpp"
+#include "task_state.hpp"
 
 #include <expected>
 #include <format>
@@ -14,6 +15,7 @@ struct UpdateTaskMessage : RequestMessage
 {
 	TaskID taskID;
 	TaskID parentID;
+	TaskState state = TaskState::PENDING;
 	std::int32_t indexInParent = 0;
 	bool serverControlled = false;
 	bool locked = false;
@@ -52,7 +54,7 @@ struct UpdateTaskMessage : RequestMessage
 			}
 		}
 
-		return requestID == message.requestID && taskID == message.taskID && parentID == message.parentID && indexInParent == message.indexInParent && name == message.name && labels == message.labels && timeEntry == message.timeEntry;
+		return requestID == message.requestID && taskID == message.taskID && parentID == message.parentID && state == message.state && indexInParent == message.indexInParent && name == message.name && labels == message.labels && timeEntry == message.timeEntry;
 	}
 
 	std::vector<std::byte> pack() const override;
@@ -62,7 +64,7 @@ struct UpdateTaskMessage : RequestMessage
 	{
 		out << "UpdateTaskMessage { ";
 		RequestMessage::print(out);
-		out << ", taskID: " << taskID._val << ", parentID: " << parentID._val << ", indexInParent: " << indexInParent << ", serverControlled: " << serverControlled << ", locked: " << locked << ", name: \"" << name << "\"";
+		out << ", taskID: " << taskID._val << ", parentID: " << parentID._val << ", state: " << static_cast<int>(state) << ", indexInParent: " << indexInParent << ", serverControlled: " << serverControlled << ", locked: " << locked << ", name: \"" << name << "\"";
 		for (auto&& time : times)
 		{
 			out << "{ start: " << time.start.count() << ", stop: " << (time.stop.has_value() ? std::to_string(time.stop.value().count()) : "nullopt");

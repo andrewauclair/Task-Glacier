@@ -3,6 +3,7 @@ package config;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import data.Task;
+import data.TaskState;
 import dialogs.TaskIDFilter;
 import dialogs.TaskPicker;
 import packets.UpdateTask;
@@ -22,6 +23,7 @@ import static taskglacier.MainFrame.mainFrame;
 class General extends JPanel {
     private final Task task;
     JTextArea description = new JTextArea(6, 20);
+    JComboBox<String> status = new JComboBox<>();
     JTextField parent = new JTextField(6);
     JCheckBox serverControlled = new JCheckBox("Server Controlled");
     JCheckBox locked = new JCheckBox("Locked");
@@ -48,7 +50,6 @@ class General extends JPanel {
         description.setLineWrap(true);
         description.setText(task.name);
 
-        JComboBox<String> status = new JComboBox<>();
         status.addItem("Pending");
         status.addItem("Active");
         status.addItem("Finished");
@@ -163,6 +164,12 @@ class General extends JPanel {
 
     public void save(Task task, UpdateTask update) {
         if (hasChanges(task)) {
+            update.state = task.state;
+
+            if (status.getSelectedItem() == "Pending" && task.state == TaskState.FINISHED)
+            {
+                update.state = TaskState.PENDING;
+            }
             update.locked = locked.isSelected();
         }
     }

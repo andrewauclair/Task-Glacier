@@ -1,6 +1,7 @@
 package packets;
 
 import data.Task;
+import data.TaskState;
 import data.TimeData;
 
 import java.io.DataOutputStream;
@@ -11,6 +12,7 @@ import java.util.List;
 
 public class UpdateTask implements Packet {
     private final String name;
+    public TaskState state = TaskState.PENDING;
     public int indexInParent = 0;
     public boolean serverControlled = false;
     public boolean locked = false;
@@ -49,6 +51,7 @@ public class UpdateTask implements Packet {
 
     public void writeToOutput(DataOutputStream output) throws IOException {
         size = 26; // size, packet type, request ID, task ID, parent ID, index in parent, server controlled, locked
+        size += 4; // state
         size += 2 + name.length();
         size += 4; // times count
         for (TaskInfo.Session session : sessions) {
@@ -71,6 +74,7 @@ public class UpdateTask implements Packet {
         output.writeInt(requestID);
         output.writeInt(taskID);
         output.writeInt(parentID);
+        output.writeInt(state.ordinal());
         output.writeInt(indexInParent);
         output.writeByte(serverControlled ? 1 : 0);
         output.writeByte(locked ? 1 : 0);
