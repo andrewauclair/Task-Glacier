@@ -166,7 +166,7 @@ class General extends JPanel {
         if (hasChanges(task)) {
             update.state = task.state;
 
-            if (status.getSelectedItem() == "Pending" && task.state == TaskState.FINISHED)
+            if (status.getSelectedItem().equals("Pending") && task.state == TaskState.FINISHED)
             {
                 update.state = TaskState.PENDING;
             }
@@ -188,6 +188,22 @@ class General extends JPanel {
         if (parentID != 0 && parentTask == null) {
             JOptionPane.showMessageDialog(this, "Parent task ID does not exist", "Invalid Parent", JOptionPane.ERROR_MESSAGE);
 
+            return false;
+        }
+
+        TaskState selectedState = TaskState.PENDING;
+
+        if (status.getSelectedItem().toString().equals("Active"))
+        {
+            selectedState = TaskState.ACTIVE;
+        }
+        else if (status.getSelectedItem().toString().equals("Finished"))
+        {
+            selectedState = TaskState.FINISHED;
+        }
+
+        if (selectedState != task.state && selectedState != TaskState.PENDING && task.state != TaskState.FINISHED) {
+            JOptionPane.showMessageDialog(this,  "State cannot be changed unless task is finished and changing to pending", "Invalid State Selected", JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;
