@@ -4,6 +4,7 @@ import data.Task;
 import data.TimeData;
 import packets.UpdateTask;
 import taskglacier.MainFrame;
+import util.Icons;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -17,8 +18,8 @@ import java.util.Optional;
 class TimeEntry extends JPanel {
     private final TimeData timeData;
 
-    JButton add = new JButton("+");
-    JButton remove = new JButton("-");
+    JButton add = new JButton(Icons.addIcon16);
+    JButton remove = new JButton(Icons.removeIcon16);
 
     TableModel model = new TableModel();
     JTable table = new JTable(model);

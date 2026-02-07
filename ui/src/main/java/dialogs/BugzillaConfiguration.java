@@ -6,6 +6,8 @@ import data.Standards;
 import data.Task;
 import packets.BugzillaInfo;
 import taskglacier.MainFrame;
+import util.DialogEscape;
+import util.Icons;
 import util.LabeledComponent;
 
 import javax.swing.*;
@@ -23,11 +25,11 @@ public class BugzillaConfiguration extends JDialog {
     private DefaultTableModel instanceModel = new DefaultTableModel(0, 1);
     private JTable instanceTable = new JTable(instanceModel);
 
-    private JButton instanceAdd = new JButton("+");
-    private JButton instanceRemove = new JButton("-");
+    private JButton instanceAdd = new JButton(Icons.addIcon16);
+    private JButton instanceRemove = new JButton(Icons.removeIcon16);
 
-    private JButton bugsAdd = new JButton("+");
-    private JButton bugsRemove = new JButton("-");
+    private JButton bugsAdd = new JButton(Icons.addIcon16);
+    private JButton bugsRemove = new JButton(Icons.removeIcon16);
 
     private JButton save = new JButton("Save");
     private Map<String, BugzillaInstance> instances = new HashMap<>();
@@ -39,6 +41,8 @@ public class BugzillaConfiguration extends JDialog {
         setTitle("Bugzilla Configuration");
 
         setModalityType(ModalityType.APPLICATION_MODAL);
+
+        DialogEscape.addEscapeHandler(this);
 
         JSplitPane split = new JSplitPane();
         split.setLeftComponent(buildInstances());
@@ -266,11 +270,11 @@ public class BugzillaConfiguration extends JDialog {
         instance.labelModel.addRow(new Object[]{"Target", "target_milestone"});
         instance.labelModel.addRow(new Object[]{"Component", "component"});
 
-        JButton groupByAdd = new JButton("+");
-        JButton groupByRemove = new JButton("-");
+        JButton groupByAdd = new JButton(Icons.addIcon16);
+        JButton groupByRemove = new JButton(Icons.removeIcon16);
 
-        JButton groupByMoveUp = new JButton("^");
-        JButton groupByMoveDown = new JButton("v");
+        JButton groupByMoveUp = new JButton(Icons.upIcon16);
+        JButton groupByMoveDown = new JButton(Icons.downIcon16);
 
         groupByRemove.setEnabled(false);
         groupByMoveUp.setEnabled(false);
@@ -412,9 +416,7 @@ public class BugzillaConfiguration extends JDialog {
 
         public BugzillaInstance() {
             JToolBar toolBar = new JToolBar();
-            FlatSVGIcon searchIcon = new FlatSVGIcon(getClass().getResource("/search-svgrepo-com.svg")).derive(24, 24);
-
-            JButton search = new JButton(searchIcon);
+            JButton search = new JButton(Icons.searchIcon);
 
             toolBar.add(search);
 

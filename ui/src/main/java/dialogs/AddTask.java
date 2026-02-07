@@ -8,6 +8,8 @@ import packets.Basic;
 import packets.CreateTask;
 import packets.RequestID;
 import taskglacier.MainFrame;
+import util.DialogEscape;
+import util.Icons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,14 +31,21 @@ public class AddTask extends JDialog {
 
         setModalityType(ModalityType.APPLICATION_MODAL);
 
+        DialogEscape.addEscapeHandler(this);
+
+        JButton add = new JButton("Add");
+        add.setEnabled(false);
+
         // name, time tracking and project info
         // some of this info can be automatically filled
         JTextPane name = new JTextPane();
 
         name.addKeyListener(new KeyAdapter() {
             @Override
-            public void keyReleased(KeyEvent e) {
+            public void keyTyped(KeyEvent e) {
                 SwingUtilities.invokeLater(() -> {
+                    add.setEnabled(!name.getText().isEmpty());
+
                     pack();
 
                     // center on the main frame
@@ -49,8 +58,6 @@ public class AddTask extends JDialog {
         parent.setText(String.valueOf(defaultParentID));
 
         JPanel flow = createFlow(bulk ? "Name(s): " : "Name: ", name);
-
-        JButton add = new JButton("Add");
 
         setTitle("Add Task");
 
@@ -89,18 +96,25 @@ public class AddTask extends JDialog {
             }
         });
 
-        if (!bulk) {
-            KeyAdapter enterAction = new KeyAdapter() {
-                @Override
-                public void keyPressed(KeyEvent e) {
-                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                        add.doClick();
+        KeyAdapter enterAction = new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER && (!bulk || e.isControlDown())) {
+                    if (!bulk) {
+                        // don't allow extra lines when adding a single task
+                        String text = name.getText();
+                        int beginIndex = text.indexOf(System.lineSeparator());
+                        if (beginIndex != -1) {
+                            name.setText(text.substring(0, beginIndex));
+                        }
                     }
+                    add.setEnabled(!name.getText().isEmpty());
+                    add.doClick();
                 }
-            };
-            name.addKeyListener(enterAction);
-        }
-        
+            }
+        };
+        name.addKeyListener(enterAction);
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -113,9 +127,7 @@ public class AddTask extends JDialog {
         gbc.gridwidth = 2;
 
         JToolBar toolBar = new JToolBar();
-        FlatSVGIcon searchIcon = new FlatSVGIcon(getClass().getResource("/search-svgrepo-com.svg")).derive(24, 24);
-
-        JButton search = new JButton(searchIcon);
+        JButton search = new JButton(Icons.searchIcon);
 
         toolBar.add(search);
 

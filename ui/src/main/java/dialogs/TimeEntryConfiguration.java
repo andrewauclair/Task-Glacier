@@ -1,5 +1,6 @@
 package dialogs;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import data.Standards;
 import data.TimeData;
 import packets.PacketType;
@@ -8,6 +9,7 @@ import packets.TimeCategoriesMessage;
 import packets.TimeCategoryModType;
 import taskglacier.MainFrame;
 import util.DialogEscape;
+import util.Icons;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class TimeEntryConfiguration extends JDialog {
     private final TimeData timeData;
@@ -25,8 +28,8 @@ public class TimeEntryConfiguration extends JDialog {
     private CategoryTableModel categoriesModel = new CategoryTableModel();
     private JTable categoriesTable = new JTable(categoriesModel);
 
-    private JButton categoryAdd = new JButton("+");
-    private JButton categoryRemove = new JButton("-");
+    private JButton categoryAdd = new JButton(Icons.addIcon16);
+    private JButton categoryRemove = new JButton(Icons.removeIcon16);
 
     private JButton save = new JButton("Save");
 
@@ -125,20 +128,20 @@ public class TimeEntryConfiguration extends JDialog {
 
                 CodeTableModel timeCodeModel = instances.get(timeCategory.name).codeTableModel;
 
-                boolean newTimeCodes = false;
+                boolean newOrUpdatedTimeCodes = false;
 
                 for (int j = 0; j < timeCodeModel.getRowCount(); j++) {
-                    TimeData.TimeCode timeCode = new TimeData.TimeCode();
-                    timeCode.id = (int) timeCodeModel.getValueAt(j, 1);
-                    timeCode.name = (String) timeCodeModel.getValueAt(j, 0);
+                    TableTimeCode row = timeCodeModel.rows.get(j);
 
-                    if (timeCode.id == 0) {
-                        newTimeCodes = true;
+                    TimeData.TimeCode timeCode = new TimeData.TimeCode(row.id, row.name);
+
+                    if (row.newCode || row.modified) {
+                        newOrUpdatedTimeCodes = true;
                     }
                     timeCategory.timeCodes.add(timeCode);
                 }
 
-                if (timeCategory.id == 0 || newTimeCodes) {
+                if (timeCategory.id == 0 || newOrUpdatedTimeCodes) {
                     addMessage.getTimeCategories().add(timeCategory);
                 }
                 else {
@@ -170,7 +173,8 @@ public class TimeEntryConfiguration extends JDialog {
             stack.add(createInstance(instance), category.name);
 
             for (TimeData.TimeCode code : category.timeCodes) {
-                instance.codeTableModel.rows.add(code);
+                TableTimeCode tableCode = new TableTimeCode(code.id, code.name);
+                instance.codeTableModel.rows.add(tableCode);
             }
             instance.codeTableModel.fireTableDataChanged();
 
@@ -234,22 +238,36 @@ public class TimeEntryConfiguration extends JDialog {
 
         instance.removeCode.setEnabled(false);
 
+        instance.editCode.addActionListener(e -> {
+            int row = instance.codesTable.getSelectedRow();
+            String currentName = (String) instance.codeTableModel.getValueAt(row, 0);
+            String name = JOptionPane.showInputDialog(this, "Edit Time Code Name", currentName);
+
+            TableTimeCode existingCode = instance.codeTableModel.rows.get(row);
+            existingCode.name = name;
+            existingCode.modified = true;
+            instance.codeTableModel.fireTableRowsUpdated(row, row);
+        });
         instance.addCode.addActionListener(e -> {
             String name = JOptionPane.showInputDialog(this, "New Time Code Name");
 
             // TODO prevent duplicates
-            instance.codeTableModel.rows.add(new TimeData.TimeCode(0, name));
+            TableTimeCode newCode = new TableTimeCode(0, name);
+            newCode.newCode = true;
+            instance.codeTableModel.rows.add(newCode);
             instance.codeTableModel.fireTableRowsInserted(instance.codeTableModel.getRowCount() - 1, instance.codeTableModel.getRowCount() - 1);
         });
         instance.removeCode.addActionListener(e -> {
-            instance.codeTableModel.rows.remove(instance.codesTable.getSelectedRow());
-            instance.codeTableModel.fireTableRowsDeleted(instance.codesTable.getSelectedRow(), instance.codesTable.getSelectedRow());
+            instance.codeTableModel.rows.get(instance.codesTable.getSelectedRow()).removed = true;
+            instance.codeTableModel.fireTableRowsUpdated(instance.codesTable.getSelectedRow(), instance.codesTable.getSelectedRow());
         });
         instance.codesTable.getSelectionModel().addListSelectionListener(e -> {
             instance.removeCode.setEnabled(instance.codesTable.getSelectedRow() != -1);
         });
         JPanel buttons = new JPanel(new GridBagLayout());
 
+        buttons.add(instance.editCode, gbc);
+        gbc.gridy++;
         buttons.add(instance.addCode, gbc);
         gbc.gridy++;
         buttons.add(instance.removeCode, gbc);
@@ -338,8 +356,9 @@ public class TimeEntryConfiguration extends JDialog {
 
         JPanel panel;
 
-        JButton addCode = new JButton("+");
-        JButton removeCode = new JButton("-");
+        JButton editCode = new JButton(Icons.editIcon16);
+        JButton addCode = new JButton(Icons.addIcon16);
+        JButton removeCode = new JButton(Icons.removeIcon16);
 
         public TimeEntryInstance() {
             // hide ID column
@@ -347,8 +366,22 @@ public class TimeEntryConfiguration extends JDialog {
         }
     }
 
+    class TableTimeCode {
+        public int id;
+        public String name;
+
+        public boolean newCode = false;
+        public boolean modified = false;
+        public boolean removed = false;
+
+        public TableTimeCode(int id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+    }
+
     class CodeTableModel extends AbstractTableModel {
-        List<TimeData.TimeCode> rows = new ArrayList<>();
+        List<TableTimeCode> rows = new ArrayList<>();
 
         @Override
         public int getRowCount() {
@@ -378,7 +411,7 @@ public class TimeEntryConfiguration extends JDialog {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            TimeData.TimeCode row = rows.get(rowIndex);
+            TableTimeCode row = rows.get(rowIndex);
 
             switch (columnIndex) {
                 case 0:

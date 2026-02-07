@@ -7,6 +7,7 @@ import packets.RequestID;
 import panels.Search;
 import raven.datetime.DatePicker;
 import taskglacier.MainFrame;
+import util.Icons;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -28,13 +29,9 @@ public class SystemTrayDisplay extends JFrame {
     private final Search search;
     public final SystemTrayDailyReport dailyReportPanel;
 
-    // https://www.flaticon.com/free-icon/cognitive_8920590?term=cognitive&related_id=8920590
-    // https://www.flaticon.com/free-icon/clipboard_1527478?term=task&page=1&position=53&origin=search&related_id=1527478
-    // https://www.flaticon.com/free-icon/share_8584964?term=open&page=1&position=3&origin=search&related_id=8584964
-
-    JButton openApp = new JButton(new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/export-2-svgrepo-com.svg"))).derive(32, 32));//new ImageIcon(Objects.requireNonNull(getClass().getResource("/share.png"))));
-    JButton unspecifiedTask = new JButton(new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/brain-illustration-1-svgrepo-com.svg"))).derive(32, 32));
-    JButton dailyReport = new JButton(new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/report-svgrepo-com.svg"))).derive(32, 32));
+    JButton openApp = new JButton(Icons.openIcon);
+    JButton unspecifiedTask = new JButton(Icons.unspecifiedTaskIcon);
+    JButton dailyReport = new JButton(Icons.dailyReportIcon);
 
     JTextField searchText = new JTextField(30);
 
@@ -81,9 +78,7 @@ public class SystemTrayDisplay extends JFrame {
             }
         });
 
-        FlatSVGIcon searchIcon = new FlatSVGIcon(getClass().getResource("/search-svgrepo-com.svg")).derive(24, 24);
-
-        searchText.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON, searchIcon);
+        searchText.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON, Icons.searchIcon);
 
         timer = new Timer(250, e1 -> {
             if (isVisible()) {

@@ -9,6 +9,7 @@ import packets.RequestID;
 import packets.TaskInfo;
 import packets.UpdateTask;
 import packets.UpdateTaskTimes;
+import util.Icons;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -29,15 +30,15 @@ class Sessions extends JPanel {
     SessionTableModel sessionModel = new SessionTableModel();
     JTable sessionTable = new JTable(sessionModel);
 
-    JButton editSession = new JButton("E");
-    JButton addSession = new JButton("+");
-    JButton removeSession = new JButton("-");
+    JButton editSession = new JButton(Icons.editIcon16);
+    JButton addSession = new JButton(Icons.addIcon16);
+    JButton removeSession = new JButton(Icons.removeIcon16);
 
     TimeEntryTableModel timeEntryModel = new TimeEntryTableModel();
     JTable timeEntryTable = new JTable(timeEntryModel);
 
-    JButton addTimeEntry = new JButton("+");
-    JButton removeTimeEntry = new JButton("-");
+    JButton addTimeEntry = new JButton(Icons.addIcon16);
+    JButton removeTimeEntry = new JButton(Icons.removeIcon16);
 
     private JPanel createSessionButtonPanel() {
         JPanel panel = new JPanel(new GridBagLayout());

@@ -7,6 +7,7 @@ import data.TaskState;
 import dialogs.TaskIDFilter;
 import dialogs.TaskPicker;
 import packets.UpdateTask;
+import util.Icons;
 import util.LabeledComponent;
 
 import javax.swing.*;
@@ -64,9 +65,7 @@ class General extends JPanel {
         }
 
         JToolBar toolBar = new JToolBar();
-        FlatSVGIcon searchIcon = new FlatSVGIcon(getClass().getResource("/search-svgrepo-com.svg")).derive(24, 24);
-
-        JButton search = new JButton(searchIcon);
+        JButton search = new JButton(Icons.searchIcon);
 
         toolBar.add(search);
 

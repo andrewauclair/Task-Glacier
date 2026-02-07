@@ -6,6 +6,7 @@ import data.Task;
 import data.TaskModel;
 import packets.TaskInfo;
 import taskglacier.MainFrame;
+import util.Icons;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -21,9 +22,7 @@ import static taskglacier.MainFrame.mainFrame;
 
 class RecentActivity extends JPanel implements TaskModel.Listener {
     private static final LocalDate MAX_AGE = LocalDate.now(ZoneId.systemDefault()).minusDays(14);
-    private FlatSVGIcon activeIcon = new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/activity-svgrepo-com.svg"))).derive(24, 24);
-    private FlatSVGIcon finishIcon = new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/checkmark-svgrepo-com.svg"))).derive(24, 24);
-    private FlatSVGIcon pendingIcon = new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/system-pending-line-svgrepo-com.svg"))).derive(24, 24);
+
     private TreeSet<History> history = new TreeSet<>(Comparator.comparing(o -> ((History) o).session.startTime).reversed());
     private DefaultTableModel model = new DefaultTableModel(0, 1) {
         @Override
@@ -35,10 +34,6 @@ class RecentActivity extends JPanel implements TaskModel.Listener {
 
     public RecentActivity(MainFrame mainFrame) {
         super(new BorderLayout());
-
-        activeIcon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor(FlatIconColors.OBJECTS_GREEN.key)));
-        finishIcon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor(FlatIconColors.OBJECTS_PURPLE.key)));
-        pendingIcon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor(FlatIconColors.OBJECTS_YELLOW.key)));
 
         // build up a history of the last X task changes
 
@@ -60,9 +55,9 @@ class RecentActivity extends JPanel implements TaskModel.Listener {
             JLabel icon = new JLabel();
 
             switch (history.task.state) {
-                case PENDING -> icon.setIcon(pendingIcon);
-                case ACTIVE -> icon.setIcon(activeIcon);
-                case FINISHED -> icon.setIcon(finishIcon);
+                case PENDING -> icon.setIcon(Icons.pendingIcon);
+                case ACTIVE -> icon.setIcon(Icons.activeIcon);
+                case FINISHED -> icon.setIcon(Icons.finishIcon);
             }
             gbc.gridheight = 2;
 

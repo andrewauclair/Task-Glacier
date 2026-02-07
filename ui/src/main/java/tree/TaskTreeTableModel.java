@@ -38,6 +38,7 @@ import data.TaskState;
 import net.byteseek.swing.treetable.TableUtils;
 import net.byteseek.swing.treetable.TreeTableModel;
 import net.byteseek.swing.treetable.TreeUtils;
+import util.Icons;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableColumnModel;
@@ -48,13 +49,8 @@ import java.util.Comparator;
 import java.util.Objects;
 
 public final class TaskTreeTableModel extends TreeTableModel {
-    private FlatSVGIcon activeIcon = new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/activity-svgrepo-com.svg"))).derive(24, 24);
-    private FlatSVGIcon finishIcon = new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/checkmark-svgrepo-com.svg"))).derive(24, 24);
-    private FlatSVGIcon pendingIcon = new FlatSVGIcon(Objects.requireNonNull(getClass().getResource("/system-pending-line-svgrepo-com.svg"))).derive(24, 24);
-
     public TaskTreeTableModel(final TreeNode rootNode, final boolean showRoot) {
         super(rootNode, showRoot);
-        setIcons();
         setGroupingComparator(Comparator.comparingInt(o -> ((Task) ((DefaultMutableTreeNode) o).getUserObject()).indexInParent));
     }
 
@@ -87,19 +83,13 @@ public final class TaskTreeTableModel extends TreeTableModel {
             final Task obj = TreeUtils.getUserObject(node);
 
             if (obj.state == TaskState.FINISHED) {
-                return finishIcon;
+                return Icons.finishIcon;
             }
             else if (obj.state == TaskState.ACTIVE) {
-                return activeIcon;
+                return Icons.activeIcon;
             }
-            return pendingIcon;
+            return Icons.pendingIcon;
         }
         return null;
-    }
-
-    private void setIcons() {
-        activeIcon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor(FlatIconColors.OBJECTS_GREEN.key)));
-        finishIcon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor(FlatIconColors.OBJECTS_PURPLE.key)));
-        pendingIcon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor(FlatIconColors.OBJECTS_YELLOW.key)));
     }
 }

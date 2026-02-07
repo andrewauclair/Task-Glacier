@@ -6,6 +6,7 @@ import data.Task;
 import net.byteseek.swing.treetable.TreeTableModel;
 import panels.Search;
 import taskglacier.MainFrame;
+import util.Icons;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -84,9 +85,7 @@ public class TaskPicker extends JDialog {
         add(select, gbc);
         gbc.gridy++;
 
-        FlatSVGIcon searchIcon = new FlatSVGIcon(getClass().getResource("/search-svgrepo-com.svg")).derive(24, 24);
-
-        searchText.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON, searchIcon);
+        searchText.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON, Icons.searchIcon);
 
         searchText.getDocument().addDocumentListener(new DocumentListener() {
             @Override

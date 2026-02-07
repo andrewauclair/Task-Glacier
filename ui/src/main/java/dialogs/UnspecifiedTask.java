@@ -7,6 +7,7 @@ import packets.PacketType;
 import packets.RequestID;
 import packets.TaskStateChange;
 import taskglacier.MainFrame;
+import util.Icons;
 import util.LabeledComponent;
 
 import javax.swing.*;
@@ -41,9 +42,7 @@ public class UnspecifiedTask extends JDialog {
         });
 
         JToolBar toolBar = new JToolBar();
-        FlatSVGIcon searchIcon = new FlatSVGIcon(getClass().getResource("/search-svgrepo-com.svg")).derive(24, 24);
-
-        JButton search = new JButton(searchIcon);
+        JButton search = new JButton(Icons.searchIcon);
 
         toolBar.add(search);
 
