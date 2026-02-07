@@ -33,9 +33,12 @@ enum class PacketType : std::int32_t
 
 	// configure and refresh bugzilla (refresh is manual by the user on the UI)
 	// the server will create and update tasks based on bugzilla changes and send TASK_INFO messages
-	// both of these messages have responses of SUCCESS_RESPONSE or FAILURE_RESPONSE
+	// these messages have responses of SUCCESS_RESPONSE or FAILURE_RESPONSE
 	BUGZILLA_INFO = 18,
 	BUGZILLA_REFRESH = 19,
+	BUGZILLA_REFRESH_COMPLETE = 43,
+	BUGZILLA_INFO_MODIFY = 44,
+	BUGZILLA_INFO_REMOVE = 45,
 
 	// report for the day with various information, displayed on a dialog on the UI
 	DAILY_REPORT = 20,
@@ -45,12 +48,7 @@ enum class PacketType : std::int32_t
 	WEEKLY_REPORT = 22,
 	REQUEST_WEEKLY_REPORT = 23,
 
-	// request the server to search for tasks matching the provided information
-	SEARCH_REQUEST = 24,
-	// return the results to the UI. This is a list of task IDs matching the search request
-	SEARCH_RESULTS = 25,
-
-	// configure the backup, including the IP and port of the backup service, how often to perform a backup, and how many backups to keep
+	// configure the backup, including the path of the backup folder, how often to perform a backup, and how many backups to keep
 	BACKUP_CONFIGURATION = 26,
 	// backup has been successfully performed
 	BACKUP_PERFORMED = 27,
