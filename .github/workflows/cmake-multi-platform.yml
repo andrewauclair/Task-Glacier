@@ -92,6 +92,7 @@ jobs:
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DCMAKE_CXX_COMPILER_CLANG_SCAN_DEPS=/usr/bin/clang-scan-deps-18
         -DCMAKE_TOOLCHAIN_FILE="..\vcpkg\scripts\buildsystems\vcpkg.cmake"
+        -DTASK_GLACIER_VERSION="${{ github.event.release.tag_name }}"
         -S ${{ github.workspace }}/backend
 
     - name: Build
@@ -127,7 +128,7 @@ jobs:
       with:
         name: Task Glacier
         path: |
-          ${{ github.workspace }}/ui/Task Glacier-0.14.0.exe
+          ${{ github.workspace }}/ui/Task Glacier-${{ github.event.release.tag_name }}.exe
           ${{ steps.strings.outputs.build-output-dir }}/bin/task-glacier-server.exe
           ${{ steps.strings.outputs.build-output-dir }}/bin/curlpp.dll
           ${{ steps.strings.outputs.build-output-dir }}/bin/libcurl.dll

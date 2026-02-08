@@ -1585,7 +1585,7 @@ TEST_CASE("Request Version", "[api]")
 
 	REQUIRE(sender.output.size() == 1);
 
-	verify_message(VersionMessage("0.14.0"), *sender.output[0]);
+	verify_message(VersionMessage(TASK_GLACIER_VERSION), *sender.output[0]);
 }
 
 TEST_CASE("Start Unspecified Task", "[api][task]")
