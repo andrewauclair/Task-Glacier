@@ -399,7 +399,7 @@ std::vector<std::byte> TimeEntryModifyPacket::pack() const
 		builder.add(code.categoryIndex);
 		builder.add(code.codeID);
 		builder.add(code.name);
-		builder.add(code.archive);
+		builder.add(code.archived);
 	}
 	
 	return builder.build();

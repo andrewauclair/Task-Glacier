@@ -10,8 +10,9 @@
 * 
 * 1 = 0.3.3
 * 2 = 0.4.0
+* 3 = 0.14.0
 */
-static constexpr std::int32_t CURRENT_DATABASE_VERSION = 2;
+static constexpr std::int32_t CURRENT_DATABASE_VERSION = 3;
 
 static std::vector<std::string> split(const std::string& s, char delim) {
 	std::vector<std::string> result;
@@ -32,7 +33,7 @@ DatabaseImpl::DatabaseImpl(const std::string& file, PacketSender& sender)
 	{
 		m_database.exec("create table if not exists tasks (TaskID integer PRIMARY KEY, Name text, ParentID integer, State integer, CreateTime bigint, FinishTime bigint, Locked integer, ServerControlled integer, IndexInParent integer)");
 		m_database.exec("create table if not exists timeEntryCategory (TimeCategoryID integer PRIMARY KEY, TimeCategoryName text)");
-		m_database.exec("create table if not exists timeEntryCode (TimeCategoryID integer, TimeCodeID integer, TimeCodeName text, PRIMARY KEY (TimeCategoryID, TimeCodeID))");
+		m_database.exec("create table if not exists timeEntryCode (TimeCategoryID integer, TimeCodeID integer, TimeCodeName text, Archived integer, PRIMARY KEY (TimeCategoryID, TimeCodeID))");
 		m_database.exec("create table if not exists timeEntryTask (TaskID integer, TimeCategoryID integer, TimeCodeID integer, PRIMARY KEY (TaskID, TimeCategoryID))");
 		m_database.exec("create table if not exists timeEntrySession (TaskID integer, SessionIndex integer, TimeCategoryID integer, TimeCodeID integer, StartTime bigint, StopTime bigint, PRIMARY KEY (TaskID, SessionIndex, TimeCategoryID))");
 		m_database.exec("create table if not exists bugzilla (BugzillaInstanceID integer PRIMARY KEY, Name text, URL text, APIKey text, UserName text, RootTaskID integer, LastRefresh bigint)");
@@ -67,6 +68,13 @@ DatabaseImpl::DatabaseImpl(const std::string& file, PacketSender& sender)
 
 				query.executeStep();
 			}
+			break;
+		}
+		case 2: // 2 - before 0.14.0
+		{
+			// introduced an Archived column to the time entry code table
+			m_database.exec("alter table timeEntryCode add column Archived integer default 0");
+
 			break;
 		}
 		}
@@ -193,8 +201,9 @@ void DatabaseImpl::load_time_entry(MicroTask& app)
 		int catID = query_code.getColumn(0);
 		int codeID = query_code.getColumn(1);
 		std::string code_name = query_code.getColumn(2);
+		int archived = query_code.getColumn(3);
 
-		categories.at(TimeCategoryID(catID)).codes.emplace_back(TimeCodeID(codeID), code_name);
+		categories.at(TimeCategoryID(catID)).codes.emplace_back(TimeCodeID(codeID), code_name, archived != 0);
 
 		query_code.executeStep();
 	}
@@ -466,11 +475,12 @@ void DatabaseImpl::write_time_entry_config(const TimeCategory& entry, PacketSend
 
 	for (const TimeCode& code : entry.codes)
 	{
-		SQLite::Statement insert(m_database, "insert or replace into timeEntryCode values (?, ?, ?)");
+		SQLite::Statement insert(m_database, "insert or replace into timeEntryCode values (?, ?, ?, ?)");
 
 		insert.bind(1, entry.id._val);
 		insert.bind(2, code.id._val);
 		insert.bind(3, code.name);
+		insert.bind(4, code.archived);
 
 		try
 		{

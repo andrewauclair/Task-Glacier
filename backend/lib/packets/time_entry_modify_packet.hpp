@@ -21,7 +21,7 @@ struct TimeEntryModifyPacket : RequestMessage
 		std::int32_t categoryIndex;
 		TimeCodeID codeID;
 		std::string name;
-		bool archive;
+		bool archived;
 	};
 
 	std::vector<Category> categories;
@@ -56,7 +56,7 @@ struct TimeEntryModifyPacket : RequestMessage
 
 			for (const Code& code : codes)
 			{
-				out << "    type: " << static_cast<int>(code.type) << ", cat index: " << code.categoryIndex << ", code id: " << code.codeID._val << ", name: " << code.name << ", archive: " << code.archive << '\n';
+				out << "    type: " << static_cast<int>(code.type) << ", cat index: " << code.categoryIndex << ", code id: " << code.codeID._val << ", name: " << code.name << ", archived: " << code.archived << '\n';
 			}
 			out << "}\n";
 		}

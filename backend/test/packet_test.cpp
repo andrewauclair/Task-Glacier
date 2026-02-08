@@ -407,7 +407,7 @@ TEST_CASE("Time Categories Modify", "[messages]")
 
 		modify.print(ss);
 
-		auto expected_text = "TimeEntryModifyPacket { packetType: 31, requestID: 10, {\n    type: 0, id: 0, name: A\n    type: 1, id: 3, name: B\n}\n, {\n    type: 0, cat index: 0, code id: 0, name: Code 1, archive: 0\n    type: 1, cat index: 0, code id: 1, name: Code 2, archive: 0\n    type: 1, cat index: 1, code id: 2, name: Code 3, archive: 0\n    type: 0, cat index: 1, code id: 0, name: Code 4, archive: 0\n}\n }";
+		auto expected_text = "TimeEntryModifyPacket { packetType: 31, requestID: 10, {\n    type: 0, id: 0, name: A\n    type: 1, id: 3, name: B\n}\n, {\n    type: 0, cat index: 0, code id: 0, name: Code 1, archived: 0\n    type: 1, cat index: 0, code id: 1, name: Code 2, archived: 0\n    type: 1, cat index: 1, code id: 2, name: Code 3, archived: 0\n    type: 0, cat index: 1, code id: 0, name: Code 4, archived: 0\n}\n }";
 
 		CHECK(ss.str() == expected_text);
 

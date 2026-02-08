@@ -11,6 +11,7 @@ import util.Icons;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -136,7 +137,7 @@ public class TimeEntryConfiguration extends JDialog {
                         newCode.categoryIndex = categoryIndex;
                         newCode.id = row.id;
                         newCode.name = row.name;
-                        newCode.archived = false;
+                        newCode.archived = row.archived;
 
                         message.codes.add(newCode);
                     }
@@ -158,7 +159,7 @@ public class TimeEntryConfiguration extends JDialog {
             stack.add(createInstance(instance), category.name);
 
             for (TimeData.TimeCode code : category.timeCodes) {
-                TableTimeCode tableCode = new TableTimeCode(code.id, code.name);
+                TableTimeCode tableCode = new TableTimeCode(code.id, code.name, code.archived);
                 instance.codeTableModel.rows.add(tableCode);
             }
             instance.codeTableModel.fireTableDataChanged();
@@ -222,7 +223,7 @@ public class TimeEntryConfiguration extends JDialog {
         gbc.gridy = 0;
 
         instance.editCode.addActionListener(e -> {
-            int row = instance.codesTable.getSelectedRow();
+            int row = instance.codesTable.convertRowIndexToModel(instance.codesTable.getSelectedRow());
             String currentName = (String) instance.codeTableModel.getValueAt(row, 0);
             String name = JOptionPane.showInputDialog(this, "Edit Time Code Name", currentName);
 
@@ -234,18 +235,63 @@ public class TimeEntryConfiguration extends JDialog {
         instance.addCode.addActionListener(e -> {
             String name = JOptionPane.showInputDialog(this, "New Time Code Name");
 
-            // TODO prevent duplicates
-            TableTimeCode newCode = new TableTimeCode(0, name);
+            TableTimeCode newCode = new TableTimeCode(0, name, false);
             newCode.newCode = true;
             instance.codeTableModel.rows.add(newCode);
             instance.codeTableModel.fireTableRowsInserted(instance.codeTableModel.getRowCount() - 1, instance.codeTableModel.getRowCount() - 1);
         });
+        instance.archiveDown.addActionListener(e -> {
+            int row = instance.codesTable.convertRowIndexToModel(instance.codesTable.getSelectedRow());
+            TableTimeCode code = instance.codeTableModel.rows.get(row);
+
+            code.modified = true;
+            code.archived = true;
+            instance.codeTableModel.fireTableRowsUpdated(row, row);
+        });
+        instance.archiveUp.addActionListener(e -> {
+            int row = instance.codesTable.convertRowIndexToModel(instance.codesTable.getSelectedRow());
+            TableTimeCode code = instance.codeTableModel.rows.get(row);
+
+            code.modified = true;
+            code.archived = false;
+            instance.codeTableModel.fireTableRowsUpdated(row, row);
+        });
+        instance.archiveToggle.addActionListener(e -> {
+            createSorter(instance);
+
+            instance.addCode.setEnabled(!instance.archiveToggle.isSelected());
+        });
+
+        createSorter(instance);
+
+        instance.codesTable.getSelectionModel().addListSelectionListener(e -> {
+            instance.editCode.setEnabled(instance.codesTable.getSelectedRow() != -1);
+
+            instance.archiveDown.setEnabled(false);
+            instance.archiveUp.setEnabled(false);
+
+            if (instance.codesTable.getSelectedRow() != -1) {
+                TableTimeCode code = instance.codeTableModel.rows.get(instance.codesTable.convertRowIndexToModel(instance.codesTable.getSelectedRow()));
+
+                instance.archiveDown.setEnabled(!code.archived);
+                instance.archiveUp.setEnabled(code.archived);
+            }
+            instance.editCode.setEnabled(instance.codesTable.getSelectedRow() != -1);
+        });
 
         JPanel buttons = new JPanel(new GridBagLayout());
+
+        instance.editCode.setEnabled(false);
+        instance.archiveDown.setEnabled(false);
+        instance.archiveUp.setEnabled(false);
 
         buttons.add(instance.editCode, gbc);
         gbc.gridy++;
         buttons.add(instance.addCode, gbc);
+        gbc.gridy++;
+        buttons.add(instance.archiveDown, gbc);
+        gbc.gridy++;
+        buttons.add(instance.archiveUp, gbc);
 
         gbc.gridy = 0;
         gbc.weightx = 1;
@@ -255,13 +301,61 @@ public class TimeEntryConfiguration extends JDialog {
 
         gbc.gridx++;
         gbc.weightx = 0;
-        gbc.weighty = 1;
+        gbc.weighty = 0;
         gbc.fill = GridBagConstraints.NONE;
         panel.add(buttons, gbc);
 
+        gbc.gridx = 0;
+        gbc.gridy++;
+
+        {
+            GridBagConstraints gbcNested = new GridBagConstraints();
+
+            gbcNested.anchor = GridBagConstraints.NORTHWEST;
+            gbcNested.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
+            gbcNested.gridx = 0;
+            gbcNested.gridy = 0;
+
+            JPanel bottom = new JPanel(new GridBagLayout());
+
+            gbcNested.fill = GridBagConstraints.HORIZONTAL;
+            gbcNested.weightx = 1.0;
+
+            bottom.add(instance.searchText, gbcNested);
+
+            gbcNested.gridx++;
+            gbcNested.fill = GridBagConstraints.NONE;
+            gbcNested.weightx = 0;
+
+            bottom.add(instance.archiveToggle, gbcNested);
+
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.weightx = 1.0;
+
+            panel.add(bottom, gbc);
+        }
         instance.panel = panel;
 
         return panel;
+    }
+
+    private static void createSorter(TimeEntryInstance instance) {
+        TableRowSorter<CodeTableModel> sorter = new TableRowSorter<>(instance.codeTableModel);
+
+        sorter.setRowFilter(new RowFilter<>() {
+            @Override
+            public boolean include(Entry<? extends CodeTableModel, ? extends Integer> entry) {
+                boolean archived = entry.getModel().rows.get(entry.getIdentifier()).archived;
+
+                if (instance.archiveToggle.isSelected()) {
+                    return archived;
+                }
+                return !archived;
+            }
+        });
+        sorter.setSortsOnUpdates(true);
+
+        instance.codesTable.setRowSorter(sorter);
     }
 
     private JPanel createBlankPanel() {
@@ -334,6 +428,13 @@ public class TimeEntryConfiguration extends JDialog {
         JButton editCode = new JButton(Icons.editIcon16);
         JButton addCode = new JButton(Icons.addIcon16);
 
+        JButton archiveDown = new JButton(Icons.archiveDown16);
+        JButton archiveUp = new JButton(Icons.archiveUp16);
+
+        JToggleButton archiveToggle = new JToggleButton(Icons.archiveToggle16);
+
+        JTextField searchText = new JTextField();
+
         public TimeEntryInstance() {
             // hide ID column
             codesTable.removeColumn(codesTable.getColumnModel().getColumn(1));
@@ -343,13 +444,15 @@ public class TimeEntryConfiguration extends JDialog {
     class TableTimeCode {
         public int id;
         public String name;
+        public boolean archived;
 
         public boolean newCode = false;
         public boolean modified = false;
 
-        public TableTimeCode(int id, String name) {
+        public TableTimeCode(int id, String name, boolean archived) {
             this.id = id;
             this.name = name;
+            this.archived = archived;
         }
     }
 

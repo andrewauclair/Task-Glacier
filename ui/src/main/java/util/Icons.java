@@ -32,6 +32,10 @@ public class Icons {
     public static final FlatSVGIcon upIcon16 = new FlatSVGIcon(Objects.requireNonNull(Icons.class.getResource("/up-chevron-svgrepo-com.svg"))).derive(16, 16);
     public static final FlatSVGIcon downIcon16 = new FlatSVGIcon(Objects.requireNonNull(Icons.class.getResource("/down-chevron-svgrepo-com.svg"))).derive(16, 16);
 
+    public static final FlatSVGIcon archiveToggle16 = new FlatSVGIcon(Objects.requireNonNull(Icons.class.getResource("/archive-check-svgrepo-com.svg"))).derive(16, 16);
+    public static final FlatSVGIcon archiveUp16 = new FlatSVGIcon(Objects.requireNonNull(Icons.class.getResource("/archive-up-svgrepo-com.svg"))).derive(16, 16);
+    public static final FlatSVGIcon archiveDown16 = new FlatSVGIcon(Objects.requireNonNull(Icons.class.getResource("/archive-down-svgrepo-com.svg"))).derive(16, 16);
+
     static {
         activeIcon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor(FlatIconColors.OBJECTS_GREEN.key)));
         finishIcon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor(FlatIconColors.OBJECTS_PURPLE.key)));
@@ -47,5 +51,9 @@ public class Icons {
         removeIcon32.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor("Button.foreground")));
 
         editIcon16.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor("Button.foreground")));
+
+        archiveToggle16.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor("Button.foreground")));
+        archiveUp16.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor("Button.foreground")));
+        archiveDown16.setColorFilter(new FlatSVGIcon.ColorFilter(color -> UIManager.getColor("Button.foreground")));
     }
 }

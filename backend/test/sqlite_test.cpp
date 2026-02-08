@@ -68,12 +68,12 @@ TEST_CASE("Load Database", "[database]")
 
 		auto addTimeEntry = TimeEntryModifyPacket(RequestID(1));
 		addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "A");
-		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 1", false);
+		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 1", true);
 		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 2", false);
 
 		addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "B");
 		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 3", false);
-		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 4", false);
+		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 4", true);
 
 		helper.expect_success(addTimeEntry);
 
@@ -260,6 +260,12 @@ TEST_CASE("Load Database", "[database]")
 		REQUIRE(timeEntry->timeCategories.size() == 3);
 		CHECK(timeEntry->timeCategories[2].id == TimeCategoryID(3));
 		CHECK(timeEntry->timeCategories[2].codes[0].id == TimeCodeID(5));
+
+		// archived
+		CHECK(timeEntry->timeCategories[0].codes[0].archived);
+		CHECK(!timeEntry->timeCategories[0].codes[1].archived);
+		CHECK(!timeEntry->timeCategories[1].codes[0].archived);
+		CHECK(timeEntry->timeCategories[1].codes[1].archived);
 
 		// verify that we have an active task by starting a new task (this sends an info message for the old active task)
 		helper.expect_success(TaskMessage(PacketType::START_TASK, RequestID(1), TaskID(1)));
@@ -1008,10 +1014,12 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 		categoryID = query.getColumn(0);
 		int codeID = query.getColumn(1);
 		std::string codeName = query.getColumn(2);
+		int archived = query.getColumn(3);
 
 		CHECK(categoryID == 1);
 		CHECK(codeID == 1);
 		CHECK(codeName == "Code 1");
+		CHECK(archived == 0);
 
 		query.executeStep();
 
@@ -1020,10 +1028,12 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 		categoryID = query.getColumn(0);
 		codeID = query.getColumn(1);
 		codeName = query.getColumn(2).getString();
+		archived = query.getColumn(3);
 
 		CHECK(categoryID == 1);
 		CHECK(codeID == 2);
 		CHECK(codeName == "Code 2");
+		CHECK(archived == 0);
 
 		query.executeStep();
 
@@ -1032,10 +1042,12 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 		categoryID = query.getColumn(0);
 		codeID = query.getColumn(1);
 		codeName = query.getColumn(2).getString();
+		archived = query.getColumn(3);
 
 		CHECK(categoryID == 2);
 		CHECK(codeID == 3);
 		CHECK(codeName == "Code 3");
+		CHECK(archived == 0);
 
 		query.executeStep();
 
@@ -1044,10 +1056,12 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 		categoryID = query.getColumn(0);
 		codeID = query.getColumn(1);
 		codeName = query.getColumn(2).getString();
+		archived = query.getColumn(3);
 
 		CHECK(categoryID == 2);
 		CHECK(codeID == 4);
 		CHECK(codeName == "Code 4");
+		CHECK(archived == 0);
 
 		query.executeStep();
 
@@ -1086,10 +1100,12 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 		categoryID = query.getColumn(0);
 		int codeID = query.getColumn(1);
 		std::string codeName = query.getColumn(2);
+		int archived = query.getColumn(3);
 
 		CHECK(categoryID == 1);
 		CHECK(codeID == 1);
 		CHECK(codeName == "Fo o");
+		CHECK(archived == 0);
 
 		query.executeStep();
 
@@ -1098,10 +1114,70 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 		categoryID = query.getColumn(0);
 		codeID = query.getColumn(1);
 		codeName = query.getColumn(2).getString();
+		archived = query.getColumn(3);
 
 		CHECK(categoryID == 1);
 		CHECK(codeID == 2);
 		CHECK(codeName == "Bar s");
+		CHECK(archived == 0);
+
+		query.executeStep();
+
+		REQUIRE(!query.hasRow());
+	}
+
+	SECTION("Archive")
+	{
+		auto update_category = TimeEntryModifyPacket(RequestID(4));
+		update_category.categories.emplace_back(TimeCategoryModType::UPDATE, TimeCategoryID(1), "Test er");
+		update_category.codes.emplace_back(TimeCategoryModType::UPDATE, 0, TimeCodeID(1), "Fo o", true);
+		update_category.codes.emplace_back(TimeCategoryModType::UPDATE, 0, TimeCodeID(2), "Bar s", true);
+
+		api.process_packet(update_category);
+
+		SQLite::Statement query(database.database(), "SELECT * FROM timeEntryCategory WHERE TimeCategoryID == 1");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		int categoryID = query.getColumn(0);
+		std::string categoryName = query.getColumn(1);
+
+		CHECK(categoryID == 1);
+		CHECK(categoryName == "Test er");
+
+		query.executeStep();
+
+		REQUIRE(!query.hasRow());
+
+		query = SQLite::Statement(database.database(), "SELECT * FROM timeEntryCode WHERE TimeCategoryID == 1");
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		categoryID = query.getColumn(0);
+		int codeID = query.getColumn(1);
+		std::string codeName = query.getColumn(2);
+		int archived = query.getColumn(3);
+
+		CHECK(categoryID == 1);
+		CHECK(codeID == 1);
+		CHECK(codeName == "Fo o");
+		CHECK(archived != 0);
+
+		query.executeStep();
+
+		REQUIRE(query.hasRow());
+
+		categoryID = query.getColumn(0);
+		codeID = query.getColumn(1);
+		codeName = query.getColumn(2).getString();
+		archived = query.getColumn(3);
+
+		CHECK(categoryID == 1);
+		CHECK(codeID == 2);
+		CHECK(codeName == "Bar s");
+		CHECK(archived != 0);
 
 		query.executeStep();
 

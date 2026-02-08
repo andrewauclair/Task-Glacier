@@ -599,7 +599,7 @@ void API::handle_basic(const BasicMessage& message)
 
 			for (auto&& code : category.codes)
 			{
-				TimeCode codePacket = TimeCode(code.id, code.name);
+				TimeCode codePacket = TimeCode(code.id, code.name, code.archived);
 
 				packet.codes.push_back(codePacket);
 			}
@@ -607,9 +607,6 @@ void API::handle_basic(const BasicMessage& message)
 		}
 		m_sender->send(std::make_unique<TimeEntryDataPacket>(data));
 
-		/*const auto send_task = [&](const Task& task) { send_task_info(task, false, output); };
-
-		m_app.for_each_task_sorted(send_task);*/
 		m_app.send_all_tasks();
 
 		m_bugzilla.send_info();
@@ -686,7 +683,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 
 			if (result != m_app.timeCategories().end())
 			{
-				timeCategory = &(*result);
+				timeCategory = &*result;
 			}
 			else
 			{
@@ -716,7 +713,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 					}
 					else
 					{
-						TimeCode timeCode{ app->m_nextTimeCodeID, code.name };
+						TimeCode timeCode{ app->m_nextTimeCodeID, code.name, code.archived };
 
 						app->m_nextTimeCodeID++;
 
@@ -754,6 +751,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 					if (result != timeCategory->codes.end())
 					{
 						result->name = code.name;
+						result->archived = code.archived;
 					}
 					else
 					{
@@ -767,8 +765,6 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 		}
 		else
 		{
-			bool allow = true;
-
 			for (auto&& code : message.codes)
 			{
 				if (code.categoryIndex != categoryIndex)
@@ -796,7 +792,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 
 		for (auto&& code : category.codes)
 		{
-			TimeCode codePacket = TimeCode(code.id, code.name);
+			TimeCode codePacket = TimeCode(code.id, code.name, code.archived);
 
 			packet.codes.push_back(codePacket);
 		}

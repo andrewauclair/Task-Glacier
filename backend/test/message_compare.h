@@ -138,7 +138,7 @@ inline void verify_time_entry_modify(const TimeEntryModifyPacket& expected, cons
 		CHECK(expected.codes[i].categoryIndex == actual.codes[i].categoryIndex);
 		CHECK(expected.codes[i].codeID == actual.codes[i].codeID);
 		CHECK(expected.codes[i].name == actual.codes[i].name);
-		CHECK(expected.codes[i].archive == actual.codes[i].archive);
+		CHECK(expected.codes[i].archived == actual.codes[i].archived);
 	}
 }
 

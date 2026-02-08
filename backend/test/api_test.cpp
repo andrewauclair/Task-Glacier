@@ -1015,6 +1015,44 @@ TEST_CASE("Time Categories and Time Codes", "[api][task]")
 		helper.expect_success(addTimeEntry);
 	}
 
+	SECTION("Success - Archive Time Code")
+	{
+		auto addTimeEntry = TimeEntryModifyPacket(RequestID(1));
+
+		addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "A");
+		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 1", false);
+		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 2", false);
+
+		addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "B");
+		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 1", false);
+		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 2", false);
+
+		helper.expect_success(addTimeEntry);
+
+		auto updateTimeEntry = TimeEntryModifyPacket(RequestID(1));
+		updateTimeEntry.categories.emplace_back(TimeCategoryModType::UPDATE, TimeCategoryID(1), "AA");
+		updateTimeEntry.codes.emplace_back(TimeCategoryModType::UPDATE, 0, TimeCodeID(1), "Code 1", true);
+		updateTimeEntry.codes.emplace_back(TimeCategoryModType::UPDATE, 0, TimeCodeID(2), "Code 2", false);
+
+		updateTimeEntry.categories.emplace_back(TimeCategoryModType::UPDATE, TimeCategoryID(2), "BB");
+		updateTimeEntry.codes.emplace_back(TimeCategoryModType::UPDATE, 1, TimeCodeID(3), "Code 3", false);
+		updateTimeEntry.codes.emplace_back(TimeCategoryModType::UPDATE, 1, TimeCodeID(4), "Code 4", true);
+
+		helper.expect_success(updateTimeEntry);
+
+		auto data = TimeEntryDataPacket({});
+
+		auto& verifyCategory1 = data.timeCategories.emplace_back(TimeCategoryID(1), "AA");
+		verifyCategory1.codes.emplace_back(TimeCodeID(1), "Code 1", true);
+		verifyCategory1.codes.emplace_back(TimeCodeID(2), "Code 2");
+
+		auto& verifyCategory2 = data.timeCategories.emplace_back(TimeCategoryID(2), "BB");
+		verifyCategory2.codes.emplace_back(TimeCodeID(3), "Code 3");
+		verifyCategory2.codes.emplace_back(TimeCodeID(4), "Code 4", true);
+
+		helper.required_messages({ &data });
+	}
+
 	SECTION("Failure - Time Category Already Exists")
 	{
 		auto addTimeEntry = TimeEntryModifyPacket(RequestID(1));
@@ -1491,14 +1529,17 @@ TEST_CASE("request configuration at startup", "[api]")
 	api.process_packet(create_task_5);
 	api.process_packet(create_task_6);
 
-	/*auto timeCategories = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
-	auto& category1 = timeCategories.timeCategories.emplace_back(TimeCategoryID(0), "Foo");
-	category1.codes.emplace_back(TimeCodeID(0), "Fizz");
-	category1.codes.emplace_back(TimeCodeID(0), "Buzz");
+	auto addTimeEntry = TimeEntryModifyPacket(RequestID(1));
 
-	auto& category2 = timeCategories.timeCategories.emplace_back(TimeCategoryID(0), "Bar");
-	category2.codes.emplace_back(TimeCodeID(0), "Bing");
-	category2.codes.emplace_back(TimeCodeID(0), "Bong");*/
+	addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "A");
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 1", true);
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 2", false);
+
+	addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "B");
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 3", false);
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 4", true);
+
+	api.process_packet(addTimeEntry);
 
 	sender.output.clear();
 
@@ -1508,6 +1549,13 @@ TEST_CASE("request configuration at startup", "[api]")
 	REQUIRE(sender.output.size() == 10);
 
 	auto timeCategoriesData = TimeEntryDataPacket({});
+	auto& category1 = timeCategoriesData.timeCategories.emplace_back(TimeCategoryID(1), "A");
+	category1.codes.emplace_back(TimeCodeID(1), "Code 1", true);
+	category1.codes.emplace_back(TimeCodeID(2), "Code 2", false);
+
+	auto& category2 = timeCategoriesData.timeCategories.emplace_back(TimeCategoryID(2), "B");
+	category2.codes.emplace_back(TimeCodeID(3), "Code 3", false);
+	category2.codes.emplace_back(TimeCodeID(4), "Code 4", true);
 
 	verify_message(timeCategoriesData, *sender.output[0]);
 
