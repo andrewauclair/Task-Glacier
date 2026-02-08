@@ -71,6 +71,9 @@ public class AddTask extends JDialog {
                 List<CreateTask> packets = new ArrayList<>();
 
                 for (String s : names) {
+                    if (s.isEmpty()) {
+                        continue;
+                    }
                     int requestID = RequestID.nextRequestID();
                     CreateTask create = new CreateTask(s, parentID, requestID);
                     packets.add(create);
