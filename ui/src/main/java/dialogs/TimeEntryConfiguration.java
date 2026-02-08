@@ -1,11 +1,9 @@
 package dialogs;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
 import data.Standards;
 import data.TimeData;
-import packets.PacketType;
 import packets.RequestID;
-import packets.TimeCategoriesMessage;
+import packets.TimeEntryModify;
 import packets.TimeCategoryModType;
 import taskglacier.MainFrame;
 import util.DialogEscape;
@@ -14,13 +12,10 @@ import util.Icons;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class TimeEntryConfiguration extends JDialog {
     private final TimeData timeData;
@@ -29,7 +24,6 @@ public class TimeEntryConfiguration extends JDialog {
     private JTable categoriesTable = new JTable(categoriesModel);
 
     private JButton categoryAdd = new JButton(Icons.addIcon16);
-    private JButton categoryRemove = new JButton(Icons.removeIcon16);
 
     private JButton save = new JButton("Save");
 
@@ -71,26 +65,9 @@ public class TimeEntryConfiguration extends JDialog {
         });
 
         categoriesTable.getSelectionModel().addListSelectionListener(e -> {
-            categoryRemove.setEnabled(categoriesTable.getSelectedRow() != -1);
-
             String name = categoriesTable.getSelectedRow() != -1 ? (String) categoriesModel.getValueAt(categoriesTable.getSelectedRow(), 0) : "blank";
 
             layout.show(stack, name);
-        });
-
-        categoryRemove.setEnabled(false);
-
-        categoryRemove.addActionListener(e -> {
-            if (categoriesTable.getSelectedRow() != -1) {
-                String name = (String) categoriesModel.getValueAt(categoriesTable.getSelectedRow(), 0);
-
-                categoriesModel.rows.remove(categoriesTable.getSelectedRow());
-                categoriesModel.fireTableRowsDeleted(categoriesTable.getSelectedRow(), categoriesTable.getSelectedRow());
-
-                instances.remove(name);
-
-                layout.show(stack, "blank");
-            }
         });
 
         setLayout(new GridBagLayout());
@@ -115,52 +92,60 @@ public class TimeEntryConfiguration extends JDialog {
         add(save, gbc);
 
         save.addActionListener(e -> {
-            TimeCategoriesMessage addMessage = new TimeCategoriesMessage(PacketType.TIME_CATEGORIES_MODIFY);
-            addMessage.type = TimeCategoryModType.ADD;
-
-            TimeCategoriesMessage updateMessage = new TimeCategoriesMessage(PacketType.TIME_CATEGORIES_MODIFY);
-            updateMessage.type = TimeCategoryModType.UPDATE;
+            TimeEntryModify message = new TimeEntryModify();
 
             for (int i = 0; i < categoriesModel.getRowCount(); i++) {
-                TimeData.TimeCategory timeCategory = new TimeData.TimeCategory();
+                TimeEntryModify.Category timeCategory = new TimeEntryModify.Category();
                 timeCategory.id = (int) categoriesModel.getValueAt(i, 1);
                 timeCategory.name = (String) categoriesModel.getValueAt(i, 0);
 
                 CodeTableModel timeCodeModel = instances.get(timeCategory.name).codeTableModel;
 
-                boolean newOrUpdatedTimeCodes = false;
+                boolean categoryAdded = timeCategory.id == 0;
+                int categoryIndex = 0;
 
-                for (int j = 0; j < timeCodeModel.getRowCount(); j++) {
-                    TableTimeCode row = timeCodeModel.rows.get(j);
-
-                    TimeData.TimeCode timeCode = new TimeData.TimeCode(row.id, row.name);
-
-                    if (row.newCode || row.modified) {
-                        newOrUpdatedTimeCodes = true;
-                    }
-                    timeCategory.timeCodes.add(timeCode);
-                }
-
-                if (timeCategory.id == 0 || newOrUpdatedTimeCodes) {
-                    addMessage.getTimeCategories().add(timeCategory);
+                if (timeCategory.id == 0) {
+                    timeCategory.type = TimeCategoryModType.ADD;
+                    message.categories.add(timeCategory);
+                    categoryIndex = message.categories.size() - 1;
                 }
                 else {
                     TimeData.TimeCategory category = mainFrame.getTimeData().findTimeCategory(timeCategory.id);
 
                     if (!category.name.equals(timeCategory.name)) {
-                        updateMessage.getTimeCategories().add(timeCategory);
+                        timeCategory.type = TimeCategoryModType.UPDATE;
+                        message.categories.add(timeCategory);
+                        categoryIndex = message.categories.size() - 1;
+                    }
+                }
+
+                for (int j = 0; j < timeCodeModel.getRowCount(); j++) {
+                    TableTimeCode row = timeCodeModel.rows.get(j);
+
+                    if (!categoryAdded && (row.newCode || row.modified)) {
+                        categoryAdded = true;
+                        timeCategory.type = TimeCategoryModType.UPDATE;
+                        message.categories.add(timeCategory);
+                        categoryIndex = message.categories.size() - 1;
+                    }
+
+                    if (row.newCode || row.modified) {
+                        TimeEntryModify.Code newCode = new TimeEntryModify.Code();
+
+                        newCode.type = row.newCode ? TimeCategoryModType.ADD : TimeCategoryModType.UPDATE;
+                        newCode.categoryIndex = categoryIndex;
+                        newCode.id = row.id;
+                        newCode.name = row.name;
+                        newCode.archived = false;
+
+                        message.codes.add(newCode);
                     }
                 }
             }
 
-            if (!addMessage.getTimeCategories().isEmpty()) {
-                addMessage.requestID = RequestID.nextRequestID();
-                mainFrame.getConnection().sendPacket(addMessage);
-            }
-
-            if (!updateMessage.getTimeCategories().isEmpty()) {
-                updateMessage.requestID = RequestID.nextRequestID();
-                mainFrame.getConnection().sendPacket(updateMessage);
+            if (!message.categories.isEmpty()) {
+                message.requestID = RequestID.nextRequestID();
+                mainFrame.getConnection().sendPacket(message);
             }
 
             TimeEntryConfiguration.this.dispose();
@@ -210,7 +195,7 @@ public class TimeEntryConfiguration extends JDialog {
 
         panel.add(categoryAdd, gbc);
         gbc.gridx++;
-        panel.add(categoryRemove, gbc);
+        panel.add(new JLabel("      "), gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
@@ -236,8 +221,6 @@ public class TimeEntryConfiguration extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = 0;
 
-        instance.removeCode.setEnabled(false);
-
         instance.editCode.addActionListener(e -> {
             int row = instance.codesTable.getSelectedRow();
             String currentName = (String) instance.codeTableModel.getValueAt(row, 0);
@@ -257,20 +240,12 @@ public class TimeEntryConfiguration extends JDialog {
             instance.codeTableModel.rows.add(newCode);
             instance.codeTableModel.fireTableRowsInserted(instance.codeTableModel.getRowCount() - 1, instance.codeTableModel.getRowCount() - 1);
         });
-        instance.removeCode.addActionListener(e -> {
-            instance.codeTableModel.rows.get(instance.codesTable.getSelectedRow()).removed = true;
-            instance.codeTableModel.fireTableRowsUpdated(instance.codesTable.getSelectedRow(), instance.codesTable.getSelectedRow());
-        });
-        instance.codesTable.getSelectionModel().addListSelectionListener(e -> {
-            instance.removeCode.setEnabled(instance.codesTable.getSelectedRow() != -1);
-        });
+
         JPanel buttons = new JPanel(new GridBagLayout());
 
         buttons.add(instance.editCode, gbc);
         gbc.gridy++;
         buttons.add(instance.addCode, gbc);
-        gbc.gridy++;
-        buttons.add(instance.removeCode, gbc);
 
         gbc.gridy = 0;
         gbc.weightx = 1;
@@ -358,7 +333,6 @@ public class TimeEntryConfiguration extends JDialog {
 
         JButton editCode = new JButton(Icons.editIcon16);
         JButton addCode = new JButton(Icons.addIcon16);
-        JButton removeCode = new JButton(Icons.removeIcon16);
 
         public TimeEntryInstance() {
             // hide ID column
@@ -372,7 +346,6 @@ public class TimeEntryConfiguration extends JDialog {
 
         public boolean newCode = false;
         public boolean modified = false;
-        public boolean removed = false;
 
         public TableTimeCode(int id, String name) {
             this.id = id;

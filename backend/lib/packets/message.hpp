@@ -29,7 +29,7 @@ enum class PacketType : std::int32_t
 	REQUEST_CONFIGURATION_COMPLETE = 16,
 
 	TASK_INFO = 17,
-	TASK_STATE_CHANGE = 42,
+	TASK_STATE_CHANGE = 42, // TODO remove. The UI is using it for the unspecified task?
 
 	// configure and refresh bugzilla (refresh is manual by the user on the UI)
 	// the server will create and update tasks based on bugzilla changes and send TASK_INFO messages
@@ -55,7 +55,7 @@ enum class PacketType : std::int32_t
 	// backup has failed. error message and last successful backup time are provided
 	BACKUP_FAILED = 28,
 
-	TIME_ENTRY_REQUEST = 29,
+	REQUEST_TIME_ENTRY = 29,
 	TIME_ENTRY_DATA = 30,
 	TIME_ENTRY_MODIFY = 31,
 

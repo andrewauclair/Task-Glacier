@@ -122,8 +122,24 @@ inline void verify_time_entry_data(const TimeEntryDataPacket& expected, const Ti
 inline void verify_time_entry_modify(const TimeEntryModifyPacket& expected, const TimeEntryModifyPacket& actual, std::source_location location)
 {
 	CHECK(expected.requestID == actual.requestID);
-	CHECK(expected.type == actual.type);
-	CHECK(expected.timeCategories == actual.timeCategories);
+	CHECK(expected.categories.size() == actual.categories.size());
+	CHECK(expected.codes.size() == actual.codes.size());
+
+	for (int i = 0; i < expected.categories.size() && i < actual.categories.size(); i++)
+	{
+		CHECK(expected.categories[i].type == actual.categories[i].type);
+		CHECK(expected.categories[i].id == actual.categories[i].id);
+		CHECK(expected.categories[i].name == actual.categories[i].name);
+	}
+
+	for (int i = 0; i < expected.codes.size() && i < actual.codes.size(); i++)
+	{
+		CHECK(expected.codes[i].type == actual.codes[i].type);
+		CHECK(expected.codes[i].categoryIndex == actual.codes[i].categoryIndex);
+		CHECK(expected.codes[i].codeID == actual.codes[i].codeID);
+		CHECK(expected.codes[i].name == actual.codes[i].name);
+		CHECK(expected.codes[i].archive == actual.codes[i].archive);
+	}
 }
 
 inline void verify_update_task_times(const UpdateTaskTimesMessage& expected, const UpdateTaskTimesMessage& actual, std::source_location location)

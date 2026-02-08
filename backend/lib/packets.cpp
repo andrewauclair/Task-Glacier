@@ -325,17 +325,12 @@ std::vector<std::byte> TimeEntryDataPacket::pack() const
 	{
 		builder.add(timeCategory.id);
 		builder.add(timeCategory.name);
-		builder.add(timeCategory.inUse);
-		builder.add(timeCategory.taskCount);
-		builder.add(timeCategory.archived);
 		builder.add(static_cast<std::int32_t>(timeCategory.codes.size()));
 
 		for (auto&& timeCode : timeCategory.codes)
 		{
 			builder.add(timeCode.id);
 			builder.add(timeCode.name);
-			builder.add(timeCode.inUse);
-			builder.add(timeCode.taskCount);
 			builder.add(timeCode.archived);
 		}
 	}
@@ -359,9 +354,6 @@ std::expected<TimeEntryDataPacket, UnpackError> TimeEntryDataPacket::unpack(std:
 			auto id = parser.parse_next_immediate<TimeCategoryID>();
 			auto name = parser.parse_next_immediate<std::string>();
 			TimeCategory timeCategory(id, name);
-			timeCategory.inUse = parser.parse_next_immediate<bool>();
-			timeCategory.taskCount = parser.parse_next_immediate<std::int32_t>();
-			timeCategory.archived = parser.parse_next_immediate<bool>();
 
 			const std::int32_t timeCodeCount = parser.parse_next_immediate<std::int32_t>();
 
@@ -370,8 +362,6 @@ std::expected<TimeEntryDataPacket, UnpackError> TimeEntryDataPacket::unpack(std:
 				auto codeID = parser.parse_next_immediate<TimeCodeID>();
 				auto codeName = parser.parse_next_immediate<std::string>();
 				TimeCode timeCode(codeID, codeName);
-				timeCode.inUse = parser.parse_next_immediate<bool>();
-				timeCode.taskCount = parser.parse_next_immediate<std::int32_t>();
 				timeCode.archived = parser.parse_next_immediate<bool>();
 
 				timeCategory.codes.push_back(timeCode);
@@ -393,23 +383,23 @@ std::vector<std::byte> TimeEntryModifyPacket::pack() const
 
 	builder.add(static_cast<std::int32_t>(packetType()));
 	builder.add(requestID);
-	builder.add(type);
-	builder.add<std::int32_t>(timeCategories.size());
+	builder.add<std::int32_t>(categories.size());
 
-	for (auto&& category : timeCategories)
+	for (const Category& category : categories)
 	{
+		builder.add(category.type);
 		builder.add(category.id);
 		builder.add(category.name);
-		builder.add(category.archived);
+	}
+	builder.add<std::int32_t>(codes.size());
 
-		builder.add<std::int32_t>(category.codes.size());
-
-		for (auto&& code : category.codes)
-		{
-			builder.add(code.id);
-			builder.add(code.name);
-			builder.add(code.archived);
-		}
+	for (const Code& code : codes)
+	{
+		builder.add(code.type);
+		builder.add(code.categoryIndex);
+		builder.add(code.codeID);
+		builder.add(code.name);
+		builder.add(code.archive);
 	}
 	
 	return builder.build();
@@ -421,33 +411,36 @@ std::expected<TimeEntryModifyPacket, UnpackError> TimeEntryModifyPacket::unpack(
 
 	const auto packetType = parser.parse_next<PacketType>();
 	const auto requestID = parser.parse_next<RequestID>();
-	const auto modType = parser.parse_next<TimeCategoryModType>();
 
 	const auto categoryCount = parser.parse_next<std::int32_t>();
 
 	try
 	{
-		std::vector<TimeCategory> categories;
+		TimeEntryModifyPacket packet(requestID.value());
 
 		for (int i = 0; i < categoryCount.value(); i++)
 		{
-			TimeCategory category(parser.parse_next_immediate<TimeCategoryID>());
+			const auto type = parser.parse_next_immediate<TimeCategoryModType>();
+			const auto id = parser.parse_next_immediate<TimeCategoryID>();
+			const auto name = parser.parse_next_immediate<std::string>();
 
-			category.name = parser.parse_next_immediate<std::string>();
-			category.archived = parser.parse_next_immediate<bool>();
-
-			const auto codeCount = parser.parse_next_immediate<std::int32_t>();
-			for (int j = 0; j < codeCount; j++)
-			{
-				const auto id = parser.parse_next<TimeCodeID>();
-				const auto name = parser.parse_next<std::string>();
-				const auto archived = parser.parse_next<bool>();
-
-				category.codes.emplace_back(id.value(), name.value(), archived.value());
-			}
-			categories.push_back(category);
+			packet.categories.emplace_back(type, id, name);
 		}
-		return TimeEntryModifyPacket(requestID.value(), modType.value(), categories);
+
+		const auto codeCount = parser.parse_next_immediate<std::int32_t>();
+
+		for (int i = 0; i < codeCount; i++)
+		{
+			const auto type = parser.parse_next_immediate<TimeCategoryModType>();
+			const auto categoryIndex = parser.parse_next_immediate<std::int32_t>();
+			const auto id = parser.parse_next_immediate<TimeCodeID>();
+			const auto name = parser.parse_next_immediate<std::string>();
+			const auto archive = parser.parse_next_immediate<bool>();
+
+			packet.codes.emplace_back(type, categoryIndex, id, name, archive);
+		}
+		
+		return packet;
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{

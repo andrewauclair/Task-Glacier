@@ -14,7 +14,7 @@ struct TimeEntry
 
 	friend std::ostream& operator<<(std::ostream& out, const TimeEntry& entry)
 	{
-		out << "TimeEntry { catID: " << entry.categoryID._val << "codeID: " << entry.codeID._val;
+		out << "TimeEntry { catID: " << entry.categoryID._val << ", codeID: " << entry.codeID._val;
 		out << " }";
 
 		return out;

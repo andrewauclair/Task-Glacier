@@ -1,6 +1,7 @@
 package data;
 
-import packets.TimeCategoriesMessage;
+import packets.TimeEntryData;
+import packets.TimeEntryModify;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.Optional;
 public class TimeData {
     List<TimeCategory> timeCategories = new ArrayList<>();
 
-    public void processPacket(TimeCategoriesMessage data) {
+    public void processPacket(TimeEntryData data) {
         timeCategories = new ArrayList<>(data.getTimeCategories());
     }
 
@@ -49,6 +50,7 @@ public class TimeData {
     public static class TimeCode {
         public int id;
         public String name;
+        public boolean archived;
 
         public TimeCode() {
         }

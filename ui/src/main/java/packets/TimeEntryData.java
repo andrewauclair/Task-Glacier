@@ -8,18 +8,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TimeCategoriesMessage implements Packet {
-    private final PacketType packetType;
+public class TimeEntryData implements Packet {
+    private final PacketType packetType = PacketType.TIME_ENTRY_DATA;
     public int requestID;
     public TimeCategoryModType type = TimeCategoryModType.UPDATE;
     List<TimeData.TimeCategory> timeCategories = new ArrayList<>();
     private int size = 0;
-    public TimeCategoriesMessage(PacketType packetType) {
-        this.packetType = packetType;
-    }
 
-    public static TimeCategoriesMessage parse(DataInputStream input, int size) throws IOException {
-        TimeCategoriesMessage data = new TimeCategoriesMessage(PacketType.valueOf(input.readInt()));
+    public static TimeEntryData parse(DataInputStream input, int size) throws IOException {
+        TimeEntryData data = new TimeEntryData();
+
+        input.readInt(); // packet type
 
         data.size = size;
 
@@ -29,16 +28,7 @@ public class TimeCategoriesMessage implements Packet {
             TimeData.TimeCategory timeCategory = new TimeData.TimeCategory();
 
             timeCategory.id = input.readInt();
-
-            {
-                int chars = input.readShort(); // string length
-                byte[] bytes = input.readNBytes(chars);
-                timeCategory.name = new String(bytes);
-            }
-
-            input.readByte();
-            input.readInt();
-            input.readByte();
+            timeCategory.name = Packet.parseString(input);
 
             int codeCount = input.readInt();
 
@@ -46,16 +36,8 @@ public class TimeCategoriesMessage implements Packet {
                 TimeData.TimeCode timeCode = new TimeData.TimeCode();
 
                 timeCode.id = input.readInt();
-
-                {
-                    int chars = input.readShort(); // string length
-                    byte[] bytes = input.readNBytes(chars);
-                    timeCode.name = new String(bytes);
-                }
-
-                input.readByte();
-                input.readInt();
-                input.readByte();
+                timeCode.name = Packet.parseString(input);
+                timeCode.archived = input.readByte() != 0;
 
                 timeCategory.timeCodes.add(timeCode);
             }

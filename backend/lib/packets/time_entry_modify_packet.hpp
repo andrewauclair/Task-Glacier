@@ -9,10 +9,25 @@
 
 struct TimeEntryModifyPacket : RequestMessage
 {
-	TimeCategoryModType type;
-	std::vector<TimeCategory> timeCategories;
+	struct Category
+	{
+		TimeCategoryModType type;
+		TimeCategoryID id;
+		std::string name;
+	};
+	struct Code
+	{
+		TimeCategoryModType type;
+		std::int32_t categoryIndex;
+		TimeCodeID codeID;
+		std::string name;
+		bool archive;
+	};
 
-	TimeEntryModifyPacket(RequestID requestID, TimeCategoryModType type, std::vector<TimeCategory> timeCategories) : RequestMessage(PacketType::TIME_ENTRY_MODIFY, requestID), type(type), timeCategories(std::move(timeCategories))
+	std::vector<Category> categories;
+	std::vector<Code> codes;
+
+	TimeEntryModifyPacket(RequestID requestID) : RequestMessage(PacketType::TIME_ENTRY_MODIFY, requestID)
 	{
 	}
 
@@ -24,16 +39,26 @@ struct TimeEntryModifyPacket : RequestMessage
 		out << "TimeEntryModifyPacket { ";
 		RequestMessage::print(out);
 
-		out << ", type: " << static_cast<int>(type);
-
-		if (!timeCategories.empty())
+		if (!categories.empty())
 		{
-			out << ", ";
+			out << ", {\n";
+
+			for (const Category& category : categories)
+			{
+				out << "    type: " << static_cast<int>(category.type) << ", id: " << category.id._val << ", name: " << category.name << '\n';
+			}
+			out << "}\n";
 		}
 
-		for (auto&& category : timeCategories)
+		if (!codes.empty())
 		{
-			out << category;
+			out << ", {\n";
+
+			for (const Code& code : codes)
+			{
+				out << "    type: " << static_cast<int>(code.type) << ", cat index: " << code.categoryIndex << ", code id: " << code.codeID._val << ", name: " << code.name << ", archive: " << code.archive << '\n';
+			}
+			out << "}\n";
 		}
 		out << " }";
 		return out;

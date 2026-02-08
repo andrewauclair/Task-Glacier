@@ -263,6 +263,7 @@ void API::process_packet(const Message& message)
 	case PacketType::REQUEST_CONFIGURATION:
 	case PacketType::BULK_TASK_UPDATE_START:
 	case PacketType::BULK_TASK_UPDATE_FINISH:
+	case PacketType::REQUEST_TIME_ENTRY:
 		handle_basic(static_cast<const BasicMessage&>(message));
 		break;
 	case PacketType::REQUEST_DAILY_REPORT:
@@ -284,8 +285,6 @@ void API::process_packet(const Message& message)
 	}
 	case PacketType::TIME_ENTRY_MODIFY:
 		time_entry_modify(static_cast<const TimeEntryModifyPacket&>(message));
-		break;
-	case PacketType::TIME_ENTRY_REQUEST:
 		break;
 	case PacketType::BUGZILLA_INFO:
 	{
@@ -652,11 +651,15 @@ void API::send_task_info(const Task& task, bool newTask)
 
 void API::time_entry_modify(const TimeEntryModifyPacket& message)
 {
-	for (auto&& category : message.timeCategories)
+	std::int32_t categoryIndex = -1;
+
+	for (auto&& category : message.categories)
 	{
+		categoryIndex++;
+
 		TimeCategory* timeCategory = nullptr;
 
-		if (category.id == TimeCategoryID(0) && message.type == TimeCategoryModType::ADD)
+		if (category.id == TimeCategoryID(0) && category.type == TimeCategoryModType::ADD)
 		{
 			// creating new time category
 			auto result = std::find_if(m_app.timeCategories().begin(), m_app.timeCategories().end(), [&](auto&& cat) { return cat.name == category.name; });
@@ -698,90 +701,84 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 			return;
 		}
 
-		if (message.type == TimeCategoryModType::UPDATE)
+		const auto add_code_to_category = [requestID = message.requestID, app = &m_app, database = m_database, sender = m_sender](TimeCategory& category, const TimeEntryModifyPacket::Code& code)
+			{
+				const bool newCode = code.codeID == TimeCodeID(0);
+
+				if (newCode)
+				{
+					const auto existing = std::find_if(category.codes.begin(), category.codes.end(), [&](auto&& c) { return c.name == code.name; });
+
+					if (existing != category.codes.end())
+					{
+						sender->send(std::make_unique<FailureResponse>(requestID, std::format("Time Code with name '{}' already exists on Time Category '{}'", code.name, category.name)));
+						return true;
+					}
+					else
+					{
+						TimeCode timeCode{ app->m_nextTimeCodeID, code.name };
+
+						app->m_nextTimeCodeID++;
+
+						category.codes.push_back(timeCode);
+
+						database->write_next_time_code_id(app->m_nextTimeCodeID, *sender);
+					}
+				}
+				return false;
+			};
+
+		if (category.type == TimeCategoryModType::UPDATE)
 		{
 			// update names
 			timeCategory->name = category.name;
 
-			for (auto&& code : category.codes)
+			for (auto&& code : message.codes)
 			{
-				auto result = std::find_if(timeCategory->codes.begin(), timeCategory->codes.end(), [&](auto&& c) { return c.id == code.id; });
-
-				if (result != timeCategory->codes.end())
+				if (code.categoryIndex != categoryIndex)
 				{
-					result->name = code.name;
+					continue;
+				}
+
+				if (code.type == TimeCategoryModType::ADD)
+				{
+					if (add_code_to_category(*timeCategory, code))
+					{
+						return;
+					}
 				}
 				else
 				{
-					m_sender->send(std::make_unique<FailureResponse>(message.requestID, std::format("Time Code with ID {} does not exist", code.id)));
-					return;
+					auto result = std::find_if(timeCategory->codes.begin(), timeCategory->codes.end(), [&](auto&& c) { return c.id == code.codeID; });
+
+					if (result != timeCategory->codes.end())
+					{
+						result->name = code.name;
+					}
+					else
+					{
+						m_sender->send(std::make_unique<FailureResponse>(message.requestID, std::format("Time Code with ID {} does not exist", code.codeID)));
+						return;
+					}
 				}
 			}
 
 			m_database->write_time_entry_config(*timeCategory, *m_sender);
 		}
-		else if (message.type == TimeCategoryModType::REMOVE_CATEGORY)
-		{
-			auto result = std::find_if(m_app.timeCategories().begin(), m_app.timeCategories().end(), [&](auto&& cat) { return cat.id == category.id; });
-
-			if (result != m_app.timeCategories().end())
-			{
-				m_database->remove_time_category(*result, *m_sender);
-			}
-
-			m_app.timeCategories().erase(result);
-		}
-		else if (message.type == TimeCategoryModType::REMOVE_CODE)
-		{
-			for (auto&& code : category.codes)
-			{
-				auto result = std::find_if(timeCategory->codes.begin(), timeCategory->codes.end(), [&](auto&& c) { return c.id == code.id; });
-
-				if (result != timeCategory->codes.end())
-				{
-					timeCategory->codes.erase(result);
-				}
-				else
-				{
-					m_sender->send(std::make_unique<FailureResponse>(message.requestID, std::format("Time Code with ID {} does not exist", code.id)));
-					return;
-				}
-			}
-
-			for (auto&& code : category.codes)
-			{
-				// TODO validate that this is called multiple times in storage_test.cpp
-				m_database->remove_time_code(category, code, *m_sender);
-			}
-		}
 		else
 		{
 			bool allow = true;
 
-			for (auto&& code : category.codes)
+			for (auto&& code : message.codes)
 			{
-				const bool newCode = code.id == TimeCodeID(0);
-
-				if (newCode)
+				if (code.categoryIndex != categoryIndex)
 				{
-					const auto existing = std::find_if(timeCategory->codes.begin(), timeCategory->codes.end(), [&](auto&& c) { return c.name == code.name; });
+					continue;
+				}
 
-					if (existing != timeCategory->codes.end())
-					{
-						m_sender->send(std::make_unique<FailureResponse>(message.requestID, std::format("Time Code with name '{}' already exists on Time Category '{}'", code.name, timeCategory->name)));
-						return;
-					}
-					else
-					{
-						auto copyCode = code;
-						copyCode.id = m_app.m_nextTimeCodeID;
-
-						m_app.m_nextTimeCodeID++;
-
-						timeCategory->codes.push_back(copyCode);
-
-						m_database->write_next_time_code_id(m_app.m_nextTimeCodeID, *m_sender);
-					}
+				if (add_code_to_category(*timeCategory, code))
+				{
+					return;
 				}
 			}
 

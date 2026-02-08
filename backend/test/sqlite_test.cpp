@@ -66,16 +66,16 @@ TEST_CASE("Load Database", "[database]")
 		TestPacketSender sender;
 		TestHelper<DatabaseImpl> helper{ DatabaseImpl("database_load_test.db3", sender) };
 
-		auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
-		auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
-		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
-		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
+		auto addTimeEntry = TimeEntryModifyPacket(RequestID(1));
+		addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "A");
+		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 1", false);
+		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 2", false);
 
-		auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B");
-		newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
-		newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
+		addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "B");
+		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 3", false);
+		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 4", false);
 
-		helper.expect_success(modify);
+		helper.expect_success(addTimeEntry);
 
 		CreateTaskMessage create1(NO_PARENT, RequestID(1), "parent");
 		create1.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
@@ -218,9 +218,6 @@ TEST_CASE("Load Database", "[database]")
 
 		REQUIRE(helper.sender.output.size() == 22);
 
-
-
-
 		// test next bugzilla instance ID
 		helper.sender.output.clear();
 		auto configure = BugzillaInfoMessage(BugzillaInstanceID(0), "bugzilla2", "0.0.0.0", "asfesdFEASfslj");
@@ -251,9 +248,9 @@ TEST_CASE("Load Database", "[database]")
 
 		// test next time category ID
 		// test next time code ID
-		auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
-		auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "C");
-		newCategory1.codes.emplace_back(TimeCodeID(0), "Code 5");
+		auto modify = TimeEntryModifyPacket(RequestID(1));
+		modify.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "C");
+		modify.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 5");
 
 		helper.sender.output.clear();
 		helper.api.process_packet(modify);
@@ -627,16 +624,16 @@ TEST_CASE("Write Task Session to Database", "[database]")
 
 	std::vector<std::unique_ptr<Message>> output;
 
-	auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
-	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
-	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
-	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
+	auto addTimeEntry = TimeEntryModifyPacket(RequestID(1));
+	addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "A");
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 1", false);
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 2", false);
 
-	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B");
-	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
-	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
+	addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "B");
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 3", false);
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 4", false);
 
-	api.process_packet(modify);
+	api.process_packet(addTimeEntry);
 
 	auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
 	create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
@@ -736,16 +733,16 @@ TEST_CASE("Add Session - Write to Database", "[database]")
 
 	std::vector<std::unique_ptr<Message>> output;
 
-	auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
-	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
-	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
-	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
+	auto addTimeEntry = TimeEntryModifyPacket(RequestID(1));
+	addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "A");
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 1", false);
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 2", false);
 
-	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B");
-	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
-	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
+	addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "B");
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 3", false);
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 4", false);
 
-	api.process_packet(modify);
+	api.process_packet(addTimeEntry);
 
 	auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
 	create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
@@ -810,16 +807,16 @@ TEST_CASE("Edit Session - Write to Database", "[database]")
 
 	std::vector<std::unique_ptr<Message>> output;
 
-	auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
-	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
-	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
-	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
+	auto addTimeEntry = TimeEntryModifyPacket(RequestID(1));
+	addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "A");
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 1", false);
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 2", false);
 
-	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B");
-	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
-	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
+	addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "B");
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 3", false);
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 4", false);
 
-	api.process_packet(modify);
+	api.process_packet(addTimeEntry);
 
 	auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
 	create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
@@ -887,16 +884,16 @@ TEST_CASE("Remove Session - Write to Database", "[database]")
 
 	std::vector<std::unique_ptr<Message>> output;
 
-	auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
-	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
-	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
-	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
+	auto addTimeEntry = TimeEntryModifyPacket(RequestID(1));
+	addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "A");
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 1", false);
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 2", false);
 
-	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B");
-	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
-	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
+	addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "B");
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 3", false);
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 4", false);
 
-	api.process_packet(modify);
+	api.process_packet(addTimeEntry);
 
 	auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
 	create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
@@ -965,16 +962,16 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 
 	std::vector<std::unique_ptr<Message>> output;
 
-	auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
-	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
-	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
-	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
+	auto addTimeEntry = TimeEntryModifyPacket(RequestID(1));
+	addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "A");
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 1", false);
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 2", false);
 
-	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B");
-	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
-	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
+	addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "B");
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 3", false);
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 4", false);
 
-	api.process_packet(modify);
+	api.process_packet(addTimeEntry);
 
 	SECTION("Add")
 	{
@@ -1059,14 +1056,10 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 
 	SECTION("Update")
 	{
-		auto cat = TimeCategory(TimeCategoryID(1));
-		cat.name = "Test er";
-		cat.codes.clear();
-		cat.codes.push_back(TimeCode{ TimeCodeID(1), "Fo o" });
-		cat.codes.push_back(TimeCode{ TimeCodeID(2), "Bar s" });
-
-		auto update_category = TimeEntryModifyPacket(RequestID(4), TimeCategoryModType::UPDATE, {});
-		update_category.timeCategories.push_back(cat);
+		auto update_category = TimeEntryModifyPacket(RequestID(4));
+		update_category.categories.emplace_back(TimeCategoryModType::UPDATE, TimeCategoryID(1), "Test er");
+		update_category.codes.emplace_back(TimeCategoryModType::UPDATE, 0, TimeCodeID(1), "Fo o", false);
+		update_category.codes.emplace_back(TimeCategoryModType::UPDATE, 0, TimeCodeID(2), "Bar s", false);
 
 		api.process_packet(update_category);
 
@@ -1114,140 +1107,6 @@ TEST_CASE("Write Time Configuration to Database", "[database]")
 
 		REQUIRE(!query.hasRow());
 	}
-
-	SECTION("Remove")
-	{
-		SECTION("Category")
-		{
-			auto cat = TimeCategory(TimeCategoryID(1));
-
-			auto remove_category = TimeEntryModifyPacket(RequestID(5), TimeCategoryModType::REMOVE_CATEGORY, {});
-			remove_category.timeCategories.push_back(cat);
-
-			api.process_packet(remove_category);
-
-			SQLite::Statement query(database.database(), "SELECT * FROM timeEntryCategory");
-			query.executeStep();
-
-			REQUIRE(query.hasRow());
-
-			int categoryID = query.getColumn(0);
-			std::string categoryName = query.getColumn(1);
-
-			CHECK(categoryID == 2);
-			CHECK(categoryName == "B");
-
-			query.executeStep();
-
-			REQUIRE(!query.hasRow());
-
-			query = SQLite::Statement(database.database(), "SELECT * FROM timeEntryCode");
-			query.executeStep();
-
-			REQUIRE(query.hasRow());
-
-			categoryID = query.getColumn(0);
-			int codeID = query.getColumn(1);
-			std::string codeName = query.getColumn(2);
-
-			CHECK(categoryID == 2);
-			CHECK(codeID == 3);
-			CHECK(codeName == "Code 3");
-
-			query.executeStep();
-
-			REQUIRE(query.hasRow());
-
-			categoryID = query.getColumn(0);
-			codeID = query.getColumn(1);
-			codeName = query.getColumn(2).getString();
-
-			CHECK(categoryID == 2);
-			CHECK(codeID == 4);
-			CHECK(codeName == "Code 4");
-
-			query.executeStep();
-
-			REQUIRE(!query.hasRow());
-		}
-
-		SECTION("Code")
-		{
-			auto cat = TimeCategory(TimeCategoryID(1));
-			cat.codes.push_back(TimeCode{ TimeCodeID(1), "Bar" });
-
-			auto remove_category = TimeEntryModifyPacket(RequestID(5), TimeCategoryModType::REMOVE_CODE, {});
-			remove_category.timeCategories.push_back(cat);
-
-			api.process_packet(remove_category);
-
-			SQLite::Statement query(database.database(), "SELECT * FROM timeEntryCategory");
-			query.executeStep();
-
-			REQUIRE(query.hasRow());
-
-			int categoryID = query.getColumn(0);
-			std::string categoryName = query.getColumn(1);
-
-			CHECK(categoryID == 1);
-			CHECK(categoryName == "A");
-
-			query.executeStep();
-
-			REQUIRE(query.hasRow());
-
-			categoryID = query.getColumn(0);
-			categoryName = query.getColumn(1).getString();
-
-			CHECK(categoryID == 2);
-			CHECK(categoryName == "B");
-
-			query.executeStep();
-
-			REQUIRE(!query.hasRow());
-
-			query = SQLite::Statement(database.database(), "SELECT * FROM timeEntryCode");
-			query.executeStep();
-
-			REQUIRE(query.hasRow());
-
-			categoryID = query.getColumn(0);
-			int codeID = query.getColumn(1);
-			std::string codeName = query.getColumn(2);
-
-			CHECK(categoryID == 1);
-			CHECK(codeID == 2);
-			CHECK(codeName == "Code 2");
-
-			query.executeStep();
-
-			REQUIRE(query.hasRow());
-
-			categoryID = query.getColumn(0);
-			codeID = query.getColumn(1);
-			codeName = query.getColumn(2).getString();
-
-			CHECK(categoryID == 2);
-			CHECK(codeID == 3);
-			CHECK(codeName == "Code 3");
-
-			query.executeStep();
-
-			REQUIRE(query.hasRow());
-
-			categoryID = query.getColumn(0);
-			codeID = query.getColumn(1);
-			codeName = query.getColumn(2).getString();
-
-			CHECK(categoryID == 2);
-			CHECK(codeID == 4);
-			CHECK(codeName == "Code 4");
-
-			query.executeStep();
-
-			REQUIRE(!query.hasRow());
-		}
-	}
 }
 
 TEST_CASE("Write Task Time Entry to Database", "[database]")
@@ -1261,16 +1120,16 @@ TEST_CASE("Write Task Time Entry to Database", "[database]")
 
 	std::vector<std::unique_ptr<Message>> output;
 
-	auto modify = TimeEntryModifyPacket(RequestID(1), TimeCategoryModType::ADD, {});
-	auto& newCategory1 = modify.timeCategories.emplace_back(TimeCategoryID(0), "A");
-	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 1");
-	newCategory1.codes.emplace_back(TimeCodeID(0), "Code 2");
+	auto addTimeEntry = TimeEntryModifyPacket(RequestID(1));
+	addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "A");
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 1", false);
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 2", false);
 
-	auto& newCategory2 = modify.timeCategories.emplace_back(TimeCategoryID(0), "B");
-	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 3");
-	newCategory2.codes.emplace_back(TimeCodeID(0), "Code 4");
+	addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "B");
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 3", false);
+	addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 4", false);
 
-	api.process_packet(modify);
+	api.process_packet(addTimeEntry);
 
 	SECTION("Add")
 	{

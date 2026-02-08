@@ -1,8 +1,17 @@
 package packets;
 
+import data.TaskState;
+
 public enum TimeCategoryModType {
     ADD,
-    UPDATE,
-    REMOVE_CATEGORY,
-    REMOVE_CODE
+    UPDATE;
+
+    public static TimeCategoryModType valueOf(int value) {
+        for (TimeCategoryModType state : TimeCategoryModType.values()) {
+            if (state.ordinal() == value) {
+                return state;
+            }
+        }
+        return null;
+    }
 }
