@@ -10,6 +10,7 @@ import packets.RequestID;
 import taskglacier.MainFrame;
 import util.DialogEscape;
 import util.Icons;
+import util.LabeledComponent;
 
 import javax.swing.*;
 import java.awt.*;
@@ -119,24 +120,17 @@ public class AddTask extends JDialog {
         name.addKeyListener(enterAction);
 
         GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
         setLayout(new GridBagLayout());
 
-
         add(flow, gbc);
         gbc.gridy++;
-        gbc.gridwidth = 2;
 
         JToolBar toolBar = new JToolBar();
         JButton search = new JButton(Icons.searchIcon);
-
-        toolBar.add(search);
-
-        parent.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
-
-        add(createFlow("Parent: ", parent), gbc);
 
         search.addActionListener(e -> {
             int taskID = 0;
@@ -156,6 +150,16 @@ public class AddTask extends JDialog {
             }
         });
 
+        toolBar.add(search);
+
+        parent.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
+
+        add(createFlow("Parent: ", parent), gbc);
+        gbc.gridy++;
+
+        JTextField estimate = new JTextField(4);
+
+        add(new LabeledComponent("Time Estimate", estimate, "hours"), gbc);
         gbc.gridy++;
 
         add(add, gbc);

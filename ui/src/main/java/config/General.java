@@ -26,6 +26,7 @@ class General extends JPanel {
     JTextArea description = new JTextArea(6, 20);
     JComboBox<String> status = new JComboBox<>();
     JTextField parent = new JTextField(6);
+    JTextField estimate = new JTextField(4);
     JCheckBox serverControlled = new JCheckBox("Server Controlled");
     JCheckBox locked = new JCheckBox("Locked");
 
@@ -44,7 +45,7 @@ class General extends JPanel {
         add(new JLabel("ID " + task.id), gbc);
         gbc.gridy++;
 
-        add(new LabeledComponent("Description", description, GridBagConstraints.NORTH), gbc);
+        add(new LabeledComponent("Description", description, null, GridBagConstraints.NORTH), gbc);
         gbc.gridy++;
 
         description.setWrapStyleWord(true);
@@ -119,6 +120,9 @@ class General extends JPanel {
                 }
             }
         });
+
+        add(new LabeledComponent("Time Estimate", estimate, "hours"), gbc);
+        gbc.gridy++;
 
         serverControlled.setEnabled(false);
         serverControlled.setSelected(task.serverControlled);
