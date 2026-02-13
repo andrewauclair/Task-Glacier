@@ -10,7 +10,7 @@
 * 
 * 1 = 0.3.3
 * 2 = 0.4.0
-* 3 = 0.14.0
+* 3 = 0.14.1
 */
 static constexpr std::int32_t CURRENT_DATABASE_VERSION = 3;
 
