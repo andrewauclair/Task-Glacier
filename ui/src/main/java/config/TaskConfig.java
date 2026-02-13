@@ -112,6 +112,7 @@ public class TaskConfig extends JDialog {
             update.sessions = task.sessions;
             update.locked = task.locked;
             update.timeEntry = task.timeEntry;
+            update.state = task.state;
 
             general.save(task, update);
             timeEntry.save(task, update);

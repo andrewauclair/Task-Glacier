@@ -190,7 +190,7 @@ void API::process_packet(const Message& message)
 				{
 					overlap_detected = true;
 				}
-				else if (update.stop.value() >= times.start && update.stop.value() <= times.stop.value())
+				else if (update.stop.has_value() && times.stop.has_value() && update.stop.value() >= times.start && update.stop.value() <= times.stop.value())
 				{
 					overlap_detected = true;
 				}
