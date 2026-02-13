@@ -35,6 +35,7 @@ import panels.StatusBar;
 import panels.TasksList;
 import panels.WeeklyReportPanel;
 import tray.SystemTrayDisplay;
+import util.FailOnThreadViolationRepaintManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -293,6 +294,8 @@ public class MainFrame extends JFrame {
         }
         UIManager.getDefaults().put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
         UIManager.getDefaults().put("TabbedPane.tabsOverlapBorder", true);
+
+//        FailOnThreadViolationRepaintManager.install();
     }
 
     public boolean isConnected() {
