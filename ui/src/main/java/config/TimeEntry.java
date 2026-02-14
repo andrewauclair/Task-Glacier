@@ -2,6 +2,7 @@ package config;
 
 import data.Task;
 import data.TimeData;
+import dialogs.UpdateSessionTimeCode;
 import packets.UpdateTask;
 import taskglacier.MainFrame;
 import util.Icons;
@@ -105,6 +106,9 @@ class TimeEntry extends JPanel {
                 }
                 model.data.add(new Row(entry.category, entry.code, false));
                 model.fireTableRowsInserted(model.data.size() - 1, model.data.size() - 1);
+
+                UpdateSessionTimeCode updateCodes = new UpdateSessionTimeCode(taskConfig, taskConfig.sessions.sessionModel.data, entry.category, entry.code);
+                updateCodes.setVisible(true);
             }
         });
 

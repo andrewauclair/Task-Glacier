@@ -12,6 +12,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
 public class TaskConfig extends JDialog {
+    public final Sessions sessions;
 
     public TaskConfig(MainFrame mainFrame, Window parent, Task task) {
         super(parent);
@@ -55,7 +56,7 @@ public class TaskConfig extends JDialog {
         General general = new General(task);
         stack.add(general, "General");
         stack.add(new Labels(task), "Labels");
-        Sessions sessions = new Sessions(parent, task);
+        sessions = new Sessions(parent, task);
         stack.add(sessions, "Sessions");
         TimeEntry timeEntry = new TimeEntry(this, mainFrame, task);
         stack.add(timeEntry, "Time Entry");

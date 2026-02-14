@@ -25,7 +25,7 @@ import java.util.Optional;
 
 import static taskglacier.MainFrame.mainFrame;
 
-class Sessions extends JPanel {
+public class Sessions extends JPanel {
     private final Task task;
     SessionTableModel sessionModel = new SessionTableModel();
     JTable sessionTable = new JTable(sessionModel);
@@ -360,12 +360,12 @@ class Sessions extends JPanel {
         }
     }
 
-    class SessionRow {
+    public class SessionRow {
         Instant start;
         Optional<Instant> stop;
-        List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
+        public List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
 
-        boolean modified = false;
+        public boolean modified = false;
         boolean added = false;
         boolean removed = false;
     }
