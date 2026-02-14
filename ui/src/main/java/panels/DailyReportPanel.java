@@ -79,6 +79,10 @@ public class DailyReportPanel extends JPanel implements Dockable {
         buildUI();
     }
 
+    public boolean isToday() {
+        return today;
+    }
+
     private void refreshTodayDate() {
         if (!today) {
             return;

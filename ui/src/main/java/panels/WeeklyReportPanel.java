@@ -94,6 +94,10 @@ public class WeeklyReportPanel extends JPanel implements Dockable {
         buildUI();
     }
 
+    public boolean isCurrentWeek() {
+        return currentWeek;
+    }
+
     private void refreshDate() {
         if (!currentWeek) {
             return;

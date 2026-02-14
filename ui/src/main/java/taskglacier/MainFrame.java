@@ -175,26 +175,18 @@ public class MainFrame extends JFrame {
             }
         }
 
-        // refresh reports every 5 minutes
+        // refresh current daily and weekly reports every 5 minutes
         Timer timer = new Timer(5 * 60 * 1000, e1 -> {
             if (!isConnected()) {
                 return;
             }
-
-            LocalDate now = LocalDate.now();
-
-            int month = now.getMonthValue();
-            int day = now.getDayOfMonth();
-            int year = now.getYear();
 
             for (Dockable dockable : Docking.getDockables()) {
                 if (!Docking.isDocked(dockable)) {
                     continue;
                 }
                 if (dockable instanceof DailyReportPanel dailyReport) {
-                    boolean isToday = dailyReport.getMonth() == month && dailyReport.getDay() == day && dailyReport.getYear() == year;
-
-                    if (isToday) {
+                    if (dailyReport.isToday()) {
                         RequestDailyReport request = new RequestDailyReport();
                         request.requestID = RequestID.nextRequestID();
                         request.month = dailyReport.getMonth();
@@ -205,9 +197,7 @@ public class MainFrame extends JFrame {
                     }
                 }
                 else if (dockable instanceof WeeklyReportPanel weeklyReport) {
-                    boolean isCurrentWeek = weeklyReport.getMonth() == month && weeklyReport.getDay() == day && weeklyReport.getYear() == year;
-
-                    if (isCurrentWeek) {
+                    if (weeklyReport.isCurrentWeek()) {
                         RequestWeeklyReport request = new RequestWeeklyReport();
                         request.requestID = RequestID.nextRequestID();
                         request.month = weeklyReport.getMonth();
