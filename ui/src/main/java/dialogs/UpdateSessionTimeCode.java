@@ -97,7 +97,7 @@ public class UpdateSessionTimeCode extends JDialog {
                     UpdateSessionTimeCode.this.dispose();
                     return;
                 }
-                
+
                 sessionRow = sessions.get(currentSession);
                 entry = sessionRow.timeEntry.stream()
                         .filter(timeEntry -> timeEntry.category == category)

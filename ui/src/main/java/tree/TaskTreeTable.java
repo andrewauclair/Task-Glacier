@@ -134,7 +134,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
                 Docking.dock(newList, "tasks", DockingRegion.CENTER);
             }
             else {
-                Docking.display("tasks-list-" + task.id);
+                Docking.display("task-list-" + task.id);
             }
         });
 
