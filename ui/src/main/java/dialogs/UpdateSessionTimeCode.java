@@ -71,19 +71,38 @@ public class UpdateSessionTimeCode extends JDialog {
                     .filter(timeEntry -> timeEntry.category == category)
                     .findFirst();
 
-            if (entry.isEmpty()) {
-                // TODO this probably causes issues, but we should never run into an empty entry
-                currentSession++;
-                return;
-            }
-
-            if (e != null && e.getSource() == apply) {
+            // TODO this probably causes issues, but we should never run into an empty entry
+            if (!entry.isEmpty() && e != null && e.getSource() == apply) {
                 sessionRow.modified = true;
                 sessionRow.timeEntry.remove(entry.get());
                 sessionRow.timeEntry.add(new TimeData.TimeEntry(entry.get().category, newCode));
             }
 
             currentSession++;
+
+            if (currentSession >= sessions.size()) {
+                UpdateSessionTimeCode.this.dispose();
+                return;
+            }
+
+            sessionRow = sessions.get(currentSession);
+            entry = sessionRow.timeEntry.stream()
+                    .filter(timeEntry -> timeEntry.category == category)
+                    .findFirst();
+
+            while (entry.isEmpty() && currentSession < sessions.size()) {
+                currentSession++;
+
+                if (currentSession >= sessions.size()) {
+                    UpdateSessionTimeCode.this.dispose();
+                    return;
+                }
+                
+                sessionRow = sessions.get(currentSession);
+                entry = sessionRow.timeEntry.stream()
+                        .filter(timeEntry -> timeEntry.category == category)
+                        .findFirst();
+            }
 
             if (currentSession >= sessions.size()) {
                 UpdateSessionTimeCode.this.dispose();

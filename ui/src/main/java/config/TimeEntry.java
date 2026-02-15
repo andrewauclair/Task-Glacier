@@ -67,6 +67,9 @@ class TimeEntry extends JPanel {
 
             model.data.add(new Row(category, code, true));
             model.fireTableRowsInserted(model.data.size() - 1, model.data.size() - 1);
+
+            UpdateSessionTimeCode updateCodes = new UpdateSessionTimeCode(taskConfig, taskConfig.sessions.sessionModel.data, category, code);
+            updateCodes.setVisible(true);
         });
 
         JPanel buttons = new JPanel(new FlowLayout());
