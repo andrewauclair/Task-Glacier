@@ -21,6 +21,7 @@ import java.util.List;
 import static taskglacier.MainFrame.mainFrame;
 
 public class AddTask extends JDialog {
+    private static final Dimension MAX_SIZE = new Dimension(600, 400);
     public static AddTask openInstance = null;
 
     public static List<Integer> activeRequests = new ArrayList<>();
@@ -39,6 +40,9 @@ public class AddTask extends JDialog {
         // name, time tracking and project info
         // some of this info can be automatically filled
         JTextPane name = new JTextPane();
+        JScrollPane scrollPane = new JScrollPane(name);
+
+        setMaximumSize(MAX_SIZE);
 
         name.addKeyListener(new KeyAdapter() {
             @Override
@@ -46,10 +50,14 @@ public class AddTask extends JDialog {
                 SwingUtilities.invokeLater(() -> {
                     add.setEnabled(!name.getText().isEmpty());
 
-                    pack();
+                    Point center = new Point(getX() + getWidth() / 2, getY() + getHeight() / 2);
 
-                    // center on the main frame
-                    setLocationRelativeTo(mainFrame);
+                    packRespectMax();
+
+                    setLocation(center.x - getWidth() / 2, center.y - getHeight() / 2);
+
+                    JScrollBar vertical = scrollPane.getVerticalScrollBar();
+                    vertical.setValue(vertical.getMaximum());
                 });
             }
         });
@@ -57,7 +65,7 @@ public class AddTask extends JDialog {
         JTextField parent = new JTextField();
         parent.setText(String.valueOf(defaultParentID));
 
-        JPanel flow = createFlow(bulk ? "Name(s): " : "Name: ", name);
+        //JPanel flow = createFlow(bulk ? "Name(s): " : "Name: ", new JScrollPane(name));
 
         setTitle("Add Task");
 
@@ -121,13 +129,19 @@ public class AddTask extends JDialog {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(Standards.TOP_INSET, Standards.LEFT_INSET, Standards.BOTTOM_INSET, Standards.RIGHT_INSET);
+
         setLayout(new GridBagLayout());
 
+        add(scrollPane, gbc);
 
-        add(flow, gbc);
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.gridy++;
-        gbc.gridwidth = 2;
 
         JToolBar toolBar = new JToolBar();
         JButton search = new JButton(Icons.searchIcon);
@@ -182,5 +196,20 @@ public class AddTask extends JDialog {
         panel.add(new JLabel(name));
         panel.add(comp);
         return panel;
+    }
+
+    private void packRespectMax() {
+        Container parent = this.getParent();
+        if (parent != null) {
+            parent.addNotify();
+        }
+        Dimension newSize = getPreferredSize();
+        if (newSize.width > getMaximumSize().width) {
+            newSize.width = getMaximumSize().width;
+        }
+        if (newSize.height > getMaximumSize().height) {
+            newSize.height = getMaximumSize().height;
+        }
+        setSize(newSize);
     }
 }
