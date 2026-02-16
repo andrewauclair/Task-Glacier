@@ -183,6 +183,7 @@ public class WeeklyReportTreeTableModel extends TreeTableModel {
     }
 
     public static class WeeklyTaskNode extends DailyReportTreeTableModel.TaskNode {
+        long[] childrenMinutesPerDay = new long[7];
         Long[] minutesPerDay = new Long[7];
 
         public Long getMinutes() {
@@ -193,6 +194,8 @@ public class WeeklyReportTreeTableModel extends TreeTableModel {
             }
             long total = 0;
             for (int i = 0; i < 7; i++) {
+                total += childrenMinutesPerDay[i];
+                
                 if (minutesPerDay[i] != null) {
                     total += minutesPerDay[i];
                 }

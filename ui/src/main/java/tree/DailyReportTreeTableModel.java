@@ -151,6 +151,9 @@ public class DailyReportTreeTableModel extends TreeTableModel {
 
     public static class TaskNode extends DefaultMutableTreeNode {
         Task task;
+
+        public long minutesChildren = 0;
+
         private Long minutes = null;
 
         public Long getMinutes() {

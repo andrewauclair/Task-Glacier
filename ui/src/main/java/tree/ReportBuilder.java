@@ -188,6 +188,8 @@ public class ReportBuilder {
         }
     }
 
+    // remove any tasks that are no longer part of the report
+    // add up task times for parents
     private void post(List<DailyReportMessage.DailyReport> reports) {
         tasks.forEach((timeEntry, tasks1) -> {
             Set<Task> thisUpdate = tasksThisUpdate.get(timeEntry);
@@ -205,6 +207,85 @@ public class ReportBuilder {
         });
 
         this.tasks = tasksThisUpdate;
+
+        // add up task times for parents
+        categoryNodes.forEach((timeEntry, categoryNode) -> {
+            fillTimesForParents(categoryNode);
+        });
+    }
+
+    private void fillTimesForParents(DefaultMutableTreeNode parent) {
+        Enumeration<TreeNode> children = parent.children();
+
+        while (children.hasMoreElements()) {
+            DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) children.nextElement();
+
+            fillTimesForParents(treeNode);
+
+            if (treeNode instanceof TaskNode taskNode) {
+                if (taskNode instanceof WeeklyTaskNode weeklyTask) {
+                    for (int i = 0; i < 7; i++) {
+                        if (weeklyTask.minutesPerDay[i] == null) {
+                            weeklyTask.minutesPerDay[i] = totalMinutesForTaskChildren(weeklyTask, i);
+                        }
+                    }
+                }
+                else {
+                    // make sure to only set the minutes for tasks that do not have minutes
+                    if (taskNode.getMinutes() == null) {
+                        taskNode.setMinutes(totalMinutesForTaskChildren(taskNode, 0));
+                    }
+                }
+            }
+        }
+    }
+
+    private Long totalMinutesForTaskChildren(TaskNode node, int day) {
+        Long minutes = null;
+
+        Enumeration<TreeNode> children = node.children();
+
+        while (children.hasMoreElements()) {
+            TreeNode treeNode = children.nextElement();
+
+            if (treeNode instanceof TaskNode taskNode) {
+                if (taskNode instanceof WeeklyTaskNode weeklyTask) {
+                    if (weeklyTask.minutesPerDay[day] != null) {
+                        if (minutes == null) {
+                            minutes = 0L;
+                        }
+                        minutes += weeklyTask.minutesPerDay[day];
+                    }
+                    Long childrenMinutes = totalMinutesForTaskChildren(weeklyTask, day);
+
+                    if (childrenMinutes != null) {
+                        if (minutes == null) {
+                            minutes = 0L;
+                        }
+                        minutes += childrenMinutes;
+                    }
+                }
+                else {
+                    if (taskNode.getMinutes() != null) {
+                        if (minutes == null) {
+                            minutes = 0L;
+                        }
+                        minutes += taskNode.getMinutes();
+                    }
+
+                    Long childrenMinutes = totalMinutesForTaskChildren(taskNode, 0);
+
+                    if (childrenMinutes != null) {
+                        if (minutes == null) {
+                            minutes = 0L;
+                        }
+                        minutes += childrenMinutes;
+                    }
+                }
+            }
+        }
+
+        return minutes;
     }
 
     private void update(DailyReportMessage.DailyReport report, int index) {
