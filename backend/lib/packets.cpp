@@ -44,14 +44,14 @@ std::vector<std::byte> CreateTaskMessage::pack() const
 
 	for (auto&& time : timeEntry)
 	{
-		builder.add(time.categoryID);
-		builder.add(time.codeID);
+		builder.add(time.category.id);
+		builder.add(time.code.id);
 	}
 	
 	return builder.build();
 }
 
-std::expected<CreateTaskMessage, UnpackError> CreateTaskMessage::unpack(std::span<const std::byte> data)
+std::expected<CreateTaskMessage, UnpackError> CreateTaskMessage::unpack(std::span<const std::byte> data, const TimeCategories& time_categories)
 {
 	auto parser = PacketParser(data);
 	
@@ -78,7 +78,8 @@ std::expected<CreateTaskMessage, UnpackError> CreateTaskMessage::unpack(std::spa
 			auto category = parser.parse_next_immediate<TimeCategoryID>();
 			auto code = parser.parse_next_immediate<TimeCodeID>();
 
-			task.timeEntry.push_back(TimeEntry{ category, code });
+			auto entry = time_categories.find(category, code);
+			task.timeEntry.push_back(TimeEntry{ entry.first, entry.second });
 		}
 
 		return task;
@@ -114,8 +115,8 @@ std::vector<std::byte> UpdateTaskMessage::pack() const
 
 		for (auto&& entry : time.timeEntry)
 		{
-			builder.add(entry.categoryID);
-			builder.add(entry.codeID);
+			builder.add(entry.category.id);
+			builder.add(entry.code.id);
 		}
 	}
 	builder.add(static_cast<std::int32_t>(labels.size()));
@@ -126,13 +127,13 @@ std::vector<std::byte> UpdateTaskMessage::pack() const
 	builder.add(static_cast<std::int32_t>(timeEntry.size()));
 	for (auto&& time : timeEntry)
 	{
-		builder.add(time.categoryID);
-		builder.add(time.codeID);
+		builder.add(time.category.id);
+		builder.add(time.code.id);
 	}
 	return builder.build();
 }
 
-std::expected<UpdateTaskMessage, UnpackError> UpdateTaskMessage::unpack(std::span<const std::byte> data)
+std::expected<UpdateTaskMessage, UnpackError> UpdateTaskMessage::unpack(std::span<const std::byte> data, const TimeCategories& time_categories)
 {
 	auto parser = PacketParser(data);
 
@@ -176,7 +177,8 @@ std::expected<UpdateTaskMessage, UnpackError> UpdateTaskMessage::unpack(std::spa
 				auto category = parser.parse_next_immediate<TimeCategoryID>();
 				auto code = parser.parse_next_immediate<TimeCodeID>();
 
-				times.timeEntry.emplace_back(category, code);
+				auto entry = time_categories.find(category, code);
+				times.timeEntry.push_back(TimeEntry{ entry.first, entry.second });
 			}
 			update.times.push_back(times);
 		}
@@ -195,7 +197,8 @@ std::expected<UpdateTaskMessage, UnpackError> UpdateTaskMessage::unpack(std::spa
 			auto category = parser.parse_next_immediate<TimeCategoryID>();
 			auto code = parser.parse_next_immediate<TimeCodeID>();
 
-			update.timeEntry.push_back(TimeEntry{ category, code });
+			auto entry = time_categories.find(category, code);
+			update.timeEntry.push_back(TimeEntry{ entry.first, entry.second });
 		}
 
 		return update;
@@ -552,8 +555,8 @@ std::vector<std::byte> TaskInfoMessage::pack() const
 
 		for (auto&& entry : time.timeEntry)
 		{
-			builder.add(entry.categoryID);
-			builder.add(entry.codeID);
+			builder.add(entry.category.id);
+			builder.add(entry.code.id);
 		}
 	}
 
@@ -568,14 +571,14 @@ std::vector<std::byte> TaskInfoMessage::pack() const
 
 	for (auto&& time : timeEntry)
 	{
-		builder.add(time.categoryID);
-		builder.add(time.codeID);
+		builder.add(time.category.id);
+		builder.add(time.code.id);
 	}
 
 	return builder.build();
 }
 
-std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<const std::byte> data)
+std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<const std::byte> data, const TimeCategories& time_categories)
 {
 	auto parser = PacketParser(data);
 
@@ -629,7 +632,8 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 				auto category = parser.parse_next_immediate<TimeCategoryID>();
 				auto code = parser.parse_next_immediate<TimeCodeID>();
 
-				times.timeEntry.emplace_back(category, code);
+				auto entry = time_categories.find(category, code);
+				times.timeEntry.push_back(TimeEntry{ entry.first, entry.second });
 			}
 			info.times.push_back(times);
 		}
@@ -648,7 +652,8 @@ std::expected<TaskInfoMessage, UnpackError> TaskInfoMessage::unpack(std::span<co
 			auto category = parser.parse_next_immediate<TimeCategoryID>();
 			auto code = parser.parse_next_immediate<TimeCodeID>();
 
-			info.timeEntry.push_back(TimeEntry{ category, code });
+			auto entry = time_categories.find(category, code);
+			info.timeEntry.push_back(TimeEntry{ entry.first, entry.second });
 		}
 		return info;
 	}
@@ -818,8 +823,8 @@ std::vector<std::byte> DailyReportMessage::pack() const
 
 		for (auto&& timeEntry : report.timePerTimeEntry)
 		{
-			builder.add(timeEntry.first.categoryID);
-			builder.add(timeEntry.first.codeID);
+			builder.add(timeEntry.first.category.id);
+			builder.add(timeEntry.first.code.id);
 			builder.add(timeEntry.second);
 		}
 
@@ -892,8 +897,8 @@ std::vector<std::byte> WeeklyReportMessage::pack() const
 
 			for (auto&& timeEntry : report.timePerTimeEntry)
 			{
-				builder.add(timeEntry.first.categoryID);
-				builder.add(timeEntry.first.codeID);
+				builder.add(timeEntry.first.category.id);
+				builder.add(timeEntry.first.code.id);
 				builder.add(timeEntry.second);
 			}
 

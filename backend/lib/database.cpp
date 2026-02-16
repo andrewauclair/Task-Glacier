@@ -251,7 +251,8 @@ void DatabaseImpl::load_tasks(MicroTask& app)
 			int catID = query_time_entry.getColumn(1);
 			int codeID = query_time_entry.getColumn(2);
 
-			task.timeEntry.emplace_back(TimeCategoryID(catID), TimeCodeID(codeID));
+			auto pair = app.timeCategories().find(TimeCategoryID(catID), TimeCodeID(codeID));
+			task.timeEntry.emplace_back(pair.first, pair.second);
 
 			query_time_entry.executeStep();
 		}
@@ -267,16 +268,18 @@ void DatabaseImpl::load_tasks(MicroTask& app)
 			int codeID = query_sessions.getColumn(3);
 			std::int64_t start_time = query_sessions.getColumn(4);
 			std::int64_t stop_time = query_sessions.getColumn(5);
-			
+
+			auto pair = app.timeCategories().find(TimeCategoryID(catID), TimeCodeID(codeID));
+
 			if (task.m_times.size() > index)
 			{
-				task.m_times.back().timeEntry.emplace_back(TimeCategoryID(catID), TimeCodeID(codeID));
+				task.m_times.back().timeEntry.emplace_back(pair.first, pair.second);
 			}
 			else
 			{
 				TaskTimes times{ std::chrono::milliseconds(start_time) };
 				times.stop = stop_time == 0 ? std::nullopt : std::optional(std::chrono::milliseconds(stop_time));
-				times.timeEntry.emplace_back(TimeCategoryID(catID), TimeCodeID(codeID));
+				times.timeEntry.emplace_back(pair.first, pair.second);
 
 				task.m_times.push_back(times);
 			}
@@ -379,8 +382,8 @@ void DatabaseImpl::write_task_time_entry(const Task& task, PacketSender& sender)
 	{
 		SQLite::Statement insert(m_database, "insert or replace into timeEntryTask values(?, ?, ?)");
 		insert.bind(1, task.taskID()._val);
-		insert.bind(2, entry.categoryID._val);
-		insert.bind(3, entry.codeID._val);
+		insert.bind(2, entry.category.id._val);
+		insert.bind(3, entry.code.id._val);
 
 		try
 		{
@@ -424,8 +427,8 @@ void DatabaseImpl::write_sessions(const Task& task, PacketSender& sender)
 			SQLite::Statement insert(m_database, "insert or replace into timeEntrySession values(?, ?, ?, ?, ?, ?)");
 			insert.bind(1, task.taskID()._val);
 			insert.bind(2, index);
-			insert.bind(3, entry.categoryID._val);
-			insert.bind(4, entry.codeID._val);
+			insert.bind(3, entry.category.id._val);
+			insert.bind(4, entry.code.id._val);
 			insert.bind(5, times.start.count());
 			insert.bind(6, times.stop.value_or(std::chrono::milliseconds(0)).count());
 			

@@ -49,8 +49,9 @@ private:
 	void create_weekly_report(RequestID requestID, int month, int day, int year);
 
 	const Clock* m_clock;
-	MicroTask m_app;
+	
 public:
+	MicroTask m_app;
 	Bugzilla m_bugzilla;
 private:
 	Database* m_database;

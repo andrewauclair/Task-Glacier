@@ -134,7 +134,7 @@ struct ParseResult
 	std::int32_t bytes_read = 0;
 };
 
-inline ParseResult parse_packet(std::span<const std::byte> bytes)
+inline ParseResult parse_packet(std::span<const std::byte> bytes, const TimeCategories& time_categories)
 {
 	ParseResult result;
 
@@ -158,7 +158,7 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 			using enum PacketType;
 
 		case CREATE_TASK:
-			result.packet = std::make_unique<CreateTaskMessage>(CreateTaskMessage::unpack(bytes.subspan(4)).value());
+			result.packet = std::make_unique<CreateTaskMessage>(CreateTaskMessage::unpack(bytes.subspan(4), time_categories).value());
 			result.bytes_read = raw_length;
 
 			break;
@@ -172,7 +172,7 @@ inline ParseResult parse_packet(std::span<const std::byte> bytes)
 			result.bytes_read = raw_length;
 			break;
 		case UPDATE_TASK:
-			result.packet = std::make_unique<UpdateTaskMessage>(UpdateTaskMessage::unpack(bytes.subspan(4)).value());
+			result.packet = std::make_unique<UpdateTaskMessage>(UpdateTaskMessage::unpack(bytes.subspan(4), time_categories).value());
 			result.bytes_read = raw_length;
 			break;
 		case TASK_STATE_CHANGE:

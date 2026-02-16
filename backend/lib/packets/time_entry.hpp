@@ -1,20 +1,25 @@
 #pragma once
 
-#include "time_category_id.hpp"
-#include "time_code_id.hpp"
+#include "time_category.hpp"
+#include "time_code.hpp"
 
 #include <ostream>
 
 struct TimeEntry
 {
-	TimeCategoryID categoryID;
-	TimeCodeID codeID;
+	TimeCategory category;
+	TimeCode code;
 
-	constexpr auto operator<=>(const TimeEntry&) const = default;
+	constexpr bool operator==(const TimeEntry&) const = default;
+	constexpr bool operator!=(const TimeEntry&) const = default;
+	constexpr bool operator<(const TimeEntry& other) const
+	{
+		return std::tie(category.id, code.id) < std::tie(other.category.id, other.code.id);
+	}
 
 	friend std::ostream& operator<<(std::ostream& out, const TimeEntry& entry)
 	{
-		out << "TimeEntry { catID: " << entry.categoryID._val << ", codeID: " << entry.codeID._val;
+		out << "TimeEntry { cat: " << entry.category.name << " (" << entry.category.id._val << "), code: " << entry.code.name << " (" << entry.code.id._val << ")";
 		out << " }";
 
 		return out;

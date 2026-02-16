@@ -1,5 +1,7 @@
 #pragma once
 
+#include "time_code_id.hpp"
+
 struct TimeCode
 {
 	TimeCodeID id; // the ID will be continuously incremented, even when deleting time codes that were just created
@@ -14,5 +16,18 @@ struct TimeCode
 		return out;
 	}
 
-	constexpr auto operator<=>(const TimeCode&) const = default;
+	constexpr bool operator==(const TimeCode& other) const
+	{
+		return id == other.id;
+	}
+
+	constexpr bool operator!=(const TimeCode& other) const
+	{
+		return id != other.id;
+	}
+
+	constexpr bool operator<(const TimeCode& other) const
+	{
+		return id < other.id;
+	}
 };

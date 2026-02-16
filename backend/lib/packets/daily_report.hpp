@@ -62,7 +62,7 @@ struct DailyReport
 		out << "Time Per Time Code {";
 		for (auto&& [timeEntry, time] : report.timePerTimeEntry)
 		{
-			out << "\ntimeEntry: " << std::format("[ {} {} ]", timeEntry.categoryID, timeEntry.codeID) << ", time: " << time;
+			out << "\ntimeEntry: " << std::format("[ {} ({}) {} ({}) ]", timeEntry.category.name, timeEntry.category.id, timeEntry.code.name, timeEntry.code.id) << ", time: " << time;
 		}
 		out << "\n}\n";
 		out << "Total Time: " << report.totalTime << '\n';

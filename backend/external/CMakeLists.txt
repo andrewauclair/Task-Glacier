@@ -55,4 +55,11 @@ FetchContent_Declare(
     GIT_TAG         3.3.3
 )
 
-FetchContent_MakeAvailable(Catch2 sockpp strong_type cpptrace simdjson SQLiteCpp)
+FetchContent_Declare(
+    magic_enum
+    GIT_SHALLOW     TRUE
+    GIT_REPOSITORY  https://github.com/Neargye/magic_enum
+    GIT_TAG         v0.9.7
+)
+
+FetchContent_MakeAvailable(Catch2 sockpp strong_type cpptrace simdjson SQLiteCpp magic_enum)

@@ -34,6 +34,22 @@ using namespace std::chrono_literals;
 
 // save bugzilla bug ID to task ID
 
+static const TimeCategory TEST_TIME_CATEGORY_UNKNOWN = TimeCategory(TimeCategoryID(0), "Unknown");
+static const TimeCode TEST_TIME_CODE_UNKNOWN = TimeCode(TimeCodeID(0), "Unknown");
+
+static const TimeCategory TEST_TIME_CATEGORY_1 = TimeCategory(TimeCategoryID(1), "Test Category 1");
+static const TimeCode TEST_TIME_CODE_1 = TimeCode(TimeCodeID(2), "Two");
+
+static const TimeCategory TEST_TIME_CATEGORY_2 = TimeCategory(TimeCategoryID(2), "Test Category 2");
+static const TimeCode TEST_TIME_CODE_2 = TimeCode(TimeCodeID(3), "Three");
+
+static const TimeCategory TEST_TIME_CATEGORY_3 = TimeCategory(TimeCategoryID(3), "Test Category 3");
+static const TimeCategory TEST_TIME_CATEGORY_4 = TimeCategory(TimeCategoryID(4), "Test Category 4");
+static const TimeCategory TEST_TIME_CATEGORY_5 = TimeCategory(TimeCategoryID(5), "Test Category 5");
+
+static const TimeEntry TEST_TIME_ENTRY_1 = TimeEntry(TEST_TIME_CATEGORY_1, TEST_TIME_CODE_1);
+static const TimeEntry TEST_TIME_ENTRY_2 = TimeEntry(TEST_TIME_CATEGORY_2, TEST_TIME_CODE_2);
+
 TEST_CASE("Create Database", "[database]")
 {
 	TestPacketSender sender;
@@ -78,20 +94,20 @@ TEST_CASE("Load Database", "[database]")
 		helper.expect_success(addTimeEntry);
 
 		CreateTaskMessage create1(NO_PARENT, RequestID(1), "parent");
-		create1.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
-		create1.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
+		create1.timeEntry.emplace_back(TEST_TIME_CATEGORY_1, TEST_TIME_CODE_1);
+		create1.timeEntry.emplace_back(TEST_TIME_CATEGORY_2, TimeCode(TimeCodeID(4), ""));
 
 		CreateTaskMessage create2(TaskID(1), RequestID(2), "child 1");
-		create2.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(2));
-		create2.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(3));
+		create2.timeEntry.emplace_back(TEST_TIME_CATEGORY_1, TEST_TIME_CODE_2);
+		create2.timeEntry.emplace_back(TEST_TIME_CATEGORY_2, TimeCode(TimeCodeID(3), ""));
 
 		CreateTaskMessage create3(TaskID(2), RequestID(3), "child 2");
-		create3.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(2));
-		create3.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
+		create3.timeEntry.emplace_back(TEST_TIME_CATEGORY_1, TEST_TIME_CODE_2);
+		create3.timeEntry.emplace_back(TEST_TIME_CATEGORY_2, TimeCode(TimeCodeID(4), ""));
 
 		CreateTaskMessage create4(NO_PARENT, RequestID(3), "parent 2");
-		create3.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(2));
-		create3.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
+		create3.timeEntry.emplace_back(TEST_TIME_CATEGORY_1, TEST_TIME_CODE_2);
+		create3.timeEntry.emplace_back(TEST_TIME_CATEGORY_2, TimeCode(TimeCodeID(4), ""));
 
 		helper.expect_success(create1);
 		helper.expect_success(create2);
@@ -258,7 +274,7 @@ TEST_CASE("Load Database", "[database]")
 
 		auto* timeEntry = dynamic_cast<TimeEntryDataPacket*>(helper.sender.output[1].get());
 		REQUIRE(timeEntry->timeCategories.size() == 3);
-		CHECK(timeEntry->timeCategories[2].id == TimeCategoryID(3));
+		CHECK(timeEntry->timeCategories[2].id == TEST_TIME_CATEGORY_3.id);
 		CHECK(timeEntry->timeCategories[2].codes[0].id == TimeCodeID(5));
 
 		// archived
@@ -339,7 +355,7 @@ TEST_CASE("Load Unspecified Task from Database - Inactive", "[database]")
 		root.createTime = std::chrono::milliseconds(1737344039870);
 		root.state = TaskState::ACTIVE;
 		root.times.emplace_back(std::chrono::milliseconds(1737344939870));
-		root.times.back().timeEntry.emplace_back(TimeCategoryID(0), TimeCodeID(0));
+		root.times.back().timeEntry.emplace_back(TEST_TIME_CATEGORY_UNKNOWN, TEST_TIME_CODE_UNKNOWN);
 
 		auto bulk_start = BasicMessage(PacketType::BULK_TASK_INFO_START);
 		auto bulk_finish = BasicMessage(PacketType::BULK_TASK_INFO_FINISH);
@@ -642,8 +658,8 @@ TEST_CASE("Write Task Session to Database", "[database]")
 	api.process_packet(addTimeEntry);
 
 	auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
-	create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
-	create.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
+	create.timeEntry.emplace_back(TEST_TIME_CATEGORY_1, TEST_TIME_CODE_1);
+	create.timeEntry.emplace_back(TEST_TIME_CATEGORY_2, TimeCode(TimeCodeID(4), ""));
 
 	api.process_packet(create);
 	api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(3), TaskID(1)));
@@ -665,7 +681,7 @@ TEST_CASE("Write Task Session to Database", "[database]")
 	CHECK(id == 1);
 	CHECK(sessionIndex == 0);
 	CHECK(timeCategoryID == 1);
-	CHECK(timeCodeID == 1);
+	CHECK(timeCodeID == 2);
 	CHECK(start == 1737344939870);
 	CHECK(stop == 1737345839870);
 	
@@ -703,7 +719,7 @@ TEST_CASE("Write Task Session to Database", "[database]")
 	CHECK(start == 1737346739870);
 	CHECK(stop == 0);
 	CHECK(timeCategoryID == 1);
-	CHECK(timeCodeID == 1);
+	CHECK(timeCodeID == 2);
 
 	query.executeStep();
 
@@ -751,8 +767,8 @@ TEST_CASE("Add Session - Write to Database", "[database]")
 	api.process_packet(addTimeEntry);
 
 	auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
-	create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
-	create.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
+	create.timeEntry.emplace_back(TEST_TIME_CATEGORY_1, TEST_TIME_CODE_1);
+	create.timeEntry.emplace_back(TEST_TIME_CATEGORY_2, TimeCode(TimeCodeID(4), ""));
 
 	api.process_packet(create);
 
@@ -775,7 +791,7 @@ TEST_CASE("Add Session - Write to Database", "[database]")
 	CHECK(id == 1);
 	CHECK(sessionIndex == 0);
 	CHECK(timeCategoryID == 1);
-	CHECK(timeCodeID == 1);
+	CHECK(timeCodeID == 2);
 	CHECK(start == 10000);
 	CHECK(stop == 20000);
 
@@ -825,8 +841,8 @@ TEST_CASE("Edit Session - Write to Database", "[database]")
 	api.process_packet(addTimeEntry);
 
 	auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
-	create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
-	create.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
+	create.timeEntry.emplace_back(TEST_TIME_CATEGORY_1, TEST_TIME_CODE_1);
+	create.timeEntry.emplace_back(TEST_TIME_CATEGORY_2, TimeCode(TimeCodeID(4), ""));
 
 	api.process_packet(create);
 	api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(3), TaskID(1)));
@@ -852,7 +868,7 @@ TEST_CASE("Edit Session - Write to Database", "[database]")
 	CHECK(id == 1);
 	CHECK(sessionIndex == 0);
 	CHECK(timeCategoryID == 1);
-	CHECK(timeCodeID == 1);
+	CHECK(timeCodeID == 2);
 	CHECK(start == 10000);
 	CHECK(stop == 20000);
 
@@ -902,8 +918,8 @@ TEST_CASE("Remove Session - Write to Database", "[database]")
 	api.process_packet(addTimeEntry);
 
 	auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
-	create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
-	create.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
+	create.timeEntry.emplace_back(TEST_TIME_CATEGORY_1, TEST_TIME_CODE_1);
+	create.timeEntry.emplace_back(TEST_TIME_CATEGORY_2, TimeCode(TimeCodeID(4), ""));
 
 	api.process_packet(create);
 	api.process_packet(TaskMessage(PacketType::START_TASK, RequestID(3), TaskID(1)));
@@ -932,7 +948,7 @@ TEST_CASE("Remove Session - Write to Database", "[database]")
 	CHECK(start == 1737346739870);
 	CHECK(stop == 0);
 	CHECK(timeCategoryID == 1);
-	CHECK(timeCodeID == 1);
+	CHECK(timeCodeID == 2);
 
 	query.executeStep();
 
@@ -1210,8 +1226,8 @@ TEST_CASE("Write Task Time Entry to Database", "[database]")
 	SECTION("Add")
 	{
 		auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
-		create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
-		create.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
+		create.timeEntry.emplace_back(TEST_TIME_CATEGORY_1, TEST_TIME_CODE_1);
+		create.timeEntry.emplace_back(TEST_TIME_CATEGORY_2, TimeCode(TimeCodeID(4), ""));
 
 		api.process_packet(create);
 
@@ -1226,7 +1242,7 @@ TEST_CASE("Write Task Time Entry to Database", "[database]")
 
 		CHECK(taskID == 1);
 		CHECK(categoryID == 1);
-		CHECK(codeID == 1);
+		CHECK(codeID == 2);
 
 		query.executeStep();
 
@@ -1248,12 +1264,12 @@ TEST_CASE("Write Task Time Entry to Database", "[database]")
 	SECTION("Update - Change Time Codes")
 	{
 		auto create = CreateTaskMessage(NO_PARENT, RequestID(2), "parent");
-		create.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(1));
-		create.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(4));
+		create.timeEntry.emplace_back(TEST_TIME_CATEGORY_1, TEST_TIME_CODE_1);
+		create.timeEntry.emplace_back(TEST_TIME_CATEGORY_2, TimeCode(TimeCodeID(4), ""));
 
 		auto update = UpdateTaskMessage(RequestID(2), TaskID(1), NO_PARENT, "parent");
-		update.timeEntry.emplace_back(TimeCategoryID(1), TimeCodeID(2));
-		update.timeEntry.emplace_back(TimeCategoryID(2), TimeCodeID(3));
+		update.timeEntry.emplace_back(TEST_TIME_CATEGORY_1, TimeCode(TimeCodeID(2), ""));
+		update.timeEntry.emplace_back(TEST_TIME_CATEGORY_2, TimeCode(TimeCodeID(3), ""));
 
 		api.process_packet(create);
 		api.process_packet(update);

@@ -221,7 +221,7 @@ public:
 		m_sender->send(std::make_unique<BasicMessage>(PacketType::BULK_TASK_INFO_FINISH));
 	}
 
-	std::vector<TimeCategory>& timeCategories() { return m_timeCategories; }
+	TimeCategories& timeCategories() { return m_timeCategories; }
 	std::optional<std::string> add_time_category(std::string_view name)
 	{
 		// error if time category with name already exists
@@ -281,7 +281,7 @@ private:
 	bool m_bulk_update = false;
 	std::set<TaskID> m_changedTasksBulkUpdate;
 
-	std::vector<TimeCategory> m_timeCategories;
+	TimeCategories m_timeCategories;
 
 	const Clock* m_clock;
 	Database* m_database;

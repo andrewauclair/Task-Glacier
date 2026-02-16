@@ -11,6 +11,22 @@
 
 using namespace std::chrono_literals;
 
+static const TimeCategory TEST_TIME_CATEGORY_UNKNOWN = TimeCategory(TimeCategoryID(0), "Unknown");
+static const TimeCode TEST_TIME_CODE_UNKNOWN = TimeCode(TimeCodeID(0), "Unknown");
+
+static const TimeCategory TEST_TIME_CATEGORY_1 = TimeCategory(TimeCategoryID(1), "Test Category 1");
+static const TimeCode TEST_TIME_CODE_1 = TimeCode(TimeCodeID(2), "Two");
+
+static const TimeCategory TEST_TIME_CATEGORY_2 = TimeCategory(TimeCategoryID(2), "Test Category 2");
+static const TimeCode TEST_TIME_CODE_2 = TimeCode(TimeCodeID(3), "Three");
+
+static const TimeCategory TEST_TIME_CATEGORY_3 = TimeCategory(TimeCategoryID(3), "Test Category 3");
+static const TimeCategory TEST_TIME_CATEGORY_4 = TimeCategory(TimeCategoryID(4), "Test Category 4");
+static const TimeCategory TEST_TIME_CATEGORY_5 = TimeCategory(TimeCategoryID(5), "Test Category 5");
+
+static const TimeEntry TEST_TIME_ENTRY_1 = TimeEntry(TEST_TIME_CATEGORY_1, TEST_TIME_CODE_1);
+static const TimeEntry TEST_TIME_ENTRY_2 = TimeEntry(TEST_TIME_CATEGORY_2, TEST_TIME_CODE_2);
+
 TEST_CASE("no parent ID is 0", "[task]")
 {
 	CHECK(NO_PARENT == TaskID(0));
@@ -50,7 +66,7 @@ TEST_CASE("Create Task", "[api][task]")
 	SECTION("Success - Create Task Time Entry")
 	{
 		auto create = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 1");
-		create.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		create.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		helper.expect_success(create);
 
@@ -60,7 +76,7 @@ TEST_CASE("Create Task", "[api][task]")
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = true;
 
-		taskInfo.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		taskInfo.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 		
 		helper.required_messages({ &taskInfo });
 	}
@@ -195,7 +211,7 @@ TEST_CASE("Start Task - Time Entry", "[api][task]")
 	SECTION("Success")
 	{
 		CreateTaskMessage create(NO_PARENT, helper.next_request_id(), "test 1");
-		create.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		create.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		helper.expect_success(create);
 		
@@ -207,12 +223,12 @@ TEST_CASE("Start Task - Time Entry", "[api][task]")
 
 		TaskTimes times;
 		times.start = std::chrono::milliseconds(1737344939870);
-		times.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		times.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		taskInfo.times.push_back(times);
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
-		taskInfo.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		taskInfo.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		helper.required_messages({ &taskInfo });
 	}
@@ -220,12 +236,12 @@ TEST_CASE("Start Task - Time Entry", "[api][task]")
 	SECTION("Time codes on task take priority over parent")
 	{
 		CreateTaskMessage create1(NO_PARENT, helper.next_request_id(), "test 1");
-		create1.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		create1.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		helper.expect_success(create1);
 
 		CreateTaskMessage create2(TaskID(1), helper.next_request_id(), "test 2");
-		create2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		create2.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		helper.expect_success(create2);
 
@@ -239,12 +255,12 @@ TEST_CASE("Start Task - Time Entry", "[api][task]")
 
 		TaskTimes times;
 		times.start = std::chrono::milliseconds(1737345839870);
-		times.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		times.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		taskInfo.times.push_back(times);
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
-		taskInfo.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		taskInfo.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		helper.required_messages({ &taskInfo });
 	}
@@ -252,7 +268,7 @@ TEST_CASE("Start Task - Time Entry", "[api][task]")
 	SECTION("Inherit from parent if no time code is found for category")
 	{
 		CreateTaskMessage create1(NO_PARENT, helper.next_request_id(), "test 1");
-		create1.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		create1.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		helper.expect_success(create1);
 
@@ -270,7 +286,7 @@ TEST_CASE("Start Task - Time Entry", "[api][task]")
 
 		TaskTimes times;
 		times.start = std::chrono::milliseconds(1737345839870);
-		times.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		times.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		taskInfo.times.push_back(times);
 		taskInfo.state = TaskState::ACTIVE;
@@ -282,7 +298,7 @@ TEST_CASE("Start Task - Time Entry", "[api][task]")
 	SECTION("Move to next parent if parent has no time codes")
 	{
 		CreateTaskMessage create1(NO_PARENT, helper.next_request_id(), "test 1");
-		create1.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		create1.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		helper.expect_success(create1);
 
@@ -302,7 +318,7 @@ TEST_CASE("Start Task - Time Entry", "[api][task]")
 
 		TaskTimes times;
 		times.start = std::chrono::milliseconds(1737346739870);
-		times.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		times.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		taskInfo.times.push_back(times);
 		taskInfo.state = TaskState::ACTIVE;
@@ -321,7 +337,7 @@ TEST_CASE("Start Task - Time Entry", "[api][task]")
 		helper.expect_success(addTimeEntry);
 
 		CreateTaskMessage create1(NO_PARENT, helper.next_request_id(), "test 1");
-		create1.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		create1.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		helper.expect_success(create1);
 
@@ -329,7 +345,7 @@ TEST_CASE("Start Task - Time Entry", "[api][task]")
 		helper.expect_success(create2);
 
 		CreateTaskMessage create3(TaskID(2), helper.next_request_id(), "test 3");
-		create3.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(5)} };
+		create3.timeEntry = std::vector{ TimeEntry{TEST_TIME_CATEGORY_1, TimeCode(TimeCodeID(5), "Five") } };
 
 		helper.expect_success(create3);
 
@@ -343,12 +359,12 @@ TEST_CASE("Start Task - Time Entry", "[api][task]")
 
 		TaskTimes times;
 		times.start = std::chrono::milliseconds(1737346739870);
-		times.timeEntry = std::vector{ TimeEntry{ TimeCategoryID(1), TimeCodeID(5) }, TimeEntry{ TimeCategoryID(2), TimeCodeID(3) }, TimeEntry{ TimeCategoryID(3), TimeCodeID(0) } };
+		times.timeEntry = std::vector{ TimeEntry{TEST_TIME_CATEGORY_1, TimeCode(TimeCodeID(5), "Five") }, TEST_TIME_ENTRY_2, TimeEntry{ TimeCategory(TimeCategoryID(3), "Three"), TEST_TIME_CODE_UNKNOWN } };
 
 		taskInfo.times.push_back(times);
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
-		taskInfo.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(5)} };
+		taskInfo.timeEntry = std::vector{ TimeEntry{TEST_TIME_CATEGORY_1, TimeCode(TimeCodeID(5), "Five") } };
 
 		helper.required_messages({ &taskInfo });
 	}
@@ -375,7 +391,7 @@ TEST_CASE("Start Task - Time Entry", "[api][task]")
 
 		TaskTimes times;
 		times.start = std::chrono::milliseconds(1737346739870);
-		times.timeEntry = std::vector{ TimeEntry{ TimeCategoryID(1), TimeCodeID(0) }, TimeEntry{ TimeCategoryID(2), TimeCodeID(0) } };
+		times.timeEntry = std::vector{ TimeEntry{ TEST_TIME_CATEGORY_1, TEST_TIME_CODE_UNKNOWN }, TimeEntry{ TEST_TIME_CATEGORY_2, TEST_TIME_CODE_UNKNOWN } };
 
 		taskInfo.times.push_back(times);
 		taskInfo.state = TaskState::ACTIVE;
@@ -401,7 +417,7 @@ TEST_CASE("Start Task - Empty Time Entry", "[api][task]")
 
 	TaskTimes times;
 	times.start = std::chrono::milliseconds(1737344939870);
-	times.timeEntry = std::vector{ TimeEntry{ TimeCategoryID(0), TimeCodeID(0) } };
+	times.timeEntry = std::vector{ TimeEntry{ TimeCategory(TimeCategoryID(0), "Unknown"), TEST_TIME_CODE_UNKNOWN } };
 
 	taskInfo.times.push_back(times);
 	taskInfo.state = TaskState::ACTIVE;
@@ -734,7 +750,7 @@ TEST_CASE("Modify Task", "[api][task]")
 		helper.expect_success(CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test"));
 
 		UpdateTaskMessage update(helper.next_request_id(), TaskID(1), NO_PARENT, "test");
-		update.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		update.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		helper.expect_success(update);
 
@@ -743,7 +759,7 @@ TEST_CASE("Modify Task", "[api][task]")
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
-		taskInfo.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		taskInfo.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		helper.required_messages({ &taskInfo });
 	}
@@ -820,7 +836,7 @@ TEST_CASE("Modify Task", "[api][task]")
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
-		taskInfo.times.emplace_back(1737344939870ms, std::nullopt, std::vector{ TimeEntry{TimeCategoryID(0), TimeCodeID(0)} });
+		taskInfo.times.emplace_back(1737344939870ms, std::nullopt, std::vector{ TimeEntry{TEST_TIME_CATEGORY_UNKNOWN, TEST_TIME_CODE_UNKNOWN} });
 
 		helper.required_messages({ &taskInfo });
 	}
@@ -841,7 +857,7 @@ TEST_CASE("Modify Task", "[api][task]")
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
 		taskInfo.state = TaskState::ACTIVE;
 		taskInfo.newTask = false;
-		taskInfo.times.emplace_back(1737344939870ms, std::nullopt, std::vector{ TimeEntry{TimeCategoryID(0), TimeCodeID(0)} });
+		taskInfo.times.emplace_back(1737344939870ms, std::nullopt, std::vector{ TimeEntry{TEST_TIME_CATEGORY_UNKNOWN, TEST_TIME_CODE_UNKNOWN} });
 
 		helper.required_messages({ &taskInfo });
 	}
@@ -1156,8 +1172,8 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(15);
 		report.report.times.emplace_back(TaskID(1), 0);
 		report.report.totalTime = std::chrono::minutes(30);
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(1), TimeCodeID(0) }, std::chrono::minutes(30));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(2), TimeCodeID(0) }, std::chrono::minutes(30));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_1, TEST_TIME_CODE_UNKNOWN }, std::chrono::minutes(30));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_2, TEST_TIME_CODE_UNKNOWN }, std::chrono::minutes(30));
 
 		helper.required_messages({ &report });
 	}
@@ -1184,8 +1200,8 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(15);
 		report.report.times.emplace_back(TaskID(1), 0);
 		report.report.totalTime = std::chrono::milliseconds(88200000);
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(1), TimeCodeID(0) }, std::chrono::milliseconds(88200000));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(2), TimeCodeID(0) }, std::chrono::milliseconds(88200000));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_1, TEST_TIME_CODE_UNKNOWN }, std::chrono::milliseconds(88200000));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_2, TEST_TIME_CODE_UNKNOWN }, std::chrono::milliseconds(88200000));
 
 		helper.required_messages({ &report });
 	}
@@ -1232,8 +1248,8 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5) + std::chrono::minutes(15);
 		report.report.times.emplace_back(TaskID(1), 0);
 		report.report.totalTime = std::chrono::minutes(30);
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(1), TimeCodeID(0) }, std::chrono::minutes(30));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(2), TimeCodeID(0) }, std::chrono::minutes(30));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_1, TEST_TIME_CODE_UNKNOWN }, std::chrono::minutes(30));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_2, TEST_TIME_CODE_UNKNOWN }, std::chrono::minutes(30));
 
 		helper.required_messages({ &report });
 	}
@@ -1263,8 +1279,8 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.endTime = date_to_ms(2, 3, 2025) + std::chrono::hours(7);
 		report.report.times.emplace_back(TaskID(1), 0);
 		report.report.totalTime = std::chrono::hours(2);
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(1), TimeCodeID(0) }, std::chrono::hours(2));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(2), TimeCodeID(0) }, std::chrono::hours(2));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_1, TEST_TIME_CODE_UNKNOWN }, std::chrono::hours(2));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_2, TEST_TIME_CODE_UNKNOWN }, std::chrono::hours(2));
 		helper.required_messages({ &report });
 	}
 
@@ -1293,8 +1309,8 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.endTime = date_to_ms(2, 3, 2025) + std::chrono::hours(7);
 		report.report.times.emplace_back(TaskID(1), 0);
 		report.report.totalTime = std::chrono::hours(2);
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(1), TimeCodeID(0) }, std::chrono::hours(2));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(2), TimeCodeID(0) }, std::chrono::hours(2));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_1, TEST_TIME_CODE_UNKNOWN }, std::chrono::hours(2));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_2, TEST_TIME_CODE_UNKNOWN }, std::chrono::hours(2));
 		helper.required_messages({ &report });
 	}
 
@@ -1335,8 +1351,8 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.endTime = date_to_ms(2, 3, 2025) + std::chrono::hours(7);
 		report.report.times.emplace_back(TaskID(1), 1);
 		report.report.totalTime = std::chrono::hours(2);
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(1), TimeCodeID(0) }, std::chrono::hours(2));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(2), TimeCodeID(0) }, std::chrono::hours(2));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_1, TEST_TIME_CODE_UNKNOWN }, std::chrono::hours(2));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_2, TEST_TIME_CODE_UNKNOWN }, std::chrono::hours(2));
 		helper.required_messages({ &report });
 	}
 
@@ -1363,8 +1379,8 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		auto create2 = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 2");
 		auto create3 = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "test 3");
 
-		create1.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
-		create2.timeEntry = std::vector{ TimeEntry{TimeCategoryID(3), TimeCodeID(4)}, TimeEntry{TimeCategoryID(4), TimeCodeID(5)} };
+		create1.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
+		create2.timeEntry = std::vector{ TimeEntry{TEST_TIME_CATEGORY_3, TimeCode(TimeCodeID(4), "")}, TimeEntry{TEST_TIME_CATEGORY_4, TimeCode(TimeCodeID(5), "")} };
 
 		helper.expect_success(create1);
 		helper.expect_success(create2);
@@ -1414,14 +1430,14 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.times.emplace_back(TaskID(1), 2);
 		report.report.times.emplace_back(TaskID(2), 1);
 		report.report.times.emplace_back(TaskID(3), 0);
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(1), TimeCodeID(0) }, std::chrono::hours(4));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(1), TimeCodeID(2) }, std::chrono::hours(5));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(2), TimeCodeID(0) }, std::chrono::hours(4));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(2), TimeCodeID(3) }, std::chrono::hours(5));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(3), TimeCodeID(0) }, std::chrono::hours(7));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(3), TimeCodeID(4) }, std::chrono::hours(2));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(4), TimeCodeID(0) }, std::chrono::hours(7));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(4), TimeCodeID(5) }, std::chrono::hours(2));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_1, TEST_TIME_CODE_UNKNOWN }, std::chrono::hours(4));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_1, TimeCodeID(2) }, std::chrono::hours(5));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_2, TEST_TIME_CODE_UNKNOWN }, std::chrono::hours(4));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_2, TimeCodeID(3) }, std::chrono::hours(5));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_3, TEST_TIME_CODE_UNKNOWN }, std::chrono::hours(7));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_3, TimeCodeID(4) }, std::chrono::hours(2));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_4, TimeCodeID(0) }, std::chrono::hours(7));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_4, TimeCodeID(5) }, std::chrono::hours(2));
 		report.report.totalTime = std::chrono::hours(9);
 
 		helper.required_messages({ &report });
@@ -1437,7 +1453,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		auto create2 = CreateTaskMessage(TaskID(1), helper.next_request_id(), "test 2");
 		auto create3 = CreateTaskMessage(TaskID(2), helper.next_request_id(), "test 3");
 
-		create1.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		create1.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		helper.expect_success(create1);
 		helper.expect_success(create2);
@@ -1463,8 +1479,8 @@ TEST_CASE("Request Daily Report", "[api][task]")
 		report.report.startTime = date_to_ms(2, 3, 2025) + std::chrono::hours(5);
 		report.report.endTime = date_to_ms(2, 3, 2025) + std::chrono::hours(8);
 		report.report.times.emplace_back(TaskID(3), 0);
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(1), TimeCodeID(2) }, std::chrono::hours(3));
-		report.report.timePerTimeEntry.emplace(TimeEntry{ TimeCategoryID(2), TimeCodeID(3) }, std::chrono::hours(3));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_1, TimeCode(TimeCodeID(2), "") }, std::chrono::hours(3));
+		report.report.timePerTimeEntry.emplace(TimeEntry{ TEST_TIME_CATEGORY_2, TimeCode(TimeCodeID(3), "") }, std::chrono::hours(3));
 		report.report.totalTime = std::chrono::hours(3);
 
 		helper.required_messages({ &report });
@@ -1784,7 +1800,7 @@ TEST_CASE("Add Sessions", "[api][task]")
 		helper.expect_success(addTimeEntry);
 
 		auto create = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a");
-		create.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		create.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		helper.expect_success(create);
 
@@ -1870,7 +1886,7 @@ TEST_CASE("Add Sessions", "[api][task]")
 		helper.expect_success(addTimeEntry);
 
 		auto create = CreateTaskMessage(NO_PARENT, helper.next_request_id(), "a");
-		create.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+		create.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 		helper.expect_success(create);
 
@@ -1896,11 +1912,11 @@ TEST_CASE("Add Sessions", "[api][task]")
 	SECTION("Success - Use Unknown from Each Time Category When Task has no Time Entry")
 	{
 		auto addTimeEntry = TimeEntryModifyPacket(RequestID(1));
-		addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "A");
+		addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "Test Category 1");
 		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 1", false);
 		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 0, TimeCodeID(0), "Code 2", false);
 
-		addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "B");
+		addTimeEntry.categories.emplace_back(TimeCategoryModType::ADD, TimeCategoryID(0), "Test Category 2");
 		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 3", false);
 		addTimeEntry.codes.emplace_back(TimeCategoryModType::ADD, 1, TimeCodeID(0), "Code 4", false);
 
@@ -1916,7 +1932,7 @@ TEST_CASE("Add Sessions", "[api][task]")
 		auto taskInfo = TaskInfoMessage(TaskID(1), NO_PARENT, "a");
 
 		taskInfo.createTime = std::chrono::milliseconds(1737344039870);
-		taskInfo.times.emplace_back(10000ms, 20000ms, std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(0)}, TimeEntry{TimeCategoryID(2), TimeCodeID(0)} });
+		taskInfo.times.emplace_back(10000ms, 20000ms, std::vector{ TimeEntry{TEST_TIME_CATEGORY_1, TEST_TIME_CODE_UNKNOWN}, TimeEntry{TEST_TIME_CATEGORY_2, TEST_TIME_CODE_UNKNOWN} });
 		taskInfo.state = TaskState::PENDING;
 		taskInfo.newTask = false;
 

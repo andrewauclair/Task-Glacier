@@ -41,5 +41,8 @@ struct TaskTimes
 
 inline TaskTimes create_times_with_unknown_time_entry(std::chrono::milliseconds start, std::optional<std::chrono::milliseconds> stop)
 {
-	return TaskTimes(start, stop, std::vector{ TimeEntry{ TimeCategoryID(0), TimeCodeID(0) } });
+	TimeCategory unknownCategory{ TimeCategoryID(0), "Unknown" };
+	TimeCode unknownCode{ TimeCodeID(0), "Unknown" };
+
+	return TaskTimes(start, stop, std::vector{ TimeEntry{ unknownCategory, unknownCode } });
 }

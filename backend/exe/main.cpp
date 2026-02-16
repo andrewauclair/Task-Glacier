@@ -172,7 +172,7 @@ int main(int argc, char** argv)
 			
 			try
 			{
-				result = parse_packet(input);
+				result = parse_packet(input, api.m_app.timeCategories());
 			}
 			catch (const std::exception& e)
 			{

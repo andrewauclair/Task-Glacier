@@ -19,7 +19,7 @@ struct CreateTaskMessage : RequestMessage
 	CreateTaskMessage(TaskID parentID, RequestID requestID, std::string name) : RequestMessage(PacketType::CREATE_TASK, requestID), parentID(parentID), name(std::move(name)) {}
 
 	std::vector<std::byte> pack() const override;
-	static std::expected<CreateTaskMessage, UnpackError> unpack(std::span<const std::byte> data);
+	static std::expected<CreateTaskMessage, UnpackError> unpack(std::span<const std::byte> data, const TimeCategories& time_categories);
 
 	std::ostream& print(std::ostream& out) const override
 	{
@@ -35,7 +35,7 @@ struct CreateTaskMessage : RequestMessage
 		out << ", timeCodes: [ ";
 		for (auto time : timeEntry)
 		{
-			out << std::format("[ {} {} ]", time.categoryID._val, time.codeID._val) << ", ";
+			out << std::format("[ {} ({}) {} ({}) ]", time.category.name, time.category.id._val, time.code.name, time.code.id._val) << ", ";
 		}
 		out << "] }";
 

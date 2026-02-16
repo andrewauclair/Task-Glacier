@@ -593,7 +593,7 @@ void API::handle_basic(const BasicMessage& message)
 
 		auto& time_categories = m_app.timeCategories();
 		
-		for (auto&& category : time_categories)
+		for (auto&& category : time_categories.categories)
 		{
 			TimeCategory packet = TimeCategory(category.id, category.name);
 
@@ -659,9 +659,9 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 		if (category.id == TimeCategoryID(0) && category.type == TimeCategoryModType::ADD)
 		{
 			// creating new time category
-			auto result = std::find_if(m_app.timeCategories().begin(), m_app.timeCategories().end(), [&](auto&& cat) { return cat.name == category.name; });
+			auto result = std::find_if(m_app.timeCategories().categories.begin(), m_app.timeCategories().categories.end(), [&](auto&& cat) { return cat.name == category.name; });
 
-			if (result != m_app.timeCategories().end())
+			if (result != m_app.timeCategories().categories.end())
 			{
 				m_sender->send(std::make_unique<FailureResponse>(message.requestID, std::format("Time Category with name '{}' already exists", category.name)));
 				return;
@@ -673,15 +673,15 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 
 			m_database->write_next_time_category_id(m_app.m_nextTimeCategoryID, *m_sender);
 
-			m_app.timeCategories().push_back(newCategory);
+			m_app.timeCategories().categories.push_back(newCategory);
 
-			timeCategory = &m_app.timeCategories().back();
+			timeCategory = &m_app.timeCategories().categories.back();
 		}
 		else
 		{
-			auto result = std::find_if(m_app.timeCategories().begin(), m_app.timeCategories().end(), [&](auto&& cat) { return cat.id == category.id;});
+			auto result = std::find_if(m_app.timeCategories().categories.begin(), m_app.timeCategories().categories.end(), [&](auto&& cat) { return cat.id == category.id;});
 
-			if (result != m_app.timeCategories().end())
+			if (result != m_app.timeCategories().categories.end())
 			{
 				timeCategory = &*result;
 			}
@@ -786,7 +786,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 
 	TimeEntryDataPacket data({});
 
-	for (auto&& category : m_app.timeCategories())
+	for (auto&& category : m_app.timeCategories().categories)
 	{
 		TimeCategory packet = TimeCategory(category.id, category.name);
 

@@ -339,16 +339,16 @@ std::optional<std::string> MicroTask::rename_task(TaskID id, std::string_view na
 
 void MicroTask::fill_session_time_entry(const Task& task, TaskTimes& times)
 {
-	if (m_timeCategories.empty())
+	if (m_timeCategories.categories.empty())
 	{
-		times.timeEntry.push_back(TimeEntry{ TimeCategoryID(0), TimeCodeID(0) });
+		times.timeEntry.push_back(TimeEntry{ TimeCategory(TimeCategoryID(0), "Unknown"), TimeCode(TimeCodeID(0), "Unknown") });
 	}
 
-	for (const TimeCategory& category : m_timeCategories)
+	for (const TimeCategory& category : m_timeCategories.categories)
 	{
 		const auto findCategory = [category](const Task* task)
 			{
-				auto result = std::find_if(task->timeEntry.begin(), task->timeEntry.end(), [&](const TimeEntry& entry) { return entry.categoryID == category.id; });
+				auto result = std::find_if(task->timeEntry.begin(), task->timeEntry.end(), [&](const TimeEntry& entry) { return entry.category.id == category.id; });
 
 				return result;
 			};
@@ -383,13 +383,13 @@ void MicroTask::fill_session_time_entry(const Task& task, TaskTimes& times)
 				else
 				{
 					// if we didn't find a parent with the category, use unknown
-					times.timeEntry.emplace_back(category.id, TimeCodeID(0));
+					times.timeEntry.emplace_back(category, TimeCode(TimeCodeID(0), "Unknown"));
 				}
 			}
 			else
 			{
 				// if we didn't find a parent with the category, use unknown
-				times.timeEntry.emplace_back(category.id, TimeCodeID(0));
+				times.timeEntry.emplace_back(category, TimeCode(TimeCodeID(0), "Unknown"));
 			}
 		}
 	}
@@ -430,5 +430,5 @@ void MicroTask::load_task(const Task& task)
 
 void MicroTask::load_time_entry(const std::vector<TimeCategory>& timeCategories)
 {
-	m_timeCategories = timeCategories;
+	m_timeCategories.categories = timeCategories;
 }

@@ -48,7 +48,7 @@ struct TaskInfoMessage : Message
 	}*/
 
 	std::vector<std::byte> pack() const override;
-	static std::expected<TaskInfoMessage, UnpackError> unpack(std::span<const std::byte> data);
+	static std::expected<TaskInfoMessage, UnpackError> unpack(std::span<const std::byte> data, const TimeCategories& time_categories);
 
 	std::ostream& print(std::ostream& out) const override
 	{
@@ -59,7 +59,7 @@ struct TaskInfoMessage : Message
 			out << ", time codes: [ ";
 			for (auto&& code : time.timeEntry)
 			{
-				out << std::format("[ {} {} ]", code.categoryID._val, code.codeID._val);
+				out << std::format("[ {} ({}) {} ({}) ]", code.category.name, code.category.id._val, code.code.name, code.code.id._val);
 				out << ", ";
 			}
 			out << "]";
@@ -76,7 +76,7 @@ struct TaskInfoMessage : Message
 		out << "time codes: [ ";
 		for (auto&& code : timeEntry)
 		{
-			out << std::format("[ {} {} ]", code.categoryID, code.codeID);
+			out << std::format("[ {} ({}) {} ({}) ]", code.category.name, code.category.id, code.code.name, code.code.id);
 			out << ", ";
 		}
 		out << "]";

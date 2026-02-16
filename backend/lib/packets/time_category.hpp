@@ -27,5 +27,47 @@ struct TimeCategory
 		return out;
 	}
 
-	constexpr auto operator<=>(const TimeCategory&) const = default;
+	constexpr bool operator==(const TimeCategory& other) const
+	{
+		return id == other.id;
+	}
+
+	constexpr bool operator!=(const TimeCategory& other) const
+	{
+		return id != other.id;
+	}
+
+	constexpr bool operator<(const TimeCategory& other) const
+	{
+		return id < other.id;
+	}
+};
+
+struct TimeCategories
+{
+	std::vector<TimeCategory> categories;
+
+	std::pair<TimeCategory, TimeCode> find(TimeCategoryID categoryID, TimeCodeID codeID) const
+	{
+		TimeCategory unknownCategory{ TimeCategoryID(0), "Unknown" };
+		TimeCode unknownCode{ TimeCodeID(0), "Unknown" };
+
+		for (auto&& category : categories)
+		{
+			if (category.id == categoryID)
+			{
+				for (auto&& code : category.codes)
+				{
+					if (code.id == codeID)
+					{
+						return { category, code };
+					}
+				}
+
+				return { category, unknownCode };
+			}
+		}
+
+		return { unknownCategory, unknownCode };
+	}
 };

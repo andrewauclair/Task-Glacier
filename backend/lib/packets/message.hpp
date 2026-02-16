@@ -5,6 +5,8 @@
 #include <ostream>
 #include <vector>
 
+#include <magic_enum/magic_enum.hpp>
+
 enum class PacketType : std::int32_t
 {
 	VERSION_REQUEST = 1,
@@ -97,6 +99,6 @@ private:
 
 inline std::ostream& Message::print(std::ostream& out) const
 {
-	out << "packetType: " << static_cast<std::int32_t>(m_packetType);
+	out << "packetType: " << magic_enum::enum_name(m_packetType) << " (" << static_cast<std::int32_t>(m_packetType) << ")";
 	return out;
 }

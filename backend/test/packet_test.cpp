@@ -10,6 +10,15 @@
 
 using namespace std::chrono_literals;
 
+static const TimeCategory TEST_TIME_CATEGORY_1 = TimeCategory(TimeCategoryID(1), "Test Category 1");
+static const TimeCode TEST_TIME_CODE_1 = TimeCode(TimeCodeID(2), "Two");
+
+static const TimeCategory TEST_TIME_CATEGORY_2 = TimeCategory(TimeCategoryID(2), "Test Category 2");
+static const TimeCode TEST_TIME_CODE_2 = TimeCode(TimeCodeID(3), "Three");
+
+static const TimeEntry TEST_TIME_ENTRY_1 = TimeEntry(TEST_TIME_CATEGORY_1, TEST_TIME_CODE_1);
+static const TimeEntry TEST_TIME_ENTRY_2 = TimeEntry(TEST_TIME_CATEGORY_2, TEST_TIME_CODE_2);
+
 std::vector<std::byte> bytes(auto... a)
 {
 	return std::vector<std::byte>{ static_cast<std::byte>(a)... };
@@ -99,7 +108,11 @@ struct PacketTestHelper
 	template<typename T>
 	void expect_packet(const Message& message, std::size_t size)
 	{
-		const auto result = parse_packet(message.pack());
+		TimeCategories categories;
+		categories.categories.push_back(TimeCategory(TEST_TIME_CATEGORY_1.id, TEST_TIME_CATEGORY_1.name, { TimeCode(TEST_TIME_CODE_1.id, TEST_TIME_CODE_1.name) }));
+		categories.categories.push_back(TimeCategory(TEST_TIME_CATEGORY_2.id, TEST_TIME_CATEGORY_2.name, { TimeCode(TEST_TIME_CODE_2.id, TEST_TIME_CODE_2.name) }));
+
+		const auto result = parse_packet(message.pack(), categories);
 
 		INFO("");
 		INFO(cpptrace::generate_trace().to_string());
@@ -119,7 +132,7 @@ TEST_CASE("Create Task", "[message]")
 {
 	auto create_task = CreateTaskMessage(TaskID(5), RequestID(10), "this is a test");
 	create_task.labels = { "one", "two" };
-	create_task.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+	create_task.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 	CAPTURE(create_task);
 
@@ -129,7 +142,7 @@ TEST_CASE("Create Task", "[message]")
 
 		create_task.print(ss);
 
-		auto expected_text = "CreateTaskMessage { packetType: 3, requestID: 10, parentID: 5, name: \"this is a test\", labels { \"one\", \"two\", }, timeCodes: [ [ 1 2 ], [ 2 3 ], ] }";
+		auto expected_text = "CreateTaskMessage { packetType: CREATE_TASK (3), requestID: 10, parentID: 5, name: \"this is a test\", labels { \"one\", \"two\", }, timeCodes: [ [ Test Category 1 (1) Two (2) ], [ Test Category 2 (2) Three (3) ], ] }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -178,7 +191,7 @@ TEST_CASE("Update Task", "[message]")
 	auto update_task = UpdateTaskMessage(RequestID(10), TaskID(5), TaskID(1), "this is a test");
 	update_task.state = TaskState::ACTIVE;
 	update_task.labels = { "one", "two" };
-	update_task.timeEntry = std::vector{ TimeEntry{TimeCategoryID(1), TimeCodeID(2)}, TimeEntry{TimeCategoryID(2), TimeCodeID(3)} };
+	update_task.timeEntry = std::vector{ TEST_TIME_ENTRY_1, TEST_TIME_ENTRY_2 };
 
 	CAPTURE(update_task);
 
@@ -188,7 +201,7 @@ TEST_CASE("Update Task", "[message]")
 
 		update_task.print(ss);
 
-		auto expected_text = "UpdateTaskMessage { packetType: 8, requestID: 10, taskID: 5, parentID: 1, state: 1, indexInParent: 0, serverControlled: 0, locked: 0, name: \"this is a test\", labels { \"one\", \"two\", }, timeCodes: [ [ 1 2 ], [ 2 3 ], ] }";
+		auto expected_text = "UpdateTaskMessage { packetType: UPDATE_TASK (8), requestID: 10, taskID: 5, parentID: 1, state: 1, indexInParent: 0, serverControlled: 0, locked: 0, name: \"this is a test\", labels { \"one\", \"two\", }, timeCodes: [ [ Test Category 1 (1) Two (2) ], [ Test Category 2 (2) Three (3) ], ] }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -277,7 +290,7 @@ TEST_CASE("Task", "[messages]")
 
 		task.print(ss);
 
-		auto expected_text = std::format("TaskMessage {{ packetType: {}, requestID: 10, taskID: 20 }}", static_cast<std::int32_t>(packet_type));
+		auto expected_text = std::format("TaskMessage {{ packetType: {} ({}), requestID: 10, taskID: 20 }}", magic_enum::enum_name(packet_type), static_cast<std::int32_t>(packet_type));
 
 		CHECK(ss.str() == expected_text);
 
@@ -351,7 +364,7 @@ TEST_CASE("Time Categories Data", "[messages]")
 
 		data.print(ss);
 
-		auto expected_text = "TimeEntryDataPacket { packetType: 30, TimeCategory { id: 5, name: one, \nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
+		auto expected_text = "TimeEntryDataPacket { packetType: TIME_ENTRY_DATA (30), TimeCategory { id: 5, name: one, \nTimeCode { id: 1, name: a, archived: 0 }\nTimeCode { id: 2, name: b, archived: 0 }\n } }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -407,7 +420,7 @@ TEST_CASE("Time Categories Modify", "[messages]")
 
 		modify.print(ss);
 
-		auto expected_text = "TimeEntryModifyPacket { packetType: 31, requestID: 10, {\n    type: 0, id: 0, name: A\n    type: 1, id: 3, name: B\n}\n, {\n    type: 0, cat index: 0, code id: 0, name: Code 1, archived: 0\n    type: 1, cat index: 0, code id: 1, name: Code 2, archived: 0\n    type: 1, cat index: 1, code id: 2, name: Code 3, archived: 0\n    type: 0, cat index: 1, code id: 0, name: Code 4, archived: 0\n}\n }";
+		auto expected_text = "TimeEntryModifyPacket { packetType: TIME_ENTRY_MODIFY (31), requestID: 10, {\n    type: 0, id: 0, name: A\n    type: 1, id: 3, name: B\n}\n, {\n    type: 0, cat index: 0, code id: 0, name: Code 1, archived: 0\n    type: 1, cat index: 0, code id: 1, name: Code 2, archived: 0\n    type: 1, cat index: 1, code id: 2, name: Code 3, archived: 0\n    type: 0, cat index: 1, code id: 0, name: Code 4, archived: 0\n}\n }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -454,7 +467,7 @@ TEST_CASE("Success Response", "[messages]")
 
 		response.print(ss);
 
-		auto expected_text = "SuccessResponse { packetType: 13, requestID: 10 }";
+		auto expected_text = "SuccessResponse { packetType: SUCCESS_RESPONSE (13), requestID: 10 }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -501,7 +514,7 @@ TEST_CASE("Failure Response", "[messages]")
 
 		response.print(ss);
 
-		auto expected_text = "FailureResponse { packetType: 14, requestID: 10, message: \"Task does not exist.\" }";
+		auto expected_text = "FailureResponse { packetType: FAILURE_RESPONSE (14), requestID: 10, message: \"Task does not exist.\" }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -549,7 +562,7 @@ TEST_CASE("Request Daily Report", "[messages]")
 
 		request.print(ss);
 
-		auto expected_text = "RequestDailyReportMessage { packetType: 21, requestID: 10, month: 2, day: 3, year: 2025 }";
+		auto expected_text = "RequestDailyReportMessage { packetType: REQUEST_DAILY_REPORT (21), requestID: 10, month: 2, day: 3, year: 2025 }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -599,7 +612,7 @@ TEST_CASE("Daily Report", "[messages]")
 
 		report.print(ss);
 
-		auto expected_text = "DailyReportMessage { packetType: 20, requestID: 10, reportTime: 5000ms, report: { found: 0, month: 0, day: 0, year: 0 }}";
+		auto expected_text = "DailyReportMessage { packetType: DAILY_REPORT (20), requestID: 10, reportTime: 5000ms, report: { found: 0, month: 0, day: 0, year: 0 }}";
 
 		CHECK(ss.str() == expected_text);
 
@@ -629,7 +642,7 @@ TEST_CASE("Daily Report", "[messages]")
 
 		newReport.print(ss);
 
-		auto expected_text = "DailyReportMessage { packetType: 20, requestID: 10, reportTime: 5000ms, report: { found: 1, month: 2, day: 3, year: 2025, startTime: 0ms, endTime: 0ms\nTime Pairs {\n}\nTime Per Time Code {\n}\nTotal Time: 0ms\n}}";
+		auto expected_text = "DailyReportMessage { packetType: DAILY_REPORT (20), requestID: 10, reportTime: 5000ms, report: { found: 1, month: 2, day: 3, year: 2025, startTime: 0ms, endTime: 0ms\nTime Pairs {\n}\nTime Per Time Code {\n}\nTotal Time: 0ms\n}}";
 
 		CHECK(ss.str() == expected_text);
 	}
@@ -710,7 +723,11 @@ TEST_CASE("unpack the empty packet", "[message][unpack]")
 
 	const auto message = BasicMessage(PacketType::REQUEST_CONFIGURATION_COMPLETE);
 
-	const auto result = parse_packet(message.pack());
+	TimeCategories categories;
+	categories.categories.push_back(TimeCategory(TEST_TIME_CATEGORY_1.id, TEST_TIME_CATEGORY_1.name, { TimeCode(TEST_TIME_CODE_1.id, TEST_TIME_CODE_1.name) }));
+	categories.categories.push_back(TimeCategory(TEST_TIME_CATEGORY_2.id, TEST_TIME_CATEGORY_2.name, { TimeCode(TEST_TIME_CODE_2.id, TEST_TIME_CODE_2.name) }));
+
+	const auto result = parse_packet(message.pack(), categories);
 
 	REQUIRE(result.packet);
 
@@ -763,7 +780,11 @@ TEST_CASE("Bugzilla Info Packet", "[message]")
 
 	SECTION("Unpack")
 	{
-		const auto result = parse_packet(message.pack());
+		TimeCategories categories;
+		categories.categories.push_back(TimeCategory(TEST_TIME_CATEGORY_1.id, TEST_TIME_CATEGORY_1.name, { TimeCode(TEST_TIME_CODE_1.id, TEST_TIME_CODE_1.name) }));
+		categories.categories.push_back(TimeCategory(TEST_TIME_CATEGORY_2.id, TEST_TIME_CATEGORY_2.name, { TimeCode(TEST_TIME_CODE_2.id, TEST_TIME_CODE_2.name) }));
+
+		const auto result = parse_packet(message.pack(), categories);
 
 		REQUIRE(result.packet);
 
