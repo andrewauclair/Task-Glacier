@@ -212,6 +212,8 @@ public class ReportBuilder {
         categoryNodes.forEach((timeEntry, categoryNode) -> {
             fillTimesForParents(categoryNode);
         });
+
+        treeModel.reload();
     }
 
     private void fillTimesForParents(DefaultMutableTreeNode parent) {
@@ -225,9 +227,7 @@ public class ReportBuilder {
             if (treeNode instanceof TaskNode taskNode) {
                 if (taskNode instanceof WeeklyTaskNode weeklyTask) {
                     for (int i = 0; i < 7; i++) {
-                        if (weeklyTask.childrenMinutesPerDay[i] == null) {
-                            weeklyTask.childrenMinutesPerDay[i] = totalMinutesForTaskChildren(weeklyTask, i);
-                        }
+                        weeklyTask.childrenMinutesPerDay[i] = totalMinutesForTaskChildren(weeklyTask, i);
                     }
                 }
                 else {
