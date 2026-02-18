@@ -107,7 +107,17 @@ public class WeeklyReportTreeTableModel extends TreeTableModel {
                 case 8:
                     return taskNode.getMinutes();
             }
-            return taskNode.minutesPerDay[column - 1];
+            Long minutes = null;
+            if (taskNode.childrenMinutesPerDay[column - 1] != null) {
+                minutes = taskNode.childrenMinutesPerDay[column - 1];
+            }
+            if (taskNode.minutesPerDay[column - 1] != null) {
+                if (minutes == null) {
+                    minutes = 0L;
+                }
+                minutes += taskNode.minutesPerDay[column - 1];
+            }
+            return minutes;
         }
         else if (node instanceof WeeklyTotalCategoryNode totalNode) {
             switch (column) {
@@ -183,18 +193,21 @@ public class WeeklyReportTreeTableModel extends TreeTableModel {
     }
 
     public static class WeeklyTaskNode extends DailyReportTreeTableModel.TaskNode {
-        long[] childrenMinutesPerDay = new long[7];
+        Long[] childrenMinutesPerDay = new Long[7];
         Long[] minutesPerDay = new Long[7];
 
         public Long getMinutes() {
-            boolean anyExist = Arrays.stream(minutesPerDay).anyMatch(aLong -> aLong != null);
+            boolean anyExist = Arrays.stream(childrenMinutesPerDay).anyMatch(aLong -> aLong != null) ||
+                    Arrays.stream(minutesPerDay).anyMatch(aLong -> aLong != null);
 
             if (!anyExist) {
                 return null;
             }
             long total = 0;
             for (int i = 0; i < 7; i++) {
-                total += childrenMinutesPerDay[i];
+                if (childrenMinutesPerDay[i] != null) {
+                    total += childrenMinutesPerDay[i];
+                }
                 
                 if (minutesPerDay[i] != null) {
                     total += minutesPerDay[i];
