@@ -20,3 +20,5 @@ target_link_libraries(task-glacier-server PRIVATE
  	sockpp-static
     curlpp::curlpp
 )
+
+target_compile_definitions(task-glacier-server PRIVATE TG_ENABLE_LOG_STATEMENTS)

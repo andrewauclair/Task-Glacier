@@ -6,7 +6,9 @@
 
 #include "packets/error.hpp"
 
+#ifdef TG_ENABLE_LOG_STATEMENTS
 extern std::ofstream logfile;
+#endif
 
 /*
 * Database Versions for Reference
@@ -573,30 +575,35 @@ bool DatabaseImpl::execute_statement(SQLite::Statement& statement, PacketSender&
 {
 	try
 	{
+#ifdef TG_ENABLE_LOG_STATEMENTS
 		auto time = std::chrono::system_clock::now();
 
 		std::cout << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [DB] Execute statement\n";
 
 		logfile << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [DB] Execute statement\n";
+#endif
 
 		statement.exec();
 
+#ifdef TG_ENABLE_LOG_STATEMENTS
 		time = std::chrono::system_clock::now();
 
 		std::cout << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [DB] Execute statement complete\n";
 
 		logfile << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [DB] Execute statement complete";
+#endif
 
 		return true;
 	}
 	catch (const std::exception& e)
 	{
+#ifdef TG_ENABLE_LOG_STATEMENTS
 		auto time = std::chrono::system_clock::now();
 
 		std::cout << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [DB] Execute statement failed\n";
 
 		logfile << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [DB] Execute statement failed\n";
-
+#endif
 
 		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}

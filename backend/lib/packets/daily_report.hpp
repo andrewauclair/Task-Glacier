@@ -89,7 +89,7 @@ struct DailyReportMessage : Message
 		out << "DailyReportMessage { ";
 		Message::print(out);
 		out << ", requestID: " << requestID._val;
-		out << ", reportTime: " << reportTime;
+		out << ", reportTime: " << std::format("{:%m/%d/%y %H:%M:%S}", std::chrono::system_clock::time_point{ reportTime });
 		out << ", report: " << report;
 		out << "}";
 		return out;
