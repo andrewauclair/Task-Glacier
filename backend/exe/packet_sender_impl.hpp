@@ -21,7 +21,7 @@ struct PacketSenderImpl : PacketSender
 
 		std::cout << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [TX] " << *message << '\n';
 
-		logfile << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [TX] " << *message << std::endl;
+		logfile << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [TX] " << *message << '\n';
 
 		const auto output = message->pack();
 		socket->write_n(output.data(), output.size());

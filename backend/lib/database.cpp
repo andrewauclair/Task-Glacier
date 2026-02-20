@@ -2,8 +2,11 @@
 #include "api.hpp"
 
 #include <format>
+#include <fstream>
 
 #include "packets/error.hpp"
+
+extern std::ofstream logfile;
 
 /*
 * Database Versions for Reference
@@ -97,6 +100,14 @@ void DatabaseImpl::load(Bugzilla& bugzilla, MicroTask& app, API& api)
 
 void DatabaseImpl::write_task(const Task& task, PacketSender& sender)
 {
+	bool using_transaction = false;
+
+	if (!m_transaction_in_progress)
+	{
+		start_transaction(sender);
+		using_transaction = true;
+	}
+
 	SQLite::Statement insert(m_database, "insert or replace into tasks values(?, ?, ?, ?, ?, ?, ?, ?, ?)");
 	insert.bind(1, task.taskID()._val);
 	insert.bind(2, task.m_name);
@@ -119,6 +130,11 @@ void DatabaseImpl::write_task(const Task& task, PacketSender& sender)
 
 	write_task_time_entry(task, sender);
 	write_sessions(task, sender);
+
+	if (using_transaction)
+	{
+		finish_transaction(sender);
+	}
 }
 
 void DatabaseImpl::write_next_task_id(TaskID nextID, PacketSender& sender)
@@ -385,14 +401,7 @@ void DatabaseImpl::write_task_time_entry(const Task& task, PacketSender& sender)
 		insert.bind(2, entry.category.id._val);
 		insert.bind(3, entry.code.id._val);
 
-		try
-		{
-			insert.exec();
-		}
-		catch (const std::exception& e)
-		{
-			sender.send(std::make_unique<ErrorMessage>(e.what()));
-		}
+		execute_statement(insert, sender);
 	}
 }
 
@@ -412,14 +421,7 @@ void DatabaseImpl::write_sessions(const Task& task, PacketSender& sender)
 			insert.bind(5, times.start.count());
 			insert.bind(6, times.stop.value_or(std::chrono::milliseconds(0)).count());
 
-			try
-			{
-				insert.exec();
-			}
-			catch (const std::exception& e)
-			{
-				sender.send(std::make_unique<ErrorMessage>(e.what()));
-			}
+			execute_statement(insert, sender);
 		}
 
 		for (const TimeEntry& entry : times.timeEntry)
@@ -432,14 +434,7 @@ void DatabaseImpl::write_sessions(const Task& task, PacketSender& sender)
 			insert.bind(5, times.start.count());
 			insert.bind(6, times.stop.value_or(std::chrono::milliseconds(0)).count());
 			
-			try
-			{
-				insert.exec();
-			}
-			catch (const std::exception& e)
-			{
-				sender.send(std::make_unique<ErrorMessage>(e.what()));
-			}
+			execute_statement(insert, sender);
 		}
 
 		index++;
@@ -451,14 +446,7 @@ void DatabaseImpl::remove_sessions(TaskID task, PacketSender& sender)
 	SQLite::Statement remove(m_database, "delete from timeEntrySession where TaskID == ?");
 	remove.bind(1, task._val);
 
-	try
-	{
-		remove.exec();
-	}
-	catch (const std::exception& e)
-	{
-		sender.send(std::make_unique<ErrorMessage>(e.what()));
-	}
+	execute_statement(remove, sender);
 }
 
 void DatabaseImpl::write_time_entry_config(const TimeCategory& entry, PacketSender& sender)
@@ -467,14 +455,7 @@ void DatabaseImpl::write_time_entry_config(const TimeCategory& entry, PacketSend
 	insert_cat.bind(1, entry.id._val);
 	insert_cat.bind(2, entry.name);
 
-	try
-	{
-		insert_cat.exec();
-	}
-	catch (const std::exception& e)
-	{
-		sender.send(std::make_unique<ErrorMessage>(e.what()));
-	}
+	execute_statement(insert_cat, sender);
 
 	for (const TimeCode& code : entry.codes)
 	{
@@ -485,14 +466,7 @@ void DatabaseImpl::write_time_entry_config(const TimeCategory& entry, PacketSend
 		insert.bind(3, code.name);
 		insert.bind(4, code.archived);
 
-		try
-		{
-			insert.exec();
-		}
-		catch (const std::exception& e)
-		{
-			sender.send(std::make_unique<ErrorMessage>(e.what()));
-		}
+		execute_statement(insert, sender);
 	}
 }
 
@@ -501,14 +475,7 @@ void DatabaseImpl::write_next_time_category_id(TimeCategoryID nextID, PacketSend
 	SQLite::Statement insert(m_database, "insert or replace into nextIDs values ('category', ?)");
 	insert.bind(1, nextID._val);
 
-	try
-	{
-		insert.exec();
-	}
-	catch (const std::exception& e)
-	{
-		sender.send(std::make_unique<ErrorMessage>(e.what()));
-	}
+	execute_statement(insert, sender);
 }
 
 void DatabaseImpl::write_next_time_code_id(TimeCodeID nextID, PacketSender& sender)
@@ -516,14 +483,7 @@ void DatabaseImpl::write_next_time_code_id(TimeCodeID nextID, PacketSender& send
 	SQLite::Statement insert(m_database, "insert or replace into nextIDs values ('code', ?)");
 	insert.bind(1, nextID._val);
 
-	try
-	{
-		insert.exec();
-	}
-	catch (const std::exception& e)
-	{
-		sender.send(std::make_unique<ErrorMessage>(e.what()));
-	}
+	execute_statement(insert, sender);
 }
 
 void DatabaseImpl::remove_time_category(const TimeCategory& entry, PacketSender& sender)
@@ -531,26 +491,12 @@ void DatabaseImpl::remove_time_category(const TimeCategory& entry, PacketSender&
 	SQLite::Statement remove_cat(m_database, "delete from timeEntryCategory where TimeCategoryID == ?");
 	remove_cat.bind(1, entry.id._val);
 
-	try
-	{
-		remove_cat.exec();
-	}
-	catch (const std::exception& e)
-	{
-		sender.send(std::make_unique<ErrorMessage>(e.what()));
-	}
+	execute_statement(remove_cat, sender);
 
 	SQLite::Statement remove_code(m_database, "delete from timeEntryCode where TimeCategoryID == ?");
 	remove_code.bind(1, entry.id._val);
 
-	try
-	{
-		remove_code.exec();
-	}
-	catch (const std::exception& e)
-	{
-		sender.send(std::make_unique<ErrorMessage>(e.what()));
-	}
+	execute_statement(remove_code, sender);
 }
 
 void DatabaseImpl::remove_time_code(const TimeCategory& entry, const TimeCode& code, PacketSender& sender)
@@ -558,43 +504,26 @@ void DatabaseImpl::remove_time_code(const TimeCategory& entry, const TimeCode& c
 	SQLite::Statement remove_code(m_database, "delete from timeEntryCode where TimeCodeID == ?");
 	remove_code.bind(1, code.id._val);
 
-	try
-	{
-		remove_code.exec();
-	}
-	catch (const std::exception& e)
-	{
-		sender.send(std::make_unique<ErrorMessage>(e.what()));
-	}
+	execute_statement(remove_code, sender);
 }
 
 void DatabaseImpl::start_transaction(PacketSender& sender)
 {
 	SQLite::Statement start(m_database, "BEGIN TRANSACTION;");
 
-	try
+	if (execute_statement(start, sender))
 	{
-		start.exec();
 		m_transaction_in_progress = true;
-	}
-	catch (const std::exception& e)
-	{
-		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
 }
 
 void DatabaseImpl::finish_transaction(PacketSender& sender)
 {
-	SQLite::Statement start(m_database, "COMMIT;");
+	SQLite::Statement finish(m_database, "COMMIT;");
 
-	try
+	if (execute_statement(finish, sender))
 	{
-		start.exec();
 		m_transaction_in_progress = false;
-	}
-	catch (const std::exception& e)
-	{
-		sender.send(std::make_unique<ErrorMessage>(e.what()));
 	}
 }
 
@@ -624,14 +553,7 @@ void DatabaseImpl::write_bugzilla_group_by(const BugzillaInstance& instance, Pac
 	insert.bind(1, instance.instanceID._val);
 	insert.bind(2, group_by_full);
 
-	try
-	{
-		insert.exec();
-	}
-	catch (const std::exception& e)
-	{
-		sender.send(std::make_unique<ErrorMessage>(e.what()));
-	}
+	execute_statement(insert, sender);
 }
 
 void DatabaseImpl::write_bugzilla_bug_to_task(const BugzillaInstance& instance, PacketSender& sender)
@@ -643,13 +565,40 @@ void DatabaseImpl::write_bugzilla_bug_to_task(const BugzillaInstance& instance, 
 		insert.bind(2, bug);
 		insert.bind(3, task._val);
 
-		try
-		{
-			insert.exec();
-		}
-		catch (const std::exception& e)
-		{
-			sender.send(std::make_unique<ErrorMessage>(e.what()));
-		}
+		execute_statement(insert, sender);
 	}
+}
+
+bool DatabaseImpl::execute_statement(SQLite::Statement& statement, PacketSender& sender)
+{
+	try
+	{
+		auto time = std::chrono::system_clock::now();
+
+		std::cout << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [DB] Execute statement\n";
+
+		logfile << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [DB] Execute statement\n";
+
+		statement.exec();
+
+		time = std::chrono::system_clock::now();
+
+		std::cout << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [DB] Execute statement complete\n";
+
+		logfile << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [DB] Execute statement complete";
+
+		return true;
+	}
+	catch (const std::exception& e)
+	{
+		auto time = std::chrono::system_clock::now();
+
+		std::cout << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [DB] Execute statement failed\n";
+
+		logfile << std::format("[{:%m/%d/%y %H:%M:%S}]", time) << " [DB] Execute statement failed\n";
+
+
+		sender.send(std::make_unique<ErrorMessage>(e.what()));
+	}
+	return false;
 }

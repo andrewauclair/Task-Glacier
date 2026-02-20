@@ -109,6 +109,8 @@ private:
 	void write_bugzilla_group_by(const BugzillaInstance& instance, PacketSender& sender);
 	void write_bugzilla_bug_to_task(const BugzillaInstance& instance, PacketSender& sender);
 
+	bool execute_statement(SQLite::Statement& statement, PacketSender& sender);
+
 	SQLite::Database m_database;
 	bool m_transaction_in_progress = false;
 };
