@@ -45,8 +45,8 @@ private:
 
 	void time_entry_modify(const TimeEntryModifyPacket& message);
 
-	DailyReportMessage create_daily_report(RequestID requestID, int month, int day, int year);
-	void create_weekly_report(RequestID requestID, int month, int day, int year);
+	DailyReportMessage create_daily_report(RequestOrigin request, int month, int day, int year);
+	void create_weekly_report(RequestOrigin request, int month, int day, int year);
 
 	const Clock* m_clock;
 	

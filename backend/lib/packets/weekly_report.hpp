@@ -2,7 +2,7 @@
 
 struct WeeklyReportMessage : Message
 {
-	RequestID requestID;
+	RequestOrigin request;
 
 	std::chrono::milliseconds reportTime;
 
@@ -11,7 +11,7 @@ struct WeeklyReportMessage : Message
 	std::chrono::milliseconds totalTime = std::chrono::milliseconds(0);
 	std::map<TimeCodeID, std::chrono::milliseconds> timePerTimeCode;
 
-	WeeklyReportMessage(RequestID requestID, std::chrono::milliseconds reportTime) : Message(PacketType::WEEKLY_REPORT), requestID(requestID), reportTime(reportTime) {}
+	WeeklyReportMessage(RequestOrigin request, std::chrono::milliseconds reportTime) : Message(PacketType::WEEKLY_REPORT), request(request), reportTime(reportTime) {}
 
 	std::vector<std::byte> pack() const override;
 	static std::expected<WeeklyReportMessage, UnpackError> unpack(std::span<const std::byte> data);
@@ -20,7 +20,7 @@ struct WeeklyReportMessage : Message
 	{
 		out << "WeeklyReportMessage { ";
 		Message::print(out);
-		out << ", requestID: " << requestID._val << ", totalTime: " << totalTime << ", ";
+		out << ", request: " << request << ", totalTime: " << totalTime << ", ";
 		for (auto&& dailyReport : dailyReports)
 		{
 			out << dailyReport;

@@ -2,9 +2,9 @@
 
 struct SuccessResponse : Message
 {
-	RequestID requestID;
+	RequestOrigin request;
 
-	SuccessResponse(RequestID requestID) : Message(PacketType::SUCCESS_RESPONSE), requestID(requestID) {}
+	SuccessResponse(RequestOrigin request) : Message(PacketType::SUCCESS_RESPONSE), request(request) {}
 
 	std::vector<std::byte> pack() const override;
 	static std::expected<SuccessResponse, UnpackError> unpack(std::span<const std::byte> data);
@@ -13,7 +13,7 @@ struct SuccessResponse : Message
 	{
 		out << "SuccessResponse { ";
 		Message::print(out);
-		out << ", requestID: " << requestID._val << " }";
+		out << ", request: " << request << " }";
 		return out;
 	}
 

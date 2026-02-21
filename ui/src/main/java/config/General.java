@@ -20,7 +20,7 @@ import java.awt.event.MouseEvent;
 
 import static taskglacier.MainFrame.mainFrame;
 
-// general (id, name, status, parent, bugzilla)
+// general (id, name, status, parent)
 class General extends JPanel {
     private final Task task;
     JTextArea description = new JTextArea(6, 20);

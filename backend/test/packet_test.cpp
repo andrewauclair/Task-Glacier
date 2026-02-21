@@ -458,7 +458,7 @@ TEST_CASE("Time Categories Modify", "[messages]")
 
 TEST_CASE("Success Response", "[messages]")
 {
-	const auto response = SuccessResponse(RequestID(10));
+	const auto response = SuccessResponse(RequestOrigin{ PacketType::START_TASK, RequestID(10) });
 	CAPTURE(response);
 
 	SECTION("Print")
@@ -467,7 +467,7 @@ TEST_CASE("Success Response", "[messages]")
 
 		response.print(ss);
 
-		auto expected_text = "SuccessResponse { packetType: SUCCESS_RESPONSE (13), requestID: 10 }";
+		auto expected_text = "SuccessResponse { packetType: SUCCESS_RESPONSE (13), request: 10 (START_TASK) }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -505,7 +505,7 @@ TEST_CASE("Success Response", "[messages]")
 
 TEST_CASE("Failure Response", "[messages]")
 {
-	const auto response = FailureResponse(RequestID(10), "Task does not exist.");
+	const auto response = FailureResponse(RequestOrigin{ PacketType::START_TASK, RequestID(10) }, "Task does not exist.");
 	CAPTURE(response);
 
 	SECTION("Print")
@@ -514,7 +514,7 @@ TEST_CASE("Failure Response", "[messages]")
 
 		response.print(ss);
 
-		auto expected_text = "FailureResponse { packetType: FAILURE_RESPONSE (14), requestID: 10, message: \"Task does not exist.\" }";
+		auto expected_text = "FailureResponse { packetType: FAILURE_RESPONSE (14), request: 10 (START_TASK), message: \"Task does not exist.\" }";
 
 		CHECK(ss.str() == expected_text);
 
@@ -603,7 +603,7 @@ TEST_CASE("Request Daily Report", "[messages]")
 
 TEST_CASE("Daily Report", "[messages]")
 {
-	const auto report = DailyReportMessage(RequestID(10), 1737344039870ms);
+	const auto report = DailyReportMessage(RequestOrigin{ PacketType::REQUEST_DAILY_REPORT, RequestID(10) }, 1737344039870ms);
 	CAPTURE(report);
 
 	SECTION("Print - No Report Found")
@@ -612,7 +612,7 @@ TEST_CASE("Daily Report", "[messages]")
 
 		report.print(ss);
 
-		auto expected_text = "DailyReportMessage { packetType: DAILY_REPORT (20), requestID: 10, reportTime: 01/20/25 03:33:59.8700000, report: { found: 0, month: 0, day: 0, year: 0 }}";
+		auto expected_text = "DailyReportMessage { packetType: DAILY_REPORT (20), request: 10 (REQUEST_DAILY_REPORT), reportTime: 01/20/25 03:33:59.8700000, report: { found: 0, month: 0, day: 0, year: 0 }}";
 
 		CHECK(ss.str() == expected_text);
 
@@ -633,7 +633,7 @@ TEST_CASE("Daily Report", "[messages]")
 
 	SECTION("Print - Report Found")
 	{
-		auto newReport = DailyReportMessage(RequestID(10), 1737344039870ms);
+		auto newReport = DailyReportMessage(RequestOrigin{ PacketType::REQUEST_DAILY_REPORT, RequestID(10) }, 1737344039870ms);
 		newReport.report = { true, 2, 3, 2025 };
 
 		CAPTURE(newReport);
@@ -642,14 +642,14 @@ TEST_CASE("Daily Report", "[messages]")
 
 		newReport.print(ss);
 
-		auto expected_text = "DailyReportMessage { packetType: DAILY_REPORT (20), requestID: 10, reportTime: 01/20/25 03:33:59.8700000, report: { found: 1, month: 2, day: 3, year: 2025, startTime: 0ms, endTime: 0ms\nTime Pairs {\n}\nTime Per Time Code {\n}\nTotal Time: 0ms\n}}";
+		auto expected_text = "DailyReportMessage { packetType: DAILY_REPORT (20), request: 10 (REQUEST_DAILY_REPORT), reportTime: 01/20/25 03:33:59.8700000, report: { found: 1, month: 2, day: 3, year: 2025, startTime: 0ms, endTime: 0ms\nTime Pairs {\n}\nTime Per Time Code {\n}\nTotal Time: 0ms\n}}";
 
 		CHECK(ss.str() == expected_text);
 	}
 
 	SECTION("Pack - No Report Found")
 	{
-		auto newReport = DailyReportMessage(RequestID(10), 1737344039870ms);
+		auto newReport = DailyReportMessage(RequestOrigin{ PacketType::REQUEST_DAILY_REPORT, RequestID(10) }, 1737344039870ms);
 		newReport.report = { false, 2, 3, 2025 };
 
 		auto verifier = PacketVerifier(newReport.pack(), 25);
@@ -667,7 +667,7 @@ TEST_CASE("Daily Report", "[messages]")
 
 	SECTION("Pack - Report Found")
 	{
-		auto newReport = DailyReportMessage(RequestID(10), 1737344039870ms);
+		auto newReport = DailyReportMessage(RequestOrigin{ PacketType::REQUEST_DAILY_REPORT, RequestID(10) }, 1737344039870ms);
 		newReport.report = { true, 2, 3, 2025 };
 
 		auto verifier = PacketVerifier(newReport.pack(), 57);
@@ -691,7 +691,7 @@ TEST_CASE("Daily Report", "[messages]")
 
 	SECTION("Unpack - Report Found")
 	{
-		auto newReport = DailyReportMessage(RequestID(10), 1737344039870ms);
+		auto newReport = DailyReportMessage(RequestOrigin{ PacketType::REQUEST_DAILY_REPORT, RequestID(10) }, 1737344039870ms);
 		newReport.report = { true, 2, 3, 2025 };
 
 		PacketTestHelper helper;

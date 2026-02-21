@@ -7,6 +7,8 @@
 
 #include <magic_enum/magic_enum.hpp>
 
+#include "request_id.hpp"
+
 enum class PacketType : std::int32_t
 {
 	VERSION_REQUEST = 1,
@@ -75,6 +77,33 @@ enum class PacketType : std::int32_t
 	BULK_TASK_ADD_FINISH = 40,
 
 	ERROR_MESSAGE = 41,
+};
+
+struct RequestOrigin
+{
+	PacketType packetType;
+	RequestID id;
+
+	constexpr bool operator==(const RequestOrigin& other) const
+	{
+		return id == other.id;
+	}
+
+	constexpr bool operator!=(const RequestOrigin& other) const
+	{
+		return id != other.id;
+	}
+
+	constexpr bool operator<(const RequestOrigin& other) const
+	{
+		return id < other.id;
+	}
+
+	friend std::ostream& operator<<(std::ostream& out, RequestOrigin request)
+	{
+		out << request.id._val << " (" << magic_enum::enum_name(request.packetType) << ")";
+		return out;
+	}
 };
 
 struct Message

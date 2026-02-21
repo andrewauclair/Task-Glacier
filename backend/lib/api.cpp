@@ -48,19 +48,19 @@ void API::process_packet(const Message& message)
 
 		if (!task)
 		{
-			m_sender->send(std::make_unique<FailureResponse>(update.requestID, std::format("Task with ID {} does not exist.", update.taskID)));
+			m_sender->send(std::make_unique<FailureResponse>(update.origin(), std::format("Task with ID {} does not exist.", update.taskID)));
 			break;
 		}
 
 		if (!update.stop.has_value())
 		{
-			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "New session must have a stop time."));
+			m_sender->send(std::make_unique<FailureResponse>(update.origin(), "New session must have a stop time."));
 			break;
 		}
 
 		if (update.stop.has_value() && update.stop <= update.start)
 		{
-			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Stop time cannot be before start time."));
+			m_sender->send(std::make_unique<FailureResponse>(update.origin(), "Stop time cannot be before start time."));
 			break;
 		}
 
@@ -104,13 +104,13 @@ void API::process_packet(const Message& message)
 
 		if (overlap_task)
 		{
-			m_sender->send(std::make_unique<FailureResponse>(update.requestID, std::format("Overlap detected with '{}'.", overlap_task->m_name)));
+			m_sender->send(std::make_unique<FailureResponse>(update.origin(), std::format("Overlap detected with '{}'.", overlap_task->m_name)));
 			break;
 		}
 
 		if (update.checkForOverlaps)
 		{
-			m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
+			m_sender->send(std::make_unique<SuccessResponse>(update.origin()));
 		}
 		else
 		{
@@ -122,7 +122,7 @@ void API::process_packet(const Message& message)
 
 			m_database->write_task(*task, *m_sender);
 
-			m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
+			m_sender->send(std::make_unique<SuccessResponse>(update.origin()));
 			send_task_info(*task, false);
 		}
 		break;
@@ -135,19 +135,19 @@ void API::process_packet(const Message& message)
 
 		if (!task)
 		{
-			m_sender->send(std::make_unique<FailureResponse>(update.requestID, std::format("Task with ID {} does not exist.", update.taskID)));
+			m_sender->send(std::make_unique<FailureResponse>(update.origin(), std::format("Task with ID {} does not exist.", update.taskID)));
 			break;
 		}
 
 		if (update.sessionIndex >= task->m_times.size())
 		{
-			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Invalid session index."));
+			m_sender->send(std::make_unique<FailureResponse>(update.origin(), "Invalid session index."));
 			break;
 		}
 
 		if (update.stop.has_value() && update.stop <= update.start)
 		{
-			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Stop time cannot be before start time."));
+			m_sender->send(std::make_unique<FailureResponse>(update.origin(), "Stop time cannot be before start time."));
 			break;
 		}
 
@@ -155,12 +155,12 @@ void API::process_packet(const Message& message)
 
 		if (times.stop.has_value() && !update.stop.has_value())
 		{
-			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Cannot remove stop time."));
+			m_sender->send(std::make_unique<FailureResponse>(update.origin(), "Cannot remove stop time."));
 			break;
 		}
 		else if (!times.stop.has_value() && update.stop.has_value())
 		{
-			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Cannot add stop time."));
+			m_sender->send(std::make_unique<FailureResponse>(update.origin(), "Cannot add stop time."));
 			break;
 		}
 
@@ -208,13 +208,13 @@ void API::process_packet(const Message& message)
 
 		if (overlap_task)
 		{
-			m_sender->send(std::make_unique<FailureResponse>(update.requestID, std::format("Overlap detected with '{}'.", overlap_task->m_name)));
+			m_sender->send(std::make_unique<FailureResponse>(update.origin(), std::format("Overlap detected with '{}'.", overlap_task->m_name)));
 			break;
 		}
 
 		if (update.checkForOverlaps)
 		{
-			m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
+			m_sender->send(std::make_unique<SuccessResponse>(update.origin()));
 		}
 		else
 		{
@@ -223,7 +223,7 @@ void API::process_packet(const Message& message)
 
 			m_database->write_task(*task, *m_sender);
 
-			m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
+			m_sender->send(std::make_unique<SuccessResponse>(update.origin()));
 			send_task_info(*task, false);
 		}
 		break;
@@ -236,13 +236,13 @@ void API::process_packet(const Message& message)
 
 		if (!task)
 		{
-			m_sender->send(std::make_unique<FailureResponse>(update.requestID, std::format("Task with ID {} does not exist.", update.taskID)));
+			m_sender->send(std::make_unique<FailureResponse>(update.origin(), std::format("Task with ID {} does not exist.", update.taskID)));
 			break;
 		}
 
 		if (update.sessionIndex >= static_cast<std::int32_t>(task->m_times.size()))
 		{
-			m_sender->send(std::make_unique<FailureResponse>(update.requestID, "Invalid session index."));
+			m_sender->send(std::make_unique<FailureResponse>(update.origin(), "Invalid session index."));
 			break;
 		}
 
@@ -252,7 +252,7 @@ void API::process_packet(const Message& message)
 
 		m_database->write_task(*task, *m_sender);
 
-		m_sender->send(std::make_unique<SuccessResponse>(update.requestID));
+		m_sender->send(std::make_unique<SuccessResponse>(update.origin()));
 		send_task_info(*task, false);
 
 		break;
@@ -270,7 +270,7 @@ void API::process_packet(const Message& message)
 	{
 		const auto& request = static_cast<const RequestDailyReportMessage&>(message);
 
-		auto report = create_daily_report(request.requestID, request.month, request.day, request.year);
+		auto report = create_daily_report(request.origin(), request.month, request.day, request.year);
 
 		m_sender->send(std::make_unique<DailyReportMessage>(report));
 
@@ -280,7 +280,7 @@ void API::process_packet(const Message& message)
 	{
 		const auto& request = static_cast<const RequestWeeklyReportMessage&>(message);
 
-		create_weekly_report(request.requestID, request.month, request.day, request.year);
+		create_weekly_report(request.origin(), request.month, request.day, request.year);
 		break;
 	}
 	case PacketType::TIME_ENTRY_MODIFY:
@@ -315,13 +315,13 @@ void API::create_task(const CreateTaskMessage& message)
 
 		m_app.configure_task_time_entry(task->taskID(), message.timeEntry); 
 
-		m_sender->send(std::make_unique<SuccessResponse>(message.requestID));
+		m_sender->send(std::make_unique<SuccessResponse>(message.origin()));
 
 		send_task_info(*task, true);
 	}
 	else
 	{
-		m_sender->send(std::make_unique<FailureResponse>(message.requestID, result.error()));
+		m_sender->send(std::make_unique<FailureResponse>(message.origin(), result.error()));
 	}
 }
 
@@ -340,7 +340,7 @@ void API::start_task(const TaskMessage& message)
 		{
 			failure = std::format("Cannot start task with ID {}. Unspecified task is active.", message.taskID);
 		}
-		m_sender->send(std::make_unique<FailureResponse>(message.requestID, failure));
+		m_sender->send(std::make_unique<FailureResponse>(message.origin(), failure));
 
 		return;
 	}
@@ -349,11 +349,11 @@ void API::start_task(const TaskMessage& message)
 
 	if (result)
 	{
-		m_sender->send(std::make_unique<FailureResponse>(message.requestID, result.value()));
+		m_sender->send(std::make_unique<FailureResponse>(message.origin(), result.value()));
 	}
 	else
 	{
-		m_sender->send(std::make_unique<SuccessResponse>(message.requestID));
+		m_sender->send(std::make_unique<SuccessResponse>(message.origin()));
 
 		if (currentActiveTask)
 		{
@@ -378,7 +378,7 @@ void API::stop_task(const TaskMessage& message)
 {
 	if (message.taskID == UNSPECIFIED_TASK)
 	{
-		m_sender->send(std::make_unique<FailureResponse>(message.requestID, "Unspecified task cannot be stopped."));
+		m_sender->send(std::make_unique<FailureResponse>(message.origin(), "Unspecified task cannot be stopped."));
 
 		return;
 	}
@@ -387,11 +387,11 @@ void API::stop_task(const TaskMessage& message)
 
 	if (result)
 	{
-		m_sender->send(std::make_unique<FailureResponse>(message.requestID, result.value()));
+		m_sender->send(std::make_unique<FailureResponse>(message.origin(), result.value()));
 	}
 	else
 	{
-		m_sender->send(std::make_unique<SuccessResponse>(message.requestID));
+		m_sender->send(std::make_unique<SuccessResponse>(message.origin()));
 
 		auto* task = m_app.find_task(message.taskID);
 
@@ -403,14 +403,14 @@ void API::stop_unspecified_task(const TaskMessage& message)
 {
 	if (message.packetType() == PacketType::STOP_TASK)
 	{
-		m_sender->send(std::make_unique<FailureResponse>(message.requestID, "Unspecified task cannot be stopped."));
+		m_sender->send(std::make_unique<FailureResponse>(message.origin(), "Unspecified task cannot be stopped."));
 
 		return;
 	}
 
 	if (m_app.find_task(message.taskID) == nullptr)
 	{
-		m_sender->send(std::make_unique<FailureResponse>(message.requestID, std::format("Task with ID {} does not exist.", message.taskID)));
+		m_sender->send(std::make_unique<FailureResponse>(message.origin(), std::format("Task with ID {} does not exist.", message.taskID)));
 
 		return;
 	}
@@ -428,11 +428,11 @@ void API::stop_unspecified_task(const TaskMessage& message)
 
 	if (result)
 	{
-		m_sender->send(std::make_unique<FailureResponse>(message.requestID, result.value()));
+		m_sender->send(std::make_unique<FailureResponse>(message.origin(), result.value()));
 	}
 	else
 	{
-		m_sender->send(std::make_unique<SuccessResponse>(message.requestID));
+		m_sender->send(std::make_unique<SuccessResponse>(message.origin()));
 
 		auto* task = m_app.find_task(message.taskID);
 
@@ -444,7 +444,7 @@ void API::finish_task(const TaskMessage& message)
 {
 	if (message.taskID == UNSPECIFIED_TASK && message.packetType() == PacketType::FINISH_TASK)
 	{
-		m_sender->send(std::make_unique<FailureResponse>(message.requestID, "Unspecified task cannot be finished."));
+		m_sender->send(std::make_unique<FailureResponse>(message.origin(), "Unspecified task cannot be finished."));
 
 		return;
 	}
@@ -453,11 +453,11 @@ void API::finish_task(const TaskMessage& message)
 
 	if (result)
 	{
-		m_sender->send(std::make_unique<FailureResponse>(message.requestID, result.value()));
+		m_sender->send(std::make_unique<FailureResponse>(message.origin(), result.value()));
 	}
 	else
 	{
-		m_sender->send(std::make_unique<SuccessResponse>(message.requestID));
+		m_sender->send(std::make_unique<SuccessResponse>(message.origin()));
 
 		auto* task = m_app.find_task(message.taskID);
 
@@ -471,7 +471,7 @@ void API::update_task(const UpdateTaskMessage& message)
 
 	if (!task)
 	{
-		m_sender->send(std::make_unique<FailureResponse>(message.requestID, std::format("Task with ID {} does not exist.", message.taskID)));
+		m_sender->send(std::make_unique<FailureResponse>(message.origin(), std::format("Task with ID {} does not exist.", message.taskID)));
 
 		return;
 	}
@@ -518,7 +518,7 @@ void API::update_task(const UpdateTaskMessage& message)
 	
 	if (result)
 	{
-		m_sender->send(std::make_unique<FailureResponse>(message.requestID, result.value()));
+		m_sender->send(std::make_unique<FailureResponse>(message.origin(), result.value()));
 	}
 	else
 	{
@@ -556,7 +556,7 @@ void API::update_task(const UpdateTaskMessage& message)
 			}
 		}
 
-		m_sender->send(std::make_unique<SuccessResponse>(message.requestID));
+		m_sender->send(std::make_unique<SuccessResponse>(message.origin()));
 
 		if (!m_app.is_bulk_update())
 		{
@@ -575,13 +575,13 @@ void API::request_task(const TaskMessage& message)
 
 	if (task)
 	{
-		m_sender->send(std::make_unique<SuccessResponse>(message.requestID));
+		m_sender->send(std::make_unique<SuccessResponse>(message.origin()));
 
 		send_task_info(*task, false);
 	}
 	else
 	{
-		m_sender->send(std::make_unique<FailureResponse>(message.requestID, std::format("Task with ID {} does not exist.", message.taskID)));
+		m_sender->send(std::make_unique<FailureResponse>(message.origin(), std::format("Task with ID {} does not exist.", message.taskID)));
 	}
 }
 
@@ -663,7 +663,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 
 			if (result != m_app.timeCategories().categories.end())
 			{
-				m_sender->send(std::make_unique<FailureResponse>(message.requestID, std::format("Time Category with name '{}' already exists", category.name)));
+				m_sender->send(std::make_unique<FailureResponse>(message.origin(), std::format("Time Category with name '{}' already exists", category.name)));
 				return;
 			}
 
@@ -688,7 +688,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 			else
 			{
 				// failed to find a time category with the given ID
-				m_sender->send(std::make_unique<FailureResponse>(message.requestID, std::format("Time Category with ID {} does not exist", category.id)));
+				m_sender->send(std::make_unique<FailureResponse>(message.origin(), std::format("Time Category with ID {} does not exist", category.id)));
 				return;
 			}
 		}
@@ -698,7 +698,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 			return;
 		}
 
-		const auto add_code_to_category = [requestID = message.requestID, app = &m_app, database = m_database, sender = m_sender](TimeCategory& category, const TimeEntryModifyPacket::Code& code)
+		const auto add_code_to_category = [request = message.origin(), app = &m_app, database = m_database, sender = m_sender](TimeCategory& category, const TimeEntryModifyPacket::Code& code)
 			{
 				const bool newCode = code.codeID == TimeCodeID(0);
 
@@ -708,7 +708,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 
 					if (existing != category.codes.end())
 					{
-						sender->send(std::make_unique<FailureResponse>(requestID, std::format("Time Code with name '{}' already exists on Time Category '{}'", code.name, category.name)));
+						sender->send(std::make_unique<FailureResponse>(request, std::format("Time Code with name '{}' already exists on Time Category '{}'", code.name, category.name)));
 						return true;
 					}
 					else
@@ -755,7 +755,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 					}
 					else
 					{
-						m_sender->send(std::make_unique<FailureResponse>(message.requestID, std::format("Time Code with ID {} does not exist", code.codeID)));
+						m_sender->send(std::make_unique<FailureResponse>(message.origin(), std::format("Time Code with ID {} does not exist", code.codeID)));
 						return;
 					}
 				}
@@ -782,7 +782,7 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 		}
 		
 	}
-	m_sender->send(std::make_unique<SuccessResponse>(message.requestID));
+	m_sender->send(std::make_unique<SuccessResponse>(message.origin()));
 
 	TimeEntryDataPacket data({});
 
@@ -801,9 +801,9 @@ void API::time_entry_modify(const TimeEntryModifyPacket& message)
 	m_sender->send(std::make_unique<TimeEntryDataPacket>(data));
 }
 
-DailyReportMessage API::create_daily_report(RequestID requestID, int month, int day, int year)
+DailyReportMessage API::create_daily_report(RequestOrigin request, int month, int day, int year)
 {
-	DailyReportMessage report(requestID, m_clock->now());
+	DailyReportMessage report(request, m_clock->now());
 
 	// search for tasks on the given day
 
@@ -881,11 +881,11 @@ DailyReportMessage API::create_daily_report(RequestID requestID, int month, int 
 	return report;
 }
 
-void API::create_weekly_report(RequestID requestID, int month, int day, int year)
+void API::create_weekly_report(RequestOrigin request, int month, int day, int year)
 {
-	WeeklyReportMessage report(requestID, m_clock->now());
+	WeeklyReportMessage report(request, m_clock->now());
 
-	report.dailyReports[0] = create_daily_report(requestID, month, day, year).report;
+	report.dailyReports[0] = create_daily_report(request, month, day, year).report;
 
 	auto ymd = std::chrono::year_month_day(std::chrono::year(year), std::chrono::month(month), std::chrono::day(day));
 
@@ -897,7 +897,7 @@ void API::create_weekly_report(RequestID requestID, int month, int day, int year
 
 		auto f = std::chrono::year_month_day(days);
 
-		report.dailyReports[i] = create_daily_report(requestID, static_cast<unsigned int>(f.month()), static_cast<unsigned int>(f.day()), static_cast<int>(f.year())).report;
+		report.dailyReports[i] = create_daily_report(request, static_cast<unsigned int>(f.month()), static_cast<unsigned int>(f.day()), static_cast<int>(f.year())).report;
 	}
 
 	m_sender->send(std::make_unique<WeeklyReportMessage>(report));

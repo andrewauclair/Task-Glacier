@@ -17,6 +17,8 @@ struct RequestMessage : Message
 
 	RequestMessage(PacketType packetType, RequestID requestID) : Message(packetType), requestID(requestID) {}
 
+	RequestOrigin origin() const { return RequestOrigin{ packetType(), requestID }; }
+
 	std::vector<std::byte> pack() const override;
 	static std::expected<RequestMessage, UnpackError> unpack(std::span<const std::byte> data);
 

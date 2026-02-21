@@ -73,13 +73,13 @@ struct DailyReport
 
 struct DailyReportMessage : Message
 {
-	RequestID requestID;
+	RequestOrigin request;
 
 	std::chrono::milliseconds reportTime;
 
 	DailyReport report;
 
-	DailyReportMessage(RequestID requestID, std::chrono::milliseconds reportTime) : Message(PacketType::DAILY_REPORT), requestID(requestID), reportTime(reportTime) {}
+	DailyReportMessage(RequestOrigin request, std::chrono::milliseconds reportTime) : Message(PacketType::DAILY_REPORT), request(request), reportTime(reportTime) {}
 
 	std::vector<std::byte> pack() const override;
 	static std::expected<DailyReportMessage, UnpackError> unpack(std::span<const std::byte> data);
@@ -88,7 +88,7 @@ struct DailyReportMessage : Message
 	{
 		out << "DailyReportMessage { ";
 		Message::print(out);
-		out << ", requestID: " << requestID._val;
+		out << ", request: " << request;
 		out << ", reportTime: " << std::format("{:%m/%d/%y %H:%M:%S}", std::chrono::system_clock::time_point{ reportTime });
 		out << ", report: " << report;
 		out << "}";

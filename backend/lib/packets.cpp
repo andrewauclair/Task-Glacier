@@ -456,7 +456,7 @@ std::vector<std::byte> SuccessResponse::pack() const
 	PacketBuilder builder;
 
 	builder.add(static_cast<std::int32_t>(PacketType::SUCCESS_RESPONSE));
-	builder.add(requestID);
+	builder.add(request.id);
 
 	return builder.build();
 }
@@ -470,7 +470,7 @@ std::expected<SuccessResponse, UnpackError> SuccessResponse::unpack(std::span<co
 
 	if (requestID)
 	{
-		return SuccessResponse(requestID.value());
+		return SuccessResponse(RequestOrigin{ static_cast<PacketType>(0), requestID.value() });
 	}
 	return std::unexpected(requestID.error());
 }
@@ -480,7 +480,7 @@ std::vector<std::byte> FailureResponse::pack() const
 	PacketBuilder builder;
 
 	builder.add(PacketType::FAILURE_RESPONSE);
-	builder.add(requestID);
+	builder.add(request.id);
 	builder.add(message);
 
 	return builder.build();
@@ -496,7 +496,7 @@ std::expected<FailureResponse, UnpackError> FailureResponse::unpack(std::span<co
 
 	try
 	{
-		return FailureResponse(requestID.value(), name.value());
+		return FailureResponse(RequestOrigin{ static_cast<PacketType>(0), requestID.value() }, name.value());
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{
@@ -806,7 +806,7 @@ std::vector<std::byte> DailyReportMessage::pack() const
 	PacketBuilder builder;
 
 	builder.add(PacketType::DAILY_REPORT);
-	builder.add(requestID);
+	builder.add(request.id);
 	builder.add(reportTime);
 	builder.add(report.found);
 	builder.add<std::int8_t>(report.month);
@@ -854,10 +854,10 @@ std::expected<DailyReportMessage, UnpackError> DailyReportMessage::unpack(std::s
 	{
 		if (!reportFound.value())
 		{
-			return DailyReportMessage(requestID.value(), reportTime.value());
+			return DailyReportMessage(RequestOrigin{ static_cast<PacketType>(0), requestID.value() }, reportTime.value());
 		}
 
-		auto report = DailyReportMessage(requestID.value(), reportTime.value());
+		auto report = DailyReportMessage(RequestOrigin{ static_cast<PacketType>(0), requestID.value() }, reportTime.value());
 
 		report.report.found = true;
 		report.report.month = parser.parse_next_immediate<std::int8_t>();
@@ -877,7 +877,7 @@ std::vector<std::byte> WeeklyReportMessage::pack() const
 	PacketBuilder builder;
 
 	builder.add(PacketType::WEEKLY_REPORT);
-	builder.add(requestID);
+	builder.add(request.id);
 	builder.add(reportTime);
 
 	for (auto&& report : dailyReports)
@@ -925,7 +925,7 @@ std::expected<WeeklyReportMessage, UnpackError> WeeklyReportMessage::unpack(std:
 
 	try
 	{
-		return WeeklyReportMessage(requestID.value(), reportTime.value());
+		return WeeklyReportMessage(RequestOrigin{ static_cast<PacketType>(0), requestID.value() }, reportTime.value());
 	}
 	catch (const std::bad_expected_access<UnpackError>& e)
 	{

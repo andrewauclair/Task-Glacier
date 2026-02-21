@@ -184,7 +184,7 @@ void Bugzilla::perform_refresh(const RequestMessage& request, MicroTask& app, AP
 
 		if (request.requestID != RequestID(0))
 		{
-			m_sender->send(std::make_unique<SuccessResponse>(request.requestID));
+			m_sender->send(std::make_unique<SuccessResponse>(request.origin()));
 		}
 
 		if (!task_updates.first.empty() || !task_updates.second.empty())
@@ -209,7 +209,7 @@ void Bugzilla::perform_refresh(const RequestMessage& request, MicroTask& app, AP
 	}
 	catch (const std::exception& e)
 	{
-		m_sender->send(std::make_unique<FailureResponse>(request.requestID, e.what()));
+		m_sender->send(std::make_unique<FailureResponse>(request.origin(), e.what()));
 	}
 }
 
@@ -227,7 +227,7 @@ std::pair<std::vector<Task*>, std::vector<Task*>> Bugzilla::refresh(const Reques
 			{
 				if (request.requestID != RequestID(0))
 				{
-					m_sender->send(std::make_unique<FailureResponse>(request.requestID, std::format("Root task {} does not exist", info.bugzillaRootTaskID)));
+					m_sender->send(std::make_unique<FailureResponse>(request.origin(), std::format("Root task {} does not exist", info.bugzillaRootTaskID)));
 				}
 				return tasks_changed;
 			}

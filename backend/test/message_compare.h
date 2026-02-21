@@ -37,12 +37,12 @@ inline void verify_update_task(const UpdateTaskMessage& expected, const UpdateTa
 
 inline void verify_success_response(const SuccessResponse& expected, const SuccessResponse& actual, std::source_location location)
 {
-	CHECK(expected.requestID == actual.requestID);
+	CHECK(expected.request == actual.request);
 }
 
 inline void verify_failure_response(const FailureResponse& expected, const FailureResponse& actual, std::source_location location)
 {
-	CHECK(expected.requestID == actual.requestID);
+	CHECK(expected.request == actual.request);
 	CHECK(expected.message == actual.message);
 }
 
@@ -84,7 +84,7 @@ inline void verify_bugzilla_info(const BugzillaInfoMessage& expected, const Bugz
 
 inline void verify_daily_report(const DailyReportMessage& expected, const DailyReportMessage& actual, std::source_location location)
 {
-	CHECK(expected.requestID == actual.requestID);
+	CHECK(expected.request == actual.request);
 	CHECK(expected.reportTime == actual.reportTime);
 	CHECK(expected.report == actual.report);
 }
@@ -99,7 +99,7 @@ inline void verify_request_daily_report(const RequestDailyReportMessage& expecte
 
 inline void verify_weekly_report(const WeeklyReportMessage& expected, const WeeklyReportMessage& actual, std::source_location location)
 {
-	CHECK(expected.requestID == actual.requestID);
+	CHECK(expected.request == actual.request);
 	CHECK(expected.reportTime == actual.reportTime);
 	CHECK(expected.dailyReports == actual.dailyReports);
 	CHECK(expected.totalTime == actual.totalTime);

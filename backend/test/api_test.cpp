@@ -1144,7 +1144,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request);
 
-		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1737344039870));
+		auto report = DailyReportMessage(RequestOrigin{ PacketType::REQUEST_DAILY_REPORT, helper.prev_request_id() }, std::chrono::milliseconds(1737344039870));
 		report.report.month = 2;
 		report.report.day = 3;
 		report.report.year = 2025;
@@ -1165,7 +1165,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request);
 
-		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738560600000));
+		auto report = DailyReportMessage(RequestOrigin{ PacketType::REQUEST_DAILY_REPORT, helper.prev_request_id() }, std::chrono::milliseconds(1738560600000));
 		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
@@ -1193,7 +1193,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request);
 
-		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738647000000));
+		auto report = DailyReportMessage(RequestOrigin{ PacketType::REQUEST_DAILY_REPORT, helper.prev_request_id() }, std::chrono::milliseconds(1738647000000));
 		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
@@ -1220,7 +1220,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request);
 
-		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738542600000));
+		auto report = DailyReportMessage(RequestOrigin{ PacketType::REQUEST_DAILY_REPORT, helper.prev_request_id() }, std::chrono::milliseconds(1738542600000));
 		report.report.month = 2;
 		report.report.day = 4;
 		report.report.year = 2025;
@@ -1241,7 +1241,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request);
 
-		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738560600000));
+		auto report = DailyReportMessage(RequestOrigin{ PacketType::REQUEST_DAILY_REPORT, helper.prev_request_id() }, std::chrono::milliseconds(1738560600000));
 		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
@@ -1271,7 +1271,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request);
 
-		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738566000000));
+		auto report = DailyReportMessage(RequestOrigin{ PacketType::REQUEST_DAILY_REPORT, helper.prev_request_id() }, std::chrono::milliseconds(1738566000000));
 		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
@@ -1301,7 +1301,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request);
 
-		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738566000000));
+		auto report = DailyReportMessage(RequestOrigin{ PacketType::REQUEST_DAILY_REPORT, helper.prev_request_id() }, std::chrono::milliseconds(1738566000000));
 		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
@@ -1343,7 +1343,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request);
 
-		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738652400000));
+		auto report = DailyReportMessage(RequestOrigin{ PacketType::REQUEST_DAILY_REPORT, helper.prev_request_id() }, std::chrono::milliseconds(1738652400000));
 		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
@@ -1420,7 +1420,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request);
 
-		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738659600000));
+		auto report = DailyReportMessage(RequestOrigin{ PacketType::REQUEST_DAILY_REPORT, helper.prev_request_id() }, std::chrono::milliseconds(1738659600000));
 		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
@@ -1472,7 +1472,7 @@ TEST_CASE("Request Daily Report", "[api][task]")
 
 		helper.api.process_packet(request);
 
-		auto report = DailyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1738569600000));
+		auto report = DailyReportMessage(RequestOrigin{ PacketType::REQUEST_DAILY_REPORT, helper.prev_request_id() }, std::chrono::milliseconds(1738569600000));
 		report.report.found = true;
 		report.report.month = 2;
 		report.report.day = 3;
@@ -1498,7 +1498,7 @@ TEST_CASE("Request Weekly Report", "[api][task]")
 
 		helper.api.process_packet(request);
 
-		auto report = WeeklyReportMessage(helper.prev_request_id(), std::chrono::milliseconds(1737344039870));
+		auto report = WeeklyReportMessage(RequestOrigin{ PacketType::REQUEST_WEEKLY_REPORT, helper.prev_request_id() }, std::chrono::milliseconds(1737344039870));
 		report.dailyReports[0].day = 29;
 		report.dailyReports[1].day = 30;
 		report.dailyReports[2].day = 1;
