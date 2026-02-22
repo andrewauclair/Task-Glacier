@@ -103,22 +103,7 @@ std::vector<std::byte> UpdateTaskMessage::pack() const
 	builder.add(serverControlled);
 	builder.add(locked);
 	builder.add(name);
-	builder.add(static_cast<std::int32_t>(times.size()));
-
-	for (auto&& time : times)
-	{
-		builder.add(time.start);
-		builder.add(time.stop.has_value());
-		builder.add(time.stop.value_or(std::chrono::milliseconds(0)));
-
-		builder.add(static_cast<std::int32_t>(time.timeEntry.size()));
-
-		for (auto&& entry : time.timeEntry)
-		{
-			builder.add(entry.category.id);
-			builder.add(entry.code.id);
-		}
-	}
+	
 	builder.add(static_cast<std::int32_t>(labels.size()));
 	for (auto&& label : labels)
 	{
@@ -154,34 +139,6 @@ std::expected<UpdateTaskMessage, UnpackError> UpdateTaskMessage::unpack(std::spa
 		update.indexInParent = indexInParent.value();
 		update.serverControlled = serverControlled.value();
 		update.locked = locked.value();
-
-		const auto startStopCount = parser.parse_next_immediate<std::int32_t>();
-
-		for (std::int32_t i = 0; i < startStopCount; i++)
-		{
-			TaskTimes times;
-
-			times.start = parser.parse_next_immediate<std::chrono::milliseconds>();
-
-			const bool stopPresent = parser.parse_next_immediate<bool>();
-
-			if (stopPresent)
-			{
-				times.stop = parser.parse_next_immediate<std::chrono::milliseconds>();
-			}
-
-			const auto entryCount = parser.parse_next_immediate<std::int32_t>();
-
-			for (std::int32_t j = 0; j < entryCount; j++)
-			{
-				auto category = parser.parse_next_immediate<TimeCategoryID>();
-				auto code = parser.parse_next_immediate<TimeCodeID>();
-
-				auto entry = time_categories.find(category, code);
-				times.timeEntry.push_back(TimeEntry{ entry.first, entry.second });
-			}
-			update.times.push_back(times);
-		}
 
 		const auto labelCount = parser.parse_next_immediate<std::int32_t>();
 

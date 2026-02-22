@@ -30,7 +30,6 @@ inline void verify_update_task(const UpdateTaskMessage& expected, const UpdateTa
 	CHECK(expected.serverControlled == actual.serverControlled);
 	CHECK(expected.locked == actual.locked);
 	CHECK(expected.name == actual.name);
-	CHECK(expected.times == actual.times);
 	CHECK(expected.labels == actual.labels);
 	CHECK(expected.timeEntry == actual.timeEntry);
 }

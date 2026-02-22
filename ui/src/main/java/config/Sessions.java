@@ -321,14 +321,6 @@ public class Sessions extends JPanel {
         });
     }
 
-    public void save(Task task, UpdateTask update) {
-        update.sessions.clear();
-
-        for (SessionRow row : sessionModel.data) {
-            update.sessions.add(new TaskInfo.Session(row.start, row.stop, row.timeEntry));
-        }
-    }
-
     public void save(ServerConnection connection) {
         List<UpdateTaskTimes> removes = new ArrayList<>();
         List<UpdateTaskTimes> adds = new ArrayList<>();

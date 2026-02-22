@@ -222,10 +222,10 @@ TEST_CASE("Update Task", "[message]")
 
 	SECTION("Pack")
 	{
-		auto verifier = PacketVerifier(update_task.pack(), 84);
+		auto verifier = PacketVerifier(update_task.pack(), 80);
 
 		verifier
-			.verify_value<std::uint32_t>(84, "packet length")
+			.verify_value<std::uint32_t>(80, "packet length")
 			.verify_value<std::uint32_t>(8, "packet ID")
 			.verify_value<std::uint32_t>(10, "request ID")
 			.verify_value<std::uint32_t>(5, "task ID")
@@ -235,7 +235,6 @@ TEST_CASE("Update Task", "[message]")
 			.verify_value<bool>(false, "server controlled")
 			.verify_value<bool>(false, "locked")
 			.verify_string("this is a test", "task name")
-			.verify_value<std::int32_t>(0, "times count")
 			.verify_value<std::int32_t>(2, "label count")
 			.verify_string("one", "first label")
 			.verify_string("two", "second label");
@@ -244,7 +243,7 @@ TEST_CASE("Update Task", "[message]")
 	SECTION("Unpack")
 	{
 		PacketTestHelper helper;
-		helper.expect_packet<UpdateTaskMessage>(update_task, 84);
+		helper.expect_packet<UpdateTaskMessage>(update_task, 80);
 	}
 }
 

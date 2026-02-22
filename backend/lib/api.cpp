@@ -509,8 +509,6 @@ void API::update_task(const UpdateTaskMessage& message)
 	}
 	else // assume time entry changed
 	{
-		// TODO validation of time codes, make sure they exist
-		task->m_times = message.times;
 		task->timeEntry = message.timeEntry;
 
 		m_database->write_task(*task, *m_sender);
