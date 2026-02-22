@@ -1,5 +1,6 @@
 #pragma once
 
+#include "message.hpp"
 #include "task_id.hpp"
 #include "request_id.hpp"
 
@@ -89,7 +90,7 @@ struct DailyReportMessage : Message
 		out << "DailyReportMessage { ";
 		Message::print(out);
 		out << ", request: " << request;
-		out << ", reportTime: " << std::format("{:%m/%d/%y %H:%M:%S}", std::chrono::system_clock::time_point{ reportTime });
+		out << ", reportTime: " << format_time(reportTime);
 		out << ", report: " << report;
 		out << "}";
 		return out;

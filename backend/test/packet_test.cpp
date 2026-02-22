@@ -611,7 +611,7 @@ TEST_CASE("Daily Report", "[messages]")
 
 		report.print(ss);
 
-		auto expected_text = "DailyReportMessage { packetType: DAILY_REPORT (20), request: 10 (REQUEST_DAILY_REPORT), reportTime: 01/20/25 03:33:59.8700000, report: { found: 0, month: 0, day: 0, year: 0 }}";
+		auto expected_text = "DailyReportMessage { packetType: DAILY_REPORT (20), request: 10 (REQUEST_DAILY_REPORT), reportTime: 01/20/25 03:33:59, report: { found: 0, month: 0, day: 0, year: 0 }}";
 
 		CHECK(ss.str() == expected_text);
 
@@ -641,7 +641,7 @@ TEST_CASE("Daily Report", "[messages]")
 
 		newReport.print(ss);
 
-		auto expected_text = "DailyReportMessage { packetType: DAILY_REPORT (20), request: 10 (REQUEST_DAILY_REPORT), reportTime: 01/20/25 03:33:59.8700000, report: { found: 1, month: 2, day: 3, year: 2025, startTime: 0ms, endTime: 0ms\nTime Pairs {\n}\nTime Per Time Code {\n}\nTotal Time: 0ms\n}}";
+		auto expected_text = "DailyReportMessage { packetType: DAILY_REPORT (20), request: 10 (REQUEST_DAILY_REPORT), reportTime: 01/20/25 03:33:59, report: { found: 1, month: 2, day: 3, year: 2025, startTime: 0ms, endTime: 0ms\nTime Pairs {\n}\nTime Per Time Code {\n}\nTotal Time: 0ms\n}}";
 
 		CHECK(ss.str() == expected_text);
 	}
