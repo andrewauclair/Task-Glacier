@@ -146,6 +146,11 @@ class RecentActivity extends JPanel implements TaskModel.Listener {
         update();
     }
 
+    @Override
+    public void removeAllTasks() {
+        history.clear();
+    }
+
     private void update() {
         model.setRowCount(0);
 

@@ -357,6 +357,12 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
         treeTableModel.expandTree();
     }
 
+    @Override
+    public void removeAllTasks() {
+        rootNode.removeAllChildren();
+        treeTableModel.refreshTree();
+    }
+
     private DefaultMutableTreeNode findTaskNode(DefaultMutableTreeNode currentParent, int parentID) {
         if (parentID == taskID) {
             return rootNode;

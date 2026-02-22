@@ -134,15 +134,9 @@ inline std::ostream& Message::print(std::ostream& out) const
 
 inline std::string format_time(std::chrono::milliseconds time)
 {
-	std::chrono::system_clock::now();
-
 	auto point = std::chrono::system_clock::time_point{ time };
 
 	auto b = std::chrono::floor<std::chrono::sys_time<std::chrono::seconds>::duration>(point);
-
-	//auto point = std::chrono::floor<std::chrono::sys_time<std::chrono::seconds>>(std::chrono::system_clock::time_point{ time });
-	//auto a = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::time_point{ time });
-
 
 	return std::format("{:%m/%d/%y %H:%M:%S}", b);
 }

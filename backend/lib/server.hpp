@@ -222,33 +222,6 @@ public:
 	}
 
 	TimeCategories& timeCategories() { return m_timeCategories; }
-	std::optional<std::string> add_time_category(std::string_view name)
-	{
-		// error if time category with name already exists
-
-		return std::nullopt;
-	}
-	
-	std::optional<std::string> add_time_code(TimeCodeID id, std::string_view category, std::string_view name)
-	{
-		// error if time category doesn't exist
-
-		// error if time category already has time code with name
-
-		return std::nullopt;
-	}
-	
-	std::optional<std::string> add_time_code(std::string_view category, std::string_view name)
-	{
-		auto id = m_nextTimeCodeID;
-		m_nextTimeCodeID++;
-
-		// error if time category doesn't exist
-
-		// error if time category already has time code with name
-
-		return std::nullopt;
-	}
 	
 	bool is_bulk_update() const { return m_bulk_update; }
 	void add_update_task(TaskID id) { m_changedTasksBulkUpdate.insert(id); }

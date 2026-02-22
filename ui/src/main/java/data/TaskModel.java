@@ -199,9 +199,7 @@ public class TaskModel {
     }
 
     public void clear() {
-        for (Task task : tasks) {
-            listeners.forEach(listener -> listener.removeTask(task));
-        }
+        listeners.forEach(listener -> listener.removeAllTasks());
         tasks.clear();
     }
 
@@ -210,5 +208,6 @@ public class TaskModel {
         void updatedTask(Task task);
         void removeTask(Task task);
         void configComplete();
+        void removeAllTasks();
     }
 }

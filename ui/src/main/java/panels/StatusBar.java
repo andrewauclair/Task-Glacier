@@ -85,4 +85,10 @@ public class StatusBar extends JPanel implements TaskModel.Listener {
     @Override
     public void configComplete() {
     }
+
+    @Override
+    public void removeAllTasks() {
+        activeTask = null;
+        updateDisplay(mainFrame.getTaskModel());
+    }
 }
