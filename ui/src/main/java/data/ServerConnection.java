@@ -25,6 +25,7 @@ import panels.WeeklyReportPanel;
 import taskglacier.MainFrame;
 
 import javax.swing.*;
+import java.awt.Cursor;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -96,13 +97,15 @@ public class ServerConnection {
     }
 
     private void handlePacket(MainFrame mainFrame, PacketType packetType, byte[] bytes, int packetLength) throws IOException {
-        System.out.println("Received packet with length: " + packetLength + ", type: " + packetType);
-
         if (packetType == PacketType.VERSION) {
             Version version = Version.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
             About.serverVersion = version.version;
         }
         if (packetType == PacketType.TASK_INFO) {
+            if (!mainFrame.getTaskModel().isLoaded() && mainFrame.getCursor().getType() != Cursor.WAIT_CURSOR) {
+                mainFrame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            }
+
             TaskInfo info = TaskInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
             mainFrame.getTaskModel().receiveInfo(info);
 
@@ -113,6 +116,7 @@ public class ServerConnection {
         else if (packetType == PacketType.REQUEST_CONFIGURATION_COMPLETE) {
             MainFrame.restoreLayout();
             mainFrame.getTaskModel().configurationComplete();
+            mainFrame.setCursor(Cursor.getDefaultCursor());
 
             for (Packet packet : toSend) {
                 sendPacket(packet);

@@ -13,6 +13,7 @@ import static taskglacier.MainFrame.mainFrame;
 public class TaskModel {
     private List<Task> tasks = new ArrayList<>();
     private List<Listener> listeners = new ArrayList<>();
+    private boolean loaded = false;
 
     public List<Task> getTasks() {
         return Collections.unmodifiableList(tasks);
@@ -39,34 +40,42 @@ public class TaskModel {
                 .anyMatch(task -> task.state != TaskState.FINISHED)).orElse(false);
     }
 
+    public boolean isLoaded() {
+        return loaded;
+    }
+
     public void addListener(Listener listener) {
         listeners.add(listener);
 
-        // send all tasks to new listeners
-        SwingUtilities.invokeLater(() -> {
-            List<Task> tasks = new ArrayList<>();
+        // send all tasks to new listeners (only if already loaded; otherwise configurationComplete will do it)
+        if (loaded) {
+            SwingUtilities.invokeLater(() -> replayTasksToListener(listener));
+        }
+    }
 
-            for (Task task : this.tasks) {
-                if (task.parentID == 0) {
-                    tasks.add(task);
-                }
+    private void replayTasksToListener(Listener listener) {
+        List<Task> tasks = new ArrayList<>();
+
+        for (Task task : this.tasks) {
+            if (task.parentID == 0) {
+                tasks.add(task);
             }
+        }
 
-            while (!tasks.isEmpty()) {
-                List<Task> next = new ArrayList<>();
+        while (!tasks.isEmpty()) {
+            List<Task> next = new ArrayList<>();
 
-                for (Task task : tasks) {
-                    listener.addTask(task);
+            for (Task task : tasks) {
+                listener.addTask(task);
 
-                    for (Task task1 : this.tasks) {
-                        if (task1.parentID == task.id) {
-                            next.add(task1);
-                        }
+                for (Task task1 : this.tasks) {
+                    if (task1.parentID == task.id) {
+                        next.add(task1);
                     }
                 }
-                tasks = next;
             }
-        });
+            tasks = next;
+        }
     }
 
     public void removeListener(Listener listener) {
@@ -114,12 +123,15 @@ public class TaskModel {
                 optionalParent.get().children.add(task);
                 task.parent = optionalParent.get();
             }
-            listeners.forEach(listener -> listener.addTask(task));
+
+            if (loaded) {
+                listeners.forEach(listener -> listener.addTask(task));
+            }
         }
         else {
             boolean parentChanged = first.get().parentID != info.parentID;
 
-            if (parentChanged) {
+            if (loaded && parentChanged) {
                 listeners.forEach(listener -> listener.removeTask(task));
             }
 
@@ -139,55 +151,42 @@ public class TaskModel {
                 task.parent = optionalNewParent.get();
             }
 
-            int oldParent = task.parentID;
-
             task.parentID = info.parentID;
 
-            if (parentChanged) {
-                listeners.forEach(listener -> listener.addTask(task));
+            if (loaded) {
+                if (parentChanged) {
+                    listeners.forEach(listener -> listener.addTask(task));
 
-                List<Task> tasks = new ArrayList<>();
+                    List<Task> tasks = new ArrayList<>();
 
-                for (Task child : task.children) {
-                    tasks.add(child);
-                }
-
-                while (!tasks.isEmpty()) {
-                    List<Task> next = new ArrayList<>();
-
-                    for (Task child : tasks) {
-                        listeners.forEach(listener -> listener.addTask(child));
-
-                        for (Task children : child.children) {
-                            next.add(children);
-                        }
+                    for (Task child : task.children) {
+                        tasks.add(child);
                     }
-                    tasks = next;
+
+                    while (!tasks.isEmpty()) {
+                        List<Task> next = new ArrayList<>();
+
+                        for (Task child : tasks) {
+                            listeners.forEach(listener -> listener.addTask(child));
+
+                            for (Task children : child.children) {
+                                next.add(children);
+                            }
+                        }
+                        tasks = next;
+                    }
+                }
+                else {
+                    listeners.forEach(listener -> listener.updatedTask(first.get()));
                 }
             }
-            else {
-                listeners.forEach(listener -> listener.updatedTask(first.get()));
-            }
         }
     }
 
-    // it's possible that we receive data out-of-order the first time. for updates for everything
     public void configurationComplete() {
-        forceUpdates();
+        loaded = true;
+        listeners.forEach(this::replayTasksToListener);
         listeners.forEach(Listener::configComplete);
-    }
-
-    private void forceUpdates() {
-        for (int i = 0; i < tasks.size() + 1; i++) {
-            final int parentID = i;
-            List<Task> toUpdate = tasks.stream()
-                    .filter(t -> t.parentID == parentID)
-                    .toList();
-
-            for (Task task1 : toUpdate) {
-                listeners.forEach(listener -> listener.updatedTask(task1));
-            }
-        }
     }
 
     public void removeUnspecifiedTask() {
