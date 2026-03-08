@@ -48,6 +48,7 @@ public class SessionEdit extends JDialog {
         super(mainFrame);
 
         setModalityType(ModalityType.APPLICATION_MODAL);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         setTitle("Add Session");
 

@@ -31,6 +31,7 @@ public class AddTask extends JDialog {
         openInstance = this;
 
         setModalityType(ModalityType.APPLICATION_MODAL);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         DialogEscape.addEscapeHandler(this);
 

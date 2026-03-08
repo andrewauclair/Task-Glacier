@@ -24,6 +24,7 @@ public class RequestWeeklyReportDialog extends JDialog {
         setLayout(new GridBagLayout());
 
         setModalityType(ModalityType.APPLICATION_MODAL);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         DialogEscape.addEscapeHandler(this);
 

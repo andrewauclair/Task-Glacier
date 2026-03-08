@@ -15,6 +15,7 @@ public class About extends JDialog {
         setSize(200, 200);
         setTitle("About");
         setModalityType(ModalityType.APPLICATION_MODAL);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         DialogEscape.addEscapeHandler(this);
 

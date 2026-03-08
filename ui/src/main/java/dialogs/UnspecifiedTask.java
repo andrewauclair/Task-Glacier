@@ -31,8 +31,7 @@ public class UnspecifiedTask extends JDialog {
         openInstance = this;
 
         setModalityType(ModalityType.APPLICATION_MODAL);
-
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         JButton create = new JButton("Create New Task...");
 

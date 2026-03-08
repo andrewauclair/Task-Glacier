@@ -16,6 +16,7 @@ public class ConnectToServer extends JDialog {
         setTitle("Connect");
 
         setModalityType(ModalityType.APPLICATION_MODAL);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         GridBagConstraints gbc = new GridBagConstraints();
 

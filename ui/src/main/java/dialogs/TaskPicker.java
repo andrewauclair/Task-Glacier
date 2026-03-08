@@ -23,6 +23,7 @@ public class TaskPicker extends JDialog {
         super(mainFrame);
 
         setModalityType(ModalityType.APPLICATION_MODAL);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         task = selectedTask;
 

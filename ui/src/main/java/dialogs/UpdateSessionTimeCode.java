@@ -19,6 +19,7 @@ public class UpdateSessionTimeCode extends JDialog {
         setTitle("Update Session Time Code");
 
         setModalityType(ModalityType.APPLICATION_MODAL);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         JButton apply = new JButton("Apply");
         JButton skip = new JButton("Skip");

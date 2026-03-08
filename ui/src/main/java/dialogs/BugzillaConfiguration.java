@@ -41,6 +41,7 @@ public class BugzillaConfiguration extends JDialog {
         setTitle("Bugzilla Configuration");
 
         setModalityType(ModalityType.APPLICATION_MODAL);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         DialogEscape.addEscapeHandler(this);
 

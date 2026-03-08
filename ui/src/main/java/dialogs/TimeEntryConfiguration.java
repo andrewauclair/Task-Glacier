@@ -34,6 +34,7 @@ public class TimeEntryConfiguration extends JDialog {
         this.timeData = mainFrame.getTimeData();
 
         setModalityType(ModalityType.APPLICATION_MODAL);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         setTitle("Time Entry Configuration");
 
