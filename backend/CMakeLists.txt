@@ -5,6 +5,28 @@ set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
 project("task-glacier")
 
+find_package(Git QUIET)
+if(GIT_FOUND)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} describe --tags --always
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+else()
+    set(GIT_VERSION "unknown")
+endif()
+
+if(DEFINED ENV{RELEASE_VERSION})
+    set(APP_VERSION $ENV{RELEASE_VERSION})
+else()
+    set(APP_VERSION ${GIT_VERSION})
+endif()
+
+message(STATUS "Building version: ${APP_VERSION}")
+add_compile_definitions(APP_VERSION="${APP_VERSION}")
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 

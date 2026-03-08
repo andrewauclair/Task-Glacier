@@ -67,6 +67,10 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: true
+    - name: Set release version
+      if: github.event_name == 'release'
+      shell: bash
+      run: echo "RELEASE_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
 
     - name: Run vcpkg
       if: matrix.os == 'windows-latest'
@@ -127,7 +131,7 @@ jobs:
       with:
         name: Task Glacier
         path: |
-          ${{ github.workspace }}/ui/Task Glacier-0.14.1.exe
+          ${{ github.workspace }}/ui/Task Glacier-${{ github.ref_name }}.exe
           ${{ steps.strings.outputs.build-output-dir }}/bin/task-glacier-server.exe
           ${{ steps.strings.outputs.build-output-dir }}/bin/curlpp.dll
           ${{ steps.strings.outputs.build-output-dir }}/bin/libcurl.dll

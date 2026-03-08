@@ -19,7 +19,7 @@ void API::process_packet(const Message& message)
 	switch (message.packetType())
 	{
 	case PacketType::VERSION_REQUEST:
-		m_sender->send(std::make_unique<VersionMessage>("0.14.1"));
+		m_sender->send(std::make_unique<VersionMessage>(APP_VERSION));
 		break;
 	case PacketType::CREATE_TASK:
 		create_task(static_cast<const CreateTaskMessage&>(message));

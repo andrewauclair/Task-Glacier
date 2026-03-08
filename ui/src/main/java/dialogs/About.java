@@ -4,10 +4,23 @@ import taskglacier.MainFrame;
 import util.DialogEscape;
 
 import javax.swing.*;
+import java.io.IOException;
+import java.util.Properties;
 
 public class About extends JDialog {
     public static String serverVersion;
-    private static final String uiVersion = "0.14.0";
+    private static final String uiVersion = loadVersion();
+
+    private static String loadVersion() {
+        try (var is = About.class.getResourceAsStream("/version.properties")) {
+            if (is == null) return "unknown";
+            var props = new Properties();
+            props.load(is);
+            return props.getProperty("version", "unknown");
+        } catch (IOException e) {
+            return "unknown";
+        }
+    }
 
     public About(MainFrame mainFrame) {
         super(mainFrame);

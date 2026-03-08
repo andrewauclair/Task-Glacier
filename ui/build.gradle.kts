@@ -3,15 +3,40 @@ plugins {
     application
 }
 
+val gitVersion: String = try {
+    ProcessBuilder("git", "describe", "--tags", "--always")
+        .directory(rootDir)
+        .start()
+        .inputStream.bufferedReader().readLine()?.trim() ?: "unknown"
+} catch (e: Exception) {
+    "unknown"
+}
+
+val appVersion = System.getenv("RELEASE_VERSION") ?: gitVersion
+
 repositories {
     mavenCentral()
     maven { url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/") }
 }
 
+val generateVersionFile by tasks.registering {
+    val outputDir = layout.buildDirectory.dir("generated-resources")
+    outputs.dir(outputDir)
+    doLast {
+        val file = outputDir.get().file("version.properties").asFile
+        file.parentFile.mkdirs()
+        file.writeText("version=$appVersion\n")
+    }
+}
+
 sourceSets.main {
     resources {
-        srcDirs("resources")
+        srcDirs("resources", layout.buildDirectory.dir("generated-resources"))
     }
+}
+
+tasks.processResources {
+    dependsOn(generateVersionFile)
 }
 
 dependencies {
