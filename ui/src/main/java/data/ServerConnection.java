@@ -78,98 +78,96 @@ public class ServerConnection {
                 }
 
                 PacketType packetType = PacketType.valueOf(ByteBuffer.wrap(bytes, 0, 4).getInt());
-                System.out.println("Received packet with length: " + packetLength + ", type: " + packetType);
+                final int capturedLength = packetLength;
 
-                if (packetType == PacketType.VERSION) {
-                    Version version = Version.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
-                    About.serverVersion = version.version;
-                }
-                if (packetType == PacketType.TASK_INFO) {
-                    TaskInfo info = TaskInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
-
-                    SwingUtilities.invokeLater(() -> {
-                        mainFrame.getTaskModel().receiveInfo(info);
-
-                        if (info.newTask && UnspecifiedTask.openInstance != null) {
-                            UnspecifiedTask.openInstance.setSelectedTask(info.taskID);
-                        }
-                    });
-                }
-                else if (packetType == PacketType.REQUEST_CONFIGURATION_COMPLETE) {
-                    SwingUtilities.invokeLater(MainFrame::restoreLayout);
-
-                    SwingUtilities.invokeLater(() -> mainFrame.getTaskModel().configurationComplete());
-
-                    for (Packet packet : toSend) {
-                        sendPacket(packet);
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        handlePacket(mainFrame, packetType, bytes, capturedLength);
                     }
-                    toSend.clear();
-                }
-                else if (packetType == PacketType.UNSPECIFIED_TASK_ACTIVE) {
-                    SwingUtilities.invokeLater(() -> mainFrame.unspecifiedTaskActive());
-                }
-                else if (packetType == PacketType.BUGZILLA_INFO) {
-                    BugzillaInfo info = BugzillaInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
-
-                    MainFrame.bugzillaInfo.put(info.name, info);
-                }
-                else if (packetType == PacketType.DAILY_REPORT) {
-                    DailyReportMessage dailyReport = DailyReportMessage.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
-
-                    SwingUtilities.invokeLater(() -> mainFrame.receivedDailyReport(dailyReport));
-                }
-                else if (packetType == PacketType.WEEKLY_REPORT) {
-                    WeeklyReport report = WeeklyReport.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
-
-                    SwingUtilities.invokeLater(() -> mainFrame.receivedWeeklyReport(report));
-                }
-                else if (packetType == PacketType.TIME_ENTRY_DATA) {
-                    TimeEntryData message = TimeEntryData.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
-
-                    mainFrame.getTimeData().processPacket(message);
-                }
-                else if (packetType == PacketType.FAILURE_RESPONSE) {
-                    FailureResponse failure = FailureResponse.parse(new DataInputStream((new ByteArrayInputStream(bytes))), packetLength);
-
-                    SwingUtilities.invokeLater(() -> {
-                        if (AddTask.openInstance != null) {
-                            AddTask.openInstance.failureResponse(failure.message);
-                        }
-                        else {
-                            JOptionPane.showMessageDialog(mainFrame, failure.message, "Failure", JOptionPane.ERROR_MESSAGE);
-                        }
-                    });
-                }
-                else if (packetType == PacketType.SUCCESS_RESPONSE) {
-                    SwingUtilities.invokeLater(() -> {
-                        int requestID = ByteBuffer.wrap(bytes, 4, 4).getInt();
-
-                        if (AddTask.openInstance != null && AddTask.activeRequests.contains(requestID)) {
-                            AddTask.activeRequests.remove((Integer) requestID);
-
-                            if (AddTask.activeRequests.isEmpty()) {
-                                AddTask.openInstance.close();
-                            }
-                        }
-                        if (UnspecifiedTask.openInstance != null && UnspecifiedTask.requestID == requestID) {
-                            UnspecifiedTask.openInstance.close();
-                        }
-                        if (SessionEdit.openInstance != null && SessionEdit.requestID == requestID) {
-                            SessionEdit.openInstance.successResponse();
-                        }
-                    });
-                }
-                else if (packetType == PacketType.ERROR_MESSAGE) {
-                    ErrorMessage error = ErrorMessage.parse(new DataInputStream((new ByteArrayInputStream(bytes))), packetLength);
-
-                    SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(mainFrame, error.message, "Error", JOptionPane.ERROR_MESSAGE);
-                    });
-                }
+                    catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
             }
         }
         catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void handlePacket(MainFrame mainFrame, PacketType packetType, byte[] bytes, int packetLength) throws IOException {
+        System.out.println("Received packet with length: " + packetLength + ", type: " + packetType);
+
+        if (packetType == PacketType.VERSION) {
+            Version version = Version.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
+            About.serverVersion = version.version;
+        }
+        if (packetType == PacketType.TASK_INFO) {
+            TaskInfo info = TaskInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
+            mainFrame.getTaskModel().receiveInfo(info);
+
+            if (info.newTask && UnspecifiedTask.openInstance != null) {
+                UnspecifiedTask.openInstance.setSelectedTask(info.taskID);
+            }
+        }
+        else if (packetType == PacketType.REQUEST_CONFIGURATION_COMPLETE) {
+            MainFrame.restoreLayout();
+            mainFrame.getTaskModel().configurationComplete();
+
+            for (Packet packet : toSend) {
+                sendPacket(packet);
+            }
+            toSend.clear();
+        }
+        else if (packetType == PacketType.UNSPECIFIED_TASK_ACTIVE) {
+            mainFrame.unspecifiedTaskActive();
+        }
+        else if (packetType == PacketType.BUGZILLA_INFO) {
+            BugzillaInfo info = BugzillaInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
+            MainFrame.bugzillaInfo.put(info.name, info);
+        }
+        else if (packetType == PacketType.DAILY_REPORT) {
+            DailyReportMessage dailyReport = DailyReportMessage.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
+            mainFrame.receivedDailyReport(dailyReport);
+        }
+        else if (packetType == PacketType.WEEKLY_REPORT) {
+            WeeklyReport report = WeeklyReport.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
+            mainFrame.receivedWeeklyReport(report);
+        }
+        else if (packetType == PacketType.TIME_ENTRY_DATA) {
+            TimeEntryData message = TimeEntryData.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
+            mainFrame.getTimeData().processPacket(message);
+        }
+        else if (packetType == PacketType.FAILURE_RESPONSE) {
+            FailureResponse failure = FailureResponse.parse(new DataInputStream((new ByteArrayInputStream(bytes))), packetLength);
+
+            if (AddTask.openInstance != null) {
+                AddTask.openInstance.failureResponse(failure.message);
+            }
+            else {
+                JOptionPane.showMessageDialog(mainFrame, failure.message, "Failure", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        else if (packetType == PacketType.SUCCESS_RESPONSE) {
+            int requestID = ByteBuffer.wrap(bytes, 4, 4).getInt();
+
+            if (AddTask.openInstance != null && AddTask.activeRequests.contains(requestID)) {
+                AddTask.activeRequests.remove((Integer) requestID);
+
+                if (AddTask.activeRequests.isEmpty()) {
+                    AddTask.openInstance.close();
+                }
+            }
+            if (UnspecifiedTask.openInstance != null && UnspecifiedTask.requestID == requestID) {
+                UnspecifiedTask.openInstance.close();
+            }
+            if (SessionEdit.openInstance != null && SessionEdit.requestID == requestID) {
+                SessionEdit.openInstance.successResponse();
+            }
+        }
+        else if (packetType == PacketType.ERROR_MESSAGE) {
+            ErrorMessage error = ErrorMessage.parse(new DataInputStream((new ByteArrayInputStream(bytes))), packetLength);
+            JOptionPane.showMessageDialog(mainFrame, error.message, "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
