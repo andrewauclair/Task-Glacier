@@ -4,11 +4,13 @@ import taskglacier.MainFrame;
 import util.DialogEscape;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.util.Properties;
 
 public class About extends JDialog {
     public static String serverVersion;
+
     private static final String uiVersion = loadVersion();
 
     private static String loadVersion() {
@@ -25,30 +27,59 @@ public class About extends JDialog {
     public About(MainFrame mainFrame) {
         super(mainFrame);
 
-        setSize(200, 200);
         setTitle("About");
         setModalityType(ModalityType.APPLICATION_MODAL);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        setResizable(false);
 
         DialogEscape.addEscapeHandler(this);
 
-        JPanel info = new JPanel();
+        JPanel content = new JPanel();
+        content.setLayout(new GridBagLayout());
+        content.setBorder(BorderFactory.createEmptyBorder(12, 16, 16, 16));
 
-        info.setLayout(new BoxLayout(info, BoxLayout.PAGE_AXIS));
-        info.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.gridwidth = 2;
+        gbc.insets = new Insets(5, 5, 5, 5);
 
-        info.add(new JLabel("Task Glacier"));
+        JLabel title = new JLabel("Task Glacier");
+        title.setFont(title.getFont().deriveFont(Font.BOLD | Font.ITALIC, 20f));
+//        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        content.add(title, gbc);
+        gbc.gridy++;
 
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        info.add(new JLabel("Server Version: " + serverVersion));
+        content.add(new JSeparator(), gbc);
+        gbc.gridy++;
 
-        info.add(new JLabel("UI Version: " + uiVersion));
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.gridwidth = 1;
 
-        add(info);
+        content.add(new JLabel("UI Version:"), gbc);
+        gbc.gridx++;
 
-        // center on the main frame
-        setLocationRelativeTo(mainFrame);
+        content.add(new JLabel(uiVersion + " "), gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+
+        content.add(new JLabel("Server Version:"), gbc);
+        gbc.gridx++;
+
+        content.add(new JLabel(serverVersion != null ? serverVersion + " " : "unknown "), gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+
+        add(content);
 
         pack();
+
+        setLocationRelativeTo(mainFrame);
     }
 }
