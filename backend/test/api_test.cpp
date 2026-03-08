@@ -1602,7 +1602,7 @@ TEST_CASE("Request Version", "[api]")
 
 	REQUIRE(sender.output.size() == 1);
 
-	verify_message(VersionMessage("0.14.1"), *sender.output[0]);
+	verify_message(VersionMessage(APP_VERSION), *sender.output[0]);
 }
 
 TEST_CASE("Start Unspecified Task", "[api][task]")
