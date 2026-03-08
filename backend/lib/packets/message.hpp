@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <ostream>
 #include <vector>
+#include <chrono>
+#include <format>
 
 #include <magic_enum/magic_enum.hpp>
 
