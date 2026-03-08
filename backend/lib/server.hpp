@@ -106,6 +106,7 @@ public:
 	Task* active_task() const { return m_activeTask; }
 	Task* find_task(TaskID id);
 	std::vector<Task*> find_tasks_with_parent(TaskID parentID);
+	std::int32_t count_tasks_with_parent(TaskID parentID);
 	Task* find_task_with_parent_and_name(const std::string& name, TaskID parentID);
 
 	void find_bugzilla_helper_tasks(TaskID bugzillaParentTaskID, const std::vector<TaskID>& bugTasks, std::map<TaskID, TaskState>& helperTasks);

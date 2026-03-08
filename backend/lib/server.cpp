@@ -24,7 +24,7 @@ std::expected<TaskID, std::string> MicroTask::create_task(const std::string& nam
 
 	Task task = Task(name, id, parentID, m_clock->now());
 	task.serverControlled = serverControlled;
-	task.indexInParent = find_tasks_with_parent(parentID).size();
+	task.indexInParent = count_tasks_with_parent(parentID);
 
 	m_tasks.emplace(id, task);
 	
@@ -76,6 +76,21 @@ std::vector<Task*> MicroTask::find_tasks_with_parent(TaskID parentID)
 	}
 
 	return tasks;
+}
+
+std::int32_t MicroTask::count_tasks_with_parent(TaskID parentID)
+{
+	std::int32_t count = 0;
+
+	for (auto&& [taskID, task] : m_tasks)
+	{
+		if (task.parentID() == parentID)
+		{
+			count++;
+		}
+	}
+
+	return count;
 }
 
 Task* MicroTask::find_task_with_parent_and_name(const std::string& name, TaskID parentID)
