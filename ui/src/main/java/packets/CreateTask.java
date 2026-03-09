@@ -10,7 +10,6 @@ import java.util.List;
 public class CreateTask extends RequestPacket {
     private final String name;
     private final int parentID;
-    private int size = 0;
     private List<String> labels = new ArrayList<>();
     private List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
 
@@ -21,27 +20,11 @@ public class CreateTask extends RequestPacket {
     }
 
     @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
     public PacketType type() {
         return PacketType.CREATE_TASK;
     }
 
     public void writeToOutput(DataOutputStream output) throws IOException {
-        size = 16; // size, packet type, request ID, parent ID
-        size += 2 + name.length();
-        size += 4 + (labels.size() * 2); // labels size, label string lengths
-        for (String label : labels) {
-            size += label.length();
-        }
-        size += 4 + (timeEntry.size() * 8);
-
-        output.writeInt(size);
-        output.writeInt(PacketType.CREATE_TASK.value());
-
         super.writeToOutput(output);
 
         output.writeInt(parentID);

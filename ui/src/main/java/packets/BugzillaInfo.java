@@ -19,8 +19,6 @@ public class BugzillaInfo implements Packet {
     public List<String> groupTasksBy = new ArrayList<>();
     public Map<String, String> labelToField = new HashMap<>();
 
-    private int size = 0;
-
     public BugzillaInfo(int instanceID, String name, String url, String apiKey, String username) {
         this.instanceID = instanceID;
         this.name = name;
@@ -29,8 +27,7 @@ public class BugzillaInfo implements Packet {
         this.username = username;
     }
 
-    public static BugzillaInfo parse(DataInputStream input, int size) throws IOException {
-        input.readInt(); // packet type
+    public static BugzillaInfo parse(DataInputStream input) throws IOException {
         int instanceID = input.readInt();
         String name = Packet.parseString(input);
         String url = Packet.parseString(input);
@@ -38,7 +35,6 @@ public class BugzillaInfo implements Packet {
         String username = Packet.parseString(input);
 
         BugzillaInfo message = new BugzillaInfo(instanceID, name, url, apiKey, username);
-        message.size = size;
         message.rootTaskID = input.readInt();
 
         int groupTasksByCount = input.readInt();
@@ -60,38 +56,12 @@ public class BugzillaInfo implements Packet {
     }
 
     @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
     public PacketType type() {
         return PacketType.BUGZILLA_INFO;
     }
 
     @Override
     public void writeToOutput(DataOutputStream output) throws IOException {
-        AtomicInteger size = new AtomicInteger(16); // size, packet type, instance ID, and root task ID
-        size.addAndGet(2 + name.length());
-        size.addAndGet(2 + url.length());
-        size.addAndGet(2 + apiKey.length());
-        size.addAndGet(2 + username.length());
-
-        size.addAndGet(4);
-        groupTasksBy.forEach(s -> {
-            size.addAndGet(2);
-            size.addAndGet(s.length());
-        });
-        size.addAndGet(4);
-        labelToField.forEach((s, s2) -> {
-            size.addAndGet(4);
-            size.addAndGet(s.length());
-            size.addAndGet(s2.length());
-        });
-        this.size = size.get();
-
-        output.writeInt(size.get());
-        output.writeInt(PacketType.BUGZILLA_INFO.value());
         output.writeInt(instanceID);
         Packet.writeString(output, name);
         Packet.writeString(output, url);

@@ -27,20 +27,12 @@ public class UpdateTaskTimes extends RequestPacket {
     }
 
     @Override
-    public int size() {
-        return 37;
-    }
-
-    @Override
     public PacketType type() {
         return type;
     }
 
     @Override
     public void writeToOutput(DataOutputStream output) throws IOException {
-        output.writeInt(38);
-        output.writeInt(type.value());
-
         super.writeToOutput(output);
 
         output.writeInt(taskID);

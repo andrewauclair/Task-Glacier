@@ -20,7 +20,6 @@ public class UpdateTask extends RequestPacket {
     private int taskID;
     private int parentID;
     private List<String> labels = new ArrayList<>();
-    private int size = 0;
 
     public UpdateTask(RequestID requestID, Task task) {
         super(requestID);
@@ -40,29 +39,11 @@ public class UpdateTask extends RequestPacket {
     }
 
     @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
     public PacketType type() {
         return PacketType.UPDATE_TASK;
     }
 
     public void writeToOutput(DataOutputStream output) throws IOException {
-        size = 26; // size, packet type, request ID, task ID, parent ID, index in parent, server controlled, locked
-        size += 4; // state
-        size += 2 + name.length();
-
-        size += 4 + (labels.size() * 2); // labels size, label string lengths
-        for (String label : labels) {
-            size += label.length();
-        }
-        size += 4 + (timeEntry.size() * 8);
-
-        output.writeInt(size);
-        output.writeInt(PacketType.UPDATE_TASK.value());
-
         super.writeToOutput(output);
 
         output.writeInt(taskID);

@@ -13,14 +13,9 @@ public class TimeEntryData implements Packet {
     public int requestID;
     public TimeCategoryModType type = TimeCategoryModType.UPDATE;
     List<TimeData.TimeCategory> timeCategories = new ArrayList<>();
-    private int size = 0;
 
-    public static TimeEntryData parse(DataInputStream input, int size) throws IOException {
+    public static TimeEntryData parse(DataInputStream input) throws IOException {
         TimeEntryData data = new TimeEntryData();
-
-        input.readInt(); // packet type
-
-        data.size = size;
 
         int categoryCount = input.readInt();
 
@@ -49,11 +44,6 @@ public class TimeEntryData implements Packet {
     }
 
     @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
     public PacketType type() {
         return packetType;
     }
@@ -64,15 +54,6 @@ public class TimeEntryData implements Packet {
 
     @Override
     public void writeToOutput(DataOutputStream output) throws IOException {
-        int size = 20;
-        for (TimeData.TimeCategory timeCategory : timeCategories) {
-            size += 11 + timeCategory.name.length();
-            for (TimeData.TimeCode timeCode : timeCategory.timeCodes) {
-                size += 7 + timeCode.name.length();
-            }
-        }
-        output.writeInt(size);
-        output.writeInt(packetType.value());
         output.writeInt(requestID);
         output.writeInt(type.ordinal());
         output.writeInt(timeCategories.size());

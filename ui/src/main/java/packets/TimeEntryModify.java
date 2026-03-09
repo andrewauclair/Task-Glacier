@@ -8,7 +8,6 @@ import java.util.List;
 
 public class TimeEntryModify extends RequestPacket {
     private final PacketType packetType = PacketType.TIME_ENTRY_MODIFY;
-    private int size = 0;
 
     public static class Category {
         public TimeCategoryModType type = TimeCategoryModType.UPDATE;
@@ -32,33 +31,12 @@ public class TimeEntryModify extends RequestPacket {
     }
 
     @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
     public PacketType type() {
         return packetType;
     }
 
     @Override
     public void writeToOutput(DataOutputStream output) throws IOException {
-        int size = 20; // size, packet type, request ID, category count, code count
-
-        for (Category category : categories) {
-            size += 8; // type & id
-            size += 2 + category.name.length();
-        }
-
-        for (Code code : codes) {
-            size += 12; // type, categoryIndex & codeID
-            size += 1; // archived
-            size += 2 + code.name.length();
-        }
-
-        output.writeInt(size);
-        output.writeInt(packetType.value());
-
         super.writeToOutput(output);
 
         output.writeInt(categories.size());

@@ -16,8 +16,6 @@ public interface Packet {
         return new String(bytes);
     }
 
-    int size();
-
     PacketType type();
 
     void writeToOutput(DataOutputStream output) throws IOException;

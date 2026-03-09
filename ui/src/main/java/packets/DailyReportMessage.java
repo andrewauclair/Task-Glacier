@@ -14,14 +14,11 @@ import java.util.List;
 import java.util.Map;
 
 public class DailyReportMessage implements Packet {
-    private int size = 0;
     private int requestID;
     private DailyReport report = null;
 
-    public static DailyReportMessage parse(DataInputStream input, int size) throws IOException {
+    public static DailyReportMessage parse(DataInputStream input) throws IOException {
         DailyReportMessage message = new DailyReportMessage();
-
-        input.readInt(); // packet type
         message.requestID = input.readInt();
 
         message.report = new DailyReport();
@@ -72,11 +69,6 @@ public class DailyReportMessage implements Packet {
         }
 
         return message;
-    }
-
-    @Override
-    public int size() {
-        return size;
     }
 
     @Override

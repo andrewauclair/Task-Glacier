@@ -11,13 +11,10 @@ import java.time.Instant;
 public class WeeklyReport implements Packet {
     public DailyReportMessage.DailyReport[] reports = new DailyReportMessage.DailyReport[7];
     private int requestID;
-    private int size = 0;
 
-    public static WeeklyReport parse(DataInputStream input, int size) throws IOException {
+    public static WeeklyReport parse(DataInputStream input) throws IOException {
         WeeklyReport message = new WeeklyReport();
-        message.size = message.size;
 
-        input.readInt(); // packet type
         message.requestID = input.readInt();
         Instant reportTime = Instant.ofEpochMilli(input.readLong());
 
@@ -73,11 +70,6 @@ public class WeeklyReport implements Packet {
         }
 
         return message;
-    }
-
-    @Override
-    public int size() {
-        return size;
     }
 
     @Override

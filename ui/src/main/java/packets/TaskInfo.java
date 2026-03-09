@@ -27,13 +27,10 @@ public class TaskInfo implements Packet {
     public List<Session> sessions = new ArrayList<>();
     public List<String> labels = new ArrayList<>();
     public List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
-    private int size = 0;
 
-    public static TaskInfo parse(DataInputStream input, int size) throws IOException {
+    public static TaskInfo parse(DataInputStream input) throws IOException {
         TaskInfo info = new TaskInfo();
-        info.size = size;
 
-        input.readInt(); // packet type
         info.taskID = input.readInt();
         info.parentID = input.readInt();
         info.state = TaskState.valueOf(input.readInt());
@@ -103,11 +100,6 @@ public class TaskInfo implements Packet {
         }
 
         return info;
-    }
-
-    @Override
-    public int size() {
-        return size;
     }
 
     @Override

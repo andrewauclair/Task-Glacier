@@ -5,7 +5,6 @@ import java.io.IOException;
 
 public class Basic implements Packet {
     private final PacketType packetType;
-    private int size = 0;
 
     public Basic(PacketType packetType) {
         this.packetType = packetType;
@@ -28,18 +27,11 @@ public class Basic implements Packet {
     }
 
     @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
     public PacketType type() {
         return packetType;
     }
 
     public void writeToOutput(DataOutputStream output) throws IOException {
-        size = 8;
-        output.writeInt(size);
-        output.writeInt(packetType.value());
+        // nothing to write. size and packet type are written directly to the socket
     }
 }

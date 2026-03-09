@@ -59,7 +59,9 @@ public class ServerConnection {
         try {
             int packetLength;
             while ((packetLength = input.readInt()) != -1) {
-                int expectedBytes = packetLength - 4;
+                PacketType packetType = PacketType.valueOf(input.readInt());
+
+                int expectedBytes = packetLength - 8;
 
                 byte[] bytes = new byte[expectedBytes];
 
@@ -78,12 +80,9 @@ public class ServerConnection {
                     break;
                 }
 
-                PacketType packetType = PacketType.valueOf(ByteBuffer.wrap(bytes, 0, 4).getInt());
-                final int capturedLength = packetLength;
-
                 SwingUtilities.invokeLater(() -> {
                     try {
-                        handlePacket(mainFrame, packetType, bytes, capturedLength);
+                        handlePacket(mainFrame, packetType, bytes);
                     }
                     catch (IOException e) {
                         throw new RuntimeException(e);
@@ -96,9 +95,9 @@ public class ServerConnection {
         }
     }
 
-    private void handlePacket(MainFrame mainFrame, PacketType packetType, byte[] bytes, int packetLength) throws IOException {
+    private void handlePacket(MainFrame mainFrame, PacketType packetType, byte[] bytes) throws IOException {
         if (packetType == PacketType.VERSION) {
-            Version version = Version.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
+            Version version = Version.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
             About.serverVersion = version.version;
         }
         if (packetType == PacketType.TASK_INFO) {
@@ -106,7 +105,7 @@ public class ServerConnection {
                 mainFrame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             }
 
-            TaskInfo info = TaskInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
+            TaskInfo info = TaskInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
             mainFrame.getTaskModel().receiveInfo(info);
 
             if (info.newTask && UnspecifiedTask.openInstance != null) {
@@ -127,23 +126,23 @@ public class ServerConnection {
             mainFrame.unspecifiedTaskActive();
         }
         else if (packetType == PacketType.BUGZILLA_INFO) {
-            BugzillaInfo info = BugzillaInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
+            BugzillaInfo info = BugzillaInfo.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
             MainFrame.bugzillaInfo.put(info.name, info);
         }
         else if (packetType == PacketType.DAILY_REPORT) {
-            DailyReportMessage dailyReport = DailyReportMessage.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
+            DailyReportMessage dailyReport = DailyReportMessage.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
             mainFrame.receivedDailyReport(dailyReport);
         }
         else if (packetType == PacketType.WEEKLY_REPORT) {
-            WeeklyReport report = WeeklyReport.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
+            WeeklyReport report = WeeklyReport.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
             mainFrame.receivedWeeklyReport(report);
         }
         else if (packetType == PacketType.TIME_ENTRY_DATA) {
-            TimeEntryData message = TimeEntryData.parse(new DataInputStream(new ByteArrayInputStream(bytes)), packetLength);
+            TimeEntryData message = TimeEntryData.parse(new DataInputStream(new ByteArrayInputStream(bytes)));
             mainFrame.getTimeData().processPacket(message);
         }
         else if (packetType == PacketType.FAILURE_RESPONSE) {
-            FailureResponse failure = FailureResponse.parse(new DataInputStream((new ByteArrayInputStream(bytes))), packetLength);
+            FailureResponse failure = FailureResponse.parse(new DataInputStream((new ByteArrayInputStream(bytes))));
 
             if (AddTask.openInstance != null) {
                 AddTask.openInstance.failureResponse(failure.message);
@@ -153,7 +152,7 @@ public class ServerConnection {
             }
         }
         else if (packetType == PacketType.SUCCESS_RESPONSE) {
-            int requestID = ByteBuffer.wrap(bytes, 4, 4).getInt();
+            int requestID = ByteBuffer.wrap(bytes, 0, 4).getInt();
 
             if (AddTask.openInstance != null && AddTask.activeRequests.contains(requestID)) {
                 AddTask.activeRequests.remove((Integer) requestID);
@@ -170,7 +169,7 @@ public class ServerConnection {
             }
         }
         else if (packetType == PacketType.ERROR_MESSAGE) {
-            ErrorMessage error = ErrorMessage.parse(new DataInputStream((new ByteArrayInputStream(bytes))), packetLength);
+            ErrorMessage error = ErrorMessage.parse(new DataInputStream((new ByteArrayInputStream(bytes))));
             JOptionPane.showMessageDialog(mainFrame, error.message, "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -209,12 +208,20 @@ public class ServerConnection {
             }
             
             try {
-                try (ByteArrayOutputStream output = new ByteArrayOutputStream(packet.size())) {
+                try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+                    DataOutputStream dataOutput = new DataOutputStream(this.output);
+
                     packet.writeToOutput(new DataOutputStream(output));
+
+                    int count = output.size() + 8;
+
+                    dataOutput.writeInt(count);
+                    dataOutput.writeInt(packet.type().value());
+
+                    output.writeTo(this.output);
                 }
 
-                packet.writeToOutput(this.output);
-                System.out.println("Sent packet with size: " + packet.size() + ", type: " + packet.type());
+                System.out.println("Sent packet with type: " + packet.type());
                 return true;
             }
             catch (IOException e) {
