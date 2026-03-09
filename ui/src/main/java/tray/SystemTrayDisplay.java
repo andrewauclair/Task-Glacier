@@ -200,8 +200,7 @@ public class SystemTrayDisplay extends JFrame {
             int day = localDate.getDayOfMonth();
 
             if (mainFrame.isConnected()) {
-                RequestDailyReport request = new RequestDailyReport();
-                request.requestID = RequestID.nextRequestID();
+                RequestDailyReport request = new RequestDailyReport(RequestID.nextRequestID());
                 request.month = month;
                 request.day = day;
                 request.year = year;

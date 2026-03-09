@@ -65,10 +65,11 @@ public class RequestWeeklyReportDialog extends JDialog {
             int month = localDate.getMonthValue();
             int day = localDate.getDayOfMonth();
 
-            requestID = RequestID.nextRequestID();
+            RequestID requestID = RequestID.nextRequestID();
 
-            RequestWeeklyReport request = new RequestWeeklyReport();
-            request.requestID = requestID;
+            RequestWeeklyReportDialog.requestID = requestID.getId();
+
+            RequestWeeklyReport request = new RequestWeeklyReport(requestID);
             request.month = month;
             request.day = day;
             request.year = year;

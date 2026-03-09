@@ -94,7 +94,8 @@ public class TimeEntryConfiguration extends JDialog {
         add(save, gbc);
 
         save.addActionListener(e -> {
-            TimeEntryModify message = new TimeEntryModify();
+            // TODO this RequestID might be throw away and skipped. I'm ok with that for now
+            TimeEntryModify message = new TimeEntryModify(RequestID.nextRequestID());
 
             for (int i = 0; i < categoriesModel.getRowCount(); i++) {
                 TimeEntryModify.Category timeCategory = new TimeEntryModify.Category();
@@ -146,7 +147,6 @@ public class TimeEntryConfiguration extends JDialog {
             }
 
             if (!message.categories.isEmpty()) {
-                message.requestID = RequestID.nextRequestID();
                 mainFrame.getConnection().sendPacket(message);
             }
 

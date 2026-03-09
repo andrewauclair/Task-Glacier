@@ -187,8 +187,7 @@ public class MainFrame extends JFrame {
                 }
                 if (dockable instanceof DailyReportPanel dailyReport) {
                     if (dailyReport.isToday()) {
-                        RequestDailyReport request = new RequestDailyReport();
-                        request.requestID = RequestID.nextRequestID();
+                        RequestDailyReport request = new RequestDailyReport(RequestID.nextRequestID());
                         request.month = dailyReport.getMonth();
                         request.day = dailyReport.getDay();
                         request.year = dailyReport.getYear();
@@ -198,8 +197,7 @@ public class MainFrame extends JFrame {
                 }
                 else if (dockable instanceof WeeklyReportPanel weeklyReport) {
                     if (weeklyReport.isCurrentWeek()) {
-                        RequestWeeklyReport request = new RequestWeeklyReport();
-                        request.requestID = RequestID.nextRequestID();
+                        RequestWeeklyReport request = new RequestWeeklyReport(RequestID.nextRequestID());
                         request.month = weeklyReport.getMonth();
                         request.day = weeklyReport.getDay();
                         request.year = weeklyReport.getYear();
@@ -455,10 +453,9 @@ public class MainFrame extends JFrame {
             return;
         }
 
-        TaskStateChange startUnspecified = new TaskStateChange();
+        TaskStateChange startUnspecified = new TaskStateChange(RequestID.nextRequestID());
 
         startUnspecified.packetType = PacketType.START_UNSPECIFIED_TASK;
-        startUnspecified.requestID = RequestID.nextRequestID();
 
         getConnection().sendPacket(startUnspecified);
     }

@@ -10,29 +10,30 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UpdateTask implements Packet {
+public class UpdateTask extends RequestPacket {
     private final String name;
     public TaskState state = TaskState.PENDING;
     public int indexInParent = 0;
     public boolean serverControlled = false;
     public boolean locked = false;
     public List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
-    private int requestID;
     private int taskID;
     private int parentID;
     private List<String> labels = new ArrayList<>();
     private int size = 0;
 
-    public UpdateTask(int requestID, Task task) {
-        this.requestID = requestID;
+    public UpdateTask(RequestID requestID, Task task) {
+        super(requestID);
+
         taskID = task.id;
         parentID = task.parentID;
         name = task.name;
         labels.addAll(task.labels);
     }
 
-    public UpdateTask(int requestID, int taskID, int parentID, String name) {
-        this.requestID = requestID;
+    public UpdateTask(RequestID requestID, int taskID, int parentID, String name) {
+        super(requestID);
+
         this.taskID = taskID;
         this.parentID = parentID;
         this.name = name;
@@ -61,7 +62,9 @@ public class UpdateTask implements Packet {
 
         output.writeInt(size);
         output.writeInt(PacketType.UPDATE_TASK.value());
-        output.writeInt(requestID);
+
+        super.writeToOutput(output);
+
         output.writeInt(taskID);
         output.writeInt(parentID);
         output.writeInt(state.ordinal());

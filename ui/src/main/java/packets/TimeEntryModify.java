@@ -6,9 +6,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TimeEntryModify implements Packet {
+public class TimeEntryModify extends RequestPacket {
     private final PacketType packetType = PacketType.TIME_ENTRY_MODIFY;
-    public int requestID;
     private int size = 0;
 
     public static class Category {
@@ -28,38 +27,8 @@ public class TimeEntryModify implements Packet {
     public List<Category> categories = new ArrayList<>();
     public List<Code> codes = new ArrayList<>();
 
-    public static TimeEntryModify parse(DataInputStream input, int size) throws IOException {
-        TimeEntryModify data = new TimeEntryModify();
-
-        input.readInt();
-
-        data.size = size;
-
-        int categoryCount = input.readInt();
-
-        for (int i = 0; i < categoryCount; i++) {
-            Category category = new Category();
-            category.type = TimeCategoryModType.valueOf(input.readInt());
-            category.id = input.readInt();
-            category.name = Packet.parseString(input);
-
-            data.categories.add(category);
-        }
-
-        int codeCount = input.readInt();
-
-        for (int i = 0; i < codeCount; i++) {
-            Code code = new Code();
-            code.type = TimeCategoryModType.valueOf(input.readInt());
-            code.categoryIndex = input.readInt();
-            code.id = input.readInt();
-            code.name = Packet.parseString(input);
-            code.archived = input.readByte() != 0;
-
-            data.codes.add(code);
-        }
-
-        return data;
+    public TimeEntryModify(RequestID requestID) {
+        super(requestID);
     }
 
     @Override
@@ -89,7 +58,9 @@ public class TimeEntryModify implements Packet {
 
         output.writeInt(size);
         output.writeInt(packetType.value());
-        output.writeInt(requestID);
+
+        super.writeToOutput(output);
+
         output.writeInt(categories.size());
 
         for (Category category : categories) {

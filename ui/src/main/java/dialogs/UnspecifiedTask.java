@@ -97,11 +97,11 @@ public class UnspecifiedTask extends JDialog {
         });
 
         done.addActionListener(e -> {
-            requestID = RequestID.nextRequestID();
+            RequestID requestID = RequestID.nextRequestID();
+            UnspecifiedTask.requestID = requestID.getId();
 
-            TaskStateChange change = new TaskStateChange();
+            TaskStateChange change = new TaskStateChange(requestID);
             change.packetType = PacketType.STOP_UNSPECIFIED_TASK;
-            change.requestID = requestID;
             change.taskID = Integer.parseInt(taskID.getText());
 
             if (mainFrame.isConnected()) {

@@ -126,7 +126,8 @@ public class SessionEdit extends JDialog {
                 stopTime = Optional.of(stopDate.toInstant());
             }
 
-            requestID = RequestID.nextRequestID();
+            RequestID requestID = RequestID.nextRequestID();
+            SessionEdit.requestID = requestID.getId();
             openInstance = this;
 
             UpdateTaskTimes packet = new UpdateTaskTimes(newSession ? PacketType.ADD_TASK_SESSION : PacketType.EDIT_TASK_SESSION, requestID, taskID, sessionIndex, startTime,

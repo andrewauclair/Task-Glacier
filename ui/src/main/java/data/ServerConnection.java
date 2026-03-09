@@ -190,8 +190,7 @@ public class ServerConnection {
                         continue;
                     }
                     if (dockable instanceof DailyReportPanel dailyReport) {
-                        RequestDailyReport request = new RequestDailyReport();
-                        request.requestID = RequestID.nextRequestID();
+                        RequestDailyReport request = new RequestDailyReport(RequestID.nextRequestID());
                         request.month = dailyReport.getMonth();
                         request.day = dailyReport.getDay();
                         request.year = dailyReport.getYear();
@@ -199,8 +198,7 @@ public class ServerConnection {
                         SwingUtilities.invokeLater(() -> sendPacket(request));
                     }
                     else if (dockable instanceof WeeklyReportPanel weeklyReport) {
-                        RequestWeeklyReport request = new RequestWeeklyReport();
-                        request.requestID = RequestID.nextRequestID();
+                        RequestWeeklyReport request = new RequestWeeklyReport(RequestID.nextRequestID());
                         request.month = weeklyReport.getMonth();
                         request.day = weeklyReport.getDay();
                         request.year = weeklyReport.getYear();

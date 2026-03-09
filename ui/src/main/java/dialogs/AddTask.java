@@ -83,11 +83,11 @@ public class AddTask extends JDialog {
                     if (s.isEmpty()) {
                         continue;
                     }
-                    int requestID = RequestID.nextRequestID();
+                    RequestID requestID = RequestID.nextRequestID();
                     CreateTask create = new CreateTask(s, parentID, requestID);
                     packets.add(create);
 
-                    activeRequests.add(requestID);
+                    activeRequests.add(requestID.getId());
                 }
 
                 mainFrame.getConnection().sendPacket(Basic.BulkUpdateStart());
@@ -99,10 +99,10 @@ public class AddTask extends JDialog {
                 mainFrame.getConnection().sendPacket(Basic.BulkUpdateFinish());
             }
             else {
-                int requestID = RequestID.nextRequestID();
+                RequestID requestID = RequestID.nextRequestID();
                 CreateTask create = new CreateTask(name.getText(), parentID, requestID);
 
-                activeRequests.add(requestID);
+                activeRequests.add(requestID.getId());
 
                 mainFrame.getConnection().sendPacket(create);
             }

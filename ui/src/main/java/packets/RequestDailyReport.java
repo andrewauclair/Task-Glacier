@@ -3,12 +3,15 @@ package packets;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class RequestDailyReport implements Packet {
-    public int requestID;
+public class RequestDailyReport extends RequestPacket {
     public int month;
     public int day;
     public int year;
     private int size = 0;
+
+    public RequestDailyReport(RequestID requestID) {
+        super(requestID);
+    }
 
     @Override
     public int size() {
@@ -26,7 +29,9 @@ public class RequestDailyReport implements Packet {
 
         output.writeInt(size);
         output.writeInt(PacketType.REQUEST_DAILY_REPORT.value());
-        output.writeInt(requestID);
+
+        super.writeToOutput(output);
+
         output.writeByte(month);
         output.writeByte(day);
         output.writeShort(year);

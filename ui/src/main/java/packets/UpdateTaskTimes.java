@@ -5,9 +5,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Optional;
 
-public class UpdateTaskTimes implements Packet {
+public class UpdateTaskTimes extends RequestPacket {
     PacketType type;
-    public int requestID;
     int taskID;
 
     public int sessionIndex;
@@ -17,9 +16,10 @@ public class UpdateTaskTimes implements Packet {
 
     public boolean checkForOverlap = false;
 
-    public UpdateTaskTimes(PacketType type, int requestID, int taskID, int sessionIndex, Instant start, Optional<Instant> stop) {
+    public UpdateTaskTimes(PacketType type, RequestID requestID, int taskID, int sessionIndex, Instant start, Optional<Instant> stop) {
+        super(requestID);
+
         this.type = type;
-        this.requestID = requestID;
         this.taskID = taskID;
         this.sessionIndex = sessionIndex;
         this.start = start;
@@ -40,7 +40,9 @@ public class UpdateTaskTimes implements Packet {
     public void writeToOutput(DataOutputStream output) throws IOException {
         output.writeInt(38);
         output.writeInt(type.value());
-        output.writeInt(requestID);
+
+        super.writeToOutput(output);
+
         output.writeInt(taskID);
         output.writeInt(sessionIndex);
         output.writeLong(start.toEpochMilli());

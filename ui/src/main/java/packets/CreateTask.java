@@ -7,17 +7,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CreateTask implements Packet {
-    private final int requestID;
+public class CreateTask extends RequestPacket {
     private final String name;
     private final int parentID;
     private int size = 0;
     private List<String> labels = new ArrayList<>();
     private List<TimeData.TimeEntry> timeEntry = new ArrayList<>();
-    public CreateTask(String name, int parentID, int requestID) {
+
+    public CreateTask(String name, int parentID, RequestID requestID) {
+        super(requestID);
         this.name = name;
         this.parentID = parentID;
-        this.requestID = requestID;
     }
 
     @Override
@@ -41,7 +41,9 @@ public class CreateTask implements Packet {
 
         output.writeInt(size);
         output.writeInt(PacketType.CREATE_TASK.value());
-        output.writeInt(requestID);
+
+        super.writeToOutput(output);
+
         output.writeInt(parentID);
         output.writeShort((short) name.length());
         output.write(name.getBytes());

@@ -322,33 +322,31 @@ public class Sessions extends JPanel {
     }
 
     public void save(ServerConnection connection) {
-        List<UpdateTaskTimes> removes = new ArrayList<>();
-        List<UpdateTaskTimes> adds = new ArrayList<>();
+        List<SessionRow> removes = new ArrayList<>();
+        List<SessionRow> adds = new ArrayList<>();
 
         for (SessionRow row : sessionModel.data) {
             if (row.removed) {
-                removes.add(new UpdateTaskTimes(PacketType.REMOVE_TASK_SESSION, 0, task.id, sessionModel.data.indexOf(row), row.start
-                        , row.stop));
+                removes.add(row);
             }
             else if (row.modified) {
                 connection.sendPacket(new UpdateTaskTimes(PacketType.EDIT_TASK_SESSION, RequestID.nextRequestID(), task.id, sessionModel.data.indexOf(row),
                         row.start, row.stop));
             }
             else if (row.added) {
-                adds.add(new UpdateTaskTimes(PacketType.ADD_TASK_SESSION, 0, task.id, 0, row.start, row.stop));
+                adds.add(row);
             }
         }
 
-        removes.sort((o1, o2) -> Integer.compare(o2.sessionIndex, o1.sessionIndex));
+        removes.sort((o1, o2) -> Integer.compare(sessionModel.data.indexOf(o2), sessionModel.data.indexOf(o1)));
 
-        for (UpdateTaskTimes remove : removes) {
-            remove.requestID = RequestID.nextRequestID();
-            connection.sendPacket(remove);
+        for (SessionRow row : removes) {
+            connection.sendPacket(new UpdateTaskTimes(PacketType.REMOVE_TASK_SESSION, RequestID.nextRequestID(), task.id, sessionModel.data.indexOf(row), row.start
+                    , row.stop));
         }
 
-        for (UpdateTaskTimes add : adds) {
-            add.requestID = RequestID.nextRequestID();
-            connection.sendPacket(add);
+        for (SessionRow row : adds) {
+            connection.sendPacket(new UpdateTaskTimes(PacketType.ADD_TASK_SESSION, RequestID.nextRequestID(), task.id, 0, row.start, row.stop));
         }
     }
 

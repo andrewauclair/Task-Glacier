@@ -116,8 +116,7 @@ public class DailyReportPanel extends JPanel implements Dockable {
         refreshTodayDate();
 
         if (mainFrame.isConnected()) {
-            RequestDailyReport request = new RequestDailyReport();
-            request.requestID = RequestID.nextRequestID();
+            RequestDailyReport request = new RequestDailyReport(RequestID.nextRequestID());
             request.month = month;
             request.day = day;
             request.year = year;

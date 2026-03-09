@@ -4,12 +4,15 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class TaskStateChange implements Packet {
+public class TaskStateChange extends RequestPacket {
     public PacketType packetType = PacketType.START_TASK;
     public int taskID = 0;
-    public int requestID = 0;
 
     private int size = 0;
+
+    public TaskStateChange(RequestID requestID) {
+        super(requestID);
+    }
 
     @Override
     public int size() {
@@ -26,7 +29,9 @@ public class TaskStateChange implements Packet {
 
         output.write(ByteBuffer.allocate(4).putInt(size).array());
         output.write(ByteBuffer.allocate(4).putInt(packetType.value()).array());
-        output.write(ByteBuffer.allocate(4).putInt(requestID).array());
+
+        super.writeToOutput(output);
+
         output.write(ByteBuffer.allocate(4).putInt(taskID).array());
     }
 }

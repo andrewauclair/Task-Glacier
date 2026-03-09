@@ -3,12 +3,11 @@ package packets;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class BugzillaRefresh implements Packet {
-    private final int requestID;
+public class BugzillaRefresh extends RequestPacket {
     private int size = 0;
 
-    public BugzillaRefresh(int requestID) {
-        this.requestID = requestID;
+    public BugzillaRefresh(RequestID requestID) {
+        super(requestID);
     }
 
     @Override
@@ -26,6 +25,7 @@ public class BugzillaRefresh implements Packet {
 
         output.writeInt(size);
         output.writeInt(PacketType.BUGZILLA_REFRESH.value());
-        output.writeInt(requestID);
+
+        super.writeToOutput(output);
     }
 }

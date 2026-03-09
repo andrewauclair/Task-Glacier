@@ -219,7 +219,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
 
     private void finishActiveTask() {
         if (mainFrame.isConnected()) {
-            TaskStateChange change = new TaskStateChange();
+            TaskStateChange change = new TaskStateChange(RequestID.nextRequestID());
             change.packetType = PacketType.FINISH_TASK;
             change.taskID = mainFrame.getTaskModel().getActiveTaskID().get();
             mainFrame.getConnection().sendPacket(change);
@@ -236,7 +236,7 @@ public class TaskTreeTable extends JTable implements TaskModel.Listener {
         Task task = (Task) ((DefaultMutableTreeNode) treeTableModel.getNodeAtTableRow(selectedRow)).getUserObject();
 
         if (mainFrame.isConnected()) {
-            TaskStateChange change = new TaskStateChange();
+            TaskStateChange change = new TaskStateChange(RequestID.nextRequestID());
             change.packetType = type;
             change.taskID = task.id;
             mainFrame.getConnection().sendPacket(change);
