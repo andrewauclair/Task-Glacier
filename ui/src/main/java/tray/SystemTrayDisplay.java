@@ -86,6 +86,8 @@ public class SystemTrayDisplay extends JFrame {
                 setVisible(!isVisible());
             }
             else if (e != null) {
+                e = null;
+
                 setVisible(true);
 
                 Dimension scrnSize = Toolkit.getDefaultToolkit().getScreenSize();
