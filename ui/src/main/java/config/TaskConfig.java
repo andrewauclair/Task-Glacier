@@ -94,19 +94,21 @@ public class TaskConfig extends JDialog {
 
         gbc.gridy++;
         gbc.weighty = 0;
-        gbc.weighty = 0;
         gbc.anchor = GridBagConstraints.SOUTHEAST;
         gbc.fill = GridBagConstraints.NONE;
 
-        JButton save = new JButton("Save");
+        JButton ok = new JButton("OK");
+        JButton cancel = new JButton("Cancel");
+        JButton apply = new JButton("Apply");
 
-        add(save, gbc);
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        buttons.add(ok);
+        buttons.add(cancel);
+        buttons.add(apply);
 
-        save.addActionListener(e -> {
-            if (!general.verify()) {
-                return;
-            }
+        add(buttons, gbc);
 
+        Runnable saveAction = () -> {
             // send any packets that are necessary
             UpdateTask update = new UpdateTask(RequestID.nextRequestID(), task.id, Integer.parseInt(general.parent.getText()), general.description.getText());
             update.indexInParent = task.indexInParent;
@@ -120,8 +122,21 @@ public class TaskConfig extends JDialog {
             mainFrame.getConnection().sendPacket(update);
 
             sessions.save(mainFrame.getConnection());
+        };
 
+        ok.addActionListener(e -> {
+            if (!general.verify()) {
+                return;
+            }
+            saveAction.run();
             dispose();
+        });
+        cancel.addActionListener(e -> dispose());
+        apply.addActionListener(e -> {
+            if (!general.verify()) {
+                return;
+            }
+            saveAction.run();
         });
 
         setSize(550, 400);
