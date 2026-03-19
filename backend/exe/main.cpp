@@ -99,6 +99,11 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
+	// make sure we aren't starved if the CPU is very busy and the UI sends a request
+#ifdef _MSC_VER
+	SetPriorityClass(GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
+#endif
+
 	logfile = std::ofstream(argv[4]);
 
 	sockpp::initialize();
