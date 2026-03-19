@@ -616,12 +616,14 @@ void API::handle_basic(const BasicMessage& message)
 		// pause any task updates until we receive the finish
 		// this message will be followed by the task updates, all using the same request ID
 		m_app.start_bulk_update();
+		m_sender->start_bulk();
 		m_database->start_transaction(*m_sender);
 	}
 	else if (message.packetType() == PacketType::BULK_TASK_UPDATE_FINISH)
 	{
 		// now send the task update for any tasks that changed
 		m_app.finish_bulk_update();
+		m_sender->finish_bulk();
 		m_database->finish_transaction(*m_sender);
 	}
 }
