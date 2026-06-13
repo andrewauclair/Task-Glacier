@@ -36,6 +36,9 @@ DatabaseImpl::DatabaseImpl(const std::string& file, PacketSender& sender)
 {
 	try
 	{
+		m_database.exec("PRAGMA journal_mode=WAL;");
+		m_database.exec("PRAGMA synchronous=NORMAL;");
+
 		m_database.exec("create table if not exists tasks (TaskID integer PRIMARY KEY, Name text, ParentID integer, State integer, CreateTime bigint, FinishTime bigint, Locked integer, ServerControlled integer, IndexInParent integer)");
 		m_database.exec("create table if not exists timeEntryCategory (TimeCategoryID integer PRIMARY KEY, TimeCategoryName text)");
 		m_database.exec("create table if not exists timeEntryCode (TimeCategoryID integer, TimeCodeID integer, TimeCodeName text, Archived integer, PRIMARY KEY (TimeCategoryID, TimeCodeID))");
@@ -156,6 +159,13 @@ void DatabaseImpl::write_next_task_id(TaskID nextID, PacketSender& sender)
 
 void DatabaseImpl::write_bugzilla_instance(const BugzillaInstance& instance, PacketSender& sender)
 {
+	const bool using_transaction = !m_transaction_in_progress;
+
+	if (using_transaction)
+	{
+		start_transaction(sender);
+	}
+
 	SQLite::Statement insert(m_database, "insert or replace into bugzilla values(?, ?, ?, ?, ?, ?, ?)");
 	insert.bind(1, instance.instanceID._val);
 	insert.bind(2, instance.bugzillaName);
@@ -176,6 +186,11 @@ void DatabaseImpl::write_bugzilla_instance(const BugzillaInstance& instance, Pac
 
 	write_bugzilla_group_by(instance, sender);
 	write_bugzilla_bug_to_task(instance, sender);
+
+	if (using_transaction)
+	{
+		finish_transaction(sender);
+	}
 }
 
 void DatabaseImpl::write_next_bugzilla_instance_id(BugzillaInstanceID nextID, PacketSender& sender)
